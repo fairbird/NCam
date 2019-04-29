@@ -412,6 +412,7 @@ char *tpl_getUnparsedTpl(const char *name, int8_t removeHeader, const char *subd
 											check_conf(CARDREADER_DB2COM, ptr2);
 											check_conf(CARDREADER_STAPI, ptr2);
 											check_conf(CARDREADER_STAPI5, ptr2);
+											check_conf(CARDREADER_GXAPI, ptr2);
 											check_conf(WEBIF_LIVELOG, ptr2);
 											check_conf(WEBIF_JQUERY, ptr2);
 											check_conf(TOUCH, ptr2);
@@ -452,6 +453,7 @@ char *tpl_getUnparsedTpl(const char *name, int8_t removeHeader, const char *subd
 											check_conf(READER_TONGFANG, ptr2);
 											check_conf(READER_VIACCESS, ptr2);
 											check_conf(READER_VIDEOGUARD, ptr2);
+											check_conf(WITH_GXAPI, ptr2);
 											check_conf(WITH_CARDREADER, ptr2);
 											check_conf(WITH_DEBUG, ptr2);
 											check_conf(WITH_LB, ptr2);

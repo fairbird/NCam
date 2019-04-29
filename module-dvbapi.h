@@ -16,6 +16,7 @@
 #define DVBAPI_1    1
 #define STAPI       2
 #define COOLAPI     3
+#define GXAPI       4
 
 #ifdef __CYGWIN__
 #define TMPDIR          "./"
@@ -27,7 +28,7 @@
 #define ECMINFO_FILE    "/tmp/ecm.info"
 #endif
 
-#define BOX_COUNT 7
+#define BOX_COUNT 8
 
 #define BOXTYPE_DREAMBOX    1
 #define BOXTYPE_DUCKBOX 2
@@ -145,7 +146,7 @@
 #define DEMUX_CA_MASK_ADAPTER			0x82 // deprecated - applications should use descriptors ADAPTER_DEVICE, DEMUX_DEVICE and CA_DEVICE instead
 #define ADAPTER_DEVICE					0x83
 #define PMT_PID							0x84
-#define SERVICE_TYPE_MASK				0x85 // not used by OSCam
+#define SERVICE_TYPE_MASK				0x85 // not used by NCam
 #define DEMUX_DEVICE					0x86
 #define CA_DEVICE						0x87
 
@@ -393,11 +394,11 @@ enum stream_type
 	STREAM_SUBTITLE
 };
 
-#define MAX_DEMUX       32 // Max number of demuxes supported by NCam - each channel/service occupies one demux
+#define MAX_DEMUX       16 // Max number of demuxes supported by NCam - each channel/service occupies one demux
 #define MAX_ECM_PIDS    24 // Max number of ECM pids per demux
 #define MAX_EMM_PIDS    24 // Max number of EMM pids per demux
 #define MAX_STREAM_PIDS 32 // Max number of pids other than ECM and EMM (e.g. audio, video, subtitle, etc) per demux (hardware descramblers might have a capacity of 30 pids)
-#define MAX_FILTER      64
+#define MAX_FILTER      48
 
 #define PTINUM          10
 #define SLOTNUM         20

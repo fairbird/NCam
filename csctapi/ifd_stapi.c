@@ -4,7 +4,7 @@
 #include "atr.h"
 #include "../ncam-string.h"
 
-/* These functions are implemented in liboscam_stapi.a */
+/* These functions are implemented in libncam_stapi.a */
 extern int32_t STReader_Open(char *device, uint32_t *stsmart_handle);
 extern int32_t STReader_GetStatus(uint32_t stsmart_handle, int32_t *in);
 extern int32_t STReader_Reset(uint32_t stsmart_handle, ATR *atr);
@@ -15,7 +15,7 @@ extern int32_t STReader_SetProtocol(uint32_t stsmart_handle, unsigned char *para
 extern int32_t STReader_SetClockrate(uint32_t stsmart_handle);
 
 #ifdef CARDREADER_STAPI5
-/* These functions are implemented in liboscam_stapi5.a */
+/* These functions are implemented in libncam_stapi5.a */
 extern char *STReader_GetRevision(void);
 #endif
 

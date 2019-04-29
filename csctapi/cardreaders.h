@@ -12,6 +12,7 @@ extern const struct s_cardreader cardreader_sc8in1;
 extern const struct s_cardreader cardreader_smargo;
 extern const struct s_cardreader cardreader_smartreader;
 extern const struct s_cardreader cardreader_stapi;
+extern const struct s_cardreader cardreader_gxapi;
 extern const struct s_cardreader cardreader_stinger;
 extern const struct s_cardreader cardreader_drecas;
 extern const struct s_cardreader cardreader_emu;

@@ -406,6 +406,7 @@ static void write_versionfile(bool use_stdout)
 		write_conf(WITH_COOLAPI2, "DVB API with COOLAPI2 support");
 		write_conf(WITH_STAPI, "DVB API with STAPI support");
 		write_conf(WITH_STAPI5, "DVB API with STAPI5 support");
+		write_conf(WITH_GXAPI, "DVB API with GXAPI support");
                 write_conf(WITH_NEUTRINO, "DVB API with NEUTRINO support");
 		write_conf(READ_SDT_CHARSETS, "DVB API read-sdt charsets");
 	}
@@ -478,6 +479,7 @@ static void write_versionfile(bool use_stdout)
 		write_cardreaderconf(CARDREADER_DB2COM, "db2com");
 		write_cardreaderconf(CARDREADER_STAPI, "stapi");
 		write_cardreaderconf(CARDREADER_STAPI5, "stapi5");
+		write_cardreaderconf(CARDREADER_GXAPI, "gxapi");
 		write_cardreaderconf(CARDREADER_STINGER, "stinger");
 	}
 	else
@@ -1665,6 +1667,9 @@ const struct s_cardreader *cardreaders[] =
 #if defined(CARDREADER_STAPI) || defined(CARDREADER_STAPI5)
 	&cardreader_stapi,
 #endif
+#if defined(CARDREADER_GXAPI)
+	&cardreader_gxapi,
+#endif
 #ifdef CARDREADER_STINGER
 	&cardreader_stinger,
 #endif
@@ -1687,6 +1692,7 @@ static void find_conf_dir(void)
 			"/var/etc/",
 			"/var/ncam/",
 			"/config/ncam/",
+			"/home/gx/local/ncam/",
 #ifdef WITH_WI
 			"/data/plugin/ncam/",
 #endif
