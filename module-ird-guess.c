@@ -27,7 +27,7 @@ int32_t init_irdeto_guess_tab(void)
 	int32_t b47;
 	char token[128], *ptr, *saveptr1 = NULL;
 	char zSid[5];
-	uchar b3;
+	uint8_t b3;
 	uint16_t caid, sid;
 	struct s_irdeto_quess *ird_row, *head;
 
@@ -125,7 +125,7 @@ void free_irdeto_guess_tab(void)
 
 void guess_irdeto(ECM_REQUEST *er)
 {
-	uchar  b3;
+	uint8_t  b3;
 	int32_t    b47;
 	//uint16_t chid;
 	struct s_irdeto_quess *ptr;

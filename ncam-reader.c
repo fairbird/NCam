@@ -535,7 +535,7 @@ bool hexserialset(struct s_reader *rdr)
 	return false;
 }
 
-void hexserial_to_newcamd(uchar *source, uchar *dest, uint16_t caid)
+void hexserial_to_newcamd(uint8_t *source, uint8_t *dest, uint16_t caid)
 {
 	if(caid_is_bulcrypt(caid) || caid_is_streamguard(caid) || caid_is_tongfang(caid) || caid_is_dvn(caid))
 	{
@@ -567,7 +567,7 @@ void hexserial_to_newcamd(uchar *source, uchar *dest, uint16_t caid)
 	}
 }
 
-void newcamd_to_hexserial(uchar *source, uchar *dest, uint16_t caid)
+void newcamd_to_hexserial(uint8_t *source, uint8_t *dest, uint16_t caid)
 {
 	if(caid_is_bulcrypt(caid) || caid_is_streamguard(caid) || caid_is_tongfang(caid) || caid_is_dvn(caid))
 	{
@@ -663,7 +663,7 @@ void cs_clear_entitlement(struct s_reader *rdr)
 }
 
 
-void casc_check_dcw(struct s_reader *reader, int32_t idx, int32_t rc, uchar *cw)
+void casc_check_dcw(struct s_reader *reader, int32_t idx, int32_t rc, uint8_t *cw)
 {
 	int32_t i, pending = 0;
 	time_t t = time(NULL);
@@ -1212,7 +1212,7 @@ int32_t reader_init(struct s_reader *reader)
 
 #if !defined(WITH_CARDREADER) && (defined(WITH_STAPI) || defined(WITH_STAPI5))
 /* Dummy function stub for stapi compiles without cardreader as libstapi needs it. */
-int32_t ATR_InitFromArray(ATR *atr, const unsigned char atr_buffer[ATR_MAX_SIZE], uint32_t length)
+int32_t ATR_InitFromArray(ATR *atr, const uint8_t atr_buffer[ATR_MAX_SIZE], uint32_t length)
 {
 	(void)atr;
 	(void)atr_buffer;

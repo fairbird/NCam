@@ -53,7 +53,6 @@
 #define APDU_CASE_2E    0x0102  /* Receive data (1..65536) */
 #define APDU_CASE_3E    0x0103  /* Send data (1..65535) */
 #define APDU_CASE_4E    0x0104  /* Send data (1..65535) and receive data (1..65536) */
-#define APDU_CASE_DVN   0x0010  /* Receive data (1..256),for DVN */
 #define APDU_MALFORMED      5   /* Malformed APDU */
 
 /* Timings in ATR are not used in T=0 cards */
@@ -64,15 +63,11 @@
  */
 
 static int32_t Protocol_T0_Case2E(struct s_reader *reader, unsigned char *command, uint16_t command_len, unsigned char *rsp, uint16_t *lr);
-
 static int32_t Protocol_T0_Case3E(struct s_reader *reader, unsigned char *command, unsigned char *rsp, uint16_t *lr);
-
 static int32_t Protocol_T0_Case4E(struct s_reader *reader, unsigned char *command, uint16_t command_len, unsigned char *rsp, uint16_t *lr);
-
 static int32_t Protocol_T0_ExchangeTPDU(struct s_reader *reader, unsigned char *command, uint16_t command_len, unsigned char *rsp, uint16_t *lr);
 
-static int32_t APDU_Cmd_Case(unsigned char *command, uint16_t command_len)
-{
+static int32_t APDU_Cmd_Case(unsigned char *command, uint16_t command_len){
 	unsigned char B1;
 	uint16_t B2B3;
 	uint32_t L;
@@ -91,8 +86,6 @@ static int32_t APDU_Cmd_Case(unsigned char *command, uint16_t command_len)
 
 		if((B1 != 0) && (L == (uint32_t)B1 + 1))
 			{ res = APDU_CASE_2S; }
-		else if((B1 != 0) && (L == (uint32_t)B1 + 3) && command[B1 + 5] == 0x90 && command[B1 + 6] == 0x00)
-			{ res = APDU_CASE_DVN; }
 		else if(L == 1)
 			{ res = APDU_CASE_3S; }
 		else if((B1 != 0) && (L == (uint32_t)B1 + 2))
@@ -126,22 +119,20 @@ int32_t Protocol_T0_Command(struct s_reader *reader, unsigned char *command, uin
 	*lr = 0; //will be returned in case of error
 	if(command_len < 5)  //APDU_CASE_1 or malformed
 		{ return ERROR; }
-	int32_t cmd_case;
-	cmd_case = APDU_Cmd_Case(command, command_len);
+	int32_t cmd_case = APDU_Cmd_Case(command, command_len);
 	switch(cmd_case)
 	{
 	case APDU_CASE_2E:
-		return Protocol_T0_Case2E(reader, command, command_len, rsp, lr);
+		return Protocol_T0_Case2E(reader, command, command_len, rsp, lr); /* fallthrough */
 	case APDU_CASE_3E:
-		return Protocol_T0_Case3E(reader, command, rsp, lr);
+		return Protocol_T0_Case3E(reader, command, rsp, lr); /* fallthrough */
 	case APDU_CASE_4E:
-		return Protocol_T0_Case4E(reader, command, command_len, rsp, lr);
+		return Protocol_T0_Case4E(reader, command, command_len, rsp, lr); /* fallthrough */
 	case APDU_CASE_4S:
-		command_len--; //FIXME this should change 4S to 2S/3S command
-	case APDU_CASE_2S:
+		command_len--; /* fallthrough */ //FIXME this should change 4S to 2S/3S command
+	case APDU_CASE_2S: /* fallthrough */
 	case APDU_CASE_3S:
-	case APDU_CASE_DVN:
-		return Protocol_T0_ExchangeTPDU(reader, command, command_len, rsp, lr);
+		return Protocol_T0_ExchangeTPDU(reader, command, command_len, rsp, lr); /* fallthrough */
 	default:
 		rdr_log_dbg(reader, D_IFD, "Protocol: T=0: Invalid APDU");
 		return ERROR;
@@ -359,12 +350,6 @@ static int32_t Protocol_T0_ExchangeTPDU(struct s_reader *reader, unsigned char *
 	cmd_case = APDU_Cmd_Case(command, command_len);
 	switch(cmd_case)
 	{
-	case APDU_CASE_DVN:
-		Lc = command[4] + 2;
-		Le = 0;
-		expectedlen = 1;
-		data = command + 5;
-		break;
 	case APDU_CASE_2S:
 		Lc = command[4];
 		Le = 0;
@@ -447,23 +432,6 @@ static int32_t Protocol_T0_ExchangeTPDU(struct s_reader *reader, unsigned char *
 				sent = Lc;
 				continue;
 			}
-			if(cmd_case == APDU_CASE_DVN)
-			{
-				if(sent >= Lc)
-				{
-					rdr_log_dbg(reader, D_TRACE, "ERROR: %s: ACK byte: sent=%d exceeds Lc=%d", __func__, sent, Lc);
-					return ERROR;
-				}
-				timeout = ICC_Async_GetTimings(reader, reader->char_delay);  // we are going to send: char delay timeout
-				if(ICC_Async_Transmit(reader, MAX(Lc - sent, 0), 5, data + sent, 0, timeout) != OK) { return ERROR; }   /* Send remaining data bytes */
-				timeout = ICC_Async_GetTimings(reader, reader->read_timeout);  // we are going to receive: WWT timeout
-				if(ICC_Async_Receive(reader, 5, buffer + recved, 0, timeout) != OK) { return ERROR; }   /* Send remaining data bytes */
-				if(ICC_Async_Receive(reader, MAX(buffer[recved + 4] + 2, 0), buffer + recved + 5, 0, timeout) != OK) { return ERROR; }   /* Send remaining data bytes */
-
-				sent = Lc;
-				recved = 5 + buffer[recved + 4] + 2;
-				break;
-			}
 			else /* Case 3 command: receive data */
 			{
 				if(recved > PROTOCOL_T0_MAX_SHORT_RESPONSE)
@@ -489,7 +457,7 @@ static int32_t Protocol_T0_ExchangeTPDU(struct s_reader *reader, unsigned char *
 			nulls = 0;                                                                                              //Reset null's counter
 
 			/* Case 2 command: send data */
-			if(cmd_case == APDU_CASE_2S || cmd_case == APDU_CASE_DVN)
+			if(cmd_case == APDU_CASE_2S)
 			{
 				if(sent >= Lc)
 				{

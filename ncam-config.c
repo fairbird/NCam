@@ -1168,7 +1168,7 @@ static struct s_global_whitelist *global_whitelist_read_int(void)
 		{ return NULL; }
 
 	char token[1024], str1[1024];
-	unsigned char type;
+	uint8_t type;
 	int32_t i, ret, count = 0;
 	struct s_global_whitelist *new_whitelist = NULL, *entry, *last = NULL;
 	uint32_t line = 0;

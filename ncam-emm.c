@@ -41,6 +41,7 @@ static int8_t cs_emmlen_is_blocked(struct s_reader *rdr, int16_t len)
 static int8_t do_simple_emm_filter(struct s_reader *rdr, const struct s_cardsystem *csystem, EMM_PACKET *ep, int8_t cl_dvbapi)
 {
 	if(is_network_reader(rdr)) { return 1; }  // dont evaluate on network readers, server with local reader will check it
+	if(rdr->typ == R_EMU) { return 1; } // don't evalutate on emu reader
 
 	//copied and enhanced from module-dvbapi.c
 	//dvbapi_start_emm_filter()
@@ -50,14 +51,7 @@ static int8_t do_simple_emm_filter(struct s_reader *rdr, const struct s_cardsyst
 	unsigned int j, filter_count = 0;
 
 	// Call cardsystems emm filter
-	if(rdr->typ == R_EMU)
-	{
-		return 1; //valid emm
-	}
-	else
-	{
-		csystem->get_emm_filter(rdr, &dmx_filter, &filter_count);
-	}
+	csystem->get_emm_filter(rdr, &dmx_filter, &filter_count);
 
 	// Only check matching emmtypes:
 	uint8_t org_emmtype;
@@ -509,6 +503,35 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 			}
 		}
 
+#ifdef READER_CRYPTOWORKS
+		if ((ep->type == GLOBAL) && ((caid == 0x0D96) || (caid == 0x0D98)) && ((aureader->blockemm & EMM_GLOBAL) != EMM_GLOBAL) && ((aureader->blockemm & EMM_SHARED) != EMM_SHARED) && (aureader->needsglobalfirst == 1))
+		{
+			// save global EMM
+			cs_log_dbg(D_EMM,"save global EMM for caid 0x%04X",caid);
+			ep->client = client;
+			memcpy(aureader->last_g_emm, ep, sizeof(EMM_PACKET));
+			aureader->last_g_emm_valid = true;
+
+#ifdef WEBIF
+			aureader->emmblocked[ep->type]++;
+			aureader->webif_emmblocked[ep->type]++;
+			is_blocked = aureader->emmblocked[ep->type];
+#endif
+
+			if(aureader->logemm & 0x08)
+			{
+				rdr_log(aureader, "%s emmtype=%s, len=%d (hex: 0x%02X), idx=0, cnt=%d: blocked & saved (0 ms)",
+						client->account->usr,
+						typtext[ep->type],
+						SCT_LEN(ep->emm)-3,
+						SCT_LEN(ep->emm)-3,
+						is_blocked);
+			}
+			saveemm(aureader, ep, "blocked & saved");
+			continue;
+		}
+#endif
+
 		switch(ep->type)
 		{
 		case UNKNOWN:
@@ -564,7 +587,7 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 		
 		if(aureader->cachemm && !caid_is_irdeto(caid)) //Check emmcache early:
 		{
-			unsigned char md5tmp[MD5_DIGEST_LENGTH];
+			uint8_t md5tmp[MD5_DIGEST_LENGTH];
 
 			MD5(ep->emm, SCT_LEN(ep->emm), md5tmp);
 		
@@ -595,6 +618,20 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 			EMM_PACKET *emm_pack;
 			if(cs_malloc(&emm_pack, sizeof(EMM_PACKET)))
 			{
+#ifdef READER_CRYPTOWORKS
+				if ((ep->type == SHARED) && ((caid == 0x0D96) || (caid == 0x0D98)) && (aureader->last_g_emm_valid == true) && (aureader->needsglobalfirst == 1))
+				{
+					EMM_PACKET *emm_pack_global;
+					if(cs_malloc(&emm_pack_global, sizeof(EMM_PACKET)))
+					{
+						rdr_log_dbg(aureader, D_EMM, "Last stored global EMM for caid 0x%04X is being sent to Reader first", caid);
+						memcpy(emm_pack_global, aureader->last_g_emm, sizeof(EMM_PACKET));
+						add_job(aureader->client, ACTION_READER_EMM, emm_pack_global, sizeof(EMM_PACKET));
+						saveemm(aureader, aureader->last_g_emm, "written stored global");
+						cs_log_dump_dbg(D_EMM,emm_pack_global->emm, emm_pack_global->emmlen, "Last stored global EMM to be written before shared EMM:");
+					}
+				}
+#endif
 				rdr_log_dbg(aureader, D_EMM, "emm is being sent to reader");
 				memcpy(emm_pack, ep, sizeof(EMM_PACKET));
 				add_job(aureader->client, ACTION_READER_EMM, emm_pack, sizeof(EMM_PACKET));
@@ -617,7 +654,7 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 int32_t reader_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 {
 	int32_t rc, ecs = 0,count = 0;
-	unsigned char md5tmp[MD5_DIGEST_LENGTH];
+	uint8_t md5tmp[MD5_DIGEST_LENGTH];
 	struct timeb tps;
 
 	cs_ftime(&tps);
@@ -773,7 +810,7 @@ void do_emm_from_file(struct s_reader *reader)
 	NULLFREE(eptmp);
 }
 
-void emm_sort_nanos(unsigned char *dest, const unsigned char *src, int32_t len)
+void emm_sort_nanos(uint8_t *dest, const uint8_t *src, int32_t len)
 {
 	int32_t w = 0, c = -1, j = 0;
 	while(1)

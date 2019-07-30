@@ -110,7 +110,7 @@ int config_list_parse(const struct config_list *clist, const char *token, char *
 			unsigned int len = strlen(value);
 			if(len)
 			{
-				strncpy(scfg, value, c->str_size - 1);
+				cs_strncpy(scfg, value, c->str_size);
 				if(len > c->str_size)
 				{
 					fprintf(stderr, "WARNING: Config value for '%s' (%s, len=%u) exceeds max length: %d (%s)\n",
@@ -511,7 +511,7 @@ FILE *create_config_file(const char *conf_filename)
 	}
 	fprintf(f, "# %s generated automatically by NCAM %s\n",
 			conf_filename, CS_VERSION);
-	fprintf(f, "# Read more: https://www.lonasdigital.com\n\n");
+	fprintf(f, "# Read more: https://www.tunisia-sat.com/forums/threads/3539021/\n\n");
 	return f;
 }
 

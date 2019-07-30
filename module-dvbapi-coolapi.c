@@ -30,8 +30,8 @@ typedef struct s_cool_filter
 	struct s_cool_chanhandle *chanhandle;
 	void       *filter;
 	int32_t     filter_num;
-	uchar       filter16[16];
-	uchar       mask16[16];
+	uint8_t       filter16[16];
+	uint8_t       mask16[16];
 } S_COOL_FILTER;
 
 typedef struct s_cool_chanhandle
@@ -163,7 +163,7 @@ extern int32_t cnxt_dmx_set_filter(void *handle, filter_set_t *arg, void *);
 extern int32_t cnxt_dmx_channel_suspend(void *handle, int32_t enable);
 
 /* Local coolapi functions */
-static int32_t coolapi_read(dmx_t *dmx, dmx_callback_data_t *dataa, uchar *buffer);
+static int32_t coolapi_read(dmx_t *dmx, dmx_callback_data_t *dataa, uint8_t *buffer);
 
 static int8_t dmx_opened;
 int32_t  cool_kal_opened = 0;
@@ -358,7 +358,7 @@ static void coolapi_read_data(dmx_t *dmx, dmx_callback_data_t *data)
 	}
 
 	int32_t ret;
-	uchar buffer[4096];
+	uint8_t buffer[4096];
 
 	SAFE_SETSPECIFIC(getclient, dvbapi_client);
 	SAFE_MUTEX_LOCK(&dmx->mutex);
@@ -422,7 +422,7 @@ static void dmx_callback(void *channel, dmx_t *dmx, int32_t type, dmx_callback_d
 	}
 }
 
-int32_t coolapi_set_filter(int32_t fd, int32_t num, int32_t pid, uchar *flt, uchar *mask, int32_t type)
+int32_t coolapi_set_filter(int32_t fd, int32_t num, int32_t pid, uint8_t *flt, uint8_t *mask, int32_t type)
 {
 	dmx_t *dmx = find_demux(fd, 0);
 	if(!dmx)
@@ -789,7 +789,7 @@ int32_t coolapi_write_cw(int32_t mask, uint16_t *STREAMpids, int32_t count, ca_d
 	return 0;
 }
 
-static int32_t coolapi_read(dmx_t *dmx, dmx_callback_data_t *data, uchar *buffer)
+static int32_t coolapi_read(dmx_t *dmx, dmx_callback_data_t *data, uint8_t *buffer)
 {
 	if(!dmx)
 	{

@@ -55,6 +55,7 @@ CONFIGCCCAM                   config/cccam.html                                 
 CONFIGCCCAMCTRL               config/cccam_control.html                                   MODULE_CCCSHARE
 CONFIGCONTENT                 config/config.html
 CONFIGDVBAPI                  config/dvbapi.html                                          HAVE_DVBAPI
+CCCAMRESHAREBIT               config/cccreshare.html                                      MODULE_GBOX
 CONFIGGBOX                    config/gbox.html                                            MODULE_GBOX
 CONFIGGLOBAL                  config/global.html
 ENABLELEDBIT                  config/global_enableledbit.html                             LEDSUPPORT
@@ -119,6 +120,7 @@ FILEMENU                      files/menu.html
 FILEMENUANTICASC              files/menu_anticasc.html                                    CS_ANTICASC
 FILEMENUCONSTCW               files/menu_constantcw.html                                  MODULE_CONSTCW
 FILEMENUDVBAPI                files/menu_dvbapi.html                                      HAVE_DVBAPI
+FILEMENUGBOX                  files/menu_gbox.html	                                  MODULE_GBOX
 FILEMENUFAKECWS               files/menu_fakecws.html                                     CS_CACHEEX
 FILEMENUTWIN                  files/menu_twin.html                                        MODULE_SERIAL
 FILEMENUSOFTCAMKEY            files/menu_softcamkey.html                                  WITH_EMU
@@ -189,12 +191,16 @@ READERCONFIGCCCAMBIT          readerconfig/readerconfig_cccambit.html           
 READERCONFIGEMUBIT            readerconfig/readerconfig_emubit.html                       WITH_EMU
 READERCONFIGCS378XBIT         readerconfig/readerconfig_cs378xbit.html                    MODULE_CAMD35_TCP
 READERCONFIGGBOXBIT           readerconfig/readerconfig_gboxbit.html                      MODULE_GBOX
+READERINFOGBOXREMM            readerconfig/readerinfo_gbox_remm.html                      MODULE_GBOX
+GBOXCCCAMRESHAREBIT           readerconfig/readerconfig_gboxcccresharebit.html            MODULE_GBOX
 READERCONFIGGHTTPBIT          readerconfig/readerconfig_ghttpbit.html                     MODULE_GHTTP
 READERCONFIGHOPBIT            readerconfig/readerconfig_hopbit.html                       MODULE_CCCAM
 READERCONFIGSTDHWREADERBIT    readerconfig/readerconfig_hwreader.html                     WITH_CARDREADER
+READERCONFIGCRYPTOWORKS       readerconfig/readerconfig_hwreader_cryptoworks.html         READER_CRYPTOWORKS
 READERCONFIGBOXKEY            readerconfig/readerconfig_hwreader_boxkey.html              READER_NAGRA,READER_IRDETO,READER_SECA,READER_VIACCESS
 READERCONFIGIRDETO            readerconfig/readerconfig_hwreader_irdeto.html              READER_IRDETO
 READERCONFIGNAGRA             readerconfig/readerconfig_hwreader_nagra.html               READER_NAGRA
+READERCONFIGNAGRACAK7         readerconfig/readerconfig_hwreader_nagracak7.html           READER_NAGRA_MERLIN
 READERCONFIGNANO              readerconfig/readerconfig_hwreader_nano.html                WITH_CARDREADER
 READERPINCODE                 readerconfig/readerconfig_hwreader_pincode.html             READER_CONAX,READER_CRYPTOWORKS,READER_VIACCESS,READER_SECA
 READERCONFIGRSAKEY            readerconfig/readerconfig_hwreader_rsakey.html              READER_NAGRA,READER_IRDETO,READER_CONAX

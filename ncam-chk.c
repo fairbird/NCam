@@ -27,9 +27,9 @@ uint32_t get_fallbacktimeout(uint16_t   caid)
 	return ftimeout;
 }
 
-static int32_t find_nano(uchar *ecm, int32_t l, uchar nano, int32_t s)
+static int32_t find_nano(uint8_t *ecm, int32_t l, uint8_t nano, int32_t s)
 {
-	uchar *snano;
+	uint8_t *snano;
 
 	if(s >= l) { return 0; }
 	if(!s) { s = (ecm[4] == 0xD2) ? 12 : 9; }    // tpsflag -> offset+3
@@ -48,7 +48,7 @@ static int32_t find_nano(uchar *ecm, int32_t l, uchar nano, int32_t s)
 static int32_t chk_class(ECM_REQUEST *er, CLASSTAB *clstab, const char *type, const char *name)
 {
 	int32_t i, j, an, cl_n, l;
-	uchar ecm_class;
+	uint8_t ecm_class;
 
 	if(er->caid != 0x0500 && er->caid != 0x4AE1) { return 1; }
 	if(!clstab->bn && !clstab->an) { return 1; }
@@ -709,9 +709,9 @@ uint8_t chk_has_fixed_fallback(ECM_REQUEST *er)
 	return n_falb;
 }
 
-uint8_t chk_if_ignore_checksum(ECM_REQUEST *er, int8_t disablecrc, FTAB *disablecrc_only_for)
+uint8_t chk_if_ignore_checksum(ECM_REQUEST *er, FTAB *disablecrc_only_for)
 {
-	if(!disablecrc && !disablecrc_only_for->nfilts) { return 0; }
+	if(!disablecrc_only_for->nfilts) { return 0; }
 
 		int32_t i, k;
 		for(i = 0; i < disablecrc_only_for->nfilts; i++)
@@ -813,7 +813,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr)
 	}
 
 	//Checking ident:
-	if(!(rdr->typ == R_EMU && (er->caid>>8 == 0x26 || er->caid == 0xFFFF)) && !chk_rfilter(er, rdr))
+	if(!(rdr->typ == R_EMU && caid_is_biss(er->caid)) && !chk_rfilter(er, rdr))
 	{
 		cs_log_dbg(D_TRACE, "r-filter reader %s", rdr->label);
 		return (0);
@@ -1066,7 +1066,7 @@ int32_t chk_bcaid(ECM_REQUEST *er, CAIDTAB *ctab)
 /**
  * Check for NULL CWs
  **/
-int32_t chk_is_null_CW(uchar cw[])
+int32_t chk_is_null_CW(uint8_t cw[])
 {
 	int8_t i;
 	for(i = 0; i < 16; i++)
@@ -1091,11 +1091,11 @@ int8_t is_halfCW_er(ECM_REQUEST *er)
 /**
  * Check for wrong half CWs
  **/
-int8_t chk_halfCW(ECM_REQUEST *er, uchar *cw)
+int8_t chk_halfCW(ECM_REQUEST *er, uint8_t *cw)
 {
 	if(is_halfCW_er(er) && cw)
 	{
-		uchar cw15 = cw[15];
+		uint8_t cw15 = cw[15];
 		if(get_odd_even(er) == 0x80 && cw[15] == 0xF0) { cw[15] = 0; }
 
 		int8_t part1 = checkCWpart(cw, 0);

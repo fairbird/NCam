@@ -569,7 +569,7 @@ int32_t accept_connection(struct s_module *module, int8_t module_idx, int8_t por
 	memset(&cad, 0, sizeof(struct SOCKADDR));
 	if(module->type == MOD_CONN_UDP)
 	{
-		uchar *buf;
+		uint8_t *buf;
 		if(!cs_malloc(&buf, 1024))
 			{ return -1; }
 		if((n = recvfrom(port->fd, buf + 3, 1024 - 3, 0, (struct sockaddr *)&cad, (socklen_t *)&scad)) > 0)

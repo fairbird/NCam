@@ -37,6 +37,7 @@
 #include <termios.h>
 #include <inttypes.h>
 #include <sys/utsname.h>
+#include <sys/sysmacros.h>
 #include <sys/sysinfo.h>
 
 /*
@@ -110,8 +111,8 @@
 
 #include "cscrypt/aes.h"
 
-#ifndef uchar
-typedef unsigned char uchar;
+#ifndef uint8_t
+typedef uint8_t uint8_t;
 #endif
 
 #ifdef IPV6SUPPORT
@@ -217,15 +218,17 @@ typedef unsigned char uchar;
 
 #ifdef WITH_DEBUG
 # define call(arg) \
-    if (arg) { \
-        cs_log_dbg(D_TRACE, "ERROR, function call %s returns error.",#arg); \
-        return ERROR; \
-    }
+	if(arg) \
+	{ \
+		cs_log_dbg(D_TRACE, "ERROR, function call %s returns error.",#arg); \
+			return ERROR; \
+	}
 #else
 # define call(arg) \
-    if (arg) { \
-        return ERROR; \
-    }
+	if(arg) \
+	{ \
+		return ERROR; \
+	}
 #endif
 
 //checking if (X) free(X) unneccessary since freeing a null pointer doesnt do anything
@@ -247,23 +250,23 @@ typedef unsigned char uchar;
 		c("FATAL ERROR: %s() failed in %s with error %d %s\n", #a, __func__, pter, strerror(pter)); \
 	} }
 
-#define SAFE_MUTEX_LOCK(a)			SAFE_PTHREAD_1ARG(pthread_mutex_lock, a, cs_log)
-#define SAFE_MUTEX_UNLOCK(a)		SAFE_PTHREAD_1ARG(pthread_mutex_unlock, a, cs_log)
-#define SAFE_COND_SIGNAL(a)			SAFE_PTHREAD_1ARG(pthread_cond_signal, a, cs_log)
-#define SAFE_COND_BROADCAST(a)		SAFE_PTHREAD_1ARG(pthread_cond_broadcast, a, cs_log)
-#define SAFE_RWLOCK_RDLOCK(a)		SAFE_PTHREAD_1ARG(pthread_rwlock_rdlock, a, cs_log)
-#define SAFE_RWLOCK_WRLOCK(a)		SAFE_PTHREAD_1ARG(pthread_rwlock_wrlock, a, cs_log)
-#define SAFE_RWLOCK_UNLOCK(a)		SAFE_PTHREAD_1ARG(pthread_rwlock_unlock, a, cs_log)
-#define SAFE_ATTR_INIT(a)			SAFE_PTHREAD_1ARG(pthread_attr_init, a, cs_log)
-#define SAFE_MUTEXATTR_INIT(a)		SAFE_PTHREAD_1ARG(pthread_mutexattr_init, a, cs_log)
-#define SAFE_CONDATTR_INIT(a)		SAFE_PTHREAD_1ARG(pthread_condattr_init, a, cs_log)
+#define SAFE_MUTEX_LOCK(a)                        SAFE_PTHREAD_1ARG(pthread_mutex_lock, a, cs_log)
+#define SAFE_MUTEX_UNLOCK(a)                      SAFE_PTHREAD_1ARG(pthread_mutex_unlock, a, cs_log)
+#define SAFE_COND_SIGNAL(a)                       SAFE_PTHREAD_1ARG(pthread_cond_signal, a, cs_log)
+#define SAFE_COND_BROADCAST(a)                    SAFE_PTHREAD_1ARG(pthread_cond_broadcast, a, cs_log)
+#define SAFE_RWLOCK_RDLOCK(a)                     SAFE_PTHREAD_1ARG(pthread_rwlock_rdlock, a, cs_log)
+#define SAFE_RWLOCK_WRLOCK(a)                     SAFE_PTHREAD_1ARG(pthread_rwlock_wrlock, a, cs_log)
+#define SAFE_RWLOCK_UNLOCK(a)                     SAFE_PTHREAD_1ARG(pthread_rwlock_unlock, a, cs_log)
+#define SAFE_ATTR_INIT(a)                         SAFE_PTHREAD_1ARG(pthread_attr_init, a, cs_log)
+#define SAFE_MUTEXATTR_INIT(a)                    SAFE_PTHREAD_1ARG(pthread_mutexattr_init, a, cs_log)
+#define SAFE_CONDATTR_INIT(a)                     SAFE_PTHREAD_1ARG(pthread_condattr_init, a, cs_log)
 
-#define SAFE_MUTEX_LOCK_NOLOG(a)	SAFE_PTHREAD_1ARG(pthread_mutex_lock, a, fprintf_stderr)
-#define SAFE_MUTEX_UNLOCK_NOLOG(a)	SAFE_PTHREAD_1ARG(pthread_mutex_unlock, a, fprintf_stderr)
-#define SAFE_COND_SIGNAL_NOLOG(a)	SAFE_PTHREAD_1ARG(pthread_cond_signal, a, fprintf_stderr)
-#define SAFE_MUTEX_UNLOCK_NOLOG(a)	SAFE_PTHREAD_1ARG(pthread_mutex_unlock, a, fprintf_stderr)
-#define SAFE_ATTR_INIT_NOLOG(a)		SAFE_PTHREAD_1ARG(pthread_attr_init, a, fprintf_stderr)
-#define SAFE_CONDATTR_INIT_NOLOG(a)	SAFE_PTHREAD_1ARG(pthread_condattr_init, a, fprintf_stderr)
+#define SAFE_MUTEX_LOCK_NOLOG(a)                  SAFE_PTHREAD_1ARG(pthread_mutex_lock, a, fprintf_stderr)
+#define SAFE_MUTEX_UNLOCK_NOLOG(a)                SAFE_PTHREAD_1ARG(pthread_mutex_unlock, a, fprintf_stderr)
+#define SAFE_COND_SIGNAL_NOLOG(a)                 SAFE_PTHREAD_1ARG(pthread_cond_signal, a, fprintf_stderr)
+#define SAFE_MUTEX_UNLOCK_NOLOG(a)                SAFE_PTHREAD_1ARG(pthread_mutex_unlock, a, fprintf_stderr)
+#define SAFE_ATTR_INIT_NOLOG(a)                   SAFE_PTHREAD_1ARG(pthread_attr_init, a, fprintf_stderr)
+#define SAFE_CONDATTR_INIT_NOLOG(a)               SAFE_PTHREAD_1ARG(pthread_condattr_init, a, fprintf_stderr)
 
 #define SAFE_PTHREAD_2ARG(a, b, c, d) { \
 	int32_t pter = a(b, c); \
@@ -272,18 +275,18 @@ typedef unsigned char uchar;
 		d("FATAL ERROR: %s() failed in %s with error %d %s\n", #a, __func__, pter, strerror(pter)); \
 	} }
 
-#define SAFE_COND_WAIT(a,b)			SAFE_PTHREAD_2ARG(pthread_cond_wait, a, b, cs_log)
-#define SAFE_THREAD_JOIN(a,b)		SAFE_PTHREAD_2ARG(pthread_join, a, b, cs_log)
-#define SAFE_SETSPECIFIC(a,b)		SAFE_PTHREAD_2ARG(pthread_setspecific, a, b, cs_log)
-#define SAFE_MUTEXATTR_SETTYPE(a,b)	SAFE_PTHREAD_2ARG(pthread_mutexattr_settype, a, b, cs_log)
-#define SAFE_MUTEX_INIT(a,b)		SAFE_PTHREAD_2ARG(pthread_mutex_init, a, b, cs_log)
-#define SAFE_COND_INIT(a,b)			SAFE_PTHREAD_2ARG(pthread_cond_init, a, b, cs_log)
-#define SAFE_CONDATTR_SETCLOCK(a,b)	SAFE_PTHREAD_2ARG(pthread_condattr_setclock, a, b, cs_log)
+#define SAFE_COND_WAIT(a,b)                       SAFE_PTHREAD_2ARG(pthread_cond_wait, a, b, cs_log)
+#define SAFE_THREAD_JOIN(a,b)                     SAFE_PTHREAD_2ARG(pthread_join, a, b, cs_log)
+#define SAFE_SETSPECIFIC(a,b)                     SAFE_PTHREAD_2ARG(pthread_setspecific, a, b, cs_log)
+#define SAFE_MUTEXATTR_SETTYPE(a,b)               SAFE_PTHREAD_2ARG(pthread_mutexattr_settype, a, b, cs_log)
+#define SAFE_MUTEX_INIT(a,b)                      SAFE_PTHREAD_2ARG(pthread_mutex_init, a, b, cs_log)
+#define SAFE_COND_INIT(a,b)                       SAFE_PTHREAD_2ARG(pthread_cond_init, a, b, cs_log)
+#define SAFE_CONDATTR_SETCLOCK(a,b)               SAFE_PTHREAD_2ARG(pthread_condattr_setclock, a, b, cs_log)
 
-#define SAFE_MUTEX_INIT_NOLOG(a,b)			SAFE_PTHREAD_2ARG(pthread_mutex_init, a, b, fprintf_stderr)
-#define SAFE_COND_INIT_NOLOG(a,b)			SAFE_PTHREAD_2ARG(pthread_cond_init, a, b, fprintf_stderr)
-#define SAFE_THREAD_JOIN_NOLOG(a,b)			SAFE_PTHREAD_2ARG(pthread_join, a, b, fprintf_stderr)
-#define SAFE_CONDATTR_SETCLOCK_NOLOG(a,b)	SAFE_PTHREAD_2ARG(pthread_condattr_setclock, a, b, fprintf_stderr)
+#define SAFE_MUTEX_INIT_NOLOG(a,b)                SAFE_PTHREAD_2ARG(pthread_mutex_init, a, b, fprintf_stderr)
+#define SAFE_COND_INIT_NOLOG(a,b)                 SAFE_PTHREAD_2ARG(pthread_cond_init, a, b, fprintf_stderr)
+#define SAFE_THREAD_JOIN_NOLOG(a,b)               SAFE_PTHREAD_2ARG(pthread_join, a, b, fprintf_stderr)
+#define SAFE_CONDATTR_SETCLOCK_NOLOG(a,b)         SAFE_PTHREAD_2ARG(pthread_condattr_setclock, a, b, fprintf_stderr)
 
 #define SAFE_PTHREAD_1ARG_R(a, b, c, d) { \
 	int32_t pter = a(b); \
@@ -292,15 +295,15 @@ typedef unsigned char uchar;
 		c("FATAL ERROR: %s() failed in %s (called from %s) with error %d %s\n", #a, __func__, d, pter, strerror(pter)); \
 	} }
 
-#define SAFE_MUTEX_LOCK_R(a, b)			SAFE_PTHREAD_1ARG_R(pthread_mutex_lock, a, cs_log, b)
-#define SAFE_MUTEX_UNLOCK_R(a, b)		SAFE_PTHREAD_1ARG_R(pthread_mutex_unlock, a, cs_log, b)
-#define SAFE_COND_SIGNAL_R(a, b)		SAFE_PTHREAD_1ARG_R(pthread_cond_signal, a, cs_log, b)
-#define SAFE_COND_BROADCAST_R(a, b)		SAFE_PTHREAD_1ARG_R(pthread_cond_broadcast, a, cs_log, b)
-#define SAFE_CONDATTR_INIT_R(a, b)		SAFE_PTHREAD_1ARG_R(pthread_condattr_init, a, cs_log, b)
+#define SAFE_MUTEX_LOCK_R(a, b)                   SAFE_PTHREAD_1ARG_R(pthread_mutex_lock, a, cs_log, b)
+#define SAFE_MUTEX_UNLOCK_R(a, b)                 SAFE_PTHREAD_1ARG_R(pthread_mutex_unlock, a, cs_log, b)
+#define SAFE_COND_SIGNAL_R(a, b)                  SAFE_PTHREAD_1ARG_R(pthread_cond_signal, a, cs_log, b)
+#define SAFE_COND_BROADCAST_R(a, b)               SAFE_PTHREAD_1ARG_R(pthread_cond_broadcast, a, cs_log, b)
+#define SAFE_CONDATTR_INIT_R(a, b)                SAFE_PTHREAD_1ARG_R(pthread_condattr_init, a, cs_log, b)
 
-#define SAFE_MUTEX_LOCK_NOLOG_R(a, b)		SAFE_PTHREAD_1ARG_R(pthread_mutex_lock, a, fprintf_stderr, b)
-#define SAFE_MUTEX_UNLOCK_NOLOG_R(a, b)		SAFE_PTHREAD_1ARG_R(pthread_mutex_unlock, a, fprintf_stderr, b)
-#define SAFE_CONDATTR_INIT_NOLOG_R(a, b)	SAFE_PTHREAD_1ARG_R(pthread_condattr_init, a, fprintf_stderr, b)
+#define SAFE_MUTEX_LOCK_NOLOG_R(a, b)             SAFE_PTHREAD_1ARG_R(pthread_mutex_lock, a, fprintf_stderr, b)
+#define SAFE_MUTEX_UNLOCK_NOLOG_R(a, b)           SAFE_PTHREAD_1ARG_R(pthread_mutex_unlock, a, fprintf_stderr, b)
+#define SAFE_CONDATTR_INIT_NOLOG_R(a, b)          SAFE_PTHREAD_1ARG_R(pthread_condattr_init, a, fprintf_stderr, b)
 
 #define SAFE_PTHREAD_2ARG_R(a, b, c, d, e) { \
 	int32_t pter = a(b, c); \
@@ -309,13 +312,13 @@ typedef unsigned char uchar;
 		d("FATAL ERROR: %s() failed in %s (called from %s) with error %d %s\n", #a, __func__, e, pter, strerror(pter)); \
 	} }
 
-#define SAFE_MUTEX_INIT_R(a,b,c)		SAFE_PTHREAD_2ARG_R(pthread_mutex_init, a, b, cs_log, c)
-#define SAFE_COND_INIT_R(a,b,c)			SAFE_PTHREAD_2ARG_R(pthread_cond_init, a, b, cs_log, c)
-#define SAFE_CONDATTR_SETCLOCK_R(a,b,c)	SAFE_PTHREAD_2ARG(pthread_condattr_setclock, a, b, cs_log, c)
+#define SAFE_MUTEX_INIT_R(a,b,c)                  SAFE_PTHREAD_2ARG_R(pthread_mutex_init, a, b, cs_log, c)
+#define SAFE_COND_INIT_R(a,b,c)                   SAFE_PTHREAD_2ARG_R(pthread_cond_init, a, b, cs_log, c)
+#define SAFE_CONDATTR_SETCLOCK_R(a,b,c)           SAFE_PTHREAD_2ARG(pthread_condattr_setclock, a, b, cs_log, c)
 
-#define SAFE_MUTEX_INIT_NOLOG_R(a,b,c)	SAFE_PTHREAD_2ARG_R(pthread_mutex_init, a, b, fprintf_stderr, c)
-#define SAFE_COND_INIT_NOLOG_R(a,b,c)	SAFE_PTHREAD_2ARG_R(pthread_cond_init, a, b, fprintf_stderr, c)
-#define SAFE_CONDATTR_SETCLOCK_NOLOG_R(a,b,c)	SAFE_PTHREAD_2ARG(pthread_condattr_setclock, a, b, fprintf_stderr, c)
+#define SAFE_MUTEX_INIT_NOLOG_R(a,b,c)            SAFE_PTHREAD_2ARG_R(pthread_mutex_init, a, b, fprintf_stderr, c)
+#define SAFE_COND_INIT_NOLOG_R(a,b,c)             SAFE_PTHREAD_2ARG_R(pthread_cond_init, a, b, fprintf_stderr, c)
+#define SAFE_CONDATTR_SETCLOCK_NOLOG_R(a,b,c)     SAFE_PTHREAD_2ARG(pthread_condattr_setclock, a, b, fprintf_stderr, c)
 
 #define SAFE_COND_TIMEDWAIT(a, b, c) { \
 	int32_t pter; \
@@ -363,14 +366,14 @@ typedef unsigned char uchar;
 /* ===========================
  *         constants
  * =========================== */
-#define CS_VERSION    "1.7"
-#define DATE_BUILD    "06-03-2018"
-#define CS_REVISION   "r4"
+#define CS_VERSION    "10.3"
+#define DATE_BUILD    "16-07-2019"
+#define CS_REVISION   "r1"
 #ifndef CS_SVN_VERSION
-#   define CS_SVN_VERSION "stable"
+#define CS_SVN_VERSION "stable"
 #endif
 #ifndef CS_TARGET
-#   define CS_TARGET "unknown"
+#define CS_TARGET "unknown"
 #endif
 #ifndef CS_CONFDIR
 #define CS_CONFDIR    "/var/tuxbox/config"
@@ -395,58 +398,66 @@ typedef unsigned char uchar;
 // Support for multiple CWs per channel and other encryption algos
 #define WITH_EXTENDED_CW 1
 
-#define MAX_ECM_SIZE 2048
-#define MAX_EMM_SIZE 2048
-#define MAX_SCT_SIZE 2048   // smaller or equal to the minial one of MAX_ECM_SIZE and MAX_EMM_SIZE 
+#if defined(READER_DRE) || defined(READER_DRECAS) || defined(READER_VIACCESS) || defined(WITH_EMU)
+#define MAX_ECM_SIZE     1024
+#define MAX_EMM_SIZE     1024
+#else
+#define MAX_ECM_SIZE     596
+#define MAX_EMM_SIZE     512
+#endif
 
-#define CS_EMMCACHESIZE 2048 //nr of EMMs that each reader will cache
-#define MSGLOGSIZE 64       // size of string buffer for a ecm to return messages
+#ifdef WITH_EMU
+#define CS_EMMCACHESIZE 1024    // nr of EMMs that EMU reader will cache
+#else
+#define CS_EMMCACHESIZE 512     // nr of EMMs that each reader will cache
+#endif
+#define MSGLOGSIZE      64       // size of string buffer for a ecm to return messages
 
-#define D_TRACE     0x0001  // Generate very detailed error/trace messages per routine
-#define D_ATR       0x0002  // Debug ATR parsing, dump of ecm, cw
-#define D_READER    0x0004  // Debug Reader/Proxy Process
-#define D_CLIENT    0x0008  // Debug Client Process
-#define D_IFD       0x0010  // Debug IFD+protocol
-#define D_DEVICE    0x0020  // Debug Reader I/O
-#define D_EMM       0x0040  // Dumps EMM
-#define D_DVBAPI    0x0080  // Debug DVBAPI
-#define D_LB        0x0100  // Debug Loadbalancer/ECM handler
-#define D_CACHEEX   0x0200  // Debug CACHEEX
-#define D_CLIENTECM 0x0400  // Debug Client ECMs
-#define D_CSP       0x0800  // Debug CSP
-#define D_CWC       0x1000  // Debug CWC
-#define D_ALL_DUMP  0xFFFF  // dumps all
+#define D_TRACE         0x0001  // Generate very detailed error/trace messages per routine
+#define D_ATR           0x0002  // Debug ATR parsing, dump of ecm, cw
+#define D_READER        0x0004  // Debug Reader/Proxy Process
+#define D_CLIENT        0x0008  // Debug Client Process
+#define D_IFD           0x0010  // Debug IFD+protocol
+#define D_DEVICE        0x0020  // Debug Reader I/O
+#define D_EMM           0x0040  // Dumps EMM
+#define D_DVBAPI        0x0080  // Debug DVBAPI
+#define D_LB            0x0100  // Debug Loadbalancer/ECM handler
+#define D_CACHEEX       0x0200  // Debug CACHEEX
+#define D_CLIENTECM     0x0400  // Debug Client ECMs
+#define D_CSP           0x0800  // Debug CSP
+#define D_CWC           0x1000  // Debug CWC
+#define D_ALL_DUMP      0xFFFF  // dumps all
 
 #define MAX_DEBUG_LEVELS 13
 
-#define R_DB2COM1   0x1 // Reader Dbox2 @ com1
-#define R_DB2COM2   0x2 // Reader Dbox2 @ com1
-#define R_SC8in1    0x3 // Reader Sc8in1 or MCR
-#define R_MP35      0x4 // AD-Teknik Multiprogrammer 3.5 and 3.6 (only usb tested)
-#define R_MOUSE     0x5 // Reader smartcard mouse
+#define R_DB2COM1       0x1 // Reader Dbox2 @ com1
+#define R_DB2COM2       0x2 // Reader Dbox2 @ com1
+#define R_SC8in1        0x3 // Reader Sc8in1 or MCR
+#define R_MP35          0x4 // AD-Teknik Multiprogrammer 3.5 and 3.6 (only usb tested)
+#define R_MOUSE         0x5 // Reader smartcard mouse
 /////////////////// phoenix readers which need baudrate setting and timings need to be guarded by NCAm: BEFORE R_MOUSE
-#define R_INTERNAL  0x6 // Reader smartcard intern
+#define R_INTERNAL      0x6 // Reader smartcard intern
 /////////////////// internal readers (Dreambox, Coolstream, IPBox) are all R_INTERNAL, they are determined compile-time
 /////////////////// readers that do not reed baudrate setting and timings are guarded by reader itself (large buffer built in): AFTER R_SMART
-#define R_SMART     0x7 // Smartreader+
-#define R_PCSC      0x8 // PCSC
-#define R_DRECAS    0x9 // Reader DRECAS
-#define R_EMU       0x17  // Reader emu
+#define R_SMART         0x7 // Smartreader+
+#define R_PCSC          0x8 // PCSC
+#define R_DRECAS        0x9 // Reader DRECAS
+#define R_EMU           0x17  // Reader EMU
 /////////////////// proxy readers after R_CS378X
-#define R_CAMD35    0x20  // Reader cascading camd 3.5x
-#define R_CAMD33    0x21  // Reader cascading camd 3.3x
-#define R_NEWCAMD   0x22  // Reader cascading newcamd
-#define R_RADEGAST  0x23  // Reader cascading radegast
-#define R_CS378X    0x24  // Reader cascading camd 3.5x TCP
-#define R_CONSTCW   0x25  // Reader for Constant CW
-#define R_CSP       0x26  // Cache CSP
-#define R_GHTTP     0x27  // Reader ghttp
-#define R_SCAM      0x28  // Reader cascading scam
+#define R_CAMD35        0x20  // Reader cascading camd 3.5x
+#define R_CAMD33        0x21  // Reader cascading camd 3.3x
+#define R_NEWCAMD       0x22  // Reader cascading newcamd
+#define R_RADEGAST      0x23  // Reader cascading radegast
+#define R_CS378X        0x24  // Reader cascading camd 3.5x TCP
+#define R_CONSTCW       0x25  // Reader for Constant CW
+#define R_CSP           0x26  // Cache CSP
+#define R_GHTTP         0x27  // Reader ghttp
+#define R_SCAM          0x28  // Reader cascading scam
 /////////////////// peer to peer proxy readers after R_CCCAM
-#define R_GBOX      0x30  // Reader cascading gbox
-#define R_CCCAM     0x35  // Reader cascading cccam
-#define R_PANDORA   0x36  // Reader cascading pandora
-#define R_SERIAL    0x80  // Reader serial
+#define R_GBOX          0x30  // Reader cascading gbox
+#define R_CCCAM         0x35  // Reader cascading cccam
+#define R_PANDORA       0x36  // Reader cascading pandora
+#define R_SERIAL        0x80  // Reader serial
 #define R_IS_NETWORK    0x60
 #define R_IS_CASCADING  0xE0
 
@@ -657,48 +668,48 @@ extern const char *weekdstr;
        http://www.kroah.com/log/linux/container_of.html
 */
 #define container_of(ptr, type, member) \
-    ((type *) ((char *) (ptr) - offsetof(type, member) + \
-               (&((type *) 0)->member == (ptr)) * 0))
+	((type *) ((char *) (ptr) - offsetof(type, member) + \
+		(&((type *) 0)->member == (ptr)) * 0))
 
 /* ===========================
  *      global structures
  * =========================== */
 struct timeb
 {
-	time_t time;
-	int64_t millitm;
+	time_t          time;
+	int64_t         millitm;
 };
 
 typedef struct cs_mutexlock
 {
-	int32_t     timeout;
+	int32_t         timeout;
 	pthread_mutex_t lock;
 	pthread_cond_t  writecond, readcond;
-	const char  *name;
-	int8_t      flag;
-	int16_t     writelock, readlock;
+	const char      *name;
+	int8_t          flag;
+	int16_t         writelock, readlock;
 } CS_MUTEX_LOCK;
 
 #include "ncam-llist.h"
 
 typedef struct s_caidvaluetab_data
 {
-	uint16_t           caid;
-	uint16_t           value;
+	uint16_t        caid;
+	uint16_t        value;
 } CAIDVALUETAB_DATA;
 
 typedef struct s_caidvaluetab
 {
-	int32_t             cvnum;
-	CAIDVALUETAB_DATA   *cvdata;
+	int32_t         cvnum;
+	CAIDVALUETAB_DATA *cvdata;
 } CAIDVALUETAB;
 
 typedef struct s_classtab
 {
-	uchar           an;
-	uchar           bn;
-	uchar           *aclass;
-	uchar           *bclass;
+	uint8_t           an;
+	uint8_t           bn;
+	uint8_t           *aclass;
+	uint8_t           *bclass;
 } CLASSTAB;
 
 typedef struct s_caidtab_data
@@ -742,7 +753,7 @@ typedef struct s_sidtab
 typedef struct s_filter
 {
 	uint16_t        caid;
-	uchar           nprids;
+	uint8_t           nprids;
 	uint32_t        prids[CS_MAXPROV];
 } FILTER;
 
@@ -783,7 +794,7 @@ typedef struct aes_entry
 	uint16_t        keyid;
 	uint16_t        caid;
 	uint32_t        ident;
-	uchar           plainkey[16];
+	uint8_t           plainkey[16];
 	AES_KEY         key;
 	struct aes_entry    *next;
 } AES_ENTRY;
@@ -796,8 +807,8 @@ struct aes_keys
 
 struct s_ecm
 {
-	uchar           ecmd5[CS_ECMSTORESIZE];
-	uchar           cw[16];
+	uint8_t           ecmd5[CS_ECMSTORESIZE];
+	uint8_t           cw[16];
 	uint16_t        caid;
 	uint64_t        grp;
 	struct s_reader *reader;
@@ -807,8 +818,8 @@ struct s_ecm
 
 struct s_emmstat
 {
-	uchar           emmd5[CS_EMMSTORESIZE];
-	uchar           type;
+	uint8_t           emmd5[CS_EMMSTORESIZE];
+	uint8_t           type;
 	int32_t         count;
 	struct timeb    firstwritten;
 	struct timeb    lastwritten;
@@ -816,10 +827,10 @@ struct s_emmstat
 
 struct s_emmcache
 {
-	uchar           emmd5[CS_EMMSTORESIZE];
-	uchar           type;
+	uint8_t           emmd5[CS_EMMSTORESIZE];
+	uint8_t           type;
 	uint16_t        len;
-	uchar           emm[MAX_EMM_SIZE];
+	uint8_t           emm[MAX_EMM_SIZE];
 	struct timeb    firstseen;
 	struct timeb    lastseen;
 };
@@ -872,11 +883,11 @@ typedef struct s_entitlement            // contains entitlement Info
 #endif
 } S_ENTITLEMENT;
 
-struct s_client ;
-struct ecm_request_t ;
-struct emm_packet_t ;
-struct s_ecm_answer ;
-struct demux_s ;
+struct s_client;
+struct ecm_request_t;
+struct emm_packet_t;
+struct s_ecm_answer;
+struct demux_s;
 
 #define DEFAULT_MODULE_BUFSIZE 1024
 
@@ -889,12 +900,12 @@ struct s_module
 	//int32_t       s_port;
 	IN_ADDR_T       s_ip;
 	uint16_t        bufsize;
-	void            *(*s_handler)(struct s_client *, uchar *, int32_t);
+	void            *(*s_handler)(struct s_client *, uint8_t *, int32_t);
 	void (*s_init)(struct s_client *);
-	int32_t (*recv)(struct s_client *, uchar *, int32_t);
+	int32_t (*recv)(struct s_client *, uint8_t *, int32_t);
 	void (*send_dcw)(struct s_client *, struct ecm_request_t *);
 	void (*cleanup)(struct s_client *);
-	int32_t (*c_recv_chk)(struct s_client *, uchar *, int32_t *, uchar *, int32_t);
+	int32_t (*c_recv_chk)(struct s_client *, uint8_t *, int32_t *, uint8_t *, int32_t);
 	int32_t (*c_init)(struct s_client *);
 	int32_t (*c_send_ecm)(struct s_client *, struct ecm_request_t *);
 	int32_t (*c_send_emm)(struct emm_packet_t *);
@@ -904,6 +915,7 @@ struct s_module
 	// int32_t checktype (0=return connected, 1=return loadbalance-avail) return int
 	void (*c_idle)(void);               // Schlocke: called when reader is idle
 	void (*s_idle)(struct s_client *);
+	void (*s_peer_idle)(struct s_client *);
 	void (*c_card_info)(void);              // Schlocke: request card infos
 
 	int32_t (*c_capmt)(struct s_client *, struct demux_s *);
@@ -923,12 +935,12 @@ struct s_cardreader_settings
 {
 	uint32_t ETU;
 	uint32_t EGT;
-	unsigned char P;
+	uint8_t P;
 	uint32_t I;
 	uint32_t F;
 	uint32_t Fi;
-	unsigned char Di;
-	unsigned char Ni;
+	uint8_t Di;
+	uint8_t Ni;
 	uint32_t WWT;
 	uint32_t BGT;
 	uint8_t D;
@@ -940,23 +952,23 @@ struct s_cardreader
 	int32_t (*reader_init)(struct s_reader *);
 	int32_t (*get_status)(struct s_reader *, int *);
 	int32_t (*activate)(struct s_reader *, struct s_ATR *);
-	int32_t (*transmit)(struct s_reader *, unsigned char *sent, uint32_t size, uint32_t expectedlen, uint32_t delay, uint32_t timeout);
-	int32_t (*receive)(struct s_reader *, unsigned char *data, uint32_t size, uint32_t delay, uint32_t timeout);
+	int32_t (*transmit)(struct s_reader *, uint8_t *sent, uint32_t size, uint32_t expectedlen, uint32_t delay, uint32_t timeout);
+	int32_t (*receive)(struct s_reader *, uint8_t *data, uint32_t size, uint32_t delay, uint32_t timeout);
 	int32_t (*lock_init)(struct s_reader *);
 	void (*lock)(struct s_reader *);
 	void (*unlock)(struct s_reader *);
 	int32_t (*close)(struct s_reader *);
-	int32_t (*set_parity)(struct s_reader *, uchar parity);
+	int32_t (*set_parity)(struct s_reader *, uint8_t parity);
 	int32_t (*write_settings)(struct s_reader *, struct s_cardreader_settings *s);
 	int32_t (*set_protocol)(struct s_reader *,
-							unsigned char *params,
+							uint8_t *params,
 							uint32_t *length,
 							uint32_t len_request);
 	int32_t (*set_baudrate)(struct s_reader *,
 							uint32_t baud); //set only for readers which need baudrate setting and timings need to be guarded by NCAm
 	int32_t (*card_write)(struct s_reader *pcsc_reader,
-						  const uchar *buf,
-						  unsigned char *cta_res,
+						  const uint8_t *buf,
+						  uint8_t *cta_res,
 						  uint16_t *cta_lr,
 						  int32_t l);
 	void (*display_msg)(struct s_reader *, char *msg);
@@ -989,36 +1001,34 @@ struct s_cardsystem
 	void    (*poll_status)(struct s_reader *);
 	int32_t (*do_ecm)(struct s_reader *, const struct ecm_request_t *, struct s_ecm_answer *);
 	int32_t (*do_emm_reassembly)(struct s_reader *, struct s_client *, struct emm_packet_t *); // Returns 1/true if the EMM is ready to be written in the card
-	int32_t (*do_emm)(struct s_reader *, struct emm_packet_t *);
-	void (*post_process)(struct s_reader *);
-	int32_t (*get_emm_type)(struct emm_packet_t *, struct s_reader *);
-	int32_t (*get_emm_filter)(struct s_reader *, struct s_csystem_emm_filter **, unsigned int *);
-	int32_t (*get_emm_filter_adv)(struct s_reader *, struct s_csystem_emm_filter **, unsigned int *, uint16_t, uint32_t, uint16_t);
-	int32_t (*get_tunemm_filter)(struct s_reader *, struct s_csystem_emm_filter **, unsigned int *);
+	int32_t         (*do_emm)(struct s_reader *, struct emm_packet_t *);
+	void            (*post_process)(struct s_reader *);
+	int32_t         (*get_emm_type)(struct emm_packet_t *, struct s_reader *);
+	int32_t         (*get_emm_filter)(struct s_reader *, struct s_csystem_emm_filter **, unsigned int *);
+        int32_t		(*get_emm_filter_adv)(struct s_reader *, struct s_csystem_emm_filter **, uint32_t *, uint16_t, uint32_t, uint16_t, uint16_t, uint16_t, uint32_t);
+	int32_t         (*get_tunemm_filter)(struct s_reader *, struct s_csystem_emm_filter **, unsigned int *);
 };
 
+typedef struct cw_extendted_t
+{
 #ifdef WITH_EXTENDED_CW
-typedef struct cw_extendted_t
-{
-	uchar           mode;
-	uchar           audio[4][16];
-	uchar           data[16];
-	uchar           algo;
-	uchar           algo_mode;
-} EXTENDED_CW;
+	uint8_t         mode;
+	uint8_t		audio[4][16];					// 4 x odd/even pairs of 8 byte CWs
+	uint8_t		data[16];					// odd/even pair of 8 byte CW or 16 byte IV
+        uint8_t         session_word[32];                               // odd/even pair of 16 byte CW
+	uint8_t		algo;						// CSA, DES or AES128
+	uint8_t		algo_mode;					// ECB or CBC
 #else
-typedef struct cw_extendted_t
-{
-	uchar           disabled;
-} EXTENDED_CW;
+	uint8_t         disabled;
 #endif
+} EXTENDED_CW;
 
 typedef struct ecm_request_t
 {
-	uchar           ecm[MAX_ECM_SIZE];
-	uchar           cw[16];
+	uint8_t         ecm[MAX_ECM_SIZE];
+	uint8_t         cw[16];
 	EXTENDED_CW     cw_ex;
-	uchar           ecmd5[CS_ECMSTORESIZE];
+	uint8_t         ecmd5[CS_ECMSTORESIZE];
 	int8_t          demux_index;
 	int16_t         ecmlen;
 	uint16_t        caid;
@@ -1044,18 +1054,18 @@ typedef struct ecm_request_t
 	uint8_t         rcEx;
 	struct timeb    tps;                // incoming time stamp
 	int8_t          btun;               // mark er as betatunneled
-	uint16_t            reader_avail;               // count of available readers for ecm
-	uint16_t            readers;                    // count of available used readers for ecm
-	uint16_t            reader_requested;           // count of real requested readers
-	uint16_t            localreader_count;          // count of selected local readers
-	uint16_t            cacheex_reader_count;       // count of selected cacheex mode-1 readers
-	uint16_t            fallback_reader_count;      // count of selected fb readers
-	uint16_t            reader_count;               // count of selected not fb readers
+	uint16_t        reader_avail;               // count of available readers for ecm
+	uint16_t        readers;                    // count of available used readers for ecm
+	uint16_t        reader_requested;           // count of real requested readers
+	uint16_t        localreader_count;          // count of selected local readers
+	uint16_t        cacheex_reader_count;       // count of selected cacheex mode-1 readers
+	uint16_t        fallback_reader_count;      // count of selected fb readers
+	uint16_t        reader_count;               // count of selected not fb readers
 	int8_t          preferlocalcards;
 	int8_t          checked;                        // for doublecheck
-	uchar           cw_checked[16];                 // for doublecheck
+	uint8_t         cw_checked[16];                 // for doublecheck
 	int8_t          readers_timeout_check;          // set to 1 after ctimeout occurs and readers not answered are checked
-	struct s_reader     *origin_reader;
+	struct s_reader *origin_reader;
 
 #if defined MODULE_CCCAM
 	void            *origin_card;               // CCcam preferred card!
@@ -1110,7 +1120,7 @@ struct s_ecm_answer
 	ECM_REQUEST     *er;
 	int8_t          rc;
 	uint8_t         rcEx;
-	uchar           cw[16];
+	uint8_t           cw[16];
 	EXTENDED_CW     cw_ex;
 	char            msglog[MSGLOGSIZE];
 	struct timeb    time_request_sent;  //using for evaluate ecm_time
@@ -1136,7 +1146,7 @@ struct s_acasc_shm
 struct s_acasc
 {
 	uint16_t        stat[10];
-	uchar           idx;            // current active index in stat[]
+	uint8_t           idx;            // current active index in stat[]
 };
 
 struct s_cwresponse
@@ -1269,12 +1279,12 @@ struct s_client
 	char            lastreader[64];       // last cw got from this reader
 #endif
 
-	uchar           ucrc[4];              // needed by monitor and used by camd35
+	uint8_t           ucrc[4];              // needed by monitor and used by camd35
 	uint32_t        pcrc;                 // password crc
 	struct aes_keys *aes_keys;            // used by camd33 and camd35
 	uint16_t        ncd_msgid;
 	uint16_t        ncd_client_id;
-	uchar           ncd_skey[16];         // Also used for camd35 Cacheex to store remote node id
+	uint8_t           ncd_skey[16];         // Also used for camd35 Cacheex to store remote node id
 
 #ifdef MODULE_CCCAM
 	void            *cc;
@@ -1321,14 +1331,14 @@ struct s_client
 	uint8_t         ncd_header[12];
 
 	//camd35
-	uchar           upwd[64];
+	uint8_t           upwd[64];
 	int8_t          is_udp;
 	int8_t          stopped;
 	uint16_t        lastcaid;
 	uint16_t        lastsrvid;
 	int32_t         lastpid;
 	int8_t          disable_counter;
-	uchar           lastserial[8];
+	uint8_t           lastserial[8];
 
 	// Failban value set bitwise - compared with BAN_
 	int32_t         failban;
@@ -1343,8 +1353,8 @@ struct s_client
 #ifdef MODULE_PANDORA
 	int32_t             pand_autodelay;
 	uint8_t         pand_send_ecm;
-	uchar           pand_ignore_ecm;
-	uchar           pand_md5_key[16];
+	uint8_t           pand_ignore_ecm;
+	uint8_t           pand_md5_key[16];
 #endif
 
 #ifdef MODULE_SCAM
@@ -1389,9 +1399,9 @@ typedef struct s_ecm_hdr_whitelist
 struct ecmrl
 {
 	struct timeb    last;
-	uchar           kindecm;
+	uint8_t           kindecm;
 	bool            once;
-	uchar           ecmd5[CS_ECMSTORESIZE];
+	uint8_t           ecmd5[CS_ECMSTORESIZE];
 	uint16_t        caid;
 	uint32_t        provid;
 	uint16_t        srvid;
@@ -1478,7 +1488,19 @@ typedef struct opkeys
 } opkeys_t;
 #endif
 
-struct s_reader                                     // contains device info, reader info and card info
+typedef struct emm_packet_t
+{
+	uint8_t           emm[MAX_EMM_SIZE];
+	int16_t         emmlen;
+	uint8_t           caid[2];
+	uint8_t           provid[4];
+	uint8_t           hexserial[8];                   //contains hexserial or SA of EMM
+	uint8_t           type;
+	uint8_t         skip_filter_check;
+	struct s_client *client;
+} EMM_PACKET;
+
+struct s_reader
 {
 	uint8_t         keepalive;
 	uint8_t         changes_since_shareupdate;
@@ -1502,6 +1524,50 @@ struct s_reader                                     // contains device info, rea
 	FTAB            fallback_percaid;
 	FTAB            localcards;
 	FTAB            disablecrccws_only_for;         // ignore checksum for selected caid provid
+#ifdef READER_CRYPTOWORKS
+	int8_t          needsglobalfirst;               // 0:Write one Global EMM for SHARED EMM disabled 1:Write one Global EMM for SHARED EMM enabled
+#endif
+#ifdef READER_NAGRA_MERLIN
+ 	uint8_t         mod1[112];
+	uint8_t         mod1_length;
+	uint8_t         data50[80];
+	uint8_t         data50_length;
+	uint8_t         mod50[80];
+	uint8_t         mod50_length;
+	uint8_t         key60[96];
+	uint8_t         key60_length;
+	uint8_t         exp60[96];
+	uint8_t         exp60_length;
+	uint8_t         nuid[4];
+	uint8_t         nuid_length;
+	uint8_t         cwekey[16];
+	uint8_t         cwekey_length;
+	uint8_t         kdt05_00[216];
+	uint8_t         kdt05_10[208];
+	uint8_t         cardid[8];
+	uint8_t         edata[255];
+	uint8_t         dt5num;
+	uint8_t         out[255];
+	uint8_t         ideakey1[16];
+	uint8_t         block3[8];
+	uint8_t         v[8];
+	uint8_t         iout[8];
+        uint32_t        dword_83DBC;
+        uint8_t         data2[4];
+	uint8_t         cak7expo[0x11];
+	uint8_t         data[0x80];
+	uint8_t         step1[0x60];
+	uint8_t         step2[0x68];
+	uint8_t         step3[0x6c];
+	uint8_t         encrypted[0x68];
+	uint8_t         result[104];
+	uint8_t         stillencrypted[0x50];
+	uint8_t         resultrsa[0x50];
+	uint32_t        cak7_seq;
+	uint8_t         cak7_camstate;
+	uint8_t         cak7_aes_key[32];
+	uint8_t         cak7_aes_iv[16];
+#endif
 #ifdef CS_CACHEEX
 	CECSP           cacheex; //CacheEx Settings
 #endif
@@ -1527,7 +1593,7 @@ struct s_reader                                     // contains device info, rea
 	uint32_t        boxid;
 #ifdef READER_TONGFANG
 	uint32_t        tongfang3_calibsn;
-	uchar           tongfang3_commkey[8];
+	uint8_t           tongfang3_commkey[8];
 #endif
 #ifdef READER_JET
 	uint8_t         jet_vendor_key[32];
@@ -1549,25 +1615,25 @@ struct s_reader                                     // contains device info, rea
 	uint8_t         rsa_mod_length;
 	uint8_t         des_key[128];                   // 3des key for Viaccess 16 bytes, des key for Dre 128 bytes
 	uint8_t         des_key_length;
-	uchar           atr[64];
-	uchar           card_atr[64];                   // ATR readed from card
+	uint8_t           atr[64];
+	uint8_t           card_atr[64];                   // ATR readed from card
 	int8_t          card_atr_length;                // length of ATR
-	int8_t          seca_nagra_card;                // seca nagra card 
+	int8_t          seca_nagra_card;                // seca nagra card
 	int32_t         atrlen;
 	SIDTABS         sidtabs;
 	SIDTABS         lb_sidtabs;
 	SIDTABS         lb_prio_sidtabs;
-	uchar           hexserial[8];
+	uint8_t           hexserial[8];
 	int32_t         nprov;
-	uchar           prid[CS_MAXPROV][8];
-	uchar           sa[CS_MAXPROV][4];              // viaccess & seca
+	uint8_t           prid[CS_MAXPROV][8];
+	uint8_t           sa[CS_MAXPROV][4];              // viaccess & seca
 	uint8_t         read_old_classes;               // viaccess
 	uint8_t         maturity;                       // viaccess & seca maturity level
 	uint16_t        caid;
 	uint16_t        b_nano;
 	uint16_t        s_nano;
 	int8_t          ecmcommand;                     // used for filtering nagra bad ecm commands
-	uchar           ecmcommandcache[5];             // cachebuff for ecm commands
+	uint8_t           ecmcommandcache[5];             // cachebuff for ecm commands
 	int32_t         blockemm;
 	int32_t         saveemm;
 	LLIST           *blockemmbylen;
@@ -1579,15 +1645,15 @@ struct s_reader                                     // contains device info, rea
 	int16_t         deviceemm;                      // catch device specific emms (so far only used for viaccess)
 	int8_t          card_status;
 	int8_t          deprecated;                     //if 0 ATR obeyed, if 1 default speed (9600) is chosen; for devices that cannot switch baudrate
-	struct s_module ph;
-	const struct s_cardreader *crdr;
-	void            *crdr_data; // Private card reader data
-	bool            crdr_flush; // sci readers may disable flush per reader
-	const struct s_cardsystem *csystem;
-	void            *csystem_data; // Private card system data
+	struct          s_module ph;
+	const struct    s_cardreader *crdr;
+	void            *crdr_data;                     // Private card reader data
+	bool            crdr_flush;                     // sci readers may disable flush per reader
+	const struct    s_cardsystem *csystem;
+	void            *csystem_data;                  // Private card system data
 	bool            csystem_active;
 	uint8_t         ncd_key[14];
-	uchar           ncd_skey[16];
+	uint8_t           ncd_skey[16];
 	int8_t          ncd_connect_on_init;
 	int8_t          ncd_disable_server_filt;
 	int8_t          ncd_proto;
@@ -1604,16 +1670,16 @@ struct s_reader                                     // contains device info, rea
 	int8_t          cc_keepaliveping;               // Keep Alive Ping - interval to send keepalives if idle.
 	int8_t          cc_hop;                         // For non-cccam reader: hop for virtual cards
 	int8_t          cc_reshare;
-	int32_t         cc_reconnect;                   //reconnect on ecm-request timeout
-	int8_t          from_cccam_cfg;                 //created from cccam.cfg
+	int32_t         cc_reconnect;                   // reconnect on ecm-request timeout
+	int8_t          from_cccam_cfg;                 // created from cccam.cfg
 #endif
 	int8_t          tcp_connected;
 	int32_t         tcp_ito;                        // inactivity timeout
 	int32_t         tcp_rto;                        // reconnect timeout
 	int32_t         tcp_reconnect_delay;            // max tcp connection block delay
 
-	struct timeb    tcp_block_connect_till;         //time tcp connect ist blocked
-	int32_t         tcp_block_delay;                //incrementing block time
+	struct timeb    tcp_block_connect_till;         // time tcp connect ist blocked
+	int32_t         tcp_block_delay;                // incrementing block time
 	time_t          last_g;                         // get (if last_s-last_g>tcp_rto - reconnect )
 	time_t          last_s;                         // send
 	time_t          last_check;                     // last checked
@@ -1652,7 +1718,7 @@ struct s_reader                                     // contains device info, rea
 	////variables from icc_async.h start
 #ifdef WITH_CARDREADER
 	int32_t         convention;                     // Convention of this ICC
-	unsigned char   protocol_type;                  // Type of protocol
+	uint8_t   protocol_type;                  // Type of protocol
 	uint32_t        current_baudrate;               // (for overclocking uncorrected) baudrate to prevent unnecessary conversions from/to termios structure
 	double          worketu;          // in us for internal and external readers calculated (1/D)*(F/cardclock)*1000000
 	uint32_t        read_timeout;     // Max timeout (ETU) to receive characters
@@ -1663,21 +1729,25 @@ struct s_reader                                     // contains device info, rea
 	int32_t         written;          // keep score of how much bytes are written to serial port, since they are echoed back they have to be read
 	////variables from protocol_t1.h
 	uint16_t        ifsc;             // Information field size for the ICC
-	unsigned char   ns;               // Send sequence number
+	uint8_t   ns;               // Send sequence number
 	int16_t         smartdev_found;
 	int16_t         smart_type;
 	uint16_t        statuscnt;
 	uint16_t        modemstat;
 #endif
-	unsigned char   rom[15];
-	unsigned char   irdId[4];
-	unsigned char   payload4C[15];
-	uint16_t        VgCredit;
-	uint16_t        VgPin;
-	unsigned char   VgFuse;
-	unsigned char   VgCountryC[3];
-	unsigned char   VgRegionC[8];
-	unsigned char   VgLastPayload[6];
+#ifdef READER_CRYPTOWORKS
+	EMM_PACKET	*last_g_emm;		// last global EMM
+	bool		last_g_emm_valid;	// status of last global EMM
+#endif
+	uint8_t	rom[15];
+	uint8_t	irdId[4];
+	uint8_t   payload4C[15];
+	uint16_t	VgCredit;
+	uint16_t	VgPin;
+	uint8_t	VgFuse;
+	uint8_t   VgCountryC[3];
+	uint8_t	VgRegionC[8];
+	uint8_t   VgLastPayload[6];
 #ifdef WITH_LB
 	int32_t         lb_weight;                      //loadbalance weight factor, if unset, weight=100. The higher the value, the higher the usage-possibility
 	int8_t          lb_force_fallback;              //force this reader as fallback if fallback or fallback_percaid paramters set
@@ -1731,7 +1801,7 @@ struct s_reader                                     // contains device info, rea
 	uint8_t         sc8in1_dtrrts_patch; // fix for kernel commit 6a1a82df91fa0eb1cc76069a9efe5714d087eccd
 
 #ifdef READER_VIACCESS
-	unsigned char   initCA28; // To set when CA28 succeed
+	uint8_t   initCA28; // To set when CA28 succeed
 	uint32_t        key_schedule1[32];
 	uint32_t        key_schedule2[32];
 #endif
@@ -1746,11 +1816,13 @@ struct s_reader                                     // contains device info, rea
 #endif
 
 #ifdef MODULE_GBOX
-	uint8_t         gbox_maxdist;
-	uint8_t         gbox_maxecmsend;
-	uint8_t         gbox_reshare;
-	uint8_t         gbox_cccam_reshare;
-	char            last_gsms[128];
+	uint8_t			gbox_maxdist;
+	uint8_t			gbox_maxecmsend;
+	uint8_t			gbox_reshare;
+	uint8_t			gbox_cccam_reshare;
+	char			last_gsms[128];
+	uint16_t		gbox_remm_peer;
+	uint16_t		gbox_gsms_peer;
 #endif
 
 #ifdef MODULE_PANDORA
@@ -1762,13 +1834,10 @@ struct s_reader                                     // contains device info, rea
 #ifdef WITH_EMU
 	FTAB            emu_auproviders;                // AU providers for Emu reader
 	int8_t          emu_datecodedenabled;           // date-coded keys for BISS
-	char            *extee36;                       // path to "ee36.bin" - Set by the user via the webif
-	char            *extee56;                       // path to "ee56.bin" - Set by the user via the webif
-	uint8_t         dre36_force_group;
-	uint8_t         dre56_force_group;
+	LLIST		*ll_biss2_rsa_keys;	        // BISS2 RSA keys - Read from external PEM files
 #endif
-	uint8_t cnxlastecm; // == 0 - las ecm has not been paired ecm, > 0 last ecm has been paired ecm
-	LLIST           *emmstat; //emm stats
+	uint8_t         cnxlastecm;                     // == 0 - last ecm has not been paired ecm, > 0 last ecm has been paired ecm
+	LLIST           *emmstat;                       //emm stats
 	CS_MUTEX_LOCK   emmstat_lock;
 	struct s_reader *next;
 };
@@ -2069,7 +2138,7 @@ struct s_config
 	struct s_ip     *http_allowed;
 	int8_t          http_readonly;
 	IN_ADDR_T       http_dynip[MAX_HTTP_DYNDNS];
-	uchar           http_dyndns[MAX_HTTP_DYNDNS][64];
+	uint8_t           http_dyndns[MAX_HTTP_DYNDNS][64];
 	int8_t          http_use_ssl;
 	int8_t          https_force_secure_mode;
 	char            *http_cert;
@@ -2137,22 +2206,39 @@ struct s_config
 	uint32_t        cc_recv_timeout;            // The poll() timeout parameter in ms. Default: DEFAULT_CC_RECV_TIMEOUT (2000 ms).
 #endif
 #ifdef MODULE_GBOX
-	uint32_t        gbx_port[CS_MAXPORTS];
-	char            *gbox_hostname;
-	int32_t         gbox_reconnect;
-	char            gbox_my_password[9];
-	unsigned long   gbox_proxy_card[GBOX_MAX_PROXY_CARDS];
-	int8_t          gbox_proxy_cards_num;
-	char            gbox_my_vers[3];
-	char            gbox_my_cpu_api[3];
-	uint8_t         gsms_dis;
-	uint8_t         log_hello;
-	char            *gbox_tmp_dir;
-	uint8_t         ccc_reshare;
-	uint16_t        gbox_ignored_peer[GBOX_MAX_IGNORED_PEERS];
-	uint8_t         gbox_ignored_peer_num;
-	uint16_t        gbox_block_ecm[GBOX_MAX_BLOCKED_ECM];
-	uint8_t         gbox_block_ecm_num;
+	#define			GBOX_MY_VERS_DEF	0x2A
+	#define			GBOX_MY_CPU_API_DEF	0x40
+	#define			GBOX_MAX_PROXY_CARDS	32
+	#define			GBOX_MAX_IGNORED_PEERS  16
+	#define			GBOX_MAX_BLOCKED_ECM	16
+	#define			GBOX_MAX_REMM_PEERS	8
+	#define			GBOX_MAX_DEST_PEERS	16
+	#define			GBOX_MAX_MSG_TXT	127
+
+	uint16_t		gbox_port[CS_MAXPORTS];
+	char			*gbox_hostname;
+	uint32_t		gbox_reconnect;
+	uint32_t		gbox_password;
+	unsigned long	gbox_proxy_card[GBOX_MAX_PROXY_CARDS];
+	int8_t			gbox_proxy_cards_num;
+	uint32_t		gbox_my_vers;
+	uint8_t			gbox_my_cpu_api;
+	uint8_t			gsms_dis;
+	uint8_t			log_hello;
+	uint8_t			dis_attack_txt;
+	char			*gbox_tmp_dir;
+	uint8_t			ccc_reshare;
+	uint16_t		gbox_ignored_peer[GBOX_MAX_IGNORED_PEERS];
+	uint8_t			gbox_ignored_peer_num;
+	uint16_t		accept_remm_peer[GBOX_MAX_REMM_PEERS];
+	uint8_t			accept_remm_peer_num;
+	uint16_t		gbox_block_ecm[GBOX_MAX_BLOCKED_ECM];
+	uint8_t			gbox_block_ecm_num;
+	uint8_t			gbox_save_gsms;
+	uint8_t			gbox_msg_type;
+	uint16_t		gbox_dest_peers[GBOX_MAX_DEST_PEERS];
+	uint8_t			gbox_dest_peers_num;
+	char			gbox_msg_txt[GBOX_MAX_MSG_TXT+1];
 #endif
 #ifdef MODULE_SERIAL
 	char            *ser_device;
@@ -2211,7 +2297,6 @@ struct s_config
 	int8_t      dvbapi_read_sdt;
 	int8_t      dvbapi_write_sdt_prov;
 	int8_t      dvbapi_extended_cw_api;
-	int8_t      dvbapi_extended_cw_pids;            // pid limiter
 #endif
 
 #ifdef CS_ANTICASC
@@ -2269,6 +2354,7 @@ struct s_config
 	uint32_t    emu_stream_ecm_delay;
 	int8_t      emu_stream_relay_enabled;
 	int8_t      emu_stream_emm_enabled;
+	CAIDTAB     emu_stream_relay_ctab;              // use the stream server for these caids
 #endif
 
 	int32_t     max_cache_time;  //seconds ecms are stored in ecmcwcache
@@ -2372,19 +2458,6 @@ typedef struct cs_stat_query
 	int16_t         ecmlen;
 } STAT_QUERY;
 
-typedef struct emm_packet_t
-{
-	uchar           emm[MAX_EMM_SIZE];
-	int16_t         emmlen;
-	uchar           caid[2];
-	uchar           provid[4];
-	uchar           hexserial[8]; //contains hexserial or SA of EMM
-	uchar           type;
-	uint8_t         skip_filter_check;
-	struct s_client *client;
-} EMM_PACKET;
-
-
 struct s_write_from_cache
 {
 	ECM_REQUEST *er_new;
@@ -2441,11 +2514,16 @@ const char *boxtype_get(void);
 const char *boxname_get(void);
 static inline bool caid_is_fake(uint16_t caid) { return caid == 0xffff; }
 static inline bool caid_is_biss(uint16_t caid) { return caid >> 8 == 0x26; }
+static inline bool caid_is_biss_fixed(uint16_t caid) { return caid == 0x2600 || caid == 0x2602; } // fixed cw, fake ecm
+static inline bool caid_is_biss_dynamic(uint16_t caid) { return caid == 0x2610; } // dynamic cw, real ecm and emm
 static inline bool caid_is_seca(uint16_t caid) { return caid >> 8 == 0x01; }
 static inline bool caid_is_viaccess(uint16_t caid) { return caid >> 8 == 0x05; }
 static inline bool caid_is_irdeto(uint16_t caid) { return caid >> 8 == 0x06; }
 static inline bool caid_is_videoguard(uint16_t caid) { return caid >> 8 == 0x09; }
+static inline bool caid_is_conax(uint16_t caid) { return caid >> 8 == 0x0B; }
 static inline bool caid_is_cryptoworks(uint16_t caid) { return caid >> 8 == 0x0D; }
+static inline bool caid_is_powervu(uint16_t caid) { return caid >> 8 == 0x0E; }
+static inline bool caid_is_director(uint16_t caid) { return caid >> 8 == 0x10; }
 static inline bool caid_is_betacrypt(uint16_t caid) { return caid >> 8 == 0x17; }
 static inline bool caid_is_nagra(uint16_t caid) { return caid >> 8 == 0x18; }
 static inline bool caid_is_bulcrypt(uint16_t caid) { return caid == 0x5581 || caid == 0x4AEE; }
@@ -2456,7 +2534,7 @@ static inline bool caid_is_tongfang(uint16_t caid) { return (caid == 0x4A02) || 
 const char *get_cardsystem_desc_by_caid(uint16_t caid);
 
 #ifdef WITH_EMU
-FILTER* get_emu_prids_for_caid(struct s_reader *rdr, uint16_t caid);
+FILTER *get_emu_prids_for_caid(struct s_reader *rdr, uint16_t caid);
 #endif
 
 #endif

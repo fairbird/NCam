@@ -10,13 +10,13 @@
 
 static int32_t radegast_connect(void);
 
-static int32_t radegast_send(struct s_client *client, uchar *buf)
+static int32_t radegast_send(struct s_client *client, uint8_t *buf)
 {
 	int32_t l = buf[1] + 2;
 	return (send(client->pfd, buf, l, 0));
 }
 
-static int32_t radegast_recv(struct s_client *client, uchar *buf, int32_t l)
+static int32_t radegast_recv(struct s_client *client, uint8_t *buf, int32_t l)
 {
 	int32_t n;
 	if(!client->pfd) { return (-1); }
@@ -40,7 +40,7 @@ static int32_t radegast_recv(struct s_client *client, uchar *buf, int32_t l)
 	return (n);
 }
 
-static int32_t radegast_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc, uchar *buf, int32_t UNUSED(n))
+static int32_t radegast_recv_chk(struct s_client *client, uint8_t *dcw, int32_t *rc, uint8_t *buf, int32_t UNUSED(n))
 {
 	if((buf[0] == 2) && (buf[1] == 0x12))
 	{
@@ -82,7 +82,7 @@ static void radegast_auth_client(IN_ADDR_T ip)
 
 static void radegast_send_dcw(struct s_client *client, ECM_REQUEST *er)
 {
-	uchar mbuf[1024];
+	uint8_t mbuf[1024];
 	mbuf[0] = 0x02;   // DCW
 	if(er->rc < E_NOTFOUND)
 	{
@@ -100,7 +100,7 @@ static void radegast_send_dcw(struct s_client *client, ECM_REQUEST *er)
 	radegast_send(client, mbuf);
 }
 
-static void radegast_process_ecm(uchar *buf, int32_t l)
+static void radegast_process_ecm(uint8_t *buf, int32_t l)
 {
 	int32_t i, n, sl;
 	ECM_REQUEST *er;
@@ -153,14 +153,14 @@ static void radegast_process_ecm(uchar *buf, int32_t l)
 		{ get_cw(cl, er); }
 }
 
-static void radegast_process_unknown(uchar *buf)
+static void radegast_process_unknown(uint8_t *buf)
 {
-	uchar answer[2] = {0x81, 0x00};
+	uint8_t answer[2] = {0x81, 0x00};
 	radegast_send(cur_client(), answer);
 	cs_log("unknown request %02X, len=%d", buf[0], buf[1]);
 }
 
-static void *radegast_server(struct s_client *client, uchar *mbuf, int32_t n)
+static void *radegast_server(struct s_client *client, uint8_t *mbuf, int32_t n)
 {
 	if(n < 3)
 		{ return NULL; }
@@ -185,9 +185,9 @@ static void *radegast_server(struct s_client *client, uchar *mbuf, int32_t n)
 
 static int32_t radegast_send_ecm(struct s_client *client, ECM_REQUEST *er)
 {	
-	uchar provid_buf[8];
-	uchar header[22] = "\x02\x01\x00\x06\x08\x30\x30\x30\x30\x30\x30\x30\x30\x07\x04\x30\x30\x30\x38\x08\x01\x02";
-	uchar *ecmbuf;
+	uint8_t provid_buf[8];
+	uint8_t header[22] = "\x02\x01\x00\x06\x08\x30\x30\x30\x30\x30\x30\x30\x30\x07\x04\x30\x30\x30\x38\x08\x01\x02";
+	uint8_t *ecmbuf;
 	
 	uint8_t *SubECMp; 
 	uint8_t *via_ecm_mod;
@@ -262,7 +262,7 @@ static int32_t radegast_send_ecm(struct s_client *client, ECM_REQUEST *er)
 	memcpy(ecmbuf + 2, header, sizeof(header));
 	for(n = 0; n < 4; n++)
 	{
-		snprintf((char *)provid_buf + (n * 2), sizeof(provid_buf) - (n * 2), "%02X", ((uchar *)(&er->prid))[4 - 1 - n]);
+		snprintf((char *)provid_buf + (n * 2), sizeof(provid_buf) - (n * 2), "%02X", ((uint8_t *)(&er->prid))[4 - 1 - n]);
 	}
 	ecmbuf[7] = provid_buf[0];
 	ecmbuf[8] = provid_buf[1];

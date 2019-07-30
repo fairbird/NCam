@@ -22,7 +22,7 @@ struct s_pushclient {
 };
 
 typedef struct cw_t {
-	uchar			cw[16];
+	uint8_t			cw[16];
 	uint8_t			odd_even;			//odd/even byte (0x80 0x81)
 	uint8_t			cwc_cycletime;
 	uint8_t			cwc_next_cw_cycle;

@@ -62,9 +62,9 @@ void emm_save_cache(void)
 	struct s_emmcache *c;
 	while((c = ll_iter_next(&it)))
 	{
-		uchar tmp_emmd5[MD5_DIGEST_LENGTH * 2 + 1];
+		uint8_t tmp_emmd5[MD5_DIGEST_LENGTH * 2 + 1];
 		char_to_hex(c->emmd5, MD5_DIGEST_LENGTH, tmp_emmd5); 
-		uchar tmp_emm[c->len * 2 + 1];
+		uint8_t tmp_emm[c->len * 2 + 1];
 		char_to_hex(c->emm, c->len, tmp_emm);
 		result = fprintf(file, "%s,%ld,%ld,%02X,%04X,%s\n", tmp_emmd5, c->firstseen.time, c->lastseen.time, c->type, c->len, tmp_emm);
 		if(result < 0)
@@ -150,8 +150,8 @@ void load_emmstat_from_file(void)
 		valid = (i == 6);
 		if(valid)
 		{
-			strncpy(buf, split[0], sizeof(buf) - 1);
-			key_atob_l(split[1], s->emmd5, MD5_DIGEST_LENGTH*2);
+			cs_strncpy(buf, split[0], sizeof(buf));
+			key_atob_l(split[1], s->emmd5, MD5_DIGEST_LENGTH * 2);
 			s->firstwritten.time = atol(split[2]);
 			s->lastwritten.time = atol(split[3]);
 			s->type = a2i(split[4], 2);
@@ -251,7 +251,7 @@ void save_emmstat_to_file(void)
 			struct s_emmstat *s;
 			while((s = ll_iter_next(&it)))
 			{
-				uchar tmp_emmd5[MD5_DIGEST_LENGTH * 2 + 1];
+				uint8_t tmp_emmd5[MD5_DIGEST_LENGTH * 2 + 1];
 				char_to_hex(s->emmd5, MD5_DIGEST_LENGTH, tmp_emmd5);
 				result = fprintf(file, "%s,%s,%ld,%ld,%02X,%04X\n", rdr->label, tmp_emmd5, s->firstwritten.time, s->lastwritten.time, s->type, s->count);
 				if(result < 0)
@@ -367,7 +367,7 @@ void emm_load_cache(void)
 	cs_log("loaded %d emmcache records from %s in %"PRId64" ms", count, fname, load_time);
 }
 
-struct s_emmcache *find_emm_cache(uchar *emmd5)
+struct s_emmcache *find_emm_cache(uint8_t *emmd5)
 {
 	struct s_emmcache *c;
 	LL_ITER it;
@@ -387,7 +387,7 @@ struct s_emmcache *find_emm_cache(uchar *emmd5)
 	return NULL;
 }
 
-int32_t clean_stale_emm_cache_and_stat(uchar *emmd5, int64_t gone)
+int32_t clean_stale_emm_cache_and_stat(uint8_t *emmd5, int64_t gone)
 {
 	struct timeb now;
 	cs_ftime(&now);
@@ -409,7 +409,7 @@ int32_t clean_stale_emm_cache_and_stat(uchar *emmd5, int64_t gone)
 			LL_ITER rdr_itr = ll_iter_create(configured_readers);
 			while((rdr = ll_iter_next(&rdr_itr)))
 			{
-				if(rdr->emmstat && !caid_is_irdeto(rdr->caid))
+				if(rdr->emmstat && !(caid_is_irdeto(rdr->caid) || caid_is_videoguard(rdr->caid)))
 				{
 					remove_emm_stat(rdr, c->emmd5); // clean stale entry from stats
 					count++;
@@ -421,7 +421,7 @@ int32_t clean_stale_emm_cache_and_stat(uchar *emmd5, int64_t gone)
 	return count;
 }
 
-int32_t emm_edit_cache(uchar *emmd5, EMM_PACKET *ep, bool add)
+int32_t emm_edit_cache(uint8_t *emmd5, EMM_PACKET *ep, bool add)
 {
 	struct s_emmcache *c;
 	LL_ITER it;
@@ -463,7 +463,7 @@ int32_t emm_edit_cache(uchar *emmd5, EMM_PACKET *ep, bool add)
 
 	return count;
 }
-int32_t remove_emm_stat(struct s_reader *rdr, uchar *emmd5)
+int32_t remove_emm_stat(struct s_reader *rdr, uint8_t *emmd5)
 {
 	int32_t count = 0;
 	if(rdr && rdr->emmstat)
@@ -486,7 +486,7 @@ int32_t remove_emm_stat(struct s_reader *rdr, uchar *emmd5)
 	return count;
 }
 
-struct s_emmstat *get_emm_stat(struct s_reader *rdr, uchar *emmd5, uchar emmtype)
+struct s_emmstat *get_emm_stat(struct s_reader *rdr, uint8_t *emmd5, uint8_t emmtype)
 {
 	if(!rdr->cachemm) return NULL;
 	

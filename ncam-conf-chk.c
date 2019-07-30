@@ -371,10 +371,10 @@ void chk_cltab(char *classasc, CLASSTAB *clstab)
 			{ max_an++; }
 	}
 
-	if(max_an && !cs_malloc(&newclstab.aclass, sizeof(uchar)*max_an))
+	if(max_an && !cs_malloc(&newclstab.aclass, sizeof(uint8_t)*max_an))
 		{ NULLFREE(classasc_org); return; }	
 
-	if(max_bn && !cs_malloc(&newclstab.bclass, sizeof(uchar)*max_bn))
+	if(max_bn && !cs_malloc(&newclstab.bclass, sizeof(uint8_t)*max_bn))
 		{ NULLFREE(newclstab.aclass); NULLFREE(classasc_org); return; }	
 	
 	classasc = classasc_org;
@@ -383,9 +383,9 @@ void chk_cltab(char *classasc, CLASSTAB *clstab)
 	{
 		ptr1 = trim(ptr1);
 		if(ptr1[0] == '!')
-			{ newclstab.bclass[newclstab.bn++] = (uchar)a2i(ptr1 + 1, 2); }
+			{ newclstab.bclass[newclstab.bn++] = (uint8_t)a2i(ptr1 + 1, 2); }
 		else
-			{ newclstab.aclass[newclstab.an++] = (uchar)a2i(ptr1, 2); }
+			{ newclstab.aclass[newclstab.an++] = (uint8_t)a2i(ptr1, 2); }
 	}
 	
 	NULLFREE(classasc_org);

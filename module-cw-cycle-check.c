@@ -13,14 +13,14 @@
 
 struct s_cwc_md5
 {
-	uchar           md5[CS_ECMSTORESIZE];
-	uint32_t        csp_hash;
-	uchar           cw[16];
+	uint8_t           md5[CS_ECMSTORESIZE];
+	uint32_t          csp_hash;
+	uint8_t           cw[16];
 };
 
 struct s_cw_cycle_check
 {
-	uchar           cw[16];
+	uint8_t         cw[16];
 	time_t          time;
 	time_t          locktime; // lock in learning
 	uint16_t        caid;
@@ -72,7 +72,7 @@ static uint8_t chk_is_pos_fallback(ECM_REQUEST *er, char *reader)
 	return 0;
 }
 
-static inline uint8_t checkECMD5CW(uchar *ecmd5_cw)
+static inline uint8_t checkECMD5CW(uint8_t *ecmd5_cw)
 {
 	int8_t i;
 	for(i = 0; i < CS_ECMSTORESIZE; i++)
@@ -115,7 +115,10 @@ static uint8_t countCWpart(ECM_REQUEST *er, struct s_cw_cycle_check *cwc)
 static uint8_t checkvalidCW(ECM_REQUEST *er)
 {
 	uint8_t ret = 1;
-	if(chk_is_null_CW(er->cw) && er->caid !=0x2600) // 0x2600 used by biss and constant cw could be indeed zero 
+
+	// Skip check for BISS1 - cw could be indeed zero
+	// Skip check for BISS2 - we use the extended cw, so the "simple" cw is always zero
+	if(chk_is_null_CW(er->cw) && !caid_is_biss(er->caid))
 	{ er->rc = E_NOTFOUND; }
 
 	if(er->rc == E_NOTFOUND)
@@ -178,7 +181,7 @@ void cleanupcwcycle(void)
 		{ cs_log_dbg(D_CWC, "cyclecheck [Cleanup] list new size: %d (realsize: %d)", cw_cc_list_size, count); }
 }
 
-static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uchar *cw , char *reader, uint8_t cycletime_fr, uint8_t next_cw_cycle_fr)
+static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uint8_t *cw , char *reader, uint8_t cycletime_fr, uint8_t next_cw_cycle_fr)
 {
 
 	int8_t i, ret = 6; // ret = 6 no checked
@@ -699,7 +702,7 @@ static void count_ign(struct s_client *client)
 	}
 }
 
-uint8_t checkcwcycle(struct s_client *client, ECM_REQUEST *er, struct s_reader *reader, uchar *cw, int8_t rc, uint8_t cycletime_fr, uint8_t next_cw_cycle_fr)
+uint8_t checkcwcycle(struct s_client *client, ECM_REQUEST *er, struct s_reader *reader, uint8_t *cw, int8_t rc, uint8_t cycletime_fr, uint8_t next_cw_cycle_fr)
 {
 
 	if(!cfg.cwcycle_check_enable)

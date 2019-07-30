@@ -1,7 +1,9 @@
 #define MODULE_LOG_PREFIX "newcamd"
 
 #include "globals.h"
+
 #ifdef MODULE_NEWCAMD
+
 #include "cscrypt/des.h"
 #include "cscrypt/md5.h"
 #include "module-newcamd.h"
@@ -17,11 +19,11 @@
 #include "ncam-string.h"
 #include "ncam-time.h"
 
-const int32_t CWS_NETMSGSIZE = 1024;  //csp 0.8.9 (default: 400). This is CWS_NETMSGSIZE. The old default was 240
+const int32_t CWS_NETMSGSIZE = 1024; // csp 0.8.9 (default: 400). This is CWS_NETMSGSIZE. The old default was 240
 
-#define NCD_CLIENT_ID 0x0000
+#define NCD_CLIENT_ID 0x8888
+#define CWS_FIRSTCMDNO 0xE0
 
-#define CWS_FIRSTCMDNO 0xe0
 typedef enum
 {
 	MSG_CLIENT_2_SERVER_LOGIN = CWS_FIRSTCMDNO,
@@ -43,15 +45,15 @@ typedef enum
 	MSG_ADMIN_COMMAND,
 	MSG_ADMIN_COMMAND_ACK,
 	MSG_ADMIN_COMMAND_NAK,
-	MSG_KEEPALIVE = CWS_FIRSTCMDNO + 0x1d,
-	MSG_SERVER_2_CLIENT_OSD = 0xd1,
-	MSG_SERVER_2_CLIENT_ALLCARDS = 0xd2,
-	MSG_SERVER_2_CLIENT_ADDCARD = 0xd3,
-	MSG_SERVER_2_CLIENT_REMOVECARD = 0xd4,
-	MSG_SERVER_2_CLIENT_CHANGE_KEY = 0xd5,
-	MSG_SERVER_2_CLIENT_GET_VERSION = 0xd6,
-	MSG_SERVER_2_CLIENT_ADDSID = 0xd7,
-	MSG_CLIENT_2_SERVER_CARDDISCOVER = 0xd8
+	MSG_KEEPALIVE = CWS_FIRSTCMDNO + 0x1D,
+	MSG_SERVER_2_CLIENT_OSD = 0xD1,
+	MSG_SERVER_2_CLIENT_ALLCARDS = 0xD2,
+	MSG_SERVER_2_CLIENT_ADDCARD = 0xD3,
+	MSG_SERVER_2_CLIENT_REMOVECARD = 0xD4,
+	MSG_SERVER_2_CLIENT_CHANGE_KEY = 0xD5,
+	MSG_SERVER_2_CLIENT_GET_VERSION = 0xD6,
+	MSG_SERVER_2_CLIENT_ADDSID = 0xD7,
+	MSG_CLIENT_2_SERVER_CARDDISCOVER = 0xD8
 } net_msg_type_t;
 
 typedef enum
@@ -60,21 +62,18 @@ typedef enum
 	COMMTYPE_SERVER
 } comm_type_t;
 
-
 typedef struct custom_data
 {
 	uint16_t sid;
 	uint16_t caid;
 	int32_t provid;
-	uchar x;
+	uint8_t x;
 } custom_data_t;
 
-#define REQ_SIZE  2
+#define REQ_SIZE 2
 
-
-static int32_t network_message_send(int32_t handle, uint16_t *netMsgId, uint8_t *buffer,
-									int32_t len, uint8_t *deskey, comm_type_t commType,
-									uint16_t sid, custom_data_t *cd)
+static int32_t network_message_send(int32_t handle, uint16_t *netMsgId, uint8_t *buffer, int32_t len,
+									uint8_t *deskey, comm_type_t commType, uint16_t sid, custom_data_t *cd)
 {
 	uint8_t netbuf[CWS_NETMSGSIZE];
 	int32_t head_size;
@@ -83,67 +82,94 @@ static int32_t network_message_send(int32_t handle, uint16_t *netMsgId, uint8_t 
 	head_size = (cl->ncd_proto == NCD_524) ? 8 : 12;
 
 	if(len < 3 || len + head_size > CWS_NETMSGSIZE || handle < 0)
-		{ return -1; }
-	buffer[1] = (buffer[1] & 0xf0) | (((len - 3) >> 8) & 0x0f);
-	buffer[2] = (len - 3) & 0xff;
+	{
+		return -1;
+	}
+
+	buffer[1] = (buffer[1] & 0xF0) | (((len - 3) >> 8) & 0x0F);
+	buffer[2] = (len - 3) & 0xFF;
+
 	memcpy(netbuf + head_size, buffer, len);
 	len += head_size;
+
 	if(netMsgId)
 	{
-		if(commType == COMMTYPE_CLIENT) { (*netMsgId)++; }
+		if(commType == COMMTYPE_CLIENT)
+		{
+			(*netMsgId)++;
+		}
+
 		netbuf[2] = (*netMsgId) >> 8;
-		netbuf[3] = (*netMsgId) & 0xff;
+		netbuf[3] = (*netMsgId) & 0xFF;
 	}
 	else
-		{ netbuf[2] = netbuf[3] = 0; }
+	{
+		netbuf[2] = 0;
+		netbuf[3] = 0;
+	}
+
 	memset(netbuf + 4, 0, (cl->ncd_proto == NCD_524) ? 4 : 8);
+
 	if(sid)
 	{
-		if(cl->reader && cl->reader->ncd_disable_server_filt &&
-				sid != NCD_CLIENT_ID && cl->ncd_proto != NCD_524) //mgclient send header
+		if(cl->reader && cl->reader->ncd_disable_server_filt
+			&& sid != NCD_CLIENT_ID && cl->ncd_proto != NCD_524) // mgclient send header
 		{
 			memcpy(netbuf + 4, cl->ncd_header + 4, 7);
 		}
-		netbuf[(cl->ncd_proto == NCD_524) ? 6 : 4] = (uchar)(sid >> 8); //sid
-		netbuf[(cl->ncd_proto == NCD_524) ? 7 : 5] = (uchar)(sid);
+
+		netbuf[(cl->ncd_proto == NCD_524) ? 6 : 4] = (uint8_t)(sid >> 8); // sid
+		netbuf[(cl->ncd_proto == NCD_524) ? 7 : 5] = (uint8_t)(sid);
 	}
-	//if ((!ncd_proto==NCD_524) && (buffer[0] >= 0xd1) && (buffer[0]<= 0xd8)) { // extended proto for mg
-	//cs_log_dbg(D_CLIENT, "newcamd: extended: msg");
+
+	//if((!ncd_proto == NCD_524) && (buffer[0] >= 0xD1) && (buffer[0] <= 0xD8)) // extended proto for mg
+	//{
+	//	cs_log_dbg(D_CLIENT, "newcamd: extended: msg");
+
 	if(cd)
 	{
 		cs_log_dbg(D_CLIENT, "newcamd: has cd");
+
 		netbuf[4] = cd->sid >> 8;
-		netbuf[5] = cd->sid & 0xff;
+		netbuf[5] = cd->sid & 0xFF;
 		netbuf[6] = cd->caid >> 8;
-		netbuf[7] = cd->caid & 0xff;
+		netbuf[7] = cd->caid & 0xFF;
 		netbuf[8] = (cd->provid >> 16) & 0xFF;
-		netbuf[9] = (cd->provid >> 8) & 0xff;
-		netbuf[10] = cd->provid & 0xff;
+		netbuf[9] = (cd->provid >> 8) & 0xFF;
+		netbuf[10] = cd->provid & 0xFF;
 	}
 	//}
-	if(NCD_525 == cl->ncd_proto && cfg.ncd_mgclient &&
-			MSG_CLIENT_2_SERVER_LOGIN_ACK == buffer[0])
+
+	if(NCD_525 == cl->ncd_proto && cfg.ncd_mgclient && MSG_CLIENT_2_SERVER_LOGIN_ACK == buffer[0])
 	{
-		netbuf[4] = 0x6E; //From ExtNewcamSession.java CSP line 65-66 getLoginOkMsg()
+		netbuf[4] = 0x6E; // From ExtNewcamSession.java CSP line 65-66 getLoginOkMsg()
 		netbuf[5] = 0x73;
 		netbuf[11] = 0x14;
 	}
-	if(NCD_525 == cl->ncd_proto &&
-			MSG_SERVER_2_CLIENT_ADDSID == buffer[0])
+
+	if(NCD_525 == cl->ncd_proto && MSG_SERVER_2_CLIENT_ADDSID == buffer[0])
 	{
 		netbuf[11] = 0x14;
 	}
-	//  if (buffer[0]==MSG_CLIENT_2_SERVER_LOGIN && cur_client()->reader->ncd_disable_server_filt) {
-	//        netbuf[11] = 0x11; //From ChameleonCwsConnector.java CSP line 59-61 run()
-	//    }
+
+	//if(buffer[0] == MSG_CLIENT_2_SERVER_LOGIN && cur_client()->reader->ncd_disable_server_filt)
+	//{
+	//	netbuf[11] = 0x11; // From ChameleonCwsConnector.java CSP line 59-61 run()
+	//}
 
 	netbuf[0] = (len - 2) >> 8;
-	netbuf[1] = (len - 2) & 0xff;
+	netbuf[1] = (len - 2) & 0xFF;
+
 	cs_log_dump_dbg(D_CLIENT, netbuf, len, "send %d bytes to %s", len, remote_txt());
+
 	if((len = nc_des_encrypt(netbuf, len, deskey)) < 0)
-		{ return -1; }
+	{
+		return -1;
+	}
+
 	netbuf[0] = (len - 2) >> 8;
-	netbuf[1] = (len - 2) & 0xff;
+	netbuf[1] = (len - 2) & 0xFF;
+
 	return send(handle, netbuf, len, 0);
 }
 
@@ -157,19 +183,20 @@ static int32_t send_sid_list(void)
 		return 0;
 	}
 
-	uchar mbuf[CWS_NETMSGSIZE];
-	int32_t n = 0, nr = 0, portion_sid_num = 0, i = 0, sid_num = 0,
-			portion_num = 0;
+	uint8_t mbuf[CWS_NETMSGSIZE];
+	int32_t n = 0, nr = 0, portion_sid_num = 0, i = 0, sid_num = 0, portion_num = 0;
 	SIDTAB *sidtab = 0;
 	custom_data_t cd;
 
 	cs_log_dbg(D_TRACE, "Send SID list to mgcamd client.");
+
 	memset(&cd, 0, sizeof(cd));
 	FILTER *pfilts = cfg.ncd_ptab.ports[cl->port_idx].ncd->ncd_ftab.filts;
 
-	/*memset(mbuf, 0, sizeof(mbuf));*/ // not nessesery
+	//memset(mbuf, 0, sizeof(mbuf)); // not nessesery
 
 	for(nr = 0, sidtab = cfg.sidtab; sidtab; sidtab = sidtab->next, nr++)
+	{
 		if((cl->sidtabs.no & ((SIDTABBITS)1 << nr)) && (sidtab->num_caid | sidtab->num_provid | sidtab->num_srvid))
 		{
 			for(n = 0; n < pfilts[0].nprids; n++)
@@ -182,11 +209,12 @@ static int32_t send_sid_list(void)
 						if(0 == portion_sid_num)
 						{
 							cd.sid = sidtab->srvid[i]; // first sid
-							cd.caid = cfg.ncd_ptab.ports[cl->port_idx].s_port;   //assigned port
+							cd.caid = cfg.ncd_ptab.ports[cl->port_idx].s_port; // assigned port
 							cd.provid = 0x1; // mark as deny
 						}
-						mbuf[portion_sid_num * 3] = (uchar)(sidtab->srvid[i] >> 8);
-						mbuf[portion_sid_num * 3 + 1] = (uchar)(sidtab->srvid[i] & 0xFF);
+
+						mbuf[portion_sid_num * 3] = (uint8_t)(sidtab->srvid[i] >> 8);
+						mbuf[portion_sid_num * 3 + 1] = (uint8_t)(sidtab->srvid[i] & 0xFF);
 						mbuf[portion_sid_num * 3 + 2] = 0x1; // mark as deny
 
 						++sid_num;
@@ -195,12 +223,16 @@ static int32_t send_sid_list(void)
 						if(portion_sid_num >= 50)
 						{
 							++portion_num;
-							cs_log_dump_dbg(0x0800, mbuf, (portion_sid_num) * 3, "Portion %d contains %d SIDs", portion_num, portion_sid_num);
+
+							cs_log_dump_dbg(0x0800, mbuf, (portion_sid_num) * 3, "Portion %d contains %d SIDs",
+											portion_num, portion_sid_num);
+
 							mbuf[0] = MSG_SERVER_2_CLIENT_ADDSID;
-							mbuf[1] = 0x0;
-							mbuf[2] = 0x0;
-							network_message_send(cl->udp_fd, &cl->ncd_msgid,
-												 mbuf, portion_sid_num * 3, cl->ncd_skey, COMMTYPE_SERVER, 0, &cd);
+							mbuf[1] = 0x00;
+							mbuf[2] = 0x00;
+
+							network_message_send(cl->udp_fd, &cl->ncd_msgid, mbuf, portion_sid_num * 3,
+													cl->ncd_skey, COMMTYPE_SERVER, 0, &cd);
 							portion_sid_num = 0;
 						}
 					}
@@ -209,24 +241,31 @@ static int32_t send_sid_list(void)
 				}
 			}
 		}
+	}
 
 	if(portion_sid_num)
 	{
 		++portion_num;
-		cs_log_dump_dbg(0x0800, mbuf, (portion_sid_num) * 3, "Portion %d contains %d SIDs", portion_num, portion_sid_num);
+
+		cs_log_dump_dbg(0x0800, mbuf, (portion_sid_num) * 3, "Portion %d contains %d SIDs",
+						portion_num, portion_sid_num);
+
 		mbuf[0] = MSG_SERVER_2_CLIENT_ADDSID;
 		mbuf[1] = 0x0;
 		mbuf[2] = 0x0;
-		network_message_send(cl->udp_fd, &cl->ncd_msgid, mbuf, portion_sid_num * 3, cl->ncd_skey, COMMTYPE_SERVER, 0, &cd);
+
+		network_message_send(cl->udp_fd, &cl->ncd_msgid, mbuf, portion_sid_num * 3,
+								cl->ncd_skey, COMMTYPE_SERVER, 0, &cd);
 		portion_sid_num = 0;
 	}
 
 	cs_log("%d deny SIDs in the %d messages were sent to the client.", sid_num, portion_num);
+
 	return sid_num;
 }
 
 static int32_t network_message_receive(int32_t handle, uint16_t *netMsgId, uint8_t *buffer,
-									   uint8_t *deskey, comm_type_t commType)
+										uint8_t *deskey, comm_type_t commType)
 {
 	int32_t len, ncd_off, msgid;
 	uint8_t netbuf[CWS_NETMSGSIZE];
@@ -234,30 +273,50 @@ static int32_t network_message_receive(int32_t handle, uint16_t *netMsgId, uint8
 	struct s_client *cl = cur_client();
 
 	if(!buffer || handle < 0)
-		{ return -1; }
+	{
+		return -1;
+	}
+
 	len = cs_recv(handle, netbuf, 2, 0);
+
 	cs_log_dbg(D_CLIENT, "nmr(): len=%d, errno=%d", len, (len == -1) ? errno : 0);
+
 	if(!len)
 	{
 		cs_log_dbg(D_CLIENT, "nmr: 1 return 0");
+
 		if(commType == COMMTYPE_CLIENT)
-			{ network_tcp_connection_close(cl->reader, "receive error1"); }
+		{
+			network_tcp_connection_close(cl->reader, "receive error1");
+		}
 		else
-			{ cs_disconnect_client(cl); }
+		{
+			cs_disconnect_client(cl);
+		}
+
 		return 0;
 	}
+
 	if(len != 2)
 	{
 		cs_log_dbg(D_CLIENT, "nmr: len!=2");
+
 		if(commType == COMMTYPE_CLIENT)
-			{ network_tcp_connection_close(cl->reader, "receive error2"); }
+		{
+			network_tcp_connection_close(cl->reader, "receive error2");
+		}
 		else
-			{ cs_disconnect_client(cl); }
+		{
+			cs_disconnect_client(cl);
+		}
+
 		return -1;
 	}
+
 	if(((netbuf[0] << 8) | netbuf[1]) > CWS_NETMSGSIZE - 2)
 	{
-		cs_log_dbg(D_CLIENT, "nmr: received data len=%d longer than CWS_NETMSGSIZE=%d", ((netbuf[0] << 8) | netbuf[1]), CWS_NETMSGSIZE);
+		cs_log_dbg(D_CLIENT, "nmr: received data len=%d longer than CWS_NETMSGSIZE=%d",
+					((netbuf[0] << 8) | netbuf[1]), CWS_NETMSGSIZE);
 		cs_log_dbg(D_CLIENT, "nmr: 1 return -1");
 		return -1;
 	}
@@ -268,31 +327,40 @@ static int32_t network_message_receive(int32_t handle, uint16_t *netMsgId, uint8
 		cs_log_dbg(D_CLIENT, "nmr: 2 return 0");
 		return 0;
 	}
+
 	if(len != ((netbuf[0] << 8) | netbuf[1]))
 	{
 		cs_log_dbg(D_CLIENT, "nmr: 2 return -1");
 		return -1;
 	}
+
 	len += 2;
-	if((len = nc_des_decrypt(netbuf, len, deskey)) < 11)      // 15(newcamd525) or 11 ???
+
+	if((len = nc_des_decrypt(netbuf, len, deskey)) < 11) // 15(newcamd525) or 11 ???
 	{
 		cs_log_dbg(D_CLIENT, "nmr: can't decrypt, invalid des key?");
 		cs_sleepms(2000);
 		return -1;
 	}
+
 	//cs_log_dump_dbg(D_CLIENT, netbuf, len, "nmr: decrypted data, len=%d", len);
+
 	msgid = (netbuf[2] << 8) | netbuf[3];
 
 	if(cl->ncd_proto == NCD_AUTO)
 	{
 		// auto detect
-		int32_t l5 = (((netbuf[13] & 0x0f) << 8) | netbuf[14]) + 3;
-		int32_t l4 = (((netbuf[9] & 0x0f) << 8) | netbuf[10]) + 3;
+		int32_t l5 = (((netbuf[13] & 0x0F) << 8) | netbuf[14]) + 3;
+		int32_t l4 = (((netbuf[9] & 0x0F) << 8) | netbuf[10]) + 3;
 
 		if((l5 <= len - 12) && ((netbuf[12] & 0xF0) == 0xE0 || (netbuf[12] & 0xF0) == 0x80))
-			{ cl->ncd_proto = NCD_525; }
+		{
+			cl->ncd_proto = NCD_525;
+		}
 		else if((l4 <= len - 8) && ((netbuf[8] & 0xF0) == 0xE0 || (netbuf[9] & 0xF0) == 0x80))
-			{ cl->ncd_proto = NCD_524; }
+		{
+			cl->ncd_proto = NCD_524;
+		}
 		else
 		{
 			cs_log_dbg(D_CLIENT, "nmr: 4 return -1");
@@ -304,7 +372,7 @@ static int32_t network_message_receive(int32_t handle, uint16_t *netMsgId, uint8
 
 	ncd_off = (cl->ncd_proto == NCD_525) ? 4 : 0;
 
-	returnLen = (((netbuf[9 + ncd_off] & 0x0f) << 8) | netbuf[10 + ncd_off]) + 3;
+	returnLen = (((netbuf[9 + ncd_off] & 0x0F) << 8) | netbuf[10 + ncd_off]) + 3;
 	if(returnLen > (len - (8 + ncd_off)))
 	{
 		cs_log_dbg(D_CLIENT, "nmr: 4 return -1");
@@ -312,64 +380,71 @@ static int32_t network_message_receive(int32_t handle, uint16_t *netMsgId, uint8
 	}
 
 	//cs_log_dump_dbg(D_CLIENT, netbuf, len, "nmr: decrypted data");
+
 	if(netMsgId)
 	{
 		switch(commType)
 		{
+			case COMMTYPE_SERVER:
+				*netMsgId = msgid;
+				break;
+
+			case COMMTYPE_CLIENT:
+				//if(*netMsgId != ((netbuf[2] << 8) | netbuf[3]))
+				//{
+				cs_log_dbg(D_CLIENT, "nmr: netMsgId=%d, from server=%d, ", *netMsgId, msgid);
+				//return -2;
+				//}
+				break;
+
+			default:
+				cs_log_dbg(D_CLIENT, "nmr: 5 return -1");
+				return -1;
+				break;
+		}
+	}
+
+	switch(commType)
+	{
 		case COMMTYPE_SERVER:
-			*netMsgId = msgid;
+			memcpy(cl->ncd_header, netbuf, (8 + ncd_off));
+			buffer[0] = (cl->ncd_proto == NCD_525) ? netbuf[4] : netbuf[6]; // sid
+			buffer[1] = (cl->ncd_proto == NCD_525) ? netbuf[5] : netbuf[7];
 			break;
 
 		case COMMTYPE_CLIENT:
-			//if (*netMsgId != ((netbuf[2] << 8) | netbuf[3])) {
-			cs_log_dbg(D_CLIENT, "nmr: netMsgId=%d, from server=%d, ", *netMsgId, msgid);
-			//return -2;
-			//}
+			memcpy(cl->ncd_header, netbuf, (8 + ncd_off));
+			buffer[0] = netbuf[2]; // msgid
+			buffer[1] = netbuf[3];
 			break;
-
-		default:
-			cs_log_dbg(D_CLIENT, "nmr: 5 return -1");
-			return -1;
-			break;
-		}
-	}
-	switch(commType)
-	{
-	case COMMTYPE_SERVER:
-		memcpy(cl->ncd_header, netbuf, (8 + ncd_off));
-		buffer[0] = (cl->ncd_proto == NCD_525) ? netbuf[4] : netbuf[6]; // sid
-		buffer[1] = (cl->ncd_proto == NCD_525) ? netbuf[5] : netbuf[7];
-		break;
-	case COMMTYPE_CLIENT:
-		memcpy(cl->ncd_header, netbuf, (8 + ncd_off));
-		buffer[0] = netbuf[2]; // msgid
-		buffer[1] = netbuf[3];
-		break;
 	}
 
 	memcpy(buffer + 2, netbuf + (8 + ncd_off), returnLen);
 	return returnLen + 2;
 }
 
-static void network_cmd_no_data_send(int32_t handle, uint16_t *netMsgId,
-									 net_msg_type_t cmd, uint8_t *deskey,
-									 comm_type_t commType)
+static void network_cmd_no_data_send(int32_t handle, uint16_t *netMsgId, net_msg_type_t cmd,
+									uint8_t *deskey, comm_type_t commType)
 {
 	uint8_t buffer[3];
 
 	buffer[0] = cmd;
 	buffer[1] = 0;
 	buffer[2] = 0;
+
 	network_message_send(handle, netMsgId, buffer, 3, deskey, commType, 0, NULL);
 }
 
-static int32_t network_cmd_no_data_receive(int32_t handle, uint16_t *netMsgId,
-		uint8_t *deskey, comm_type_t commType)
+static int32_t network_cmd_no_data_receive(int32_t handle, uint16_t *netMsgId, uint8_t *deskey,
+											comm_type_t commType)
 {
 	uint8_t buffer[CWS_NETMSGSIZE];
 
 	if(network_message_receive(handle, netMsgId, buffer, deskey, commType) != 3 + 2)
-		{ return -1; }
+	{
+		return -1;
+	}
+
 	return buffer[2];
 }
 
@@ -377,7 +452,10 @@ void newcamd_reply_ka(void)
 {
 	struct s_client *cl = cur_client();
 
-	if(!cl) { return; }
+	if(!cl)
+	{
+		return;
+	}
 
 	if(!cl->udp_fd)
 	{
@@ -388,7 +466,9 @@ void newcamd_reply_ka(void)
 	cs_log_dbg(D_CLIENT, "send keepalive to client fd=%d", cl->udp_fd);
 
 	if(cl->reader)
-		{ cl->reader->last_s = time((time_t *)0); }
+	{
+		cl->reader->last_s = time((time_t *)0);
+	}
 
 	network_cmd_no_data_send(cl->udp_fd, &cl->ncd_msgid, MSG_KEEPALIVE, cl->ncd_skey, COMMTYPE_SERVER);
 }
@@ -402,18 +482,23 @@ static int32_t connect_newcamd_server(void)
 	int32_t handle = 0;
 
 	uint32_t idx;
-	uchar passwdcrypt[120];
+	uint8_t passwdcrypt[120];
 	uint8_t login_answer;
 	int32_t bytes_received;
 	struct s_client *cl = cur_client();
 
-	if(cl->reader->device[0] == 0 || cl->reader->r_pwd[0] == 0 ||
-			cl->reader->r_usr[0] == 0 || cl->reader->r_port == 0)
-		{ return -5; }
+	if(cl->reader->device[0] == 0 || cl->reader->r_pwd[0] == 0
+		|| cl->reader->r_usr[0] == 0 || cl->reader->r_port == 0)
+	{
+		return -5;
+	}
 
 	// 1. Connect
 	handle = network_tcp_connection_open(cl->reader);
-	if(handle < 0) { return -1; }
+	if(handle < 0)
+	{
+		return -1;
+	}
 
 	// 2. Get init sequence
 	cl->ncd_msgid = 0;
@@ -423,6 +508,7 @@ static int32_t connect_newcamd_server(void)
 		network_tcp_connection_close(cl->reader, "connect error");
 		return -2;
 	}
+
 	cs_log_dump_dbg(D_CLIENT, keymod, sizeof(cl->reader->ncd_key), "server init sequence:");
 	nc_des_login_key_get(keymod, cl->reader->ncd_key, sizeof(cl->reader->ncd_key), key);
 
@@ -430,27 +516,29 @@ static int32_t connect_newcamd_server(void)
 	idx = 3;
 	buf[0] = MSG_CLIENT_2_SERVER_LOGIN;
 	buf[1] = 0;
+
 	cs_strncpy((char *)buf + idx, cl->reader->r_usr, sizeof(buf) - idx);
 	__md5_crypt(cl->reader->r_pwd, "$1$abcdefgh$", (char *)passwdcrypt);
 	idx += strlen(cl->reader->r_usr) + 1;
 	cs_strncpy((char *)buf + idx, (const char *)passwdcrypt, sizeof(buf) - idx);
 
 	network_message_send(handle, 0, buf, idx + strlen((char *)passwdcrypt) + 1, key,
-						 COMMTYPE_CLIENT, NCD_CLIENT_ID, NULL);
+						COMMTYPE_CLIENT, NCD_CLIENT_ID, NULL);
 
 	// 3.1 Get login answer
-	login_answer = network_cmd_no_data_receive(handle, &cl->ncd_msgid,
-				   key, COMMTYPE_CLIENT);
+	login_answer = network_cmd_no_data_receive(handle, &cl->ncd_msgid, key, COMMTYPE_CLIENT);
 	if(login_answer == MSG_CLIENT_2_SERVER_LOGIN_NAK)
 	{
 		cs_log("login failed for user '%s'", cl->reader->r_usr);
 		network_tcp_connection_close(cl->reader, "login error1");
 		return -3;
 	}
+
 	if(login_answer != MSG_CLIENT_2_SERVER_LOGIN_ACK)
 	{
 		cs_log("expected MSG_CLIENT_2_SERVER_LOGIN_ACK (%02X), received %02X",
-			   MSG_CLIENT_2_SERVER_LOGIN_ACK, login_answer);
+				MSG_CLIENT_2_SERVER_LOGIN_ACK, login_answer);
+
 		network_tcp_connection_close(cl->reader, "login error2");
 		return -3;
 	}
@@ -461,15 +549,13 @@ static int32_t connect_newcamd_server(void)
 
 	// 4. Send MSG_CARD_DATE_REQ
 	nc_des_login_key_get(cl->reader->ncd_key, passwdcrypt, strlen((char *)passwdcrypt), key);
+	network_cmd_no_data_send(handle, &cl->ncd_msgid, MSG_CARD_DATA_REQ, key, COMMTYPE_CLIENT);
 
-	network_cmd_no_data_send(handle, &cl->ncd_msgid, MSG_CARD_DATA_REQ,
-							 key, COMMTYPE_CLIENT);
-	bytes_received = network_message_receive(handle, &cl->ncd_msgid, buf,
-					 key, COMMTYPE_CLIENT);
+	bytes_received = network_message_receive(handle, &cl->ncd_msgid, buf, key, COMMTYPE_CLIENT);
 	if(bytes_received < 16 || buf[2] != MSG_CARD_DATA)
 	{
-		cs_log("expected MSG_CARD_DATA (%02X), received %02X",
-			   MSG_CARD_DATA, buf[2]);
+		cs_log("expected MSG_CARD_DATA (%02X), received %02X", MSG_CARD_DATA, buf[2]);
+
 		network_tcp_connection_close(cl->reader, "receive error");
 		return -4;
 	}
@@ -477,12 +563,19 @@ static int32_t connect_newcamd_server(void)
 	// 5. Parse CAID and PROVID(s)
 	cl->reader->caid = (uint16_t)((buf[6] << 8) | buf[7]);
 
-	/* handle special serial format in newcamd. See newcamd_auth_client */
+	// handle special serial format in newcamd. See newcamd_auth_client
 	newcamd_to_hexserial(buf + 10, cl->reader->hexserial, cl->reader->caid);
+
 	cs_log("Newcamd Server: %s:%d - UserID: %i", cl->reader->device, cl->reader->r_port, buf[3 + 2]);
-	cs_log("CAID: %04X - UA: %02X%02X%02X%02X%02X%02X%02X%02X - Provider # %i", cl->reader->caid, cl->reader->hexserial[0], cl->reader->hexserial[1], cl->reader->hexserial[2], cl->reader->hexserial[3], cl->reader->hexserial[4], cl->reader->hexserial[5], cl->reader->hexserial[6], cl->reader->hexserial[7], buf[14 + 2]);
+
+	cs_log("CAID: %04X - UA: %02X%02X%02X%02X%02X%02X%02X%02X - Provider # %i",
+			cl->reader->caid, cl->reader->hexserial[0], cl->reader->hexserial[1], cl->reader->hexserial[2],
+			cl->reader->hexserial[3], cl->reader->hexserial[4], cl->reader->hexserial[5], cl->reader->hexserial[6],
+			cl->reader->hexserial[7], buf[14 + 2]);
+
 	cl->reader->nprov = buf[14 + 2];
 	memset(cl->reader->prid, 0x00, sizeof(cl->reader->prid));
+
 	for(i = 0; i < cl->reader->nprov; i++)
 	{
 		if(caid_is_betacrypt(cl->reader->caid) || caid_is_irdeto(cl->reader->caid))
@@ -495,9 +588,14 @@ static int32_t connect_newcamd_server(void)
 			cl->reader->prid[i][2] = buf[16 + 2 + 11 * i];
 			cl->reader->prid[i][3] = buf[17 + 2 + 11 * i];
 		}
+
 		memcpy(&cl->reader->sa[i], buf + 22 + 2 + 11 * i, 4); // the 4 first bytes are not read
-		cs_log("Provider ID: %02X%02X%02X - SA: %02X%02X%02X%02X", cl->reader->prid[i][1],  cl->reader->prid[i][2], cl->reader->prid[i][3], cl->reader->sa[i][0], cl->reader->sa[i][1], cl->reader->sa[i][2], cl->reader->sa[i][3]);
+
+		cs_log("Provider ID: %02X%02X%02X - SA: %02X%02X%02X%02X",
+				cl->reader->prid[i][1], cl->reader->prid[i][2], cl->reader->prid[i][3], cl->reader->sa[i][0],
+				cl->reader->sa[i][1], cl->reader->sa[i][2], cl->reader->sa[i][3]);
 	}
+
 	memcpy(cl->reader->ncd_skey, key, 16);
 
 	// 6. Set card inserted
@@ -508,10 +606,9 @@ static int32_t connect_newcamd_server(void)
 	// Only after connect() on cl->udp_fd (Linux)
 	cl->pfd = cl->udp_fd;
 
-	if(cl->reader->ncd_disable_server_filt)    //act like mgclient
+	if(cl->reader->ncd_disable_server_filt) // act like mgclient
 	{
-		network_cmd_no_data_send(handle, &cl->ncd_msgid, MSG_SERVER_2_CLIENT_GET_VERSION,
-								 key, COMMTYPE_CLIENT);
+		network_cmd_no_data_send(handle, &cl->ncd_msgid, MSG_SERVER_2_CLIENT_GET_VERSION, key, COMMTYPE_CLIENT);
 	}
 
 	return 0;
@@ -522,57 +619,76 @@ static int32_t newcamd_connect(void)
 	struct s_client *cl = cur_client();
 
 	if(cl->reader->tcp_connected < 2 && connect_newcamd_server() < 0)
-		{ return 0; }
+	{
+		return 0;
+	}
 
 	if(!cl->udp_fd)
-		{ return 0; }
+	{
+		return 0;
+	}
 
 	return 1;
 }
 
-
-static int32_t newcamd_send(uchar *buf, int32_t ml, uint16_t sid)
+static int32_t newcamd_send(uint8_t *buf, int32_t ml, uint16_t sid)
 {
 	struct s_client *cl = cur_client();
 
 	if(!newcamd_connect())
-		{ return (-1); }
+	{
+		return -1;
+	}
 
-	return (network_message_send(cl->udp_fd, &cl->ncd_msgid,
-								 buf, ml, cl->reader->ncd_skey, COMMTYPE_CLIENT, sid, NULL));
+	return network_message_send(cl->udp_fd, &cl->ncd_msgid, buf, ml,
+								cl->reader->ncd_skey, COMMTYPE_CLIENT, sid, NULL);
 }
 
-static int32_t newcamd_recv(struct s_client *client, uchar *buf, int32_t UNUSED(l))
+static int32_t newcamd_recv(struct s_client *client, uint8_t *buf, int32_t UNUSED(l))
 {
 	int32_t rc, rs;
 
 	if(client->typ == 'c')
 	{
-		rs = network_message_receive(client->udp_fd,
-									 &client->ncd_msgid, buf,
-									 client->ncd_skey, COMMTYPE_SERVER);
+		rs = network_message_receive(client->udp_fd, &client->ncd_msgid, buf,
+									client->ncd_skey, COMMTYPE_SERVER);
 	}
 	else
 	{
-		if(!client->udp_fd) { return (-1); }
-		rs = network_message_receive(client->udp_fd,
-									 &client->ncd_msgid, buf,
-									 client->reader->ncd_skey, COMMTYPE_CLIENT);
+		if(!client->udp_fd)
+		{
+			return (-1);
+		}
+
+		rs = network_message_receive(client->udp_fd, &client->ncd_msgid, buf,
+									client->reader->ncd_skey, COMMTYPE_CLIENT);
 	}
 
-	if(rs < 5) { rc = (-1); }
-	else { rc = rs; }
+	if(rs < 5)
+	{
+		rc = -1;
+	}
+	else
+	{
+		rc = rs;
+	}
 
 	cs_log_dump_dbg(D_CLIENT, buf, rs, "received %d bytes from %s", rs, remote_txt());
+
 	client->last = time((time_t *) 0);
 
 	if(rc == -1)
 	{
 		if(rs > 0)
-			{ cs_log("packet is too small (%d bytes)", rs); }
+		{
+			cs_log("packet is too small (%d bytes)", rs);
+		}
 		else
-			{ cs_log("Connection closed to %s", remote_txt()); }
+		{
+			cs_log("Connection closed to %s", remote_txt());
+		}
 	}
+
 	return (rc);
 }
 
@@ -586,17 +702,29 @@ static void mk_user_au_ftab(struct s_reader *aureader, FILTER *filt)
 
 	filt->caid = aureader->caid;
 	if(filt->caid == 0)
+	{
 		filt->caid = old_filter.caid;
+	}
 
 	for(i = 0; i < aureader->nprov && filt->nprids < CS_MAXPROV; i++)
-		{ filt->prids[filt->nprids++] = b2i(3, &aureader->prid[i][1]); }
+	{
+		filt->prids[filt->nprids++] = b2i(3, &aureader->prid[i][1]);
+	}
 
 	for(i = 0; i < old_filter.nprids && filt->nprids < CS_MAXPROV; i++)
 	{
 		for(j = found = 0; (!found) && (j < filt->nprids); j++)
-			if(old_filter.prids[i] == filt->prids[j]) { found = 1; }
+		{
+			if(old_filter.prids[i] == filt->prids[j])
+			{
+				found = 1;
+			}
+		}
+
 		if(!found)
-			{ filt->prids[filt->nprids++] = old_filter.prids[i]; }
+		{
+			filt->prids[filt->nprids++] = old_filter.prids[i];
+		}
 	}
 }
 
@@ -609,7 +737,10 @@ static void mk_user_ftab(FILTER *filt)
 
 	port_idx = cl->port_idx;
 	if(!cfg.ncd_ptab.ports[port_idx].ncd)
+	{
 		return;
+	}
+
 	FILTER *psfilt = &cfg.ncd_ptab.ports[port_idx].ncd->ncd_ftab.filts[0];
 
 	// 1. CAID
@@ -617,8 +748,12 @@ static void mk_user_ftab(FILTER *filt)
 	for(c = i = 0; i < cl->ctab.ctnum; i++)
 	{
 		CAIDTAB_DATA *d = &cl->ctab.ctdata[i];
+
 		int32_t ctab_caid = d->caid & d->mask;
-		if(ctab_caid) { c++; }
+		if(ctab_caid)
+		{
+			c++;
+		}
 
 		if(psfilt->caid == ctab_caid)
 		{
@@ -626,6 +761,7 @@ static void mk_user_ftab(FILTER *filt)
 			break;
 		}
 	}
+
 	if(c && !filt->caid)
 	{
 		cs_log("no valid CAID found in CAID for user '%s'", cl->account->usr);
@@ -634,7 +770,7 @@ static void mk_user_ftab(FILTER *filt)
 
 	// search CAID in client IDENT
 	cs_log_dbg(D_CLIENT, "client[%8lX].%s nfilts=%d, filt.caid=%04X", (unsigned long)pthread_self(),
-				  cl->account->usr, cl->ftab.nfilts, filt->caid);
+				cl->account->usr, cl->ftab.nfilts, filt->caid);
 
 	if(!filt->caid && cl->ftab.nfilts)
 	{
@@ -642,13 +778,18 @@ static void mk_user_ftab(FILTER *filt)
 		for(i = fcaids = 0; i < cl->ftab.nfilts; i++)
 		{
 			uint16_t ucaid = cl->ftab.filts[i].caid;
-			if(ucaid) { fcaids++; }
+			if(ucaid)
+			{
+				fcaids++;
+			}
+
 			if(ucaid && psfilt->caid == ucaid)
 			{
 				filt->caid = ucaid;
 				break;
 			}
 		}
+
 		if(fcaids == cl->ftab.nfilts && !filt->caid)
 		{
 			cs_log("no valid CAID found in IDENT for user '%s'", cl->account->usr);
@@ -656,8 +797,12 @@ static void mk_user_ftab(FILTER *filt)
 			return;
 		}
 	}
+
 	// empty client CAID - use server CAID
-	if(!filt->caid) { filt->caid = psfilt->caid; }
+	if(!filt->caid)
+	{
+		filt->caid = psfilt->caid;
+	}
 
 	// 2. PROVID
 	if(!cl->ftab.nfilts)
@@ -668,14 +813,25 @@ static void mk_user_ftab(FILTER *filt)
 			// use server PROVID(s) (and only those which are in user's groups)
 			add = 0;
 			struct s_reader *rdr;
+
 			for(rdr = first_active_reader; rdr ; rdr = rdr->next)
+			{
 				if(rdr->grp & cl->grp)
 				{
 					if(!rdr->ftab.nfilts)
 					{
-						if(is_network_reader(rdr)) { add = 1; }
+						if(is_network_reader(rdr))
+						{
+							add = 1;
+						}
+
 						for(j = 0; !add && j < rdr->nprov; j++)
-							if(b2i(3, &rdr->prid[j][1]) == psfilt->prids[i]) { add = 1; }
+						{
+							if(b2i(3, &rdr->prid[j][1]) == psfilt->prids[i])
+							{
+								add = 1;
+							}
+						}
 					}
 					else
 					{
@@ -685,13 +841,24 @@ static void mk_user_ftab(FILTER *filt)
 							if(!rcaid || rcaid == filt->caid)
 							{
 								for(k = 0; !add && k < rdr->ftab.filts[j].nprids; k++)
-									if(rdr->ftab.filts[j].prids[k] == psfilt->prids[i]) { add = 1; }
+								{
+									if(rdr->ftab.filts[j].prids[k] == psfilt->prids[i])
+									{
+										add = 1;
+									}
+								}
 							}
 						}
 					}
 				}
-			if(add) { filt->prids[filt->nprids++] = psfilt->prids[i]; }
+			}
+
+			if(add)
+			{
+				filt->prids[filt->nprids++] = psfilt->prids[i];
+			}
 		}
+
 		memcpy(filt, psfilt, sizeof(*filt));
 		return;
 	}
@@ -700,17 +867,24 @@ static void mk_user_ftab(FILTER *filt)
 	for(j = 0; j < cl->ftab.nfilts; j++)
 	{
 		uint32_t ucaid = cl->ftab.filts[j].caid;
+
 		cs_log_dbg(D_CLIENT, "client caid %d: %04X", j, ucaid);
+
 		if(!ucaid || ucaid == filt->caid)
 		{
 			for(i = 0; i < psfilt->nprids && filt->nprids < CS_MAXPROV; i++)
 			{
 				cs_log_dbg(D_CLIENT, "search server provid %d: %06X", i, psfilt->prids[i]);
+
 				if(cl->ftab.filts[j].nprids)
 				{
 					for(k = 0; k < cl->ftab.filts[j].nprids && filt->nprids < CS_MAXPROV; k++)
+					{
 						if(cl->ftab.filts[j].prids[k] == psfilt->prids[i])
-							{ filt->prids[filt->nprids++] = cl->ftab.filts[j].prids[k]; }
+						{
+							filt->prids[filt->nprids++] = cl->ftab.filts[j].prids[k];
+						}
+					}
 				}
 				else
 				{
@@ -731,14 +905,14 @@ static void mk_user_ftab(FILTER *filt)
 static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 {
 	int32_t i, ok, rc, sid_list;
-	uchar *usr = NULL, *pwd = NULL;
+	uint8_t *usr = NULL, *pwd = NULL;
 	struct s_auth *account;
-	uchar buf[14];
-	uchar key[16];
-	uchar passwdcrypt[120];
+	uint8_t buf[14];
+	uint8_t key[16];
+	uint8_t passwdcrypt[120];
 	struct s_reader *aureader = NULL, *rdr = NULL;
 	struct s_client *cl = cur_client();
-	uchar mbuf[CWS_NETMSGSIZE];
+	uint8_t mbuf[CWS_NETMSGSIZE];
 
 	sid_list = 0;
 
@@ -765,9 +939,10 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 		if(mbuf[2] != MSG_CLIENT_2_SERVER_LOGIN)
 		{
 			cs_log_dbg(D_CLIENT, "expected MSG_CLIENT_2_SERVER_LOGIN (%02X), received %02X",
-						  MSG_CLIENT_2_SERVER_LOGIN, mbuf[2]);
+						MSG_CLIENT_2_SERVER_LOGIN, mbuf[2]);
 			return -1;
 		}
+
 		usr = mbuf + 5;
 		pwd = usr + strlen((char *)usr) + 1;
 	}
@@ -779,36 +954,46 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 
 	cl->ncd_client_id = (mbuf[0] << 8) | mbuf[1];
 	const char *client_name = newcamd_get_client_name(cl->ncd_client_id);
+
 #if defined(TCP_KEEPIDLE)
-	if(cl->ncd_client_id == 0x4453)     // DiabloWifi has problems with TCPKeepAlive
+	if(cl->ncd_client_id == 0x4453) // DiabloWifi has problems with TCPKeepAlive
 	{
 		int32_t flag = 600;
-		if(setsockopt(cl->udp_fd, IPPROTO_TCP, TCP_KEEPIDLE, &flag, sizeof(flag)) && errno != EBADF)    //send first keepalive packet after 600 seconds of last package received (keepalive packets included)
+
+		// send first keepalive packet after 600 seconds of
+		// last package received (keepalive packets included)
+		if(setsockopt(cl->udp_fd, IPPROTO_TCP, TCP_KEEPIDLE, &flag, sizeof(flag)) && errno != EBADF)
 		{
 			cs_log("Setting TCP_KEEPIDLE failed, errno=%d, %s", errno, strerror(errno));
 		}
-		else { cs_log("WARNING: Setting TCP_KEEPIDLE to 10 minutes for bugged DiabloWifi. Note that this might lead to not detected broken connections or multiple connections."); }
+		else
+		{
+			cs_log("WARNING: Setting TCP_KEEPIDLE to 10 minutes for bugged DiabloWifi. Note that this might lead to not detected broken connections or multiple connections.");
+		}
 	}
 #endif
 
-	if(cl->ncd_proto == NCD_525 && 0x6D == mbuf[0]
-			&& 0x67 == mbuf[1] && 0x11 == cl->ncd_header[11])
+	if(cl->ncd_proto == NCD_525 && 0x6D == mbuf[0] && 0x67 == mbuf[1] && 0x11 == cl->ncd_header[11])
 	{
 		sid_list = 1;
 	}
 
-	for(ok = 0, account = cfg.account; (usr) && (account) && (!ok); account = account->next)
+	for(ok = 0, account = cfg.account; usr && account && (!ok); account = account->next)
 	{
 		cs_log_dbg(D_CLIENT, "account->usr=%s", account->usr);
+
 		if(strcmp((char *)usr, account->usr) == 0)
 		{
 			__md5_crypt(ESTR(account->pwd), "$1$abcdefgh$", (char *)passwdcrypt);
 			cs_log_dbg(D_CLIENT, "account->pwd=%s", passwdcrypt);
+
 			if(strcmp((char *)pwd, (const char *)passwdcrypt) == 0)
 			{
 				cl->crypted = 1;
 				char e_txt[20];
+
 				snprintf(e_txt, 20, "%s:%d", "newcamd", cfg.ncd_ptab.ports[cl->port_idx].s_port);
+
 				if((rc = cs_auth_client(cl, account, e_txt)) == 2)
 				{
 					cs_log("hostname or ip mismatch for user %s (%s)", usr, client_name);
@@ -827,7 +1012,9 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 				}
 			}
 			else
-				{ cs_log("user %s is providing a wrong password (%s)", usr, client_name); }
+			{
+				cs_log("user %s is providing a wrong password (%s)", usr, client_name);
+			}
 		}
 	}
 
@@ -841,7 +1028,10 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 	for(rdr = first_active_reader; rdr ; rdr = rdr->next)
 	{
 		if(!cfg.ncd_ptab.ports[cl->port_idx].ncd)
-			{ continue; }
+		{
+			continue;
+		}
+
 		if(rdr->caid == cfg.ncd_ptab.ports[cl->port_idx].ncd->ncd_ftab.filts[0].caid)
 		{
 			if(rdr->card_status == CARD_NEED_INIT)
@@ -859,11 +1049,14 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 		while((rdr = ll_iter_next(&itr)))
 		{
 			int32_t n;
+
 			if(!cfg.ncd_ptab.ports[cl->port_idx].ncd)
-				{ continue; }
+			{
+				continue;
+			}
 
 			if(cfg.ncd_ptab.ports[cl->port_idx].ncd->ncd_ftab.filts[0].caid == 0
-				&& !rdr->audisabled && (is_network_reader(rdr) || rdr->card_status == CARD_INSERTED) )
+				&& !rdr->audisabled && (is_network_reader(rdr) || rdr->card_status == CARD_INSERTED))
 			{
 				aureader = rdr;
 				break;
@@ -871,14 +1064,18 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 
 			for(n = 0; n < cfg.ncd_ptab.ports[cl->port_idx].ncd->ncd_ftab.filts[0].nprids; n++)
 			{
-				if(emm_reader_match(rdr, cfg.ncd_ptab.ports[cl->port_idx].ncd->ncd_ftab.filts[0].caid, cfg.ncd_ptab.ports[cl->port_idx].ncd->ncd_ftab.filts[0].prids[n]))
+				if(emm_reader_match(rdr, cfg.ncd_ptab.ports[cl->port_idx].ncd->ncd_ftab.filts[0].caid,
+									cfg.ncd_ptab.ports[cl->port_idx].ncd->ncd_ftab.filts[0].prids[n]))
 				{
 					aureader = rdr;
 					break;
 				}
 			}
+
 			if(aureader)
-				{ break; }
+			{
+				break;
+			}
 		}
 
 		if(aureader)
@@ -892,8 +1089,8 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 	}
 
 	network_cmd_no_data_send(cl->udp_fd, &cl->ncd_msgid,
-							 (ok) ? MSG_CLIENT_2_SERVER_LOGIN_ACK : MSG_CLIENT_2_SERVER_LOGIN_NAK,
-							 cl->ncd_skey, COMMTYPE_SERVER);
+							(ok) ? MSG_CLIENT_2_SERVER_LOGIN_ACK : MSG_CLIENT_2_SERVER_LOGIN_NAK,
+							cl->ncd_skey, COMMTYPE_SERVER);
 
 	if(ok)
 	{
@@ -907,10 +1104,11 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 		if(i > 0)
 		{
 			int32_t j, len = 15;
+
 			if(mbuf[2] != MSG_CARD_DATA_REQ)
 			{
 				cs_log_dbg(D_CLIENT, "expected MSG_CARD_DATA_REQ (%02X), received %02X",
-							  MSG_CARD_DATA_REQ, mbuf[2]);
+							MSG_CARD_DATA_REQ, mbuf[2]);
 				return -1;
 			}
 
@@ -922,7 +1120,7 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 #ifdef WITH_EMU
 				if(aureader->typ == R_EMU)
 				{
-					usr_filter = * get_emu_prids_for_caid(aureader, cfg.ncd_ptab.ports[cl->port_idx].ncd->ncd_ftab.filts[0].caid);
+					usr_filter = *get_emu_prids_for_caid(aureader, cfg.ncd_ptab.ports[cl->port_idx].ncd->ncd_ftab.filts[0].caid);
 				}
 				else
 #endif
@@ -941,28 +1139,30 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 			mbuf[2] = 0x00;
 
 			if(aureader)
-				{ mbuf[3] = 1; }
+			{
+				mbuf[3] = 1;
+			}
 			else
-				{ mbuf[3] = get_threadnum(cl) + 10; } // Unique user number
+			{
+				mbuf[3] = get_threadnum(cl) + 10; // Unique user number
+			}
 
-			mbuf[4] = (uchar)(pufilt->caid >> 8);
-			mbuf[5] = (uchar)(pufilt->caid);
+			mbuf[4] = (uint8_t)(pufilt->caid >> 8);
+			mbuf[5] = (uint8_t)(pufilt->caid);
 			mbuf[6] = 0x00;
 			mbuf[7] = 0x00;
 
 			if(aureader)
-				{ hexserial_to_newcamd(aureader->hexserial, mbuf + 8, pufilt->caid); }
-			else
-				{ memset(&mbuf[8], 0, 6); } //mbuf[8] - mbuf[13]
-
-#ifdef WITH_EMU
-			if(aureader && aureader->typ == R_EMU && caid_is_dre(pufilt->caid))
 			{
-				mbuf[10] = aureader->dre36_force_group;
+				hexserial_to_newcamd(aureader->hexserial, mbuf + 8, pufilt->caid);
 			}
-#endif
+			else
+			{
+				memset(&mbuf[8], 0, 6); // mbuf[8] - mbuf[13]
+			}
 
 			mbuf[14] = pufilt->nprids;
+
 			for(j = 0; j < pufilt->nprids; j++)
 			{
 				if(caid_is_betacrypt(pufilt->caid) || caid_is_irdeto(pufilt->caid))
@@ -973,23 +1173,26 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 				}
 				else
 				{
-					mbuf[15 + 11 * j] = (uchar)(pufilt->prids[j] >> 16);
-					mbuf[16 + 11 * j] = (uchar)(pufilt->prids[j] >> 8);
-					mbuf[17 + 11 * j] = (uchar)(pufilt->prids[j]);
+					mbuf[15 + 11 * j] = (uint8_t)(pufilt->prids[j] >> 16);
+					mbuf[16 + 11 * j] = (uint8_t)(pufilt->prids[j] >> 8);
+					mbuf[17 + 11 * j] = (uint8_t)(pufilt->prids[j]);
 				}
+
 				mbuf[18 + 11 * j] = 0x00;
 				mbuf[19 + 11 * j] = 0x00;
 				mbuf[20 + 11 * j] = 0x00;
 				mbuf[21 + 11 * j] = 0x00;
+
 				if(aureader)
 				{
 					// check if user provid from IDENT exists on card
 					int32_t k, found;
 					uint32_t rprid;
 					found = 0;
+
 					if(pufilt->caid == aureader->caid && aureader->typ != R_EMU)
 					{
-						for(k = 0; (k < aureader->nprov); k++)
+						for(k = 0; k < aureader->nprov; k++)
 						{
 							rprid = b2i(3, &aureader->prid[k][1]);
 							if(rprid == pufilt->prids[j])
@@ -1008,36 +1211,12 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 									mbuf[24 + 11 * j] = aureader->sa[k][2];
 									mbuf[25 + 11 * j] = aureader->sa[k][3];
 								}
+
 								found = 1;
 								break;
 							}
 						}
 					}
-#ifdef WITH_EMU
-					else if(aureader->typ == R_EMU)
-					{
-						if(caid_is_dre(pufilt->caid))
-						{
-							found = 1;
-							memset(&mbuf[22 + 11 * j] ,0 ,4);
-							switch((uchar)(pufilt->prids[j]))
-							{
-								case 0x11:
-									mbuf[22 + 11 * j] = aureader->dre36_force_group;
-									break;
-								case 0x14:
-									mbuf[22 + 11 * j] = aureader->dre56_force_group;
-									break;
-								case 0xfe:
-									mbuf[22 + 11 * j] = 0xED;
-									mbuf[25 + 11 * j] = 0x02;
-									break;
-								default:
-									found = 0;
-							}
-						}
-					}
-#endif
 
 					if(!found)
 					{
@@ -1052,9 +1231,9 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 					if(caid_is_betacrypt(pufilt->caid) || caid_is_irdeto(pufilt->caid))
 					{
 						mbuf[22 + 11 * j] = 0x00;
-						mbuf[23 + 11 * j] = (uchar)(pufilt->prids[j] >> 16);
-						mbuf[24 + 11 * j] = (uchar)(pufilt->prids[j] >> 8);
-						mbuf[25 + 11 * j] = (uchar)(pufilt->prids[j]);
+						mbuf[23 + 11 * j] = (uint8_t)(pufilt->prids[j] >> 16);
+						mbuf[24 + 11 * j] = (uint8_t)(pufilt->prids[j] >> 8);
+						mbuf[25 + 11 * j] = (uint8_t)(pufilt->prids[j]);
 					}
 					else
 					{
@@ -1064,6 +1243,7 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 						mbuf[25 + 11 * j] = 0x00;
 					}
 				}
+
 				len += 11;
 			}
 
@@ -1073,15 +1253,22 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 			if(aureader)
 			{
 				if((aureader->blockemm & EMM_GLOBAL) && !(aureader->saveemm & EMM_GLOBAL))
-					{ cd.sid |= 4; }
+				{
+					cd.sid |= 4;
+				}
+
 				if((aureader->blockemm & EMM_SHARED) && !(aureader->saveemm & EMM_SHARED))
-					{ cd.sid |= 2; }
+				{
+					cd.sid |= 2;
+				}
+
 				if((aureader->blockemm & EMM_UNIQUE) && !(aureader->saveemm & EMM_UNIQUE))
-					{ cd.sid |= 1; }
+				{
+					cd.sid |= 1;
+				}
 			}
 
-			if(network_message_send(cl->udp_fd, &cl->ncd_msgid,
-									mbuf, len, key, COMMTYPE_SERVER, 0, &cd) < 0)
+			if(network_message_send(cl->udp_fd, &cl->ncd_msgid, mbuf, len, key, COMMTYPE_SERVER, 0, &cd) < 0)
 			{
 				return -1;
 			}
@@ -1089,13 +1276,16 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 
 		// send SID list
 		if(sid_list)
-			{ send_sid_list(); }
+		{
+			send_sid_list();
+		}
 	}
 	else
 	{
 		cs_auth_client(cl, 0, usr ? "login failure" : "no such user");
 		return -1;
 	}
+
 	return 0;
 }
 
@@ -1103,7 +1293,7 @@ static void newcamd_send_dcw(struct s_client *client, ECM_REQUEST *er)
 {
 	int32_t len;
 	uint16_t cl_msgid;
-	uchar mbuf[19];
+	uint8_t mbuf[19];
 
 	if(!client->udp_fd)
 	{
@@ -1113,7 +1303,8 @@ static void newcamd_send_dcw(struct s_client *client, ECM_REQUEST *er)
 
 	cl_msgid = er->msgid;
 	mbuf[0] = er->ecm[0];
-	if(er->rc >= E_NOTFOUND /*not found*/)
+
+	if(er->rc >= E_NOTFOUND) // not found
 	{
 		len = 3;
 		mbuf[1] = mbuf[2] = 0x00;
@@ -1127,25 +1318,26 @@ static void newcamd_send_dcw(struct s_client *client, ECM_REQUEST *er)
 
 	cs_log_dbg(D_CLIENT, "ncd_send_dcw: er->msgid=%d, cl_msgid=%d, %02X", er->msgid, cl_msgid, mbuf[0]);
 
-	network_message_send(client->udp_fd, &cl_msgid, mbuf, len,
-						 client->ncd_skey, COMMTYPE_SERVER, 0, NULL);
+	network_message_send(client->udp_fd, &cl_msgid, mbuf, len, client->ncd_skey, COMMTYPE_SERVER, 0, NULL);
 }
 
-static void newcamd_process_ecm(struct s_client *cl, uchar *buf, int32_t len)
+static void newcamd_process_ecm(struct s_client *cl, uint8_t *buf, int32_t len)
 {
 	int32_t pi;
 	ECM_REQUEST *er;
 	uint16_t ecmlen;
 
 	if(len < 5)
-		{ return; }
-
-	ecmlen = SCT_LEN((&buf[2]));
-	if(ecmlen < 3 || ecmlen > MAX_ECM_SIZE || ecmlen+2 > len)
 	{
 		return;
 	}
-	
+
+	ecmlen = SCT_LEN((&buf[2]));
+	if(ecmlen < 3 || ecmlen > MAX_ECM_SIZE || ecmlen + 2 > len)
+	{
+		return;
+	}
+
 	if(!(er = get_ecmtask()))
 	{
 		return;
@@ -1154,21 +1346,27 @@ static void newcamd_process_ecm(struct s_client *cl, uchar *buf, int32_t len)
 	// save client ncd_msgid
 	er->msgid = cl->ncd_msgid;
 	er->ecmlen = ecmlen;
+
 	cs_log_dbg(D_CLIENT, "ncd_process_ecm: er->msgid=%d len=%d ecmlen=%d", er->msgid, len, er->ecmlen);
+
 	er->srvid = cl->ncd_header[4] << 8 | cl->ncd_header[5];
 	er->caid = cl->ncd_header[6] << 8 | cl->ncd_header[7];
 	er->prid = cl->ncd_header[8] << 16 | cl->ncd_header[9] << 8 | cl->ncd_header[10];
+
 	if(!er->caid)
 	{
 		pi = cl->port_idx;
 		if(cfg.ncd_ptab.nports && cfg.ncd_ptab.nports >= pi && cfg.ncd_ptab.ports[pi].ncd)
-			{ er->caid = cfg.ncd_ptab.ports[pi].ncd->ncd_ftab.filts[0].caid; }
+		{
+			er->caid = cfg.ncd_ptab.ports[pi].ncd->ncd_ftab.filts[0].caid;
+		}
 	}
+
 	memcpy(er->ecm, buf + 2, er->ecmlen);
 	get_cw(cl, er);
 }
 
-static void newcamd_process_emm(uchar *buf, int32_t len)
+static void newcamd_process_emm(uint8_t *buf, int32_t len)
 {
 	int32_t ok = 1, provid;
 	uint16_t caid = 0;
@@ -1176,56 +1374,65 @@ static void newcamd_process_emm(uchar *buf, int32_t len)
 	EMM_PACKET epg;
 
 	if(len < 3)
-		{ return; }
+	{
+		return;
+	}
 
 	memset(&epg, 0, sizeof(epg));
 
 	epg.emmlen = SCT_LEN(buf);
 	if(epg.emmlen > MAX_EMM_SIZE || epg.emmlen > len)
-		{ return; }
+	{
+		return;
+	}
 
 	caid = cfg.ncd_ptab.ports[cl->port_idx].ncd->ncd_ftab.filts[0].caid;
-	epg.caid[0] = (uchar)(caid >> 8);
-	epg.caid[1] = (uchar)(caid);
+
+	epg.caid[0] = (uint8_t)(caid >> 8);
+	epg.caid[1] = (uint8_t)(caid);
 
 	provid = cfg.ncd_ptab.ports[cl->port_idx].ncd->ncd_ftab.filts[0].prids[0];
 
-	epg.provid[0] = (uchar)(provid>>24);
-	epg.provid[1] = (uchar)(provid>>16);
-	epg.provid[2] = (uchar)(provid>>8);
-	epg.provid[3] = (uchar)(provid);
+	epg.provid[0] = (uint8_t)(provid >> 24);
+	epg.provid[1] = (uint8_t)(provid >> 16);
+	epg.provid[2] = (uint8_t)(provid >> 8);
+	epg.provid[3] = (uint8_t)(provid);
 
-	/*  if (caid == 0x0500)
-	  {
-	    uint16_t emm_head;
+	/*if(caid == 0x0500)
+	{
+		uint16_t emm_head;
 
-	    emm_head = (buf[0]<<8) | buf[1];
-	    switch( emm_head )
-	    {
-	      case 0x8e70:  // EMM-S
-	        memcpy(epg.hexserial+1, buf+3, 4);
-	        epg.hexserial[4]=aureader->hexserial[4];
-	        break;
-	      case 0x8870:  // EMM-U
-	      case 0x8c70:  // confidential ?
-	      default:
-	        cs_log("unsupported emm type: %04X", emm_head);
-	        ok=0;
-	    }
-	    if( !ok ) cs_log("only EMM-S supported");
-	  }
-	  else*/
+		emm_head = (buf[0]<<8) | buf[1];
+		switch( emm_head )
+		{
+			case 0x8e70: // EMM-S
+				memcpy(epg.hexserial+1, buf+3, 4);
+				epg.hexserial[4]=aureader->hexserial[4];
+				break;
+			case 0x8870: // EMM-U
+			case 0x8c70: // confidential?
+			default:
+				cs_log("unsupported emm type: %04X", emm_head);
+				ok=0;
+		}
+
+		if(!ok) cs_log("only EMM-S supported");
+	}
+	else*/
 
 	memcpy(epg.emm, buf, epg.emmlen);
+
 	if(ok)
-		{ do_emm(cl, &epg); }
+	{
+		do_emm(cl, &epg);
+	}
 
 	// Should always send an answer to client (also if au is disabled),
 	// some clients will disconnect if they get no answer
 	buf[1] = 0x10;
 	buf[2] = 0x00;
-	network_message_send(cl->udp_fd, &cl->ncd_msgid, buf, 3,
-						 cl->ncd_skey, COMMTYPE_SERVER, 0, NULL);
+
+	network_message_send(cl->udp_fd, &cl->ncd_msgid, buf, 3, cl->ncd_skey, COMMTYPE_SERVER, 0, NULL);
 }
 
 static void newcamd_report_cards(struct s_client *client)
@@ -1233,18 +1440,27 @@ static void newcamd_report_cards(struct s_client *client)
 	int32_t j, k, l;
 	uint8_t buf[512];
 	custom_data_t *cd;
+
 	if(!cs_malloc(&cd, sizeof(struct custom_data)))
-		{ return; }
+	{
+		return;
+	}
+
 	memset(buf, 0, sizeof(buf));
 
 	cd->sid = cfg.ncd_ptab.ports[client->port_idx].s_port;
-
 	buf[0] = MSG_SERVER_2_CLIENT_ADDCARD;
+
 	struct s_reader *rdr;
 	for(rdr = first_active_reader; rdr ; rdr = rdr->next)
 	{
 		int32_t flt = 0;
-		if(!(rdr->grp & client->grp)) { continue; }  //test - skip unaccesible readers
+
+		if(!(rdr->grp & client->grp))
+		{
+			continue; // test - skip unaccesible readers
+		}
+
 		if(rdr->ftab.filts)
 		{
 			for(j = 0; j < rdr->ftab.nfilts; j++)
@@ -1252,17 +1468,23 @@ static void newcamd_report_cards(struct s_client *client)
 				if(rdr->ftab.filts[j].caid)
 				{
 					cd->caid = rdr->ftab.filts[j].caid;
+
 					if(!rdr->ftab.filts[j].nprids)
 					{
 						cd->provid = 0;
 						cs_log_dbg(D_CLIENT, "newcamd: extended: report card %04X@%06X svc", cd->caid, cd->provid);
-						network_message_send(client->udp_fd, &client->ncd_msgid, buf, 3, client->ncd_skey, COMMTYPE_SERVER, 0, cd);
+
+						network_message_send(client->udp_fd, &client->ncd_msgid, buf, 3,
+											client->ncd_skey, COMMTYPE_SERVER, 0, cd);
 					}
+
 					for(k = 0; k < rdr->ftab.filts[j].nprids; k++)
 					{
 						cd->provid = rdr->ftab.filts[j].prids[k];
 						cs_log_dbg(D_CLIENT, "newcamd: extended: report card %04X@%06X svc", cd->caid, cd->provid);
-						network_message_send(client->udp_fd, &client->ncd_msgid, buf, 3, client->ncd_skey, COMMTYPE_SERVER, 0, cd);
+
+						network_message_send(client->udp_fd, &client->ncd_msgid, buf, 3,
+											client->ncd_skey, COMMTYPE_SERVER, 0, cd);
 						flt = 1;
 					}
 				}
@@ -1278,43 +1500,57 @@ static void newcamd_report_cards(struct s_client *client)
 				{
 					cd->provid = 0;
 					cs_log_dbg(D_CLIENT, "newcamd: extended: report card %04X@%06X caid", cd->caid, cd->provid);
-					network_message_send(client->udp_fd, &client->ncd_msgid, buf, 3, client->ncd_skey, COMMTYPE_SERVER, 0, cd);
+
+					network_message_send(client->udp_fd, &client->ncd_msgid, buf, 3,
+										client->ncd_skey, COMMTYPE_SERVER, 0, cd);
 				}
+
 				for(j = 0; j < rdr->nprov; j++)
 				{
 					cd->provid = (rdr->prid[j][1]) << 16 | (rdr->prid[j][2] << 8) | rdr->prid[j][3];
 					cs_log_dbg(D_CLIENT, "newcamd: extended: report card %04X@%06X caid", cd->caid, cd->provid);
-					network_message_send(client->udp_fd, &client->ncd_msgid, buf, 3, client->ncd_skey, COMMTYPE_SERVER, 0, cd);
+
+					network_message_send(client->udp_fd, &client->ncd_msgid, buf, 3,
+										client->ncd_skey, COMMTYPE_SERVER, 0, cd);
 				}
 			}
 		}
 	}
+
 	if(cfg.sidtab && client->account)
 	{
 		struct s_sidtab *ptr;
 		for(j = 0, ptr = cfg.sidtab; ptr; ptr = ptr->next, j++)
 		{
 			if(client->account->sidtabs.ok & ((SIDTABBITS)1 << j))
+			{
 				for(k = 0; k < ptr->num_caid; k++)
 				{
 					cd->caid = ptr->caid[k];
+
 					if(!ptr->num_provid)
 					{
 						cd->provid = 0;
 						cs_log_dbg(D_CLIENT, "newcamd: extended: report card %04X@%06X acs", cd->caid, cd->provid);
-						network_message_send(client->udp_fd, &client->ncd_msgid, buf, 3, client->ncd_skey, COMMTYPE_SERVER, 0, cd);
+
+						network_message_send(client->udp_fd, &client->ncd_msgid, buf, 3,
+											client->ncd_skey, COMMTYPE_SERVER, 0, cd);
 					}
+
 					for(l = 0; l < ptr->num_provid; l++)
 					{
 						cd->provid = ptr->provid[l];
 						cs_log_dbg(D_CLIENT, "newcamd: extended: report card %04X@%06X acs", cd->caid, cd->provid);
-						network_message_send(client->udp_fd, &client->ncd_msgid, buf, 3, client->ncd_skey, COMMTYPE_SERVER, 0, cd);
+
+						network_message_send(client->udp_fd, &client->ncd_msgid, buf, 3,
+											client->ncd_skey, COMMTYPE_SERVER, 0, cd);
 					}
 				}
+			}
 		}
 	}
-	NULLFREE(cd);
 
+	NULLFREE(cd);
 }
 
 static void newcamd_server_init(struct s_client *client)
@@ -1326,12 +1562,12 @@ static void newcamd_server_init(struct s_client *client)
 
 	if(cfg.ncd_ptab.ports[client->port_idx].ncd && cfg.ncd_ptab.ports[client->port_idx].ncd->ncd_key_is_set)
 	{
-		//port has a des key specified
+		// port has a des key specified
 		res = newcamd_auth_client(client->ip, cfg.ncd_ptab.ports[client->port_idx].ncd->ncd_key);
 	}
 	else
 	{
-		//default global des key
+		// default global des key
 		res = newcamd_auth_client(client->ip, cfg.ncd_key);
 	}
 
@@ -1355,47 +1591,62 @@ static void newcamd_server_init(struct s_client *client)
 
 static void newcamd_send_version(struct s_client *client)
 {
-	uchar buf[30];
+	uint8_t buf[30];
 	memset(buf, 0, sizeof(buf));
+
 	buf[0] = MSG_SERVER_2_CLIENT_GET_VERSION;
 	buf[1] = EXT_VERSION_LEN >> 8;
 	buf[2] = EXT_VERSION_LEN & 0xFF;
 	memcpy(buf + 3, EXT_VERSION_STR, EXT_VERSION_LEN);
-	network_message_send(client->udp_fd, &client->ncd_msgid, buf, EXT_VERSION_LEN + 3, client->ncd_skey, COMMTYPE_SERVER, 0, NULL);
+
+	network_message_send(client->udp_fd, &client->ncd_msgid, buf, EXT_VERSION_LEN + 3,
+						client->ncd_skey, COMMTYPE_SERVER, 0, NULL);
 }
 
-static void *newcamd_server(struct s_client *client, uchar *mbuf, int32_t len)
+static void *newcamd_server(struct s_client *client, uint8_t *mbuf, int32_t len)
 {
 	// check for clienttimeout, if timeout occurs try to send keepalive / wait for answer
 	// befor client was disconnected. If keepalive was disabled, exit after clienttimeout
 
 	if(len < 3)
-		{ return NULL; }
+	{
+		return NULL;
+	}
 
 	cs_log_dbg(D_CLIENT, "newcamd: got cmd %d", mbuf[2]);
 
 	switch(mbuf[2])
 	{
-	case 0x80:
-	case 0x81:
-		newcamd_process_ecm(client, mbuf, len);
-		break;
-
-	case MSG_SERVER_2_CLIENT_GET_VERSION:
-		cs_log_dbg(D_CLIENT, "newcamd: extended: send Version 1.67");
-		newcamd_send_version(client);
-		break;
-
-	case MSG_KEEPALIVE:
-		newcamd_reply_ka();
-		break;
-
-	default:
-		if(mbuf[2] > 0x81 && mbuf[2] < 0x92)
-			{ newcamd_process_emm(mbuf + 2, len - 2); }
-		else
+		case 0x80:
+		case 0x81:
 		{
-			cs_log_dbg(D_CLIENT, "unknown newcamd command! (%d)", mbuf[2]);
+			newcamd_process_ecm(client, mbuf, len);
+			break;
+		}
+
+		case MSG_SERVER_2_CLIENT_GET_VERSION:
+		{
+			cs_log_dbg(D_CLIENT, "newcamd: extended: send Version 1.67");
+			newcamd_send_version(client);
+			break;
+		}
+
+		case MSG_KEEPALIVE:
+		{
+			newcamd_reply_ka();
+			break;
+		}
+
+		default:
+		{
+			if(mbuf[2] > 0x81 && mbuf[2] < 0x92)
+			{
+				newcamd_process_emm(mbuf + 2, len - 2);
+			}
+			else
+			{
+				cs_log_dbg(D_CLIENT, "unknown newcamd command! (%d)", mbuf[2]);
+			}
 		}
 	}
 
@@ -1407,21 +1658,30 @@ void newcamd_idle(void)
 	struct s_client *client = cur_client();
 	struct s_reader *rdr = client->reader;
 
-	if(!rdr) { return; }
+	if(!rdr)
+	{
+		return;
+	}
 
 	if(rdr->tcp_ito > 0)
 	{
 		// inactivitytimeout > 0 enables protocol keepalive packages
 		time_t now;
 		int32_t time_diff;
+
 		time(&now);
 		time_diff = llabs(now - rdr->last_s);
+
 		if(time_diff > (rdr->tcp_ito))
 		{
 			if(client->ncd_keepalive)
-				{ newcamd_reply_ka(); }
+			{
+				newcamd_reply_ka();
+			}
 			else
-				{ network_tcp_connection_close(client->reader, "inactivity"); }
+			{
+				network_tcp_connection_close(client->reader, "inactivity");
+			}
 		}
 	}
 	else if(rdr->tcp_ito == -1)
@@ -1437,21 +1697,21 @@ void newcamd_idle(void)
 
 int32_t newcamd_client_init(struct s_client *client)
 {
-
 	char ptxt[1] = { "\0" };
 
 	client->ncd_proto = client->reader->ncd_proto;
 
-	cs_log("proxy %s:%d newcamd52%d (fd=%d%s)",
-		   client->reader->device, client->reader->r_port,
-		   (client->reader->ncd_proto == NCD_525) ? 5 : 4, client->udp_fd, ptxt);
+	cs_log("proxy %s:%d newcamd52%d (fd=%d%s)", client->reader->device, client->reader->r_port,
+			(client->reader->ncd_proto == NCD_525) ? 5 : 4, client->udp_fd, ptxt);
 
 	// try to connect. ignore possible failures
 	// idle reconnect (tcp_ito = -1) will trigger an additional connect anyway
 	if(client->reader->ncd_connect_on_init && client->reader->tcp_ito != -1)
-		{ newcamd_connect(); }
+	{
+		newcamd_connect();
+	}
 
-	return (0);
+	return 0;
 }
 
 static int32_t newcamd_send_ecm(struct s_client *client, ECM_REQUEST *er)
@@ -1459,15 +1719,21 @@ static int32_t newcamd_send_ecm(struct s_client *client, ECM_REQUEST *er)
 	struct s_reader *rdr = client->reader;
 
 	if(!newcamd_connect())
-		{ return (-1); }
+	{
+		return -1;
+	}
 
 	// check server filters
 	if(!chk_rsfilter(rdr, er))
-		{ return (-1); }
-	
+	{
+		return -1;
+	}
+
 	uint8_t *buf;
 	if(!cs_malloc(&buf, er->ecmlen))
-	{ return (-1); }
+	{
+		return -1;
+	}
 
 	memcpy(buf, er->ecm, er->ecmlen);
 
@@ -1479,72 +1745,88 @@ static int32_t newcamd_send_ecm(struct s_client *client, ECM_REQUEST *er)
 	client->ncd_header[9] = er->prid >> 8;
 	client->ncd_header[10] = er->prid & 0xFF;
 
-	int32_t rc = ((newcamd_send(buf, er->ecmlen, er->srvid) < 1) ? (-1) : 0);
-	
+	int32_t rc = (newcamd_send(buf, er->ecmlen, er->srvid) < 1) ? -1 : 0;
+
 	NULLFREE(buf);
 	return (rc);
 }
 
-
 static int32_t newcamd_send_emm(EMM_PACKET *ep)
 {
-	uchar buf[ep->emmlen];
+	uint8_t buf[ep->emmlen];
 
 	if(!newcamd_connect())
-		{ return (-1); }
+	{
+		return -1;
+	}
 
 	memcpy(buf, ep->emm, ep->emmlen);
-	return ((newcamd_send(buf, ep->emmlen, 0) < 1) ? 0 : 1);
+
+	return (newcamd_send(buf, ep->emmlen, 0) < 1) ? 0 : 1;
 }
 
-static int32_t newcamd_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc, uchar *buf, int32_t n)
+static int32_t newcamd_recv_chk(struct s_client *client, uint8_t *dcw, int32_t *rc, uint8_t *buf, int32_t n)
 {
 	uint16_t idx = -1;
 
 	if(n < 5)
-		{ return -1; }
+	{
+		return -1;
+	}
 
 	switch(buf[2])
 	{
-	case 0x80:
-	case 0x81:
-		idx = (buf[0] << 8) | buf[1];
-		if(n == 5)  //not found on server
+		case 0x80:
+		case 0x81:
 		{
-			*rc = 0;
-			memset(dcw, 0, 16);
+			idx = (buf[0] << 8) | buf[1];
+
+			if(n == 5) // not found on server
+			{
+				*rc = 0;
+				memset(dcw, 0, 16);
+				break;
+			}
+
+			if(n < 21)
+			{
+				cs_log_dbg(D_CLIENT, "invalid newcamd answer");
+				return (-1);
+			}
+
+			*rc = 1;
+			memcpy(dcw, buf + 5, 16);
 			break;
 		}
 
-		if(n < 21)
-		{
-			cs_log_dbg(D_CLIENT, "invalid newcamd answer");
-			return (-1);
-		}
-
-		*rc = 1;
-		memcpy(dcw, buf + 5, 16);
-		break;
-
-	case MSG_KEEPALIVE:
-		return -1;
-
-	case MSG_SERVER_2_CLIENT_ADDCARD:
-		if(client->reader)
-		{
-			client->reader->ncd_disable_server_filt = 1;
-		}
-		return -1;
-
-	default:
-		if(buf[2] > 0x81 && buf[2] < 0x92)  //answer to emm
+		case MSG_KEEPALIVE:
 		{
 			return -1;
 		}
-		cs_log_dbg(D_CLIENT, "unknown newcamd command from server");
-		return -1;
+
+		case MSG_SERVER_2_CLIENT_ADDCARD:
+		{
+			if(client->reader)
+			{
+				client->reader->ncd_disable_server_filt = 1;
+			}
+
+			return -1;
+		}
+
+		default:
+		{
+			if(buf[2] > 0x81 && buf[2] < 0x92) // answer to emm
+			{
+				return -1;
+			}
+
+			cs_log_dbg(D_CLIENT, "unknown newcamd command from server");
+			return -1;
+		}
 	}
-	return (idx);
+
+	return idx;
 }
 
 /*
@@ -1593,22 +1875,29 @@ const char *newcamd_get_client_name(uint16_t client_id)
 		{ 0x7363, "Scam" },
 		{ 0x7763, "WinCSC" },
 		{ 0x7878, "tsdecrypt" },
-		{ 0x8888, "OScam" },
-		{ 0x6e63, "NCam" },
+		{ 0x8888, "Ncam" },
 		{ 0x9911, "ACamd" },
 		{ 0x9922, "DVBplug" },
-		{ 0x4E78, "NewBox" },
 		{ 0xFFFF, NULL }
 	};
+
 	int i = 0;
+
 	while(1)
 	{
 		if(!ncd_service_ids[i].client)
-			{ break; }
+		{
+			break;
+		}
+
 		if(ncd_service_ids[i].id == client_id)
-			{ return ncd_service_ids[i].client; }
+		{
+			return ncd_service_ids[i].client;
+		}
+
 		i++;
 	}
+
 	return "unknown - please report";
 }
 

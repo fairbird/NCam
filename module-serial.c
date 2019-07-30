@@ -164,7 +164,7 @@ static void ncam_wait_ser_fork(void)
 	SAFE_MUTEX_UNLOCK(&mutex);
 }
 
-static int32_t ncam_ser_alpha_convert(uchar *buf, int32_t l)
+static int32_t ncam_ser_alpha_convert(uint8_t *buf, int32_t l)
 {
 	int32_t i;
 	if(buf[0] == 0x7E)    // normalize
@@ -344,7 +344,7 @@ static int32_t ncam_ser_poll(int32_t event, struct s_client *client)
 		{ return (((pfds.revents)&event) == event); }
 }
 
-static int32_t ncam_ser_write(struct s_client *client, const uchar *const buf, int32_t n)
+static int32_t ncam_ser_write(struct s_client *client, const uint8_t *const buf, int32_t n)
 {
 	int32_t i;
 	for(i = 0; (i < n) && (ncam_ser_poll(POLLOUT, client)); i++)
@@ -357,7 +357,7 @@ static int32_t ncam_ser_write(struct s_client *client, const uchar *const buf, i
 	return (i);
 }
 
-static int32_t ncam_ser_send(struct s_client *client, const uchar *const buf, int32_t l)
+static int32_t ncam_ser_send(struct s_client *client, const uint8_t *const buf, int32_t l)
 {
 	int32_t n;
 	struct s_serial_client *serialdata = client->serialdata ;
@@ -375,7 +375,7 @@ static int32_t ncam_ser_send(struct s_client *client, const uchar *const buf, in
 	return (n);
 }
 
-static int32_t ncam_ser_selrec(uchar *buf, int32_t n, int32_t l, int32_t *c)
+static int32_t ncam_ser_selrec(uint8_t *buf, int32_t n, int32_t l, int32_t *c)
 {
 	int32_t i;
 	if(*c + n > l)
@@ -389,13 +389,13 @@ static int32_t ncam_ser_selrec(uchar *buf, int32_t n, int32_t l, int32_t *c)
 	return (i == n);
 }
 
-static int32_t ncam_ser_recv(struct s_client *client, uchar *xbuf, int32_t l)
+static int32_t ncam_ser_recv(struct s_client *client, uint8_t *xbuf, int32_t l)
 {
 	int32_t s, p, n, r;
-	uchar job = IS_BAD;
-	static uchar lb;
+	uint8_t job = IS_BAD;
+	static uint8_t lb;
 	static int32_t have_lb = 0;
-	uchar *buf = xbuf + 1;
+	uint8_t *buf = xbuf + 1;
 	struct s_serial_client *serialdata = client->serialdata;
 
 	if(!client->pfd) { return (-1); }
@@ -537,7 +537,7 @@ static int32_t ncam_ser_recv(struct s_client *client, uchar *xbuf, int32_t l)
 					{
 						if(ncam_ser_selrec(buf, 16, l, &n))
 						{
-							uchar b;
+							uint8_t b;
 							if(cs_atob(&b, (char *)buf + 17, 1) < 0)
 								{ p = (-2); }
 							else
@@ -705,7 +705,7 @@ static int32_t ncam_ser_recv(struct s_client *client, uchar *xbuf, int32_t l)
 		cs_log_dbg(D_CLIENT, "unknown request or garbage");
 		break;
 	}
-	xbuf[0] = (uchar)((job << 4) | p);
+	xbuf[0] = (uint8_t)((job << 4) | p);
 	return ((p < 0) ? 0 : n + 1);
 }
 
@@ -715,7 +715,7 @@ static int32_t ncam_ser_recv(struct s_client *client, uchar *xbuf, int32_t l)
 
 static void ncam_ser_disconnect_client(void)
 {
-	uchar mbuf[1024];
+	uint8_t mbuf[1024];
 	struct s_serial_client *serialdata = cur_client()->serialdata;
 	switch(serialdata->connected ? serialdata->connected : serialdata->ncam_ser_proto)
 	{
@@ -733,7 +733,7 @@ static void ncam_ser_disconnect_client(void)
 
 static void ncam_ser_init_client(void)
 {
-	uchar mbuf[4];
+	uint8_t mbuf[4];
 	switch(cur_client()->serialdata->ncam_ser_proto)     // sure, does not work in auto-mode
 	{
 	case P_GS:
@@ -779,9 +779,9 @@ static void ncam_ser_auth_client(int32_t proto)
 
 static void ncam_ser_send_dcw(struct s_client *client, ECM_REQUEST *er)
 {
-	uchar mbuf[23];
+	uint8_t mbuf[23];
 	int32_t i;
-	uchar crc;
+	uint8_t crc;
 	struct s_serial_client *serialdata = cur_client()->serialdata;
 	if(er->rc < E_NOTFOUND)       // found
 		switch(serialdata->connected)
@@ -859,10 +859,10 @@ static void ncam_ser_send_dcw(struct s_client *client, ECM_REQUEST *er)
 	serialdata->serial_errors = 0; // clear error counter
 }
 
-static void ncam_ser_process_pmt(uchar *buf, int32_t l)
+static void ncam_ser_process_pmt(uint8_t *buf, int32_t l)
 {
 	int32_t i;
-	uchar sbuf[32];
+	uint8_t sbuf[32];
 	struct s_serial_client *serialdata = cur_client()->serialdata;
 	switch(serialdata->connected)
 	{
@@ -892,9 +892,9 @@ static void ncam_ser_process_pmt(uchar *buf, int32_t l)
 	}
 }
 
-static void ncam_ser_client_logon(uchar *buf, int32_t l)
+static void ncam_ser_client_logon(uint8_t *buf, int32_t l)
 {
-	uchar gs_logon[] = {0, 1, 0, 0, 2, 1, 0, 0};
+	uint8_t gs_logon[] = {0, 1, 0, 0, 2, 1, 0, 0};
 	switch(cur_client()->serialdata->connected)
 	{
 	case P_GS:
@@ -910,7 +910,7 @@ static void ncam_ser_client_logon(uchar *buf, int32_t l)
 	}
 }
 
-static int32_t ncam_ser_check_ecm(ECM_REQUEST *er, uchar *buf, int32_t l)
+static int32_t ncam_ser_check_ecm(ECM_REQUEST *er, uint8_t *buf, int32_t l)
 {
 	int32_t i;
 	struct s_serial_client *serialdata = cur_client()->serialdata;
@@ -1018,7 +1018,7 @@ static int32_t ncam_ser_check_ecm(ECM_REQUEST *er, uchar *buf, int32_t l)
 	return (0);
 }
 
-static void ncam_ser_process_ecm(uchar *buf, int32_t l)
+static void ncam_ser_process_ecm(uint8_t *buf, int32_t l)
 {
 	ECM_REQUEST *er;
 
@@ -1044,7 +1044,7 @@ static void ncam_ser_process_ecm(uchar *buf, int32_t l)
 static void ncam_ser_server(void)
 {
 	int32_t n;
-	uchar mbuf[1024];
+	uint8_t mbuf[1024];
 
 	int32_t *pserial_errors = &cur_client()->serialdata->serial_errors;
 
@@ -1201,7 +1201,7 @@ static void *ncam_ser_fork(void *pthreadparam)
 	return NULL;
 }
 
-void *init_ncam_ser(struct s_client *UNUSED(cl), uchar *UNUSED(mbuf), int32_t module_idx)
+void *init_ncam_ser(struct s_client *UNUSED(cl), uint8_t *UNUSED(mbuf), int32_t module_idx)
 {
 	char sdevice[512];
 	int32_t ret;
@@ -1298,7 +1298,7 @@ static int32_t ncam_ser_twin_send(struct s_client *client, ECM_REQUEST *er)
 static int32_t ncam_ser_send_ecm(struct s_client *client, ECM_REQUEST *er)
 {
 	char *tmp;
-	uchar *buf;
+	uint8_t *buf;
 	if(!cs_malloc(&buf, er->ecmlen + 12))
 	{
 		return(-1);
@@ -1352,7 +1352,7 @@ static int32_t ncam_ser_send_ecm(struct s_client *client, ECM_REQUEST *er)
 	return (0);
 }
 
-static void ncam_ser_process_dcw(uchar *dcw, int32_t *rc, uchar *buf, int32_t l, struct s_client *client)
+static void ncam_ser_process_dcw(uint8_t *dcw, int32_t *rc, uint8_t *buf, int32_t l, struct s_client *client)
 {
 	switch(client->serialdata->ncam_ser_proto)
 	{
@@ -1360,7 +1360,7 @@ static void ncam_ser_process_dcw(uchar *dcw, int32_t *rc, uchar *buf, int32_t l,
 		if((l >= 23) && (buf[2] == 0x3A) && (buf[3] == 0x3A))
 		{
 			int32_t i;
-			uchar crc;
+			uint8_t crc;
 			for(i = 4, crc = HSIC_CRC; i < 20; i++)
 				{ crc ^= buf[i]; }
 			if(crc == buf[20])
@@ -1400,7 +1400,7 @@ static void ncam_ser_process_dcw(uchar *dcw, int32_t *rc, uchar *buf, int32_t l,
 	}
 }
 
-static int32_t ncam_ser_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc, uchar *buf, int32_t n)
+static int32_t ncam_ser_recv_chk(struct s_client *client, uint8_t *dcw, int32_t *rc, uint8_t *buf, int32_t n)
 {
 	*rc = (-1);
 	switch(buf[0] >> 4)

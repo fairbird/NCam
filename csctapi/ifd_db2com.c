@@ -14,12 +14,6 @@
 #define OK 0
 #define ERROR 1
 
-#define MINORBITS 20
-#define MINORMASK ((1U << MINORBITS) - 1)
-#define MAJOR(dev) ((unsigned int) ((dev) >> MINORBITS))
-#define MINOR(dev) ((unsigned int) ((dev) & MINORMASK))
-#define MKDEV(ma,mi) (((ma) << MINORBITS) | (mi))
-
 bool detect_db2com_reader(struct s_reader *reader)
 {
 	struct stat sb;
@@ -98,7 +92,7 @@ static bool db2com_DTR_RTS(struct s_reader *reader, int32_t *dtr, int32_t *rts)
 	int32_t rc;
 	uint16_t msr;
 	uint16_t rts_bits[2] = { 0x10, 0x800 };
-	uint16_t dtr_bits[2] = { 0x100,     0 };
+	uint16_t dtr_bits[2] = {0x100,     0 };
 	int32_t mcport = reader->typ == R_DB2COM2;
 
 	rc = ioctl(reader->fdmc, MULTICAM_GET_PCDAT, &msr);

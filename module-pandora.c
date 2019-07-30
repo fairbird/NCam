@@ -14,7 +14,7 @@
 #define START_TIME 150000
 #define MAX_TIME 500000
 
-static void simple_crypt(uchar *buf, int len, uchar *key, int key_len)
+static void simple_crypt(uint8_t *buf, int len, uint8_t *key, int key_len)
 {
 	int i, x;
 	for(i = 0, x = 0; i < len; i++)
@@ -25,11 +25,11 @@ static void simple_crypt(uchar *buf, int len, uchar *key, int key_len)
 	}
 }
 
-static void pandora_process_request(struct s_client *cl, uchar *buf, int32_t l)
+static void pandora_process_request(struct s_client *cl, uint8_t *buf, int32_t l)
 {
 	int ecmlen;
 	ECM_REQUEST *er;
-	uchar md5tmp[MD5_DIGEST_LENGTH];
+	uint8_t md5tmp[MD5_DIGEST_LENGTH];
 
 	if(l < 10 + CS_ECMSTORESIZE + 2)
 		{ return; }
@@ -74,7 +74,7 @@ static void pandora_process_request(struct s_client *cl, uchar *buf, int32_t l)
 	get_cw(cl, er);
 }
 
-static int pandora_recv(struct s_client *cl, uchar *buf, int32_t l)
+static int pandora_recv(struct s_client *cl, uint8_t *buf, int32_t l)
 {
 	int ret;
 
@@ -99,7 +99,7 @@ static int pandora_recv(struct s_client *cl, uchar *buf, int32_t l)
 
 static void pandora_send_dcw(struct s_client *cl, ECM_REQUEST *er)
 {
-	uchar msgbuf[CWS_NETMSGSIZE], len;
+	uint8_t msgbuf[CWS_NETMSGSIZE], len;
 	if(cfg.pand_skip_send_dw)
 		{ return; }
 	if(er->rc < E_NOTFOUND)
@@ -155,17 +155,17 @@ int pandora_auth_client(struct s_client *cl, IN_ADDR_T ip)
 	return ok;
 }
 
-static void *pandora_server(struct s_client *cl, uchar *UNUSED(mbuf),
+static void *pandora_server(struct s_client *cl, uint8_t *UNUSED(mbuf),
 							int32_t UNUSED(len))
 {
-	uchar md5tmp[MD5_DIGEST_LENGTH];
+	uint8_t md5tmp[MD5_DIGEST_LENGTH];
 	if(!cl->init_done)
 	{
 		if(cfg.pand_pass)
 		{
 			cl->pand_autodelay = 150000;
 			memcpy(cl->pand_md5_key,
-				   MD5((uchar *)cfg.pand_pass, strlen(cfg.pand_pass), md5tmp), 16);
+				   MD5((uint8_t *)cfg.pand_pass, strlen(cfg.pand_pass), md5tmp), 16);
 			cl->pand_ignore_ecm = (cfg.pand_ecm) ? 0 : 1;
 			cl->crypted = 1;
 			pandora_auth_client(cl, cl->ip);
@@ -188,7 +188,7 @@ int pandora_client_init(struct s_client *cl)
 	int16_t p_proto;
 	char ptxt[16];
 	struct s_reader *rdr = cl->reader;
-	uchar md5tmp[MD5_DIGEST_LENGTH];
+	uint8_t md5tmp[MD5_DIGEST_LENGTH];
 
 	cl->pfd = 0;
 	if(rdr->r_port <= 0)
@@ -234,7 +234,7 @@ int pandora_client_init(struct s_client *cl)
 	else
 		{ ptxt[0] = '\0'; }
 
-	memcpy(cl->pand_md5_key, MD5((uchar *)rdr->r_pwd, strlen(rdr->r_pwd), md5tmp), 16);
+	memcpy(cl->pand_md5_key, MD5((uint8_t *)rdr->r_pwd, strlen(rdr->r_pwd), md5tmp), 16);
 	cl->crypted = 1;
 
 	//cl->grp = 0xFFFFFFFF;
@@ -259,10 +259,10 @@ int pandora_client_init(struct s_client *cl)
 
 static int pandora_send_ecm(struct s_client *cl, ECM_REQUEST *er)
 {
-	uchar md5tmp[MD5_DIGEST_LENGTH];
-	uchar msgbuf[CWS_NETMSGSIZE];
+	uint8_t md5tmp[MD5_DIGEST_LENGTH];
+	uint8_t msgbuf[CWS_NETMSGSIZE];
 	int ret, len;
-	uchar adel;
+	uint8_t adel;
 	adel = (cfg.ctimeout > 7) ? 7 : cfg.ctimeout;
 
 	msgbuf[0] = 1;
@@ -293,8 +293,8 @@ static int pandora_send_ecm(struct s_client *cl, ECM_REQUEST *er)
 	return ((ret < len) ? (-1) : 0);
 }
 
-static int pandora_recv_chk(struct s_client *UNUSED(cl), uchar *dcw, int *rc,
-							uchar *buf, int UNUSED(n))
+static int pandora_recv_chk(struct s_client *UNUSED(cl), uint8_t *dcw, int *rc,
+							uint8_t *buf, int UNUSED(n))
 {
 	if(buf[0] != 0x2)
 		{ return (-1); }

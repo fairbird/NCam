@@ -14,8 +14,8 @@
 extern uint8_t cs_http_use_utf8;
 
 /* struct template templates[] that comes from webif/pages.c is recreated as
-   struct tpl tpls[] because we need to add additional fields such as tpl_name_hash
-   and possibly preprocess templates[] struct before using it. */
+	struct tpl tpls[] because we need to add additional fields such as tpl_name_hash
+	and possibly preprocess templates[] struct before using it. */
 
 struct tpl
 {
@@ -34,7 +34,7 @@ static int tpls_count;
 
 static void tpl_init_base64(struct tpl *tpl)
 {
-	// The rest of NCAm expects images to be base64 encoded and contain mime type.
+	// The rest of NCam expects images to be base64 encoded and contain mime type.
 	if(!template_is_image(tpl->tpl_type))
 		{ return; }
 	size_t b64_buf_len = 32 + BASE64_LENGTH(tpl->tpl_data_len); // Enough for base64 and 32 for header (data:XXX;base64,)
@@ -112,10 +112,10 @@ void webif_tpls_prepare(void)
 void webif_tpls_free(void)
 {
 	int32_t i, tmp;
-	
+
 	tmp = tpls_count;
 	tpls_count = 0;
-	
+
 	for(i = 0; i < tmp; ++i)
 	{
 		NULLFREE(tpls[i].extra_data);
@@ -125,7 +125,7 @@ void webif_tpls_free(void)
 }
 
 /* Adds a name->value-mapping or appends to it. You will get a reference back which you may freely
-   use (but you should not call free/realloc on this!)*/
+	 use (but you should not call free/realloc on this!)*/
 void tpl_addVar(struct templatevars *vars, uint8_t addmode, const char *name, const char *value)
 {
 	if(name == NULL) { return; }
@@ -184,8 +184,8 @@ void tpl_addMsg(struct templatevars *vars, const char *value)
 }
 
 /* Allows to add a char array which has been allocated by malloc. It will automatically get
-  freed when calling tpl_clear(). Please do NOT free the memory yourself or realloc
-  it after having added the array here! */
+	freed when calling tpl_clear(). Please do NOT free the memory yourself or realloc
+	it after having added the array here! */
 static char *tpl_addTmp(struct templatevars *vars, char *value)
 {
 	if(value == NULL) { return ""; }
@@ -200,9 +200,9 @@ static char *tpl_addTmp(struct templatevars *vars, char *value)
 }
 
 /* Allows to do a dynamic printf without knowing and defining the needed memory size. If you specify
-   varname, the printf-result will be added/appended to the varlist, if varname=NULL it will only be returned.
-   In either case you will always get a reference back which you may freely use (but you should not call
-   free/realloc on this as it will be automatically cleaned!)*/
+	 varname, the printf-result will be added/appended to the varlist, if varname=NULL it will only be returned.
+	 In either case you will always get a reference back which you may freely use (but you should not call
+	 free/realloc on this as it will be automatically cleaned!)*/
 void tpl_printf(struct templatevars *vars, uint8_t addmode, const char *varname, const char *fmtstring, ...)
 {
 	uint32_t needed;
@@ -264,7 +264,7 @@ char *tpl_getVar(struct templatevars *vars, const char *name)
 }
 
 /* Initializes all variables for a templatevar-structure and returns a pointer to it. Make
-   sure to call tpl_clear() when you are finished or you'll run into a memory leak! */
+	 sure to call tpl_clear() when you are finished or you'll run into a memory leak! */
 struct templatevars *tpl_create(void)
 {
 	struct templatevars *vars;
@@ -343,16 +343,16 @@ char *tpl_getTplPath(const char *name, const char *path, char *result, uint32_t 
 }
 
 #define check_conf(CONFIG_VAR, text) \
-    if (config_enabled(CONFIG_VAR) && strncmp(#CONFIG_VAR, text, len) == 0) { ok = 1; break; }
+		if (config_enabled(CONFIG_VAR) && strncmp(#CONFIG_VAR, text, len) == 0) { ok = 1; break; }
 
 /* Returns an unparsed template either from disk or from internal templates.
-   Note: You must free() the result after using it and you may get NULL if an error occured!*/
+	 Note: You must free() the result after using it and you may get NULL if an error occured!*/
 char *tpl_getUnparsedTpl(const char *name, int8_t removeHeader, const char *subdir)
 {
 	int32_t i;
 	char *result;
 	char *tpl_path;
-	
+
 	tpl_path = (cfg.http_piconpath && strlen(name) > 3 && name[0] == 'I' && name[1] == 'C' && name[2] == '_') ? cfg.http_piconpath : cfg.http_tpl;
 
 	if(tpl_path)
@@ -380,7 +380,7 @@ char *tpl_getUnparsedTpl(const char *name, int8_t removeHeader, const char *subd
 					if(size == 0 && removeHeader)
 					{
 						/* Remove version string from output and check if it is valid for output */
-						char *pch1 = strstr(buffer, "<!--NCAm");
+						char *pch1 = strstr(buffer, "<!--NCam");
 						if(pch1 != NULL)
 						{
 							char *pch2 = strstr(pch1, "-->");
@@ -418,6 +418,7 @@ char *tpl_getUnparsedTpl(const char *name, int8_t removeHeader, const char *subd
 											check_conf(CS_ANTICASC, ptr2);
 											check_conf(CS_CACHEEX, ptr2);
 											check_conf(HAVE_DVBAPI, ptr2);
+											check_conf(WITH_NEUTRINO, ptr2);
 											check_conf(READ_SDT_CHARSETS, ptr2);
 											check_conf(CLOCKFIX, ptr2);
 											check_conf(IPV6SUPPORT, ptr2);
@@ -446,11 +447,15 @@ char *tpl_getUnparsedTpl(const char *name, int8_t removeHeader, const char *subd
 											check_conf(READER_DRE, ptr2);
 											check_conf(READER_IRDETO, ptr2);
 											check_conf(READER_NAGRA, ptr2);
+											check_conf(READER_NAGRA_MERLIN, ptr2);
 											check_conf(READER_SECA, ptr2);
 											check_conf(READER_TONGFANG, ptr2);
 											check_conf(READER_VIACCESS, ptr2);
 											check_conf(READER_VIDEOGUARD, ptr2);
 											check_conf(WITH_CARDREADER, ptr2);
+											check_conf(WITH_DEBUG, ptr2);
+											check_conf(WITH_LB, ptr2);
+											check_conf(WITH_LIBCRYPTO, ptr2);
 											check_conf(WITH_SSL, ptr2);
 											check_conf(WITH_STAPI, ptr2);
 											check_conf(WITH_STAPI5, ptr2);
@@ -511,8 +516,8 @@ char *tpl_getUnparsedTpl(const char *name, int8_t removeHeader, const char *subd
 }
 
 /* Returns the specified template with all variables/other templates replaced or an
-   empty string if the template doesn't exist. Do not free the result yourself, it
-   will get automatically cleaned up! */
+	 empty string if the template doesn't exist. Do not free the result yourself, it
+	 will get automatically cleaned up! */
 char *tpl_getTpl(struct templatevars *vars, const char *name)
 {
 	char *tplorg = tpl_getUnparsedTpl(name, 1, tpl_getVar(vars, "SUBDIR"));
@@ -589,7 +594,7 @@ int32_t tpl_saveIncludedTpls(const char *path)
 		{
 			if(strncmp(tpl->tpl_name, "IC", 2) != 0)
 			{
-				fprintf(fp, "<!--NCAm;%d;%s;%s-->\n", crc32(0, (uint8_t *)tpl->tpl_data, tpl->tpl_data_len), CS_VERSION, tpl->tpl_deps);
+				fprintf(fp, "<!--NCam;%d;%s;%s;%s-->\n", crc32(0, (uint8_t *)tpl->tpl_data, tpl->tpl_data_len), CS_VERSION, CS_SVN_VERSION, tpl->tpl_deps);
 			}
 			fwrite(tpl->tpl_data, tpl->tpl_data_len, 1, fp);
 			fclose(fp);
@@ -613,8 +618,8 @@ void tpl_checkOneDirDiskRevisions(const char *subdir)
 		{
 			int8_t error = 1;
 			char *tplorg = tpl_getUnparsedTpl(tpl->tpl_name, 0, subdir);
-			unsigned long checksum = 0, curchecksum = crc32(0L, (unsigned char *)tpl->tpl_data, tpl->tpl_data_len);
-			char *ifdefs = "", *pch1 = strstr(tplorg, "<!--NCAm");
+			unsigned long checksum = 0, curchecksum = crc32(0L, (uint8_t *)tpl->tpl_data, tpl->tpl_data_len);
+			char *ifdefs = "", *pch1 = strstr(tplorg, "<!--NCam");
 			if(pch1 != NULL)
 			{
 				char *version = "?", *revision = "?";
@@ -634,12 +639,12 @@ void tpl_checkOneDirDiskRevisions(const char *subdir)
 				}
 				if(checksum != curchecksum)
 				{
-					cs_log("WARNING: Your http disk template %s was created for an older revision of NCAm and was changed in original NCAm (%s,r%s). Please consider upgrading it!", path, version, revision);
+					cs_log("WARNING: Your http disk template %s was created for an older revision of NCam and was changed in original NCam (%s,r%s). Please consider upgrading it!", path, version, revision);
 				}
 				else { error = 0; }
 			}
 			else { cs_log("WARNING: Your http disk template %s is in the old template format without revision info. Please consider upgrading it!", path); }
-			if(error) { cs_log("If you are sure that it is current, add the following line at the beginning of the template to suppress this warning: <!--NCAm;%lu;%s;%s-->", curchecksum, CS_VERSION, ifdefs); }
+			if(error) { cs_log("If you are sure that it is current, add the following line at the beginning of the template to suppress this warning: <!--NCam;%lu;%s;%s;%s-->", curchecksum, CS_VERSION, CS_SVN_VERSION, ifdefs); }
 			NULLFREE(tplorg);
 		}
 	}
@@ -665,7 +670,7 @@ void tpl_checkDiskRevisions(void)
 				{
 					continue;
 				}
-				snprintf(dirpath, 255, "%s%s", cfg.http_tpl, entry.d_name);
+				snprintf(dirpath, 255, "%.31s%.31s", cfg.http_tpl, entry.d_name);
 				if(stat(dirpath, &s) == 0)
 				{
 					if(s.st_mode & S_IFDIR)
@@ -674,7 +679,7 @@ void tpl_checkDiskRevisions(void)
 #ifdef WIN32
 								 "%s\\"
 #else
-								 "%s/"
+								 "%.253s/"
 #endif
 								 , entry.d_name);
 						tpl_checkOneDirDiskRevisions(subdir);
@@ -727,10 +732,10 @@ char *urlencode(struct templatevars *vars, const char *str)
 	if(!cs_malloc(&buf, strlen(str) * 3 + 1)) { return ""; }
 	const char *pstr = str;
 	char *pbuf = buf;
-	
+
 	while(*pstr)
 	{
-		if(isalnum((uchar)*pstr) || *pstr == '-' || *pstr == '_' || *pstr == '.' || *pstr == '~') { *pbuf++ = *pstr; }
+		if(isalnum((uint8_t)*pstr) || *pstr == '-' || *pstr == '_' || *pstr == '.' || *pstr == '~') { *pbuf++ = *pstr; }
 		else if(*pstr == ' ') { *pbuf++ = '+'; }
 		else
 		{
@@ -747,7 +752,7 @@ char *urlencode(struct templatevars *vars, const char *str)
 }
 
 /* XML-Escapes a char array. The returned reference will be automatically cleaned through the templatevars-mechanism tpl_clear().
-   Do not call free() or realloc on the returned reference or you will get memory corruption! */
+	 Do not call free() or realloc on the returned reference or you will get memory corruption! */
 char *xml_encode(struct templatevars *vars, const char *chartoencode)
 {
 	if(!chartoencode) { return ""; }
@@ -758,7 +763,7 @@ char *xml_encode(struct templatevars *vars, const char *chartoencode)
 	if(!cs_malloc(&encoded, len * 6 + 1)) { return ""; }
 	for(i = 0; i < len; ++i)
 	{
-		unsigned char tmp = chartoencode[i];
+		uint8_t tmp = chartoencode[i];
 		switch(tmp)
 		{
 		case '&' :

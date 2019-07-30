@@ -19,8 +19,8 @@ typedef struct s_cool_filter
 	int32_t     fd;
 	int32_t     channel;
 	int32_t     pid;
-	uchar       filter16[16];
-	uchar       mask16[16];
+	uint8_t       filter16[16];
+	uint8_t       mask16[16];
 } S_COOL_FILTER;
 
 typedef struct s_cool_chanhandle
@@ -36,7 +36,7 @@ struct cool_dmx
 {
 	int32_t     opened;
 	int32_t     fd;
-	uchar       buffer[4096];
+	uint8_t       buffer[4096];
 	void       *buffer1;
 	void       *buffer2;
 	void       *channel;
@@ -239,7 +239,7 @@ static void dmx_callback(void *UNUSED(unk), dmx_t *dmx, int32_t type, dmx_callba
 	}
 }
 
-int32_t coolapi_set_filter(int32_t fd, int32_t num, int32_t pid, uchar *flt, uchar *mask, int32_t type)
+int32_t coolapi_set_filter(int32_t fd, int32_t num, int32_t pid, uint8_t *flt, uint8_t *mask, int32_t type)
 {
 	dmx_t *dmx =  find_demux(fd, 0);
 	if(!dmx)
@@ -582,7 +582,7 @@ static int32_t coolapi_read(dmx_t *dmx, dmx_callback_data_t *data)
 
 	int32_t result;
 	uint32_t done = 0, toread, len = data->len;
-	uchar *buff = &dmx->buffer[0];
+	uint8_t *buff = &dmx->buffer[0];
 	uint32_t bytes_used = 0;
 
 	//cs_log_dbg(D_DVBAPI, "dmx channel %x pid %x len %d",  (int) dmx->channel, dmx->pid, len);

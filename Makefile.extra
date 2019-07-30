@@ -334,6 +334,21 @@ cross-arm-tuxbox-linux:
 		EXTRA_FLAGS="-mtune=cortex-a9 -mcpu=cortex-a9 -mfpu=neon-vfpv4 -static-libgcc -I. -s" \
 		$(MAKEFLAGS)
 
+cross-aarch64-tuxbox-linux-libusb:
+	$(MAKE) --no-print-directory \
+		CROSS=$(CROSS) \
+		CONF_DIR=/var/tuxbox/config \
+		EXTRA_FLAGS="-static-libgcc -I. -s" \
+		LIBUSB_LIB=$(LIBUSB_LIB) \
+		$(MAKEFLAGS)
+
+cross-aarch64-tuxbox-linux:
+	$(MAKE) --no-print-directory \
+		CROSS=$(CROSS) \
+		CONF_DIR=/var/tuxbox/config \
+		EXTRA_FLAGS="-static-libgcc -I. -s" \
+		$(MAKEFLAGS)
+
 cross-arm-raspbian-linux-libusb:
 	$(MAKE) --no-print-directory \
 		CROSS=$(CROSS) \

@@ -8,7 +8,7 @@
 uint32_t get_fallbacktimeout(uint16_t caid);
 int32_t ecm_ratelimit_check(struct s_reader *reader, ECM_REQUEST *er, int32_t reader_mode);
 int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr);
-uint8_t chk_if_ignore_checksum(ECM_REQUEST *er, int8_t disablecrc, FTAB *disablecrc_only_for);
+uint8_t chk_if_ignore_checksum(ECM_REQUEST *er, FTAB *disablecrc_only_for);
 
 uint8_t is_localreader(struct s_reader *rdr, ECM_REQUEST *er);
 uint8_t chk_is_fixed_fallback(struct s_reader *rdr, ECM_REQUEST *er);
@@ -33,9 +33,9 @@ int32_t chk_ctab_ex(uint16_t caid, CAIDTAB *ctab);
 int32_t chk_caid(uint16_t caid, CAIDTAB *ctab);
 int32_t chk_caid_rdr(struct s_reader *rdr, uint16_t caid);
 int32_t chk_bcaid(ECM_REQUEST *er, CAIDTAB *ctab);
-int32_t chk_is_null_CW(uchar cw[]);
+int32_t chk_is_null_CW(uint8_t cw[]);
 int8_t is_halfCW_er(ECM_REQUEST *er);
-int8_t chk_halfCW(ECM_REQUEST *er, uchar *cw);
+int8_t chk_halfCW(ECM_REQUEST *er, uint8_t *cw);
 int32_t chk_is_null_nodeid(uint8_t node_id[], uint8_t len);
 bool check_client(struct s_client *cl);
 uint16_t caidvaluetab_get_value(CAIDVALUETAB *cv, uint16_t caid, uint16_t default_value);

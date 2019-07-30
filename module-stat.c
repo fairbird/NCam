@@ -108,7 +108,7 @@ void load_stat_from_file(void)
 	file = fopen(fname, "r");
 	if(!file)
 	{
-		cs_log("loadbalancer: could not open %s for reading (errno=%d %s)", fname, errno, strerror(errno));
+		cs_log_dbg(D_LB, "loadbalancer: could not open %s for reading (errno=%d %s)", fname, errno, strerror(errno));
 		return;
 	}
 
@@ -155,7 +155,7 @@ void load_stat_from_file(void)
 			valid = (i == 11);
 			if(valid)
 			{
-				strncpy(buf, split[0], sizeof(buf) - 1);
+				cs_strncpy(buf, split[0], sizeof(buf));
 				s->rc = atoi(split[1]);
 				s->caid = a2i(split[2], 4);
 				s->prid = a2i(split[3], 6);
@@ -837,7 +837,7 @@ static int32_t get_nbest_readers(ECM_REQUEST *er)
 
 static void convert_to_beta_int(ECM_REQUEST *er, uint16_t caid_to)
 {
-	unsigned char md5tmp[MD5_DIGEST_LENGTH];
+	uint8_t md5tmp[MD5_DIGEST_LENGTH];
 	convert_to_beta(er->client, er, caid_to);
 	// update ecmd5 for store ECM in cache
 	memcpy(er->ecmd5, MD5(er->ecm + 13, er->ecmlen - 13, md5tmp), CS_ECMSTORESIZE);
@@ -848,7 +848,7 @@ static void convert_to_beta_int(ECM_REQUEST *er, uint16_t caid_to)
 
 static void convert_to_nagra_int(ECM_REQUEST *er, uint16_t caid_to)
 {
-	unsigned char md5tmp[MD5_DIGEST_LENGTH];
+	uint8_t md5tmp[MD5_DIGEST_LENGTH];
 	convert_to_nagra(er->client, er, caid_to);
 	// update ecmd5 for store ECM in cache
 	memcpy(er->ecmd5, MD5(er->ecm + 3, er->ecmlen - 3, md5tmp), CS_ECMSTORESIZE);

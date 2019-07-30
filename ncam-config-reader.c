@@ -1,7 +1,6 @@
 #define MODULE_LOG_PREFIX "config"
 
 #include "globals.h"
-#include "module-gbox.h"
 #include "module-stat.h"
 #include "ncam-aes.h"
 #include "ncam-array.h"
@@ -13,6 +12,9 @@
 #include "ncam-lock.h"
 #include "ncam-reader.h"
 #include "ncam-string.h"
+#ifdef MODULE_GBOX
+#include "module-gbox.h"
+#endif
 
 #define cs_srvr "ncam.server"
 
@@ -395,6 +397,260 @@ static void boxkey_fn(const char *token, char *value, void *setting, FILE *f)
 	else if(cfg.http_full_cfg)
 		{ fprintf_conf(f, "boxkey", "\n"); }
 }
+
+#ifdef READER_NAGRA_MERLIN
+static void mod1_fn(const char *token, char *value, void *setting, FILE *f)
+{
+	struct s_reader *rdr = setting;
+	if(value)
+	{
+		int32_t len = strlen(value);
+		if(len != 224)
+		{
+			rdr->mod1_length = 0;
+			memset(rdr->mod1, 0, 112);
+		}
+		else
+		{
+			if(key_atob_l(value, rdr->mod1, len))
+			{
+				fprintf(stderr, "reader mod1 parse error, %s=%s\n", token, value);
+				rdr->mod1_length = 0;
+				memset(rdr->mod1, 0, sizeof(rdr->mod1));
+			}
+			else
+			{
+				rdr->mod1_length = len/2;
+			}
+		}
+		return;
+	}
+	int32_t len = rdr->mod1_length;
+	if(len > 0)
+	{
+		char tmp[len * 2 + 1];
+		fprintf_conf(f, "mod1", "%s\n", cs_hexdump(0, rdr->mod1, len, tmp, sizeof(tmp)));
+	}
+	else if(cfg.http_full_cfg)
+		{ fprintf_conf(f, "mod1", "\n"); }
+}
+
+static void data50_fn(const char *token, char *value, void *setting, FILE *f)
+{
+	struct s_reader *rdr = setting;
+	if(value)
+	{
+		int32_t len = strlen(value);
+		if(len != 160)
+		{
+			rdr->data50_length = 0;
+			memset(rdr->data50, 0, 80);
+		}
+		else
+		{
+			if(key_atob_l(value, rdr->data50, len))
+			{
+				fprintf(stderr, "reader data50 parse error, %s=%s\n", token, value);
+				rdr->data50_length = 0;
+				memset(rdr->data50, 0, sizeof(rdr->data50));
+			}
+			else
+			{
+				rdr->data50_length = len/2;
+			}
+		}
+		return;
+	}
+	int32_t len = rdr->data50_length;
+	if(len > 0)
+	{
+		char tmp[len * 2 + 1];
+		fprintf_conf(f, "data50", "%s\n", cs_hexdump(0, rdr->data50, len, tmp, sizeof(tmp)));
+	}
+	else if(cfg.http_full_cfg)
+		{ fprintf_conf(f, "data50", "\n"); }
+}
+
+static void mod50_fn(const char *token, char *value, void *setting, FILE *f)
+{
+	struct s_reader *rdr = setting;
+	if(value)
+	{
+		int32_t len = strlen(value);
+		if(len != 160)
+		{
+			rdr->mod50_length = 0;
+			memset(rdr->mod50, 0, 80);
+		}
+		else
+		{
+			if(key_atob_l(value, rdr->mod50, len))
+			{
+				fprintf(stderr, "reader mod50 parse error, %s=%s\n", token, value);
+				rdr->mod50_length = 0;
+				memset(rdr->mod50, 0, sizeof(rdr->mod50));
+			}
+			else
+			{
+				rdr->mod50_length = len/2;
+			}
+		}
+		return;
+	}
+	int32_t len = rdr->mod50_length;
+	if(len > 0)
+	{
+		char tmp[len * 2 + 1];
+		fprintf_conf(f, "mod50", "%s\n", cs_hexdump(0, rdr->mod50, len, tmp, sizeof(tmp)));
+	}
+	else if(cfg.http_full_cfg)
+		{ fprintf_conf(f, "mod50", "\n"); }
+}
+
+static void key60_fn(const char *token, char *value, void *setting, FILE *f)
+{
+	struct s_reader *rdr = setting;
+	if(value)
+	{
+		int32_t len = strlen(value);
+		if(len != 192)
+		{
+			rdr->key60_length = 0;
+			memset(rdr->key60, 0, 96);
+		}
+		else
+		{
+			if(key_atob_l(value, rdr->key60, len))
+			{
+				fprintf(stderr, "reader key60 parse error, %s=%s\n", token, value);
+				rdr->key60_length = 0;
+				memset(rdr->key60, 0, sizeof(rdr->key60));
+			}
+			else
+			{
+				rdr->key60_length = len/2;
+			}
+		}
+		return;
+	}
+	int32_t len = rdr->key60_length;
+	if(len > 0)
+	{
+		char tmp[len * 2 + 1];
+		fprintf_conf(f, "key60", "%s\n", cs_hexdump(0, rdr->key60, len, tmp, sizeof(tmp)));
+	}
+	else if(cfg.http_full_cfg)
+		{ fprintf_conf(f, "key60", "\n"); }
+}
+
+static void exp60_fn(const char *token, char *value, void *setting, FILE *f)
+{
+	struct s_reader *rdr = setting;
+	if(value)
+	{
+		int32_t len = strlen(value);
+		if(len != 192)
+		{
+			rdr->exp60_length = 0;
+			memset(rdr->exp60, 0, 96);
+		}
+		else
+		{
+			if(key_atob_l(value, rdr->exp60, len))
+			{
+				fprintf(stderr, "reader exp60 parse error, %s=%s\n", token, value);
+				rdr->exp60_length = 0;
+				memset(rdr->exp60, 0, sizeof(rdr->exp60));
+			}
+			else
+			{
+				rdr->exp60_length = len/2;
+			}
+		}
+		return;
+	}
+	int32_t len = rdr->exp60_length;
+	if(len > 0)
+	{
+		char tmp[len * 2 + 1];
+		fprintf_conf(f, "exp60", "%s\n", cs_hexdump(0, rdr->exp60, len, tmp, sizeof(tmp)));
+	}
+	else if(cfg.http_full_cfg)
+		{ fprintf_conf(f, "exp60", "\n"); }
+}
+
+static void nuid_fn(const char *token, char *value, void *setting, FILE *f)
+{
+	struct s_reader *rdr = setting;
+	if(value)
+	{
+		int32_t len = strlen(value);
+		if(len != 8)
+		{
+			rdr->nuid_length = 0;
+			memset(rdr->nuid, 0, 4);
+		}
+		else
+		{
+			if(key_atob_l(value, rdr->nuid, len))
+			{
+				fprintf(stderr, "reader nuid parse error, %s=%s\n", token, value);
+				rdr->nuid_length = 0;
+				memset(rdr->nuid, 0, sizeof(rdr->nuid));
+			}
+			else
+			{
+				rdr->nuid_length = len/2;
+			}
+		}
+		return;
+	}
+	int32_t len = rdr->nuid_length;
+	if(len > 0)
+	{
+		char tmp[len * 2 + 1];
+		fprintf_conf(f, "nuid", "%s\n", cs_hexdump(0, rdr->nuid, len, tmp, sizeof(tmp)));
+	}
+	else if(cfg.http_full_cfg)
+		{ fprintf_conf(f, "nuid", "\n"); }
+}
+
+static void cwekey_fn(const char *token, char *value, void *setting, FILE *f)
+{
+	struct s_reader *rdr = setting;
+	if(value)
+	{
+		int32_t len = strlen(value);
+		if(len != 32)
+		{
+			rdr->cwekey_length = 0;
+			memset(rdr->cwekey, 0, 16);
+		}
+		else
+		{
+			if(key_atob_l(value, rdr->cwekey, len))
+			{
+				fprintf(stderr, "reader cwekey parse error, %s=%s\n", token, value);
+				rdr->cwekey_length = 0;
+				memset(rdr->cwekey, 0, sizeof(rdr->cwekey));
+			}
+			else
+			{
+				rdr->cwekey_length = len/2;
+			}
+		}
+		return;
+	}
+	int32_t len = rdr->cwekey_length;
+	if(len > 0)
+	{
+		char tmp[len * 2 + 1];
+		fprintf_conf(f, "cwekey", "%s\n", cs_hexdump(0, rdr->cwekey, len, tmp, sizeof(tmp)));
+	}
+	else if(cfg.http_full_cfg)
+		{ fprintf_conf(f, "cwekey", "\n"); }
+}
+#endif
 
 static void flags_fn(const char *token, char *value, void *setting, long flag, FILE *f)
 {
@@ -888,10 +1144,10 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_SSTR("password"             , OFS(r_pwd),                   "", SIZEOF(r_pwd)),
 	DEF_OPT_SSTR("pincode"              , OFS(pincode),                 "none", SIZEOF(pincode)),
 #ifdef MODULE_GBOX
-	DEF_OPT_UINT8("gbox_max_distance"   , OFS(gbox_maxdist),        DEFAULT_GBOX_MAX_DIST),
-	DEF_OPT_UINT8("gbox_max_ecm_send"   , OFS(gbox_maxecmsend),     DEFAULT_GBOX_MAX_ECM_SEND),
-	DEF_OPT_UINT8("gbox_reshare"        , OFS(gbox_reshare),        DEFAULT_GBOX_RESHARE),
-	DEF_OPT_UINT8("cccam_reshare"       , OFS(gbox_cccam_reshare),  DEFAULT_GBOX_RESHARE),
+	DEF_OPT_UINT8("gbox_max_distance"   , OFS(gbox_maxdist),            DEFAULT_GBOX_MAX_DIST),
+	DEF_OPT_UINT8("gbox_max_ecm_send"   , OFS(gbox_maxecmsend),         DEFAULT_GBOX_MAX_ECM_SEND),
+	DEF_OPT_UINT8("gbox_reshare"        , OFS(gbox_reshare),            DEFAULT_GBOX_RESHARE),
+	DEF_OPT_UINT8("cccam_reshare"       , OFS(gbox_cccam_reshare),      DEFAULT_CCC_GBOX_RESHARE),
 #endif
 	DEF_OPT_STR("readnano"              , OFS(emmfile),                 NULL),
 	DEF_OPT_FUNC("services"             , OFS(sidtabs),                 reader_services_fn),
@@ -936,6 +1192,15 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_FUNC("boxkey"               , 0,                            boxkey_fn),
 	DEF_OPT_FUNC("rsakey"               , 0,                            rsakey_fn),
 	DEF_OPT_FUNC("deskey"               , 0,                            deskey_fn),
+#ifdef READER_NAGRA_MERLIN
+	DEF_OPT_FUNC("mod1"                 , 0,                            mod1_fn),
+	DEF_OPT_FUNC("data50"               , 0,                            data50_fn),
+	DEF_OPT_FUNC("mod50"                , 0,                            mod50_fn),
+	DEF_OPT_FUNC("key60"                , 0,                            key60_fn),
+	DEF_OPT_FUNC("exp60"                , 0,                            exp60_fn),
+	DEF_OPT_FUNC("nuid"               	, 0,                           	nuid_fn),
+	DEF_OPT_FUNC("cwekey"               , 0,                            cwekey_fn),
+#endif
 	DEF_OPT_FUNC_X("ins7e"              , OFS(ins7E),                   ins7E_fn, SIZEOF(ins7E)),
 	DEF_OPT_FUNC_X("ins7e11"            , OFS(ins7E11),                 ins7E_fn, SIZEOF(ins7E11)),
 	DEF_OPT_FUNC_X("ins2e06"            , OFS(ins2e06),                 ins7E_fn, SIZEOF(ins2e06)),
@@ -944,6 +1209,9 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_INT8("readtiers"           	, OFS(readtiers),               1),
 	DEF_OPT_INT8("force_irdeto"         , OFS(force_irdeto),            0),
 	DEF_OPT_INT8("needsemmfirst"        , OFS(needsemmfirst),           0),
+#ifdef READER_CRYPTOWORKS
+	DEF_OPT_INT8("needsglobalfirst"     , OFS(needsglobalfirst),        0),
+#endif
 	DEF_OPT_UINT32("ecmnotfoundlimit"   , OFS(ecmnotfoundlimit),        0),
 	DEF_OPT_UINT32("ecmtimeoutlimit"    , OFS(ecmtimeoutlimit),         0),
 	DEF_OPT_FUNC("ecmwhitelist"         , 0,                            ecmwhitelist_fn),
@@ -1007,10 +1275,6 @@ static const struct config_list reader_opts[] =
 #ifdef WITH_EMU
 	DEF_OPT_FUNC_X("emu_auproviders"    , OFS(emu_auproviders),         ftab_fn, FTAB_READER | FTAB_EMUAU),
 	DEF_OPT_INT8("emu_datecodedenabled" , OFS(emu_datecodedenabled),    0),
-	DEF_OPT_STR("extee36"               , OFS(extee36),                 NULL),
-	DEF_OPT_STR("extee56"               , OFS(extee56),                 NULL),
-	DEF_OPT_HEX("dre36_force_group"     , OFS(dre36_force_group),       1),
-	DEF_OPT_HEX("dre56_force_group"     , OFS(dre56_force_group),       1),
 #endif
 	DEF_OPT_INT8("deprecated"           , OFS(deprecated),              0),
 	DEF_OPT_INT8("audisabled"           , OFS(audisabled),              0),
@@ -1046,7 +1310,10 @@ static bool reader_check_setting(const struct config_list *UNUSED(clist), void *
 	{
 		"readnano", "resetcycle", "smargopatch", "autospeed", "sc8in1_dtrrts_patch", "boxid", "fix07",
 		"fix9993", "rsakey", "deskey", "ins7e", "ins7e11", "ins2e06", "force_irdeto", "needsemmfirst", "boxkey",
-		"atr", "detect", "nagra_read", "mhz", "cardmhz", "readtiers", "read_old_classes",
+		"atr", "detect", "nagra_read", "mhz", "cardmhz", "needsglobalfirst", "readtiers", "read_old_classes", "use_gpio",
+#ifdef READER_NAGRA_MERLIN
+		"mod1", "data50", "mod50", "key60", "exp60", "nuid", "cwekey",
+#endif
 #if defined(READER_DRE) || defined(READER_DRECAS)
 		"exec_cmd_file",
 #endif
@@ -1076,7 +1343,7 @@ static bool reader_check_setting(const struct config_list *UNUSED(clist), void *
 	// These are not written in the config file
 	static const char *deprecated_settings[] =
 	{
-		"cooldowndelay", "cooldowntime", "mg-encrypted",
+		"cooldowndelay", "cooldowntime",
 		0
 	};
 	if(in_list(setting, deprecated_settings))
@@ -1116,9 +1383,22 @@ static bool reader_check_setting(const struct config_list *UNUSED(clist), void *
 		{ return false; }
 #endif
 
+#ifdef MODULE_GBOX
+	// These are written only when the reader is GBOX
+	static const char *gbox_settings[] =
+	{
+		"gbox_max_distance", "gbox_max_ecm_send", "gbox_reshare", "cccam_reshare",
+		0
+	};
+	if(reader->typ != R_GBOX)
+	{
+		if(in_list(setting, gbox_settings))
+			{ return false; }
+	}
+#endif
+
 	return true; // Write the setting
 }
-
 
 void chk_reader(char *token, char *value, struct s_reader *rdr)
 {

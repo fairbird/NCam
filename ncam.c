@@ -155,7 +155,8 @@ static void show_usage(void)
 	}
 	printf("\n");
 	printf("Copyright (C) 2012-2018 developed by Javilonas.\n");
-	printf("Visit https://www.lonasdigital.com/ for more details.\n\n");
+	printf("Updated, Patched and Recompiled By RAED.\n");
+	printf("Visit https://www.tunisia-sat.com/ for more details.\n\n");
 
 	printf(" ConfigDir  : %s\n", CS_CONFDIR);
 	printf("\n");
@@ -279,15 +280,12 @@ static void parse_cmdline_params(int argc, char **argv)
 		case 'B': // --pidfile
 			ncam_pidfile = optarg;
 			break;
-#if defined(WITH_STAPI) || defined(WITH_STAPI5)
 		case 'f': // --foreground
 			bg = 0;
 			break;
-#else
 		case 'b': // --daemon
 			bg = 1;
 			break;
-#endif
 		case 'c': // --config-dir
 			cs_strncpy(cs_confdir, optarg, sizeof(cs_confdir));
 			break;
@@ -408,6 +406,7 @@ static void write_versionfile(bool use_stdout)
 		write_conf(WITH_COOLAPI2, "DVB API with COOLAPI2 support");
 		write_conf(WITH_STAPI, "DVB API with STAPI support");
 		write_conf(WITH_STAPI5, "DVB API with STAPI5 support");
+                write_conf(WITH_NEUTRINO, "DVB API with NEUTRINO support");
 		write_conf(READ_SDT_CHARSETS, "DVB API read-sdt charsets");
 	}
 	write_conf(IRDETO_GUESSING, "Irdeto guessing");
@@ -419,13 +418,15 @@ static void write_versionfile(bool use_stdout)
 	write_conf(CW_CYCLE_CHECK, "CW Cycle Check support");
 	write_conf(LCDSUPPORT, "LCD support");
 	write_conf(LEDSUPPORT, "LED support");
-	write_conf(WITH_EMU, "Emulator support");
-	switch (cs_getclocktype()) {
+	switch (cs_getclocktype())
+	{
 		case CLOCK_TYPE_UNKNOWN  : write_conf(CLOCKFIX, "Clockfix with UNKNOWN clock"); break;
 		case CLOCK_TYPE_REALTIME : write_conf(CLOCKFIX, "Clockfix with realtime clock"); break;
 		case CLOCK_TYPE_MONOTONIC: write_conf(CLOCKFIX, "Clockfix with monotonic clock"); break;
 	}
 	write_conf(IPV6SUPPORT, "IPv6 support");
+	write_conf(WITH_EMU, "Emulator support");
+	write_conf(WITH_SOFTCAM, "Built-in SoftCam.Key");
 
 	fprintf(fp, "\n");
 	write_conf(MODULE_CAMD33, "camd 3.3x");
@@ -448,6 +449,7 @@ static void write_versionfile(bool use_stdout)
 	{
 		fprintf(fp, "\n");
 		write_readerconf(READER_NAGRA, "Nagra");
+                write_readerconf(READER_NAGRA_MERLIN, "Nagra Merlin");
 		write_readerconf(READER_IRDETO, "Irdeto");
 		write_readerconf(READER_CONAX, "Conax");
 		write_readerconf(READER_CRYPTOWORKS, "Cryptoworks");
@@ -498,7 +500,7 @@ static void remove_versionfile(void)
 #define report_emm_support(CONFIG_VAR, text) \
     do { \
         if (!config_enabled(CONFIG_VAR)) \
-            cs_log("Binary without %s module - no EMM processing for %s possible!", text, text); \
+            cs_log_dbg(D_TRACE, "Binary without %s module - no EMM processing for %s possible!", text, text); \
     } while(0)
 
 static void do_report_emm_support(void)
@@ -510,6 +512,7 @@ static void do_report_emm_support(void)
 	else
 	{
 		report_emm_support(READER_NAGRA, "Nagra");
+                report_emm_support(READER_NAGRA_MERLIN, "Nagra Merlin");
 		report_emm_support(READER_IRDETO, "Irdeto");
 		report_emm_support(READER_CONAX, "Conax");
 		report_emm_support(READER_CRYPTOWORKS, "Cryptoworks");
@@ -837,9 +840,9 @@ static void init_machine_info(void)
 	// Linux only functionality
 	char boxtype[128];
 	boxtype[0] = 0;
-	char model[128];
+	char model[64];
 	model[0] = 0;
-	char vumodel[128];
+	char vumodel[64];
 	vumodel[0] = 0;
 	int8_t azmodel = 0;
 	FILE *f;
@@ -849,7 +852,9 @@ static void init_machine_info(void)
 	read_line_from_file("/proc/stb/info/boxtype", boxtype, sizeof(boxtype));
 	read_line_from_file("/proc/stb/info/vumodel", vumodel, sizeof(vumodel));
 	if (vumodel[0] && !boxtype[0] && !azmodel)
+	{
 		snprintf(boxtype, sizeof(boxtype), "vu%s", vumodel);
+	}
 	if (!boxtype[0] && azmodel)
 		snprintf(boxtype, sizeof(boxtype), "Azbox-%s", model);
 
@@ -889,8 +894,8 @@ static void init_machine_info(void)
 
 	if (!boxtype[0])
 	{
-		uchar *pos;
-		pos = (uchar*) memchr(buffer.release, 'd', sizeof(buffer.release));
+		uint8_t *pos;
+		pos = (uint8_t*) memchr(buffer.release, 'd', sizeof(buffer.release));
 		if(pos)
 		{
 			if((!memcmp(pos, "dbox2", sizeof("dbox2"))) && !strcasecmp(buffer.machine, "ppc"))
@@ -1191,7 +1196,7 @@ static void process_clients(void)
 	struct timeb start, end;  // start time poll, end time poll
 	uint32_t cl_size = 0;
 
-	uchar buf[10];
+	uint8_t buf[10];
 
 	if(pipe(thread_pipe) == -1)
 	{
@@ -1572,6 +1577,9 @@ const struct s_cardsystem *cardsystems[] =
 #ifdef READER_NAGRA
 	&reader_nagra,
 #endif
+#ifdef READER_NAGRA_MERLIN
+	&reader_nagracak7,
+#endif
 #ifdef READER_IRDETO
 	&reader_irdeto,
 #endif
@@ -1663,6 +1671,7 @@ const struct s_cardreader *cardreaders[] =
 #ifdef WITH_EMU
 	&cardreader_emu,
 #endif
+
 	NULL
 };
 

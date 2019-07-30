@@ -167,7 +167,7 @@ static size_t jet_decrypt(struct s_reader* reader, uint8_t *data,  uint8_t *out,
 
 /*================================================================*/
 
-static int32_t cw_is_valid(unsigned char *cw) //returns 1 if cw_is_valid, returns 0 if cw is all zeros
+static int32_t cw_is_valid(uint8_t *cw) //returns 1 if cw_is_valid, returns 0 if cw is all zeros
 {
 	int32_t i;
 
@@ -463,8 +463,8 @@ static int32_t jet_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, struct
 		rdr_log_dbg(reader, D_IFD, "ECM: %s", cs_hexdump(1, er->ecm, er->ecmlen, tmp, er->ecmlen * 3 + 1));
 		NULLFREE(tmp);
 	}
-	if((ecm_len = check_sct_len(er->ecm, 3, sizeof(er->ecm))) < 0) {
-		rdr_log(reader, "error: check_sct_len failed, smartcard section too long %d > %zd", SCT_LEN(er->ecm), sizeof(er->ecm) - 3);
+	if((ecm_len = check_sct_len(er->ecm, 3)) < 0)
+	{
 		return ERROR;
 	}
 

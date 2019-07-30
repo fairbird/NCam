@@ -15,7 +15,7 @@ add_executable (${util_name} ${exe_srcs} ${exe_hdrs})
 target_link_libraries (${util_name} ${libusb_link} ${rt_link} ${setupapi_link} ${ole32_link} ${shell32_link} ${pthread_link} ${dl_link})
 #----------------------- printout resume -----------------------------
 
-message (STATUS "Utils: operating system: ${NCAmOperatingSystem}")
+message (STATUS "Utils: operating system: ${NCamOperatingSystem}")
 message (STATUS "Utils: target system: ${CS_TARGET}")
 if(STATIC_LIBUSB EQUAL 0)
    message (STATUS "Utils: You selected to disable static libusb system libusb used")

@@ -2,7 +2,7 @@ HOSTCC ?= gcc
 HOSTCFLAGS ?= -Os \
  -W -Wall -Wextra -Wno-sign-compare \
  -Wshadow -Wno-shadow -Wformat-security -Wstrict-prototypes
-
+ 
 # Setup quiet build
 Q =
 SAY = @true
@@ -26,7 +26,7 @@ pages_gen: Makefile pages_gen.c
 	$(Q)$(HOSTCC) $(HOSTCFLAGS) ../minilzo/minilzo.c pages_gen.c -o $@
 
 clean:
-	@-for FILE in pages_gen pages.dep pages.bin pages.bin.compressed pages.h pages.c; do \
+	@-for FILE in pages_gen pages.dep pages.bin pages.bin.compressed pages.h pages.c is_defined.txt; do \
 		if [ -f $$FILE ]; then echo "RM	webif/$$FILE"; fi; \
 		rm -rf $$FILE; \
 	done

@@ -1,5 +1,5 @@
 /*
- * NCAm WebIf pages generator
+ * NCam WebIf pages generator
  * Copyright (C) 2013-2015 Unix Solutions Ltd.
  *
  * Authors: Georgi Chorbadzhiyski (gf@unixsol.org)
