@@ -55,7 +55,6 @@ CONFIGCCCAM                   config/cccam.html                                 
 CONFIGCCCAMCTRL               config/cccam_control.html                                   MODULE_CCCSHARE
 CONFIGCONTENT                 config/config.html
 CONFIGDVBAPI                  config/dvbapi.html                                          HAVE_DVBAPI
-CCCAMRESHAREBIT               config/cccreshare.html                                      MODULE_GBOX
 CONFIGGBOX                    config/gbox.html                                            MODULE_GBOX
 CONFIGGLOBAL                  config/global.html
 ENABLELEDBIT                  config/global_enableledbit.html                             LEDSUPPORT
@@ -66,6 +65,8 @@ UNLOCKPARENTAL                config/global_unlockparental.html                 
 CONFIGLCD                     config/lcd.html                                             LCDSUPPORT
 CONFIGLOADBALANCER            config/loadbalancer.html                                    WITH_LB
 CONFIGLOADBALANCERCTRL        config/loadbalancer_control.html                            WITH_LB
+CONFIGFORCEREOPENUSERS        config/loadbalancer_forcereopen_users.html                  WITH_LB
+CONFIGFORCEREOPENUSERSUSER    config/loadbalancer_forcereopen_users_user.html             WITH_LB
 CONFIGMENU                    config/menu.html
 CONFIGMENUANTICASC            config/menu_anticasc.html                                   CS_ANTICASC
 CONFIGMENUCAMD33              config/menu_camd33.html                                     MODULE_CAMD33
@@ -119,7 +120,6 @@ FILEMENUANTICASC              files/menu_anticasc.html                          
 FILEMENUCONSTCW               files/menu_constantcw.html                                  MODULE_CONSTCW
 FILEMENUDVBAPI                files/menu_dvbapi.html                                      HAVE_DVBAPI
 FILEMENUFAKECWS               files/menu_fakecws.html                                     CS_CACHEEX
-FILEMENUGBOX                  files/menu_gbox.html                                        MODULE_GBOX
 FILEMENUTWIN                  files/menu_twin.html                                        MODULE_SERIAL
 FILEMENUSOFTCAMKEY            files/menu_softcamkey.html                                  WITH_EMU
 
@@ -189,16 +189,12 @@ READERCONFIGCCCAMBIT          readerconfig/readerconfig_cccambit.html           
 READERCONFIGEMUBIT            readerconfig/readerconfig_emubit.html                       WITH_EMU
 READERCONFIGCS378XBIT         readerconfig/readerconfig_cs378xbit.html                    MODULE_CAMD35_TCP
 READERCONFIGGBOXBIT           readerconfig/readerconfig_gboxbit.html                      MODULE_GBOX
-READERINFOGBOXREMM            readerconfig/readerinfo_gbox_remm.html                      MODULE_GBOX
-GBOXCCCAMRESHAREBIT           readerconfig/readerconfig_gboxcccresharebit.html            MODULE_GBOX
 READERCONFIGGHTTPBIT          readerconfig/readerconfig_ghttpbit.html                     MODULE_GHTTP
 READERCONFIGHOPBIT            readerconfig/readerconfig_hopbit.html                       MODULE_CCCAM
 READERCONFIGSTDHWREADERBIT    readerconfig/readerconfig_hwreader.html                     WITH_CARDREADER
-READERCONFIGCRYPTOWORKS       readerconfig/readerconfig_hwreader_cryptoworks.html         READER_CRYPTOWORKS
 READERCONFIGBOXKEY            readerconfig/readerconfig_hwreader_boxkey.html              READER_NAGRA,READER_IRDETO,READER_SECA,READER_VIACCESS
 READERCONFIGIRDETO            readerconfig/readerconfig_hwreader_irdeto.html              READER_IRDETO
 READERCONFIGNAGRA             readerconfig/readerconfig_hwreader_nagra.html               READER_NAGRA
-READERCONFIGNAGRACAK7         readerconfig/readerconfig_hwreader_nagracak7.html           READER_NAGRA_MERLIN
 READERCONFIGNANO              readerconfig/readerconfig_hwreader_nano.html                WITH_CARDREADER
 READERPINCODE                 readerconfig/readerconfig_hwreader_pincode.html             READER_CONAX,READER_CRYPTOWORKS,READER_VIACCESS,READER_SECA
 READERCONFIGRSAKEY            readerconfig/readerconfig_hwreader_rsakey.html              READER_NAGRA,READER_IRDETO,READER_CONAX
@@ -208,6 +204,8 @@ READERCONFIGSMARGO            readerconfig/readerconfig_hwreader_smargo.html    
 READERCONFIGVIACCESS          readerconfig/readerconfig_hwreader_viaccess.html            READER_VIACCESS
 READERCONFIGDRE               readerconfig/readerconfig_hwreader_dre.html                 READER_DRE
 READERCONFIGVIDEOGUARD        readerconfig/readerconfig_hwreader_videoguard.html          READER_VIDEOGUARD
+READERCONFIGTONGFANG          readerconfig/readerconfig_hwreader_tongfang.html            READER_TONGFANG
+READERCONFIGJET               readerconfig/readerconfig_hwreader_jet.html                 READER_JET
 READERCONFIGLBWEIGHT          readerconfig/readerconfig_lbweight.html                     WITH_LB
 READERCONFIGNCD525BIT         readerconfig/readerconfig_ncd525bit.html                    MODULE_NEWCAMD
 READERCONFIGNCD524BIT         readerconfig/readerconfig_ncd524bit.html                    MODULE_NEWCAMD
@@ -215,6 +213,7 @@ READERCONFIGRADEGASTBIT       readerconfig/readerconfig_radegastbit.html        
 READERCONFIGSCAMBIT           readerconfig/readerconfig_scambit.html                      MODULE_SCAM
 READERCONFIGSID               readerconfig/readerconfig_sid.html
 READERCONFIGSIDLBOKBIT        readerconfig/readerconfig_sidlbokbit.html
+READERCONFIGSIDLBPRIOOKBIT    readerconfig/readerconfig_sidlbpriookbit.html
 READERCONFIGSIDNOBIT          readerconfig/readerconfig_sidnobit.html
 READERCONFIGSIDOKBIT          readerconfig/readerconfig_sidokbit.html
 
@@ -246,7 +245,7 @@ SAVETEMPLATES                 savetemplates/savetemplates.html
 SCANUSB                       scanusb/scanusb.html
 SCANUSBBIT                    scanusb/scanusb_usbbit.html
 
-SCRIPT                        script/script.html
+#SCRIPT                        script/script.html
 
 SERVICECONFIGLIST             services/services.html
 SERVICECONFIGLISTBIT          services/services_servicetabs.html
@@ -296,6 +295,7 @@ USEREDIT                      user_edit/user_edit.html
 USEREDITANTICASC              user_edit/user_edit_anticasc.html                           CS_ANTICASC
 USEREDITCACHEEXBIT            user_edit/user_edit_cacheexbit.html                         CS_CACHEEX
 USEREDITCWCYCLE               user_edit/user_edit_cwcycle.html                            CW_CYCLE_CHECK
+USEREDITLOADBALANCER          user_edit/user_edit_loadbalancer.html                       WITH_LB
 USEREDITCCCAM                 user_edit/user_edit_cccam.html                              MODULE_CCCAM
 USEREDITMONLEVEL              user_edit/user_edit_monlevel.html                           MODULE_MONITOR
 USEREDITSID                   user_edit/user_edit_sid.html

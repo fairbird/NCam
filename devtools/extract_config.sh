@@ -2,9 +2,9 @@
 
 if [ "$1" = "" ]
 then
-	echo "Extract OSCam config from OSCam binary"
+	echo "Extract NCAm config from NCAm binary"
 	echo
-	echo "  Usage: `basename $0` oscam_binary"
+	echo "  Usage: `basename $0` ncam_binary"
 	echo
 	exit 1
 fi

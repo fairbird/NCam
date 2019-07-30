@@ -1,0 +1,33 @@
+ncam.ratelimit(5)				       File Formats Manual				       ncam.ratelimit(5)
+
+
+
+NAME
+       ncam.ratelimit - ECMs ratelimit for NCAm
+
+SYNOPSIS
+       limit rate of ECMs allowed for an interval
+
+DESCRIPTIONS
+       CAID:provider ID:service ID:ChID:ratelimitecm:ratelimitseconds:srvidholdseconds
+
+	  ratelimitecm
+	     number of different SIDs in ECMs allowed for an interval
+
+	  ratelimitseconds
+	     interval in seconds for ratelimit
+
+	  srvidholdseconds
+	     extra time in seconds this service ID is kept in a slot before another service ID can take its place
+
+EXAMPLES
+	0100:00002A:3A3A:4A00:0002:0010:0004
+
+SEE ALSO
+       list_smargo(1),	ncam(1), ncam.ac(5), ncam.cacheex(5), ncam.cert(5), ncam.conf(5), ncam.dvbapi(5), ncam.fakecws(5),
+       ncam.guess(5),	ncam.ird(5),  ncam.provid(5),  ncam.server(5),  ncam.services(5),  ncam.srvid(5),	 ncam.srvid2(5),
+       ncam.tiers(5), ncam.user(5), ncam.whitelist(5)
+
+
+
+													       ncam.ratelimit(5)

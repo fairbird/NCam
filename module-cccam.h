@@ -5,7 +5,7 @@
 
 void cc_update_nodeid(void);
 
-void cc_UA_cccam2oscam(uint8_t *in, uint8_t *out, uint16_t caid);
+void cc_UA_cccam2ncam(uint8_t *in, uint8_t *out, uint16_t caid);
 
 int32_t cc_UA_valid(uint8_t *ua);
 
@@ -28,6 +28,7 @@ bool cccam_forward_origin_card(ECM_REQUEST *er);
 bool cccam_snprintf_cards_stat(struct s_client *cl, char *emmtext, size_t emmtext_sz);
 bool cccam_client_extended_mode(struct s_client *cl);
 bool cccam_client_multics_mode(struct s_client *cl);
+bool cccam_client_newbox_mode(struct s_client *cl);
 #else
 static inline bool cccam_forward_origin_card(ECM_REQUEST *UNUSED(er))
 {
@@ -42,6 +43,10 @@ static inline bool cccam_client_extended_mode(struct s_client *UNUSED(cl))
 	return false;
 }
 static inline bool cccam_client_multics_mode(struct s_client *UNUSED(cl))
+{
+	return false;
+}
+static inline bool cccam_client_newbox_mode(struct s_client *UNUSED(cl))
 {
 	return false;
 }

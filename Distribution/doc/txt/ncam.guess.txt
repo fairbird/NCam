@@ -1,0 +1,26 @@
+ncam.guess(5)					       File Formats Manual					   ncam.guess(5)
+
+
+
+NAME
+       ncam.guess - CAID guessing table for NCAm
+
+SYNOPSIS
+       CAID guessing table
+
+DESCRIPTIONS
+       <length of ECM>:<CAID>
+	  CAID	guessing  table  by  len in hex, only needed for protocols (at the moment BOMBA protocol only) that does not pass
+	  CAIDs
+
+EXAMPLES
+	12:3456
+
+SEE ALSO
+       list_smargo(1), ncam(1), ncam.ac(5), ncam.cacheex(5), ncam.cert(5), ncam.conf(5), ncam.dvbapi(5),	ncam.fakecws(5),
+       ncam.guess(5),	ncam.ird(5),  ncam.provid(5),  ncam.ratelimit(5),  ncam.server(5), ncam.services(5), ncam.srvid(5),
+       ncam.srvid2(5), ncam.tiers(5), ncam.user(5), ncam.whitelist(5)
+
+
+
+														   ncam.guess(5)

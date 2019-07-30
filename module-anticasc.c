@@ -6,16 +6,16 @@
 #ifdef CS_ANTICASC
 
 #include "module-anticasc.h"
-#include "oscam-conf.h"
-#include "oscam-client.h"
-#include "oscam-garbage.h"
-#include "oscam-string.h"
-#include "oscam-time.h"
+#include "ncam-conf.h"
+#include "ncam-client.h"
+#include "ncam-garbage.h"
+#include "ncam-string.h"
+#include "ncam-time.h"
 
-#define cs_ac "oscam.ac"
+#define cs_ac "ncam.ac"
 
 static FILE *ac_log;
-static uint8_t ac_ecmd5[CS_ECMSTORESIZE];
+static uchar  ac_ecmd5[CS_ECMSTORESIZE];
 
 bool anticasc_logging(char *txt)
 {
@@ -172,7 +172,7 @@ static int32_t ac_dw_weight(ECM_REQUEST *er)
 				(cpmap->chid  == 0 || cpmap->chid  == er->chid))
 			{ return (cpmap->dwtime * 100 / 60); }
 
-	cs_log_dbg(D_CLIENT, "acasc: WARNING: CAID %04X, PROVID %06X, SID %04X, CHID %04X not found in oscam.ac",
+	cs_log_dbg(D_CLIENT, "acasc: WARNING: CAID %04X, PROVID %06X, SID %04X, CHID %04X not found in ncam.ac",
 				  er->caid, er->prid, er->srvid, er->chid);
 	cs_log_dbg(D_CLIENT, "acasc: set DW lifetime 10 sec");
 	return 16; // 10*100/60

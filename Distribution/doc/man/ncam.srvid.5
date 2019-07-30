@@ -1,0 +1,24 @@
+.TH ncam.srvid 5
+.SH NAME
+\fBncam.srvid\fR - service ID configuration file for NCAm
+.SH SYNOPSIS
+service ID mappings
+.SH DESCRIPTIONS
+.PP
+\fBCAID[,CAID]...\fP:\fBservice ID\fP|\fB[provider]\fP|\fB[name]\fP|\fB[type]\fP|\fB[description]\fP
+
+.RS 3n
+mapping between CAID, service ID, provider, name, type and description of service
+.RE
+.SH ANNONTATIONS
+\fIPlease use Unix text file format only.\fR
+
+You only need the \fBncam.srvid\fR when using the monitor or the web interface. 
+\fIFor saving memory consumption only insert the service IDs you really need.\fR Some 
+external programs use their own \fBncam.srvid\fR and do not need the \fBncam.srvid\fR of NCAm.
+.SH EXAMPLES
+ 0001,0002,0003:000a|my provider 1|tv name 1|tv|my tv package
+ 0004,0005,0006:000a|my provider 2|radio name 2|radio|my radio package
+ 0006:000b|my provider 3|tv name 3| 
+.SH "SEE ALSO"
+\fBlist_smargo\fR(1), \fBncam\fR(1), \fBncam.ac\fR(5), \fBncam.cacheex\fR(5), \fBncam.cert\fR(5), \fBncam.conf\fR(5), \fBncam.dvbapi\fR(5), \fBncam.fakecws\fR(5), \fBncam.guess\fR(5), \fBncam.ird\fR(5), \fBncam.provid\fR(5), \fBncam.ratelimit\fR(5), \fBncam.server\fR(5), \fBncam.services\fR(5), \fBncam.srvid2\fR(5), \fBncam.tiers\fR(5), \fBncam.user\fR(5), \fBncam.whitelist\fR(5)

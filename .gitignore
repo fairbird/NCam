@@ -1,24 +1,23 @@
 # generated binaries
-Distribution/oscam-*
+Distribution/ncam-*
 Distribution/list_smargo-*
 
 # backup/swap file for vi
 *~
 *.swp
 
-# IDE resources
-.vscode
+README.build
+README.config
+README.dvbapi_protocol
 
 # build directories
 /build/
+/build_dir/
 
 # Currently enabled config items
 webif/is_defined.txt
+webif/images/ICMLOGO.svg
 
 # Testing program
 tests.bin
 tests.bin.debug
-
-# Emu files
-*.patch
-SoftCam.*

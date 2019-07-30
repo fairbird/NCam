@@ -1,9 +1,9 @@
 ##TPLHEADERSHORT##
 ##REFRESH##
 	<script type="text/javascript">
-
+	
 	var page = 'user';
-	var jsonurl = 'oscamapi.json';
+	var jsonurl = 'ncamapi.json';
 	var parameters = "?part=userstats";
 	var stoppoll = 0;
 	var pollintervall = 0;
@@ -14,7 +14,7 @@
 	</script>
 	<script type="text/javascript">
 	// script customization for templates
-
+	
 	/*
 	* this function is called during poll runs on each row update
 	* item contains the json class of actual item. Use the attribute
@@ -27,14 +27,14 @@
 		$( uid + " td.usercol4").html( 'ID of this row is ' + item.user.usermd5);
 		*/
 	}
-
+	
 	/*
 	* this function is called after poll has updated the page
 	*/
 	function afterpoll(){
 	 	// do something after poll
 	}
-
+	
 	</script>
 ##TPLBODY##
 ##TPLMENU##
@@ -63,7 +63,7 @@
 	<TABLE ID="dataTable" CLASS="users">
 	<THEAD>
 		<TR>
-			<TH COLSPAN="4"></TH>
+			<TH COLSPAN="5"></TH>
 			<TH CLASS="##GRPVIEW##"></TH>
 			<TH COLSPAN="2"></TH>
 			<TH COLSPAN="8">ECM</TH>
@@ -71,12 +71,13 @@
 ##TPLUSERCWCYCLE##
 ##TPLUSERANTICASC##
 			<TH CLASS="##EXPIREVIEW##"></TH>
-			<TH COLSPAN="3"></TH>
+			<TH COLSPAN="4"></TH>
 		</TR>
 		<TR id="headline" onClick="cdpause()"> <!--  Resolve  -->
 			<TH>On/Off</TH>
 			<TH data-sort="string-ins" data-sort-default="asc" class="sortable">User</TH>
 			<TH data-sort="ip" class="sortable">Status<BR>Address</TH>
+			<TH TITLE="Last conection Port">Port</TH>
 			<TH data-sort="string-ins" data-sort-default="asc" class="sortable">Protocol</TH>
 			<TH CLASS="##GRPVIEW##">Groups</TH>
 			<TH>Idle Time<BR>On Channel</TH>

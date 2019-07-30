@@ -4,6 +4,7 @@
 		"status":"##STATUS##",
 		"classname":"##CLASSNAME##",
 		"ip":"##CLIENTIP##",
+		"port": "##CLIENTPORT##",
 		"unotify":"##UNOTIFY##",
 		"protocol":"##CLIENTPROTO##",
 		"protoicon":"##PROTOICON##",

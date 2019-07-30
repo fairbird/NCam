@@ -1,0 +1,31 @@
+ncam.tiers(5)					       File Formats Manual					   ncam.tiers(5)
+
+
+
+NAME
+       ncam.tiers - TIER configuration file for NCAm
+
+SYNOPSIS
+       TIER mappings
+
+DESCRIPTIONS
+       CAID[,CAID]...:TIER ID|description
+
+	  mapping between CAID, TIER ID and description of TIER
+
+ANNONTATIONS
+       Please use Unix text file format only.
+
+EXAMPLES
+	0001,0002,0003:000a|my TIER 1
+	0004:000b|my TIER 2
+	0005:000b|my TIER 3
+
+SEE ALSO
+       list_smargo(1),	ncam(1), ncam.ac(5), ncam.cacheex(5), ncam.cert(5), ncam.conf(5), ncam.dvbapi(5), ncam.fakecws(5),
+       ncam.guess(5), ncam.ird(5), ncam.provid(5),  ncam.ratelimit(5),  ncam.server(5),  ncam.services(5),  ncam.srvid(5),
+       ncam.srvid2(5), ncam.user(5), ncam.whitelist(5)
+
+
+
+														   ncam.tiers(5)

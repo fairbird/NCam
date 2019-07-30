@@ -1,18 +1,18 @@
 #define MODULE_LOG_PREFIX "camd35"
 
 #include "globals.h"
-#include "oscam-array.h"
+#include "ncam-array.h"
 
 #if defined(CS_CACHEEX) && (defined(MODULE_CAMD35) || defined(MODULE_CAMD35_TCP))
 
 #include "module-cacheex.h"
 #include "module-camd35.h"
 #include "module-camd35-cacheex.h"
-#include "oscam-cache.h"
-#include "oscam-client.h"
-#include "oscam-ecm.h"
-#include "oscam-string.h"
-#include "oscam-reader.h"
+#include "ncam-cache.h"
+#include "ncam-client.h"
+#include "ncam-ecm.h"
+#include "ncam-string.h"
+#include "ncam-reader.h"
 
 uint8_t camd35_node_id[8];
 
@@ -242,7 +242,7 @@ static int32_t camd35_cacheex_push_out(struct s_client *cl, struct ecm_request_t
 
 	uint32_t size = sizeof(er->ecmd5) + sizeof(er->csp_hash) + sizeof(er->cw) + sizeof(uint8_t) +
 					(ll_count(er->csp_lastnodes) + 1) * 8;
-	uint8_t *buf;
+	unsigned char *buf;
 	if(!cs_malloc(&buf, size + 20))  //camd35_send() adds +20
 		{ return -1; }
 
@@ -274,7 +274,7 @@ static int32_t camd35_cacheex_push_out(struct s_client *cl, struct ecm_request_t
 
 	uint8_t *ofs = buf + 20;
 
-	//write oscam ecmd5:
+	//write ncam ecmd5:
 	memcpy(ofs, er->ecmd5, sizeof(er->ecmd5)); //16
 	ofs += sizeof(er->ecmd5);
 
@@ -309,7 +309,7 @@ static int32_t camd35_cacheex_push_out(struct s_client *cl, struct ecm_request_t
 	return res;
 }
 
-static void camd35_cacheex_push_in(struct s_client *cl, uint8_t *buf)
+static void camd35_cacheex_push_in(struct s_client *cl, uchar *buf)
 {
 	int8_t rc = buf[3];
 	if(rc != E_FOUND && rc != E_UNHANDLED)  //Maybe later we could support other rcs
@@ -434,7 +434,7 @@ static void camd35_cacheex_push_in(struct s_client *cl, uint8_t *buf)
 	cacheex_add_to_cache(cl, er);
 }
 
-void camd35_cacheex_recv_ce1_cwc_info(struct s_client *cl, uint8_t *buf, int32_t idx)
+void camd35_cacheex_recv_ce1_cwc_info(struct s_client *cl, uchar *buf, int32_t idx)
 {
 	if(!(buf[0] == 0x01 && buf[18] < 0xFF && buf[18] > 0x00)) // cwc info ; normal camd3 ecms send 0xFF but we need no cycletime of 255 ;)
 		return;

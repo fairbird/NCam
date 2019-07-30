@@ -1,0 +1,34 @@
+ncam.srvid(5)					       File Formats Manual					   ncam.srvid(5)
+
+
+
+NAME
+       ncam.srvid - service ID configuration file for NCAm
+
+SYNOPSIS
+       service ID mappings
+
+DESCRIPTIONS
+       CAID[,CAID]...:service ID|[provider]|[name]|[type]|[description]
+
+	  mapping between CAID, service ID, provider, name, type and description of service
+
+ANNONTATIONS
+       Please use Unix text file format only.
+
+       You  only need the ncam.srvid when using the monitor or the web interface.  For saving memory consumption only insert the
+       service IDs you really need. Some external programs use their own ncam.srvid and do not need the ncam.srvid of NCAm.
+
+EXAMPLES
+	0001,0002,0003:000a|my provider 1|tv name 1|tv|my tv package
+	0004,0005,0006:000a|my provider 2|radio name 2|radio|my radio package
+	0006:000b|my provider 3|tv name 3|
+
+SEE ALSO
+       list_smargo(1), ncam(1), ncam.ac(5), ncam.cacheex(5), ncam.cert(5), ncam.conf(5), ncam.dvbapi(5),	ncam.fakecws(5),
+       ncam.guess(5),	ncam.ird(5),  ncam.provid(5),  ncam.ratelimit(5), ncam.server(5), ncam.services(5), ncam.srvid2(5),
+       ncam.tiers(5), ncam.user(5), ncam.whitelist(5)
+
+
+
+														   ncam.srvid(5)

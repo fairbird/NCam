@@ -1,5 +1,29 @@
+/*
+    protocol_t1.c
+    Handling of ISO 7816 T=1 protocol
+
+    This file is part of the Unix driver for Towitoko smartcard readers
+    Copyright (C) 2000 Carlos Prados <cprados@yahoo.com>
+
+    This version is modified by doz21 to work in a special manner ;)
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
 #include "../globals.h"
-#include "../oscam-time.h"
+#include "../ncam-time.h"
 #ifdef WITH_CARDREADER
 #include "icc_async.h"
 
@@ -7,24 +31,24 @@
 #define ERROR 1
 
 /* Buffer sizes */
-#define T1_BLOCK_MAX_SIZE		259
+#define T1_BLOCK_MAX_SIZE                259
 
 /* Types of block */
-#define T1_BLOCK_I				0x00
-#define T1_BLOCK_R_OK			0x80
-#define T1_BLOCK_R_EDC_ERR		0x81
-#define T1_BLOCK_R_OTHER_ERR	0x82
-#define T1_BLOCK_S_RESYNCH_REQ	0xC0
-#define T1_BLOCK_S_RESYNCH_RES	0xE0
-#define T1_BLOCK_S_IFS_REQ		0xC1
-#define T1_BLOCK_S_IFS_RES		0xE1
-#define T1_BLOCK_S_ABORT_REQ	0xC2
-#define T1_BLOCK_S_ABORT_RES	0xE2
-#define T1_BLOCK_S_WTX_REQ		0xC3
-#define T1_BLOCK_S_WTX_RES		0xE3
-#define T1_BLOCK_S_VPP_ERR		0xE4
+#define T1_BLOCK_I                0x00
+#define T1_BLOCK_R_OK             0x80
+#define T1_BLOCK_R_EDC_ERR        0x81
+#define T1_BLOCK_R_OTHER_ERR      0x82
+#define T1_BLOCK_S_RESYNCH_REQ    0xC0
+#define T1_BLOCK_S_RESYNCH_RES    0xE0
+#define T1_BLOCK_S_IFS_REQ        0xC1
+#define T1_BLOCK_S_IFS_RES        0xE1
+#define T1_BLOCK_S_ABORT_REQ      0xC2
+#define T1_BLOCK_S_ABORT_RES      0xE2
+#define T1_BLOCK_S_WTX_REQ        0xC3
+#define T1_BLOCK_S_WTX_RES        0xE3
+#define T1_BLOCK_S_VPP_ERR        0xE4
 
-#define T1_BLOCK_NAD			0x00
+#define T1_BLOCK_NAD        0x00
 
 #define T1_Block_GetNS(a)   ((a[1] >> 6) & 0x01)
 #define T1_Block_GetMore(a) ((a[1] >> 5) & 0x01)
@@ -37,27 +61,21 @@ static unsigned char T1_Block_LRC(unsigned char *data, uint32_t length)
 	unsigned char lrc = 0x00;
 	uint32_t i;
 	for(i = 0; i < length; i++)
-	{
-		lrc ^= data[i];
-	}
+		{ lrc ^= data[i]; }
 	return lrc;
 }
 
-static int32_t T1_Block_SendIBlock(struct s_reader *reader, uint8_t *block_data, unsigned char len, unsigned char *inf, unsigned char ns, int32_t more, uint32_t timeout)
+static int32_t T1_Block_SendIBlock(struct s_reader *reader, uint8_t *block_data, unsigned char len, unsigned char *inf, unsigned char ns, int32_t more,                    uint32_t timeout)
 {
 	int length = len + 4;
 
 	block_data[0] = T1_BLOCK_NAD;
 	block_data[1] = T1_BLOCK_I | ((ns << 6) & 0x40);
 	if(more)
-	{
-		block_data[1] |= 0x20;
-	}
+		{ block_data[1] |= 0x20; }
 	block_data[2] = len;
 	if(len != 0x00)
-	{
-		memcpy(block_data + 3, inf, len);
-	}
+		{ memcpy(block_data + 3, inf, len); }
 	block_data[len + 3] = T1_Block_LRC(block_data, len + 3);
 
 	return ICC_Async_Transmit(reader, length, 0, block_data, 0, timeout);
@@ -83,9 +101,7 @@ static int32_t T1_Block_SendSBlock(struct s_reader *reader, uint8_t *block_data,
 	block_data[1] = type;
 	block_data[2] = len;
 	if(len != 0x00)
-	{
-		memcpy(block_data + 3, inf, len);
-	}
+		{ memcpy(block_data + 3, inf, len); }
 
 	block_data[len + 3] = T1_Block_LRC(block_data, len + 3);
 
@@ -98,9 +114,7 @@ static int32_t Protocol_T1_ReceiveBlock(struct s_reader *reader, uint8_t *block_
 
 	/* Receive four mandatory bytes */
 	if(ICC_Async_Receive(reader, 4, block_data, 0, timeout))
-	{
-		ret = ERROR;
-	}
+		{ ret = ERROR; }
 	else
 	{
 		length = block_data[2];
@@ -110,13 +124,9 @@ static int32_t Protocol_T1_ReceiveBlock(struct s_reader *reader, uint8_t *block_
 
 			/* Receive remaining bytes */
 			if(ICC_Async_Receive(reader, *block_length - 4, block_data + 4, 0, timeout))
-			{
-				ret = ERROR;
-			}
+				{ ret = ERROR; }
 			else
-			{
-				ret = OK;
-			}
+				{ ret = OK; }
 		}
 		else
 		{
@@ -275,10 +285,7 @@ int32_t Protocol_T1_Command(struct s_reader *reader, unsigned char *command, uin
 				/* Calculate nr */
 				nr = (T1_Block_GetNS(block_data) + 1) % 2;
 
-				if(counter + bytes > T1_BLOCK_MAX_SIZE)
-				{
-					return ERROR;
-				}
+				if(counter + bytes > T1_BLOCK_MAX_SIZE) { return ERROR; }
 
 				memcpy(rsp + counter, block_data + 3, bytes);
 				counter += bytes;
@@ -316,9 +323,7 @@ int32_t Protocol_T1_Command(struct s_reader *reader, unsigned char *command, uin
 	}
 
 	if(ret == OK)
-	{
-		*lr = counter;
-	}
+		{ *lr = counter; }
 
 	return ret;
 }

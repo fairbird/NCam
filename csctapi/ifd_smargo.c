@@ -1,7 +1,7 @@
 #include "../globals.h"
 
 #ifdef CARDREADER_SMARGO
-#include "../oscam-time.h"
+#include "../ncam-time.h"
 #include "icc_async.h"
 #include "io_serial.h"
 
@@ -45,8 +45,8 @@ static void smargo_set_config_mode_off(struct s_reader *reader)
 
 static int32_t smargo_set_settings(struct s_reader *reader, int32_t freq, unsigned char T, unsigned char inv, uint16_t Fi, unsigned char Di, unsigned char Ni)
 {
-	uint16_t freqk = (freq * 10);
-	uint8_t data[4];
+	uint16_t  freqk = (freq * 10);
+	uchar data[4];
 
 	smargo_set_config_mode_on(reader);
 
@@ -152,7 +152,7 @@ static int32_t smargo_fast_reset_by_atr(struct s_reader *reader, ATR *atr)
 	}
 	else
 	{
-		atr_len = reader->card_atr_length + 2; // data buffer has atr lenght + 2 bytes
+		atr_len = reader->card_atr_length + 2; // data buffer has atr lenght + 2 bytes 
 	}
 
 	IO_Serial_Read(reader, 0, 500000, atr_len, buf);
@@ -228,7 +228,7 @@ static int32_t smargo_reset(struct s_reader *reader, ATR *atr)
 	// If inverse convention, switch here due to if not PTS will fail
 	if(convention == ATR_CONVENTION_INVERSE)
 	{
-		uint8_t data[4];
+		uchar data[4];
 
 		smargo_set_config_mode_on(reader);
 

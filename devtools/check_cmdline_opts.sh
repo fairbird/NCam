@@ -1,14 +1,14 @@
 #!/bin/sh
 
-if [ ! -f oscam.c ]
+if [ ! -f ncam.c ]
 then
-	echo "ERROR: Run this script in the oscam source directory (where oscam.c file is)."
+	echo "ERROR: Run this script in the ncam source directory (where ncam.c file is)."
 	exit 1
 fi
 
-OPTS=`grep "static const char short_options" oscam.c | sed -e 's|.* \"||;s|\".*||;s|:||g;s|\(.\)|\1 |g'`
+OPTS=`grep "static const char short_options" ncam.c | sed -e 's|.* \"||;s|\".*||;s|:||g;s|\(.\)|\1 |g'`
 SOPTS=$((for i in $OPTS; do echo $i; done) | sort)
-LOPTS=$(grep "^	{ \"" oscam.c | sed -e 's|.*{ \"||;s|".*||')
+LOPTS=$(grep "^	{ \"" ncam.c | sed -e 's|.*{ \"||;s|".*||')
 FOPTS=""
 
 #echo opts:$OPTS
@@ -28,12 +28,12 @@ do
 done
 echo
 
-echo -en "Options that are not processed in oscam.c (missing case 'x'):\n    "
+echo -en "Options that are not processed in ncam.c (missing case 'x'):\n    "
 #AOPTS="$FOPTS $SOPTS"
 AOPTS="$SOPTS"
 for i in $AOPTS
 do
-	grep -q "case '$i'" oscam.c 2>/dev/null
+	grep -q "case '$i'" ncam.c 2>/dev/null
 	[ $? != 0 ] && echo -n $i
 done
 echo
@@ -41,7 +41,7 @@ echo
 echo -en "Short options that are missing from 'struct long_options[]'\n    "
 for i in $AOPTS
 do
-	grep -q "NULL, '$i' }," oscam.c 2>/dev/null
+	grep -q "NULL, '$i' }," ncam.c 2>/dev/null
 	[ $? != 0 ] && echo -n $i
 done
 echo
@@ -49,7 +49,7 @@ echo
 echo -en "No help entry in usage() for short options:\n    "
 for i in $AOPTS
 do
-	grep -q "	printf(\" -$i" oscam.c 2>/dev/null
+	grep -q "	printf(\" -$i" ncam.c 2>/dev/null
 	[ $? != 0 ] && echo -n $i
 done
 echo
@@ -57,7 +57,7 @@ echo
 echo "No help entry in usage() long options:"
 for i in $LOPTS
 do
-	grep -q "	printf(\" -., --$i" oscam.c 2>/dev/null
+	grep -q "	printf(\" -., --$i" ncam.c 2>/dev/null
 	[ $? != 0 ] && echo "    $i"
 done
 echo

@@ -19,9 +19,9 @@
 #include "../globals.h"
 
 #ifdef CARDREADER_SC8IN1
-#include "../oscam-lock.h"
-#include "../oscam-string.h"
-#include "../oscam-time.h"
+#include "../ncam-lock.h"
+#include "../ncam-string.h"
+#include "../ncam-time.h"
 #include "atr.h"
 #include "ifd_phoenix.h"
 #include "io_serial.h"
@@ -525,11 +525,11 @@ if (display) {
 	return OK;
 }
 
-static int32_t mcrHelloOscam(struct s_reader *reader)
+static int32_t mcrHelloNcam(struct s_reader *reader)
 {
-	// Display "OSCam" on MCR display
-	char helloOscam[5] = {'O', 'S', 'C', 'a', 'm'};
-	return MCR_DisplayText(reader, &helloOscam[0], 5, 100, 1);
+	// Display "NCAm" on MCR display
+	char helloNcam[5] = {'O', 'S', 'C', 'a', 'm'};
+	return MCR_DisplayText(reader, &helloNcam[0], 5, 100, 1);
 }
 
 static int32_t mcr_generateStatisticsForDisplay(struct s_reader *reader)
@@ -945,7 +945,7 @@ static int32_t Sc8in1_Init(struct s_reader *reader)
 	// Gimmick
 	if(crdr_data->mcr_type)
 	{
-		mcrHelloOscam(reader);
+		mcrHelloNcam(reader);
 	}
 
 	return OK;
@@ -1108,9 +1108,9 @@ static int32_t Sc8in1_InitLocks(struct s_reader *reader)
 			struct sc8in1_data *crdr_data = reader->crdr_data;
 			char *buff = NULL, *buff2 = NULL;
 			if(cs_malloc(&buff, 128))
-				{ snprintf(buff, 128, "sc8in1_lock_%.64s", reader->device); }
+				{ snprintf(buff, 128, "sc8in1_lock_%s", reader->device); }
 			if(cs_malloc(&buff2, 128))
-				{ snprintf(buff2, 128, "display_sc8in1_lock_%.64s", reader->device); }
+				{ snprintf(buff2, 128, "display_sc8in1_lock_%s", reader->device); }
 			cs_lock_create(__func__, &crdr_data->sc8in1_lock, ESTR(buff), 40000);
 			cs_lock_create(__func__, &crdr_data->sc8in1_display_lock, ESTR(buff2), 10000);
 		}
@@ -1179,9 +1179,9 @@ static int32_t sc8in1_init(struct s_reader *reader)
 		rdr_log_dbg(reader, D_DEVICE, "%s opening SC8in1", __func__);
 		//open physical device
 		char deviceName[128];
-		cs_strncpy(deviceName, reader->device, 128);
+		strncpy(deviceName, reader->device, 128);
 		deviceName[pos] = 0;
-		reader->handle = open(deviceName, O_RDWR | O_NOCTTY | O_NONBLOCK);
+		reader->handle = open(deviceName,  O_RDWR | O_NOCTTY | O_NONBLOCK);
 		if(reader->handle < 0)
 		{
 			rdr_log(reader, "ERROR: Opening device %s with real device %s (errno=%d %s)", reader->device, deviceName, errno, strerror(errno));

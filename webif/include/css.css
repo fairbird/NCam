@@ -34,18 +34,19 @@
 * {margin:0;padding:0}
 
 /* **************** 2. BASIC DIVISION PAGES */
-html,body,* html #wrapper {height:100%}
-#wrapper {position:relative;min-height:100%}
-#content {margin-bottom:0;padding:0 8px 115px}
+html,body,* html #wrapper {width:auto;height:100%}
+#wrapper {width:auto;position:relative;min-height:100%}
+#content {width:auto;margin-bottom:0;padding:0 8px 115px}
 #footer {position:absolute;bottom:0;width:100%}
 
 /* **************** 3. BASIC SETTINGS - BODY,P,H4,LI,B */
 body {
-	font-family:Arial;
+	font-family:Tahoma;
 	font-size:11px;
 	text-align:center;
-	background-color:#FFF;
+	background-color:#4066a7;
 	color:#000;
+	width:auto;
 	text-decoration:none
 }
 /* pre_shutdown.html */
@@ -79,7 +80,7 @@ li {
 }
 /* footer.html */
 li.styleauthor:after {
-	content:"Streamboard Team"
+	content:"Javier Sayago"
 }
 /* Solution for vertical align in tbody.statusecminfo */
 tbody.statusecminfo tr:nth-child(5) td:last-child b {
@@ -168,6 +169,7 @@ form table a {
 #main {}
 #mainmenu {
 	height:27px;
+	width:auto;
 	padding-top:6px;
 	white-space:nowrap;
 	display:inline-block;
@@ -189,7 +191,8 @@ li.menu:hover, li.menu_selected,
 li.configmenu:hover, li.configmenu_selected {
 	background-color:#DDD
 }
-
+TD.menu {color:black; background-color:white; font-family: Arial; font-size:14px; font-weight:bold;white-space: normal;}
+TD.menu_selected {color:black; background-color:#E6FEBF; font-family: Arial; font-size:14px; font-weight:bold;font-style:italic;}
 /* **************** 6. SUBNAV */
 #subnav {}
 #nav {
@@ -216,6 +219,8 @@ li.text_entitle {
 table {
 	border-spacing:1px;
 	border:0;
+	margin-left:auto;
+	margin-right:auto;
 	margin:0 auto
 }
 
@@ -344,7 +349,7 @@ table.subservicetable {
 
 /* **************** 8. TABLE TR */
 /* for entitlement of readers */
-tr.e_valid td, tr.e_expired td, tr.e_header td {
+tr.e_valid td, tr.e_expired td, tr.e_forcereopenuseronline td, tr.e_forcereopenuserconnected td, tr.e_header td {
 	font-family:"Courier New", monospace
 }
 /* hiding formatline for width of firstrow in config, readers and users / width in info */
@@ -357,11 +362,15 @@ tr.infocolswidth, tr.infocolswidth td, tr.infocolswidth th {
 /* rowcolors for cacheex rows in cachex depend on status */
 tr.e_valid td {background-color:#E6FEBF}
 tr.e_expired td {background-color:#FFF3E7}
+tr.e_forcereopenuseronline td {background-color:#C7D6FF}
+tr.e_forcereopenuserconnected td {background-color:#D2EDFF}
 /* rowcolors for users rows in unserconfig.html depend on status */
 tr.online td.usercol6 {background-color:#DDD}
 tr.online td {background-color:#BFA}
 tr.offline td {}
 tr.expired td {background-color:#FBA}
+tr.forcereopenuseronline td {background-color:#C7D6FF}
+tr.forcereopenuserconnected td {background-color:#D2EDFF}
 tr.connected td {background-color:#FFA}
 /* color of button for readers and user row in readers.html and userconfig.html*/
 tr.disabled td {}
@@ -383,7 +392,10 @@ tr.scanusbsubhead {}
 th {
 	height:10px;
 	padding:5px;
-	background-color:#CCC
+	font-family: Arial;
+	font-size: 11px;
+	color:black;
+	background-color:#CCCCCC
 }
 th.right {
 	text-align:right
@@ -406,7 +418,7 @@ th.statuscol0 {
 	width:0
 }
 /* readerconfig.html */
-th.withservices, th.notservices, th.lbservices {}
+th.withservices, th.notservices, th.lbservices, th.lbprioservices {}
 
 /* **************** 10. TABLE TD */
 td {
@@ -449,7 +461,7 @@ td.subheadline p {
 td.centered,
 td[class*='statuscol'],		/* shorthand notation td[class*='statuscol'] for  td.statuscol0 -  td.statuscol16 */
 td[class*='usercol'],		/* shorthand notation td[class*='usercol'] for  td.usercol0 -  td.usercol25 */
-td[class*='readercol'] {	/* shorthand notation td[class*='readercol'] for  td.readercol0 -  td.readercol18 */
+td[class*='readercol'] {	/* shorthand notation td[class*='readercol'] for  td.readercol0 -  td.readercol19 */
 	text-align:center
 }
 td.statuscol0 {
@@ -462,11 +474,11 @@ td.statuscol1 {
 	vertical-align:middle
 }
 /* readerconfig_sidokbit.html */
-td.servicescol1, td.servicescol2, td.servicescol3 {
+td.servicescol1, td.servicescol2, td.servicescol3, td.servicescol4 {
 	width:30%
 }
 /* Actionbutton readers.html */
-td.readercol14,td.readercol15,
+td.readercol14, td.readercol15,
 td.readercol16 {
 	min-width:22px
 }
@@ -474,7 +486,7 @@ td.readercol16 {
 .infocolswidth td {
 	width:7.5%
 }
-
+fieldset { border-radius: 11px; background-color: #ffffff; font-weight: bolder; color: #000000; font: 16px;  }
 /* **************** 11. DIV */
 /* Log status.html, livelog.html, file.html */
 div.log, div#livelog, textarea.editor, div.sidlist {
@@ -488,7 +500,22 @@ div.log {
 	margin:20px 0 0;
 	padding:4px;
 	max-height:300px;
-	overflow:scroll;
+	height: 100%;
+	overflow: auto;
+}
+div.log2 {
+	background-color: #fff;
+	color:#004455
+	font-size: 10px; word-wrap:break-word;
+	font-family:"Courier New", monospace;
+	text-align:left;
+	margin:20px 0 0;
+	border:0;
+	padding:5px;
+	background:#4066a7;
+	max-height:390px;
+	display:block;
+	overflow:auto;
 }
 /* module-webif.c class for services.html */
 div.sidlist {
@@ -514,7 +541,7 @@ div.filterform {
 div.warning {
 	margin:42px 0 14px
 }
-/* logobit.html - Logo for Oscam */
+/* logobit.html - Logo for Ncam */
 div.logo {
 	position:absolute;
 	top:6px;
@@ -532,8 +559,8 @@ div.groups {
 }
 /* footer.html */
 div.footer {
-	background-color:#EEE;
-	border-top:3px solid #CCC
+	/*background-color:#EEE;
+	border-top:3px solid #CCC*/
 }
 div.footer .top_link {
 	padding-left:12px;
@@ -565,6 +592,7 @@ div.debugmenu, div.logmenu, div.logsizemenu {
 	font-size:12px;
 	line-height:16px;
 	margin-top:10px
+	margin:auto
 }
 #regexdatainput {
 	margin-top:10px
@@ -588,15 +616,22 @@ div.cccamentitlementcontrols {
 /* texteditor in file.html */
 textarea.editor {
 	font-size:11px;
-	width:100%;
+	width:99%;
 	max-width:1500px;
-	height:556px;
-	margin:0 auto 10px;
-	padding:4px
+	height:508px;
+	border:1px dotted #AAAAAA;
+	background-color: #FAFAFA;
+	padding:8px 10px;
+	font-family:"Courier New", monospace;
+	color:black;
+	font-size: 11px;
+	word-wrap:break-word;
+	text-align:left;
+	margin:0 auto 10px
 }
 /* textarea for config */
 textarea.bt {
-	width:380px; 
+	font-family: Arial;
 	font-size:12px
 }
 /* textarea for emm.html */
@@ -767,13 +802,13 @@ img.usericon, img.readericon {
 .statusecminfo img {
 	vertical-align:middle
 }
-/* logo IC_LOGO.tpL */
+/* logo IC_LOGO.tpL
 div.logo img {
 	max-height:44px
 }
-div.logo svg.OSCam_logo {
+div.logo svg.NCAm_logo {
 	fill:#111111
-}
+} */
 
 td#out.centered img,
 td#in.centered img {
@@ -807,6 +842,9 @@ span.e_expired {background-color:#FFF3E7}
 .span, span {
 	text-align:center
 }
+
+span.e_forcereopenuseronline {background-color:#C7D6FF}
+span.e_forcereopenuserconnected {background-color:#D2EDFF}
 
 /* **************** 15. GRAPH */
 svg.graph {background-color:#F0F0F0;font-family:Arial;font-size:9px}
@@ -855,6 +893,8 @@ path.graph_curve {stroke-opacity:0.8;stroke-width:0.7px;fill:none}
 .users tr.online .td-sorting {background-color: #A6EA95}
 .users tr.online td.usercol6.td-sorting {background-color:#C8C8C8}
 .users tr.expired .td-sorting {background-color: #EAA69F}
+.users tr.forcereopenuseronline .td-sorting {background-color: #C7D6FF}
+.users tr.forcereopenuserconnected .td-sorting {background-color: #D2EDFF}
 
 /* **************** 17. POLLING */
 /*  for UL in logpoll.html */
@@ -963,10 +1003,10 @@ div.colorPicker-swatch {
 	background-color:#A00
 }
 .pollingenabled:hover {
- 	background-color:#F00
+	background-color:#F00
 }
 .pollingdisabled:hover {
- 	background-color:#F00
+	background-color:#F00
 }
 #poll button {
 	margin-bottom:1px;
@@ -1001,12 +1041,12 @@ input.pintervall {
 	height: 90px;
 	border: 1px dotted #F00;
 	background-color: #EAEAEA;
-	padding:3px;
+	padding:5px;
 	z-index:1000
 }
 #charthead {
 	background-color:transparent;
-	width:100%;
+	width:90%;
 	height:5px
 }
 #graph {
@@ -1097,6 +1137,52 @@ only screen and (min-device-width : 320px) and (max-device-width : 568px) and (o
 	}
 	textarea.editor {
 		height:508px
- 	}
+	}
 }
 
+/* ============= GEOAPI Data */
+.GeoResults {
+	position: relative;
+	color: #F00;
+	cursor: pointer;
+	float: right;
+	border-left: 1px solid #000;
+	padding-left: 5px
+}
+.GeoResultsSPAN,
+.GeoResultsTABLE {
+	display: none;
+	left: 20px;
+	z-index: 1030;
+	border-spacing: 0px;
+	width: 200px
+}
+.GeoResultsTABLE td {
+	border-bottom: 1px dotted gray;
+	padding: 2px;
+}
+.GeoResultsTABLE tr:last-child td {
+	border: initial;
+}
+.GeoResultsTABLE tr td:first-child {
+	width: 55px;
+}
+.GeoResultsTABLE tr td:last-child {
+	width: 125px;
+}
+a:hover .GeoResultsTABLE{
+	display: block;
+	position: absolute;
+	top: 1em;
+	right: 2em;
+	padding: 4px;
+	text-align: left;
+	background-color: #FFC;
+	border: 1px solid #000;
+	color: #000
+}
+
+@viewport{
+	zoom: 1.0;
+	width: device-width;
+}

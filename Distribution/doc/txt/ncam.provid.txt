@@ -1,0 +1,25 @@
+ncam.provid(5) 				       File Formats Manual					  ncam.provid(5)
+
+
+
+NAME
+       ncam.provid - provider table for NCAm
+
+SYNOPSIS
+       provider table
+
+DESCRIPTIONS
+       <caid>:<provid>|<provider>|<satellite>|<language>
+	  provider table
+
+EXAMPLES
+	0100:012345|MyPay-TV|Astra 19E|German
+
+SEE ALSO
+       list_smargo(1),	ncam(1), ncam.ac(5), ncam.cacheex(5), ncam.cert(5), ncam.conf(5), ncam.dvbapi(5), ncam.fakecws(5),
+       ncam.guess(5), ncam.ird(5), ncam.ratelimit(5),  ncam.server(5),  ncam.services(5),	ncam.srvid(5),  ncam.srvid2(5),
+       ncam.tiers(5), ncam.user(5), ncam.whitelist(5)
+
+
+
+														  ncam.provid(5)

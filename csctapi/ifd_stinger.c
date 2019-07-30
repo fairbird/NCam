@@ -27,7 +27,7 @@ services = services2
 
 #ifdef CARDREADER_STINGER
 
-#include "../oscam-time.h"
+#include "../ncam-time.h"
 #include "icc_async.h"
 #include "ifd_db2com.h"
 #include "ifd_phoenix.h"
@@ -290,7 +290,7 @@ int32_t Stinger_Reset(struct s_reader *reader, ATR *atr)
 		cs_sleepms(50);
 
 		IO_Serial_RTS_Clr(reader);
-
+		
 		cs_sleepms(50);
 
 		IO_Serial_Ioctl_Lock(reader, 0);

@@ -24,8 +24,8 @@
 /* The amount of hash buckets (based on opaque string) for better performance. */
 #define AUTHNONCEHASHBUCKETS 4
 /* The maximum amount of GET parameters the webserver will parse. */
-#define MAXGETPARAMS 150
-/* The refresh delay (in seconds) when stopping OSCam via http. */
+#define MAXGETPARAMS 100
+/* The refresh delay (in seconds) when stopping NCAm via http. */
 #define SHUTDOWNREFRESH 30
 
 #define TOUCH_SUBDIR "touch/"
@@ -56,34 +56,33 @@ struct s_nonce
 	struct s_nonce *next;
 };
 
-// should be filled with informations for stats block
-struct pstat
-{
-	uint32_t     info_procs;           // running procs
-	int64_t      utime_ticks;
-	int64_t      cutime_ticks;
-	int64_t      stime_ticks;
-	int64_t      cstime_ticks;
-	int64_t      cpu_total_time;
-	uint64_t     vsize;                // virtual memory size in bytes
-	uint64_t     rss;                  // Resident Set Size in bytes
-	uint64_t     mem_total;            // Total Memory in bytes
-	uint64_t     mem_free;             // Free Memory in bytes
-	uint64_t     mem_used;             // Used Memory in bytes
-	uint64_t     mem_buff;             // Buffered Memory in bytes
-	uint64_t      mem_cached;          // Cached Memory in bytes
-	uint64_t     mem_freem;            // Buffered Memory in bytes
-	uint64_t     mem_share;            // Shared Memory in bytes
-	uint64_t     mem_total_swap;       // Total Swap Memory in bytes
-	uint64_t     mem_free_swap;        // Free Swap Memory in bytes
-	uint64_t     mem_used_swap;        // Used Swap Memory in bytes
-	float        cpu_avg[3];           // CPU load from "load average"
-	struct timeb time_started;         // needed for calculating time between function call
-	int64_t      gone_refresh;         // time difference between CPU usage calculations in sec
-	double       cpu_usage_user;       // user_CPU usage to display in %
-	double       cpu_usage_sys;        // sys_CPU usage to display in %
-	uint16_t     check_available;      // default is 0, if value x is not available,
-	// set corresponding bit to 1 --> module-webif.c / set_status_info()
+//should be filled with informations for stats block
+struct pstat {
+	uint32_t info_procs; // running procs
+	int64_t utime_ticks;
+	int64_t cutime_ticks;
+	int64_t stime_ticks;
+	int64_t cstime_ticks;
+	int64_t cpu_total_time;
+	uint64_t vsize; // virtual memory size in bytes
+	uint64_t rss; //Resident  Set  Size in bytes
+	uint64_t mem_total;  // Total Memory in bytes
+	uint64_t mem_free; // Free Memory in bytes
+	uint64_t mem_used; // Used Memory in bytes
+	uint64_t mem_buff; // Buffered Memory in bytes
+	uint64_t mem_cached; // Cached Memory in bytes
+	uint64_t mem_freem; // Buffered Memory in bytes
+	uint64_t mem_share; // Shared Memory in bytes
+	uint64_t mem_total_swap; // Total Swap Memory in bytes
+	uint64_t mem_free_swap; // Free Swap Memory in bytes
+	uint64_t mem_used_swap; // Used Swap Memory in bytes
+	float cpu_avg[3]; //CPU load from "load average"
+	struct timeb time_started; //needed for calculating time between function call
+	int64_t gone_refresh; //time difference between CPU usage calculations in sec
+	double cpu_usage_user; //user_CPU usage to display in %
+	double cpu_usage_sys; //sys_CPU usage to display in %
+	uint16_t check_available; //default is 0, if value x is not available,
+	//set corresponding bit to 1 -->module-webif.c / set_status_info()
 };
 
 extern time_t parse_modifiedsince(char *value);
@@ -102,7 +101,7 @@ extern void send_file(FILE *f, char *filename, char *subdir, time_t modifiedhead
 extern void urldecode(char *s);
 extern void parseParams(struct uriparams *params, char *pch);
 extern char *getParam(struct uriparams *params, char *name);
-extern int32_t oscam_get_uptime(void);
+extern int32_t ncam_get_uptime(void);
 extern int8_t get_stats_linux(const pid_t pid, struct pstat* result);
 extern void calc_cpu_usage_pct(struct pstat* cur_usage, struct pstat* last_usage);
 

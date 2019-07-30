@@ -22,10 +22,14 @@
 			<TR><TD><A>Max ECM count:</A></TD><TD><input name="lb_max_ecmcount" class="short" type="text" maxlength="5" value="##LBMAXECEMCOUNT##"></TD></TR>
 			<TR><TD><A>Retry limit:</A></TD><TD><input name="lb_retrylimit" class="withunit short" type="text" maxlength="5" value="##LBRETRYLIMIT##"> ms</TD></TR>
 			<TR><TD><A>Special retry limit per caid:</A></TD><TD><input name="lb_retrylimits" type="text" maxlength="320" value="##LBRETRYLIMITS##"></TD></TR>
-			<TR><TD><A>Time to reopen:</A></TD><TD><input name="lb_reopen_seconds" class="withunit short" type="text" maxlength="5" value="##LBREOPENSECONDS##"> s</TD></TR>
+			<TR><TD><A>Time to reopen:</A></TD><TD><input name="lb_reopen_seconds" class="withunit short" type="text" maxlength="5" value="##LBREOPENSECONDS##"> s &nbsp;
+				<label>&nbsp;never reopen &nbsp;</label><input name="lb_reopen_seconds_never" type="hidden" value="0"><input name="lb_reopen_seconds_never" type="checkbox" value="1" ##LBREOPENSECONDS_NEVER##>
+				<label>&nbsp;never reopen specific group: &nbsp;</label><input name="lb_reopen_seconds_never_group" class="withunit short" type="text" maxlength="5" value="##LBREOPENSECONDS_NEVER_GROUP##">
+			</TD></TR>
+			<TR><TD>Time to reopen lb_min_ecmcount:</TD><TD><input name="lb_reopen_seconds_lbmin" class="withunit short" type="text" maxlength="5" value="##LBREOPENSECONDSLBMIN##"> s</TD></TR>
 			<TR><TD><A>Hours to cleanup older than:</A></TD><TD><input name="lb_stat_cleanup" class="withunit short" type="text" maxlength="5" value="##LBCLEANUP##"> h</TD></TR>
 			<TR><TD><A>Reopen Invalid:</A></TD><TD><input name="lb_reopen_invalid" value="0" type="hidden"><input name="lb_reopen_invalid" value="1" type="checkbox" ##LBREOPENINVALID##><label></label></TD></TR>
-			<TR><TD><A>Force always reopen:</A></TD><TD><input name="lb_force_reopen_always" value="0" type="hidden"><input name="lb_force_reopen_always" value="1" type="checkbox" ##LBFORCEALWAYS##><label></label></TD></TR>
+			<TR><TD><A>Force always reopen:</A></TD><TD><input name="lb_force_reopen_always" value="0" type="hidden"><input name="lb_force_reopen_always" value="1" type="checkbox" ##LBFORCEALWAYS##><label>(working only if no "user specific settings for loadbalancer" enabled)</label></TD></TR>
 			<TR><TD><A>Ignore provider for:</A></TD><TD><input name="lb_noproviderforcaid" type="text" maxlength="160" value="##LBNOPROVIDERFORCAID##"></TD></TR>
 			<TR><TD><A>Auto Betatunnel:</A></TD><TD><input name="lb_auto_betatunnel" value="0" type="hidden"><input name="lb_auto_betatunnel" value="1" type="checkbox" ##LBAUTOBETATUNNEL##><label></label></TD></TR>
 			<TR><TD><A>Auto Betatunnel Mode:</A></TD><TD><select name="lb_auto_betatunnel_mode"><option value="0">0 - 18XX->17X2 (only)</option><option value="1" ##LBAUTOBETATUNNELMODE1##>1 - 18XX->17X2 &amp; 17X2->18XX (1833/1801)</option><option value="2" ##LBAUTOBETATUNNELMODE2##>2 - 18XX->17X2 &amp; 17X2->18XX (1833/1834)</option><option value="3" ##LBAUTOBETATUNNELMODE3##>3 - 18XX->17X2 &amp; 17X2->18XX (1833/1835)</option><option value="4" ##LBAUTOBETATUNNELMODE4##>4 - 17X2->18XX (1833/1801 only)</option><option value="5" ##LBAUTOBETATUNNELMODE5##>5 - 17X2->18XX (1833/1834 only)</option><option value="6" ##LBAUTOBETATUNNELMODE6##>6 - 17X2->18XX (1833/1835 only)</option></select></TD></TR>
@@ -33,3 +37,4 @@
 			<TR><TD><A>Auto timeout:</A></TD><TD><input name="lb_auto_timeout" value="0" type="hidden"><input name="lb_auto_timeout" value="1" type="checkbox" ##LBAUTOTIMEOUT##><label></label></TD></TR>
 			<TR><TD><A>Auto timeout percent:</A></TD><TD><input name="lb_auto_timeout_p" class="withunit short" type="text" maxlength="5" value="##LBAUTOTIMEOUTP##"> %</TD></TR>
 			<TR><TD><A>Auto timeout time:</A></TD><TD><input name="lb_auto_timeout_t" class="withunit short" type="text" maxlength="5" value="##LBAUTOTIMEOUTT##"> ms</TD></TR>
+##CONFIGFORCEREOPENUSERSINS##

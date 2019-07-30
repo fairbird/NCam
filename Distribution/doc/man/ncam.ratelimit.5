@@ -1,0 +1,30 @@
+.TH ncam.ratelimit 5
+.SH NAME
+\fBncam.ratelimit\fR - ECMs ratelimit for NCAm
+.SH SYNOPSIS
+limit rate of ECMs allowed for an interval
+.SH DESCRIPTIONS
+.PP
+\fBCAID\fP:\fBprovider ID\fP:\fBservice ID\fP:\fBChID\fP:\fBratelimitecm\fP:\fBratelimitseconds\fP:\fBsrvidholdseconds\fP
+.RS 3n
+
+\fBratelimitecm\fP
+.RS 3n
+number of different SIDs in ECMs allowed for an interval
+.RE
+
+\fBratelimitseconds\fP
+.RS 3n
+interval in seconds for ratelimit
+.RE
+
+\fBsrvidholdseconds\fP
+.RS 3n
+extra time in seconds this service ID is kept in a slot before another service ID can take its place
+.RE
+.SH EXAMPLES
+ 0100:00002A:3A3A:4A00:0002:0010:0004
+.RE
+.RE
+.SH "SEE ALSO"
+\fBlist_smargo\fR(1), \fBncam\fR(1), \fBncam.ac\fR(5), \fBncam.cacheex\fR(5), \fBncam.cert\fR(5), \fBncam.conf\fR(5), \fBncam.dvbapi\fR(5), \fBncam.fakecws\fR(5), \fBncam.guess\fR(5), \fBncam.ird\fR(5), \fBncam.provid\fR(5), \fBncam.server\fR(5), \fBncam.services\fR(5), \fBncam.srvid\fR(5), \fBncam.srvid2\fR(5), \fBncam.tiers\fR(5), \fBncam.user\fR(5), \fBncam.whitelist\fR(5)

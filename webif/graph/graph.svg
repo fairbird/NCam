@@ -7,7 +7,7 @@
 	preserveAspectRatio='XMaxYMid'
 	onload='init(evt)'
 	class='graph' >
- <title>##HTTPOSCAMLABEL## r##CS_SVN_VERSION## (ECM Graph)</title>
+ <title>##HTTPNCAMLABEL## (ECM Graph)</title>
  <g id='graph' >
 	<rect id='g' class='graph_bg' x='0' y='0' width='800' height='400' />
 	<text id='graph_error' class='graph_error' x='400' y='125' visibility='hidden'>Error occured!</text>
@@ -79,7 +79,7 @@ var activeTask = null;
 var hideLabels = false;
 function init(evt) {
 	fetch_url=location.search.split('?');
-	fetch_url='oscamapi.html?part=ecmhistory&' + fetch_url[fetch_url.length-1];
+	fetch_url='ncamapi.html?part=ecmhistory&' + fetch_url[fetch_url.length-1];
 	if ( location.search.indexOf('hidelabels=1') > 0 ) hideLabels = true;
 	SVGDoc = evt.target.ownerDocument;
 	SVGDoc.getElementById('graph_grid_button').addEventListener('mousedown', switch_interval, false);
@@ -119,7 +119,7 @@ function showlabel(evt) {
 function plot_data(obj) {
 	if (!obj.success) return handle_error();
 	if (!obj.content) return handle_error();
-	var readers = obj.content.getElementsByTagName('oscam')[0].getElementsByTagName('status')[0].getElementsByTagName('client');
+	var readers = obj.content.getElementsByTagName('ncam')[0].getElementsByTagName('status')[0].getElementsByTagName('client');
 	i=0;
 	max=0;
 	rdx=0;

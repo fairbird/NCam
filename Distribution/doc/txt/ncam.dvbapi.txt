@@ -1,0 +1,82 @@
+ncam.dvbapi(5) 				       File Formats Manual					  ncam.dvbapi(5)
+
+
+
+NAME
+       ncam.dvbapi - DVB API configuration file for NCAm
+
+SYNOPSIS
+       DVBAPI settings, first match - first used
+
+DESCRIPTIONS
+       P: [CAID]:[provider ID]:[service ID]:[ECM PID]:[CHID] [force]:[PIDx] priority
+	   set priority, continue = 1: proceed with priority, recommended for
+	   pay-per-view services / EMMs (use carefully),  although local SCs
+	   will be prioritised higher, default:none
+
+       I: [CAID]:[provider ID]:[service ID]:[ECM PID]:[CHID] [PIDx] ignore
+	   set ignore
+
+       J: [CAID]:[provider ID]:[service ID]:[ECM PID] joined CAID:joined provider ID:joined ECM PID
+	   join to another ECM PID
+
+       A: ::service ID:[PMT PID] :[provider ID][:][ECM PID]
+	   set a dummy ECM request with CAID FFFF for services with a constant CW shown as unencrypted service (for STBs with PMT
+	  PID support only)
+
+       A: ::service ID:[video PID] :[provider ID][:][ECM PID]
+	   set a dummy ECM request with CAID FFFF for services with a constant CW shown as unencrypted service (for STBs  without
+	  PMT PID support only)
+
+       X: [CAID]:[provider ID]:[service ID]:[ECM PID]
+	   add decoding on an extra demux index on the same CA device (Multi ECM) (not support on all STBs)
+
+       D: [CAID]:[provider ID]:[service ID]:[ECM PID] delay
+	   set delay in milli-seconds writing CWs
+
+       M: [CAID]:[provider ID]:[service ID]:[ECM PID] target CAID[:][target provider ID]
+	   mapping
+
+       S: [device] [PMT file name]
+	   set DVB API device name and PMT file name (valid for STAPI only)
+
+       L: [CAID]:[provider ID]:[service ID]:[ECM PID] length
+	   set ECM length in hexadecimal
+
+ANNONTATIONS
+       Please use Unix text file format only.
+
+EXAMPLES
+	P: 0100:123456	     # prioritise CAID 0100 with provider 123456
+
+	P: :1234	     # prioritise ECM with provider ID 1234 on
+			     # on any CAID and service
+
+	P: 0200 	     # prioritise CAID 0200
+
+	P: 0300::9ABC	     # prioritise CAID 0300 on service 9ABC only
+
+	P: 0400 1	     # prioritise CAID 0400 for pay-per-view services
+
+	P: : 1		     # prioritise for EMMs
+
+	M: 0500 0600:123456  # map CAID 0500 to provider ID 123456 with
+			     # CAID 0600
+
+	D: 0700 200	     # wait 200 ms before writing CW for CAID 0700
+
+	I: :654321	     # ignore provider ID 654321 for every CAID and
+			     # service
+
+	I: 0		     # ignore every CAID that was not handled before
+
+	L: 0800 8e	     # ECM length for CAID 0800 to 8e (hexadecimal)
+
+SEE ALSO
+       list_smargo(1),	ncam(1),  ncam.ac(5), ncam.cacheex(5), ncam.cert(5), ncam.conf(5), ncam.fakecws(5), ncam.guess(5),
+       ncam.ird(5), ncam.provid(5), ncam.ratelimit(5), ncam.server(5),  ncam.services(5),	ncam.srvid(5),  ncam.srvid2(5),
+       ncam.user(5), ncam.whitelist(5)
+
+
+
+														  ncam.dvbapi(5)

@@ -226,6 +226,24 @@ tommy_inline void tommy_list_insert_tail(tommy_list* list, tommy_node* node, voi
 	node->data = data;
 }
 
+/** \internal
+ * Removes an element from the head of a not empty list.
+ * \param list The list. The list cannot be empty.
+ * \return The node removed.
+ */
+tommy_inline tommy_node* tommy_list_remove_head_not_empty(tommy_list* list)
+{
+	tommy_node* head = tommy_list_head(list);
+
+	/* remove from the "circular" prev list */
+	head->next->prev = head->prev;
+
+	/* remove from the "0 terminated" next list */
+	*list = head->next; /* the new head, in case 0 */
+
+	return head;
+}
+
 /**
  * Removes an element from the list.
  * You must already have the address of the element to remove.
@@ -311,9 +329,9 @@ tommy_inline tommy_bool_t tommy_list_empty(tommy_list* list)
  * Gets the number of elements.
  * \note This operation is O(n).
  */
-tommy_inline tommy_size_t tommy_list_count(tommy_list* list)
+tommy_inline tommy_count_t tommy_list_count(tommy_list* list)
 {
-	tommy_size_t count = 0;
+	tommy_count_t count = 0;
 	tommy_node* i = tommy_list_head(list);
 
 	while (i) {
@@ -327,8 +345,8 @@ tommy_inline tommy_size_t tommy_list_count(tommy_list* list)
 /**
  * Calls the specified function for each element in the list.
  *
- * You cannot add or remove elements from the inside of the callback,
- * but can use it to deallocate them.
+ * You can use this function to deallocate all the elements
+ * inserted in a list.
  *
  * \code
  * tommy_list list;

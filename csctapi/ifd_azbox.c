@@ -2,7 +2,7 @@
 
 #ifdef CARDREADER_INTERNAL_AZBOX
 
-#include "../oscam-time.h"
+#include "../ncam-time.h"
 
 #include "atr.h"
 #include "../extapi/openxcas/openxcas_api.h"

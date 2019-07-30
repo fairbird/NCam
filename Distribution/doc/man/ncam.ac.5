@@ -1,0 +1,21 @@
+.TH ncam.ac 5
+.SH NAME
+\fBncam.ac\fR - anti-cascading table for NCAm
+.SH SYNOPSIS
+anti-cascading table
+.SH DESCRIPTIONS
+.PP
+\fB<CAID>\fP:\fB<provider ID>\fP=\fB<seconds>\fP
+.RS 3n
+define time cycles between CWs changes relating to CAID and provider ID
+.RE
+.PP
+\fB*\fP=\fB<seconds>\fP
+.RS 3n
+default time cycles between CWs changes \fIrequired\fR
+.RE
+.SH EXAMPLES
+ 0100:000000=10
+ *=7
+.SH "SEE ALSO"
+\fBlist_smargo\fR(1), \fBncam\fR(1), \fBncam.cacheex\fR(5), \fBncam.cert\fR(5), \fBncam.conf\fR(5), \fBncam.dvbapi\fR(5), \fBncam.fakecws\fR(5), \fBncam.guess\fR(5), \fBncam.ird\fR(5), \fBncam.provid\fR(5), \fBncam.ratelimit\fR(5), \fBncam.server\fR(5), \fBncam.services\fR(5), \fBncam.srvid\fR(5), \fBncam.srvid2\fR(5), \fBncam.tiers\fR(5), \fBncam.user\fR(5), \fBncam.whitelist\fR(5)

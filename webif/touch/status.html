@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <head>
 	<meta name=viewport content='width=device-width, minimum-scale=1, maximum-scale=1'>
-	<title>##HTTPOSCAMLABEL## r##CS_SVN_VERSION##</title>
+	<title>##HTTPNCAMLABEL##</title>
 	<meta http-equiv=Content-Type content='text/html; charset=##HTTP_CHARSET##'>
 	<meta name=format-detection content='telephone=no'/>
 	<meta name=apple-mobile-web-app-capable content=yes />
@@ -9,11 +9,11 @@
 	<script type="text/javascript" src='//code.jquery.com/jquery-1.7.2.min.js'></script>
 	<script type="text/javascript" src='//code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.js'></script>
 	<script type="text/javascript">actDebugLevel='##ACTDEBUG##'</script>
-	<script type='text/javascript' src='oscam.js'></script>
+	<script type='text/javascript' src='ncam.js'></script>
 </head>
 <body>
 <div data-theme=c id=home data-role=page>
-	<div data-theme=b data-role=header data-position=fixed><a data-theme=e data-icon=refresh href='javascript:reloadPage()'>Refresh</a><h1>&nbsp;##HTTPOSCAMLABEL##</h1><a data-theme=e data-icon=delete data-iconpos=notext href='javascript:window.location="/"'></a></div>
+	<div data-theme=b data-role=header data-position=fixed><a data-theme=e data-icon=refresh href='javascript:reloadPage()'>Refresh</a><h1>&nbsp;##HTTPNCAMLABEL##</h1><a data-theme=e data-icon=delete data-iconpos=notext href='javascript:window.location="/"'></a></div>
 	<div data-role=content>
 		<div id=rdrDiv data-role=content><ul data-role=listview id=rdrList></ul></div>
 		<div id=usrDiv data-role=content><ul data-role=listview id=usrList></ul></div>
@@ -23,7 +23,7 @@
 		<div id=sysDiv>
 			<span style='font-size:12px'>
 				<strong>Now:</strong> ##CURDATE## ##CURTIME##,<strong>Uptime:</strong> ##UPTIME##<br>
-				<strong>Access from:</strong> ##CURIP##<br><strong>Version:</strong> ##CS_VERSION## build r##CS_SVN_VERSION##<br>
+				<strong>Access from:</strong> ##CURIP##<br><strong>Version:</strong> ##CS_VERSION##<br>
 			</span>
 			<div style='text-align:center'>
 				<hr>

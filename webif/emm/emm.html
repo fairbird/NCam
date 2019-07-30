@@ -2,57 +2,57 @@
 ##TPLMENU##
 ##TPLMESSAGE##
 <script>
-  var isV13V14V15 = ("##CAID##" == "098D" || "##CAID##" == "098C" || "##CAID##" == "09C4");
+var isV13V14V15 = ("##CAID##" == "098D" || "##CAID##" == "098C" || "##CAID##" == "09C4");
 
-  $(document).ready(function() {
+$(document).ready(function() {
 
-      if ("##CAID##".substr(0, 2) != "09") {
-          return;
-      }
+	if ("##CAID##".substr(0, 2) != "09") {
+		return;
+	}
 
-      document.getElementById('rdrUniqueTitle').title = '';
-      document.getElementById('rdrSharedTitle').title = '';
-      document.getElementById('rdrGlobalTitle').title = '';
+	document.getElementById('rdrUniqueTitle').title = '';
+	document.getElementById('rdrSharedTitle').title = '';
+	document.getElementById('rdrGlobalTitle').title = '';
 
-      var tosingleemm = $('.tosingleemm');
-      var singleemm = $('#singleemm');
+	var tosingleemm = $('.tosingleemm');
+	var singleemm = $('#singleemm');
 
-      if (singleemm.length > 0 || tosingleemm.length > 0) {
+	if (singleemm.length > 0 || tosingleemm.length > 0) {
 
-          $('body').append('<div style="z-index: 1; position:absolute; top: 33px; right:0px; background: #EEEEEE; text-align: left; padding: 10px 10px; font-size: 14px; color: #000000; font-family: \'Courier new\', Courier, monospace; display: none;" id="emm_decoder_top"></div>');
+		$('body').append('<div style="z-index: 1; position:absolute; top: 33px; right:0px; background: #EEEEEE; text-align: left; padding: 10px 10px; font-size: 14px; color: #000000; font-family: \'Courier new\', Courier, monospace; display: none;" id="emm_decoder_top"></div>');
 
-          function singlechanged() {
-              if (singleemm.val().length < 1) {
-                  document.getElementById('emm_decoder_top').style.display = 'none';
-                  return;
-              }
+		function singlechanged() {
+			if (singleemm.val().length < 1) {
+				document.getElementById('emm_decoder_top').style.display = 'none';
+				return;
+			}
 
-              decodeVideoguardEMM(singleemm.val(), "#emm_decoder_top", true);
-              document.getElementById('emm_decoder_top').style.display = 'block';
-          }
+			decodeVideoguardEMM(singleemm.val(), "#emm_decoder_top", true);
+			document.getElementById('emm_decoder_top').style.display = 'block';
+		}
 
-          singleemm.on('change', singlechanged);
-          singleemm.on('keyup', singlechanged);
-          singleemm.on('paste', singlechanged);
+		singleemm.on('change', singlechanged);
+		singleemm.on('keyup', singlechanged);
+		singleemm.on('paste', singlechanged);
 
-          $('body').append('<div style="z-index: 2; position:fixed; top: 33px; background: #EEEEEE; text-align: left; padding: 20px 10px; font-size: 14px; color: #000000; font-family: \'Courier new\', Courier, monospace; display: none;" id="emm_decoder"></div>');
+		$('body').append('<div style="z-index: 2; position:fixed; top: 33px; background: #EEEEEE; text-align: left; padding: 20px 10px; font-size: 14px; color: #000000; font-family: \'Courier new\', Courier, monospace; display: none;" id="emm_decoder"></div>');
 
-          tosingleemm.on('mouseover', function(e) {
-              var text = $(this).text().split(' ')[7];
-              decodeVideoguardEMM(text, "#emm_decoder", false);
+		tosingleemm.on('mouseover', function(e) {
+			var text = $(this).text().split(' ')[7];
+			decodeVideoguardEMM(text, "#emm_decoder", false);
 
-              var emmdecoder = document.getElementById('emm_decoder');
-              emmdecoder.style.top = (e.clientY + 20) + "px";
-              emmdecoder.style.left = (e.clientX + 20) + "px";
-              emmdecoder.style.display = 'block';
-          });
+			var emmdecoder = document.getElementById('emm_decoder');
+			emmdecoder.style.top = (e.clientY + 20) + "px";
+			emmdecoder.style.left = (e.clientX + 20) + "px";
+			emmdecoder.style.display = 'block';
+		});
 
-          tosingleemm.on('mouseout', function() {
-              document.getElementById('emm_decoder').style.display = 'none';
-          });
+		tosingleemm.on('mouseout', function() {
+			document.getElementById('emm_decoder').style.display = 'none';
+		});
 
-      }
-  });
+	}
+});
 </script>
 
 	<DIV ID="subnav">

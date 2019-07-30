@@ -1,0 +1,31 @@
+ncam.cacheex(5)				       File Formats Manual					 ncam.cacheex(5)
+
+
+
+NAME
+       ncam..cacheex - global ECM length matching configuration file for NCAm
+
+SYNOPSIS
+       ECM length matching
+
+DESCRIPTIONS
+       m:[CAID][:][provider  ID][:][service  ID][:][ECM  PID][:][CHID][:][ECM  length  1[,ECM  length  2]...]]=[CAID][:][provider
+       ID][:][service ID][:][ECM PID][:][CHID][:][ECM length 1[,ECM length 2]...]]
+	   ECM length matching from remote cache exchange partner to local
+	   cache, for cache exchange pull mode (cacheex = 1) only
+
+ANNONTATIONS
+       Please use Unix text file format only.
+
+EXAMPLES
+	m:1234:::::93=5678:::::93  # matching CAID 1234 and CAID 5678 with
+				   # ECM length 93
+
+SEE ALSO
+       list_smargo(1), ncam(1), ncam.ac(5), ncam.cert(5), ncam.conf(5),  ncam.dvbapi(5),  ncam.fakecws(5),  ncam.guess(5),
+       ncam.ird(5),	 ncam.provid(5),    ncam.ratelimit(5),    ncam.server(5),	ncam.services(5),    ncam.srvid    (5),
+       ncam.srvid2(5),ncam.user(5)
+
+
+
+														 ncam.cacheex(5)

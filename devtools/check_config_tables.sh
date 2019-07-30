@@ -1,12 +1,12 @@
 #!/bin/sh
 
-FILES="oscam-config-global.c oscam-config-account.c oscam-config-reader.c"
+FILES="ncam-config-global.c ncam-config-account.c ncam-config-reader.c"
 
 echo "** Checking config tables stored in: $FILES"
 
 if [ ! -f globals.h ]
 then
-	echo "ERROR: Run this script in the oscam source directory (where globals.h file is)."
+	echo "ERROR: Run this script in the ncam source directory (where globals.h file is)."
 	exit 1
 fi
 

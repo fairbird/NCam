@@ -11,10 +11,10 @@
  */
 
 #include "module-cccam.h"
-#include "oscam-client.h"
-#include "oscam-files.h"
-#include "oscam-string.h"
-#include "oscam-time.h"
+#include "ncam-client.h"
+#include "ncam-files.h"
+#include "ncam-string.h"
+#include "ncam-time.h"
 
 static int8_t running;
 
@@ -28,13 +28,13 @@ static void refresh_lcd_file(void)
 
 	if(cfg.lcd_output_path == NULL)
 	{
-		get_tmp_dir_filename(targetfile, sizeof(targetfile), "oscam.lcd");
-		get_tmp_dir_filename(temp_file, sizeof(temp_file), "oscam.lcd.tmp");
+		get_tmp_dir_filename(targetfile, sizeof(targetfile), "ncam.lcd");
+		get_tmp_dir_filename(temp_file, sizeof(temp_file), "ncam.lcd.tmp");
 	}
 	else
 	{
-		snprintf(targetfile, sizeof(targetfile), "%s%s", cfg.lcd_output_path, "/oscam.lcd");
-		snprintf(temp_file, sizeof(temp_file), "%s%s.tmp", cfg.lcd_output_path, "/oscam.lcd");
+		snprintf(targetfile, sizeof(targetfile), "%s%s", cfg.lcd_output_path, "/ncam.lcd");
+		snprintf(temp_file, sizeof(temp_file), "%s%s.tmp", cfg.lcd_output_path, "/ncam.lcd");
 	}
 
 	int8_t iscccam = 0;
@@ -80,7 +80,6 @@ static void refresh_lcd_file(void)
 			}
 
 			fprintf(fpsave, "Version: %s\n", CS_VERSION);
-			fprintf(fpsave, "Revision: %s\n", CS_SVN_VERSION);
 			if(days == 0)
 				{ fprintf(fpsave, "up: %02d:%02d:%02d\n", hours, mins, secs); }
 			else
@@ -150,7 +149,7 @@ static void refresh_lcd_file(void)
 						}
 					}
 
-					uint16_t written = 0, skipped = 0, blocked = 0, error = 0;
+					int16_t written = 0, skipped = 0, blocked = 0, error = 0;
 
 					char emmtext[16] = "               ";
 					if(cl->typ == 'r' || !iscccam)
@@ -215,12 +214,12 @@ static void refresh_lcd_file(void)
 				seconds = now - cl->lastecm;
 
 				if(cl->typ == 'c' && seconds < 15)
-				{
+				{		
 					type = "U";
 					idx = count_u;
 					label = cl->account->usr;
 					count_u++;
-
+							
 					get_servicename(cl, cl->last_srvid, cl->last_provid, cl->last_caid, channame, sizeof(channame));
 					fprintf(fpsave, "%s%d | %-10.10s | %-10.10s:%-17.17s| % 4d\n",
 							type,
@@ -241,7 +240,7 @@ static void refresh_lcd_file(void)
 		cnt++;
 
 		if(rename(temp_file, targetfile) < 0)
-			{ cs_log("An error occured while writing oscam.lcd file %s.", targetfile); }
+			{ cs_log("An error occured while writing ncam.lcd file %s.", targetfile); }
 
 	}
 

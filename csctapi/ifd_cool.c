@@ -6,8 +6,8 @@
 
 #if defined(CARDREADER_INTERNAL_COOLAPI) || defined(CARDREADER_INTERNAL_COOLAPI2)
 #include "../extapi/coolapi.h"
-#include "../oscam-string.h"
-#include "../oscam-time.h"
+#include "../ncam-string.h"
+#include "../ncam-time.h"
 #include "atr.h"
 
 #define OK 0

@@ -39,7 +39,7 @@
 #include "../extapi/linux/serial.h"
 #endif
 
-#include "../oscam-time.h"
+#include "../ncam-time.h"
 #include "icc_async.h"
 #include "io_serial.h"
 
@@ -56,21 +56,21 @@ static int32_t IO_Serial_Bitrate(int32_t bitrate);
 
 static bool IO_Serial_WaitToWrite(struct s_reader *reader, uint32_t delay_us, uint32_t timeout_us);
 
-static int32_t oscam_sem;
+static int32_t ncam_sem;
 
 void IO_Serial_Ioctl_Lock(struct s_reader *reader, int32_t flag)
 {
 	if((reader->typ != R_DB2COM1) && (reader->typ != R_DB2COM2)) { return; }
 	if(!flag)
-		{ oscam_sem = 0; }
-	else while(oscam_sem != reader->typ)
+		{ ncam_sem = 0; }
+	else while(ncam_sem != reader->typ)
 		{
-			while(oscam_sem)
+			while(ncam_sem)
 				if(reader->typ == R_DB2COM1)
 					{ cs_sleepms(6); }
 				else
 					{ cs_sleepms(8); }
-			oscam_sem = reader->typ;
+			ncam_sem = reader->typ;
 			cs_sleepms(1);
 		}
 }
@@ -175,9 +175,9 @@ bool IO_Serial_SetBitrate(struct s_reader *reader, uint32_t bitrate, struct term
 		if(baud_diff  > 0.05 * custom_baud_asked)
 		{
 			rdr_log(reader, "WARNING: your card is asking for custom_baudrate = %i, but your configuration can only deliver custom_baudrate = %i", custom_baud_asked, custom_baud_delivered);
-			rdr_log(reader, "You are over- or underclocking, try OSCam when running your reader at normal clockspeed as required by your card, and setting mhz and cardmhz parameters accordingly.");
+			rdr_log(reader, "You are over- or underclocking, try NCAm when running your reader at normal clockspeed as required by your card, and setting mhz and cardmhz parameters accordingly.");
 			if(nuts.baud_base <= 115200)
-				{ rdr_log(reader, "You are probably connecting your reader via a serial port, OSCam has more flexibility switching to custom_baudrates when using an USB->serial converter, preferably based on FTDI chip."); }
+				{ rdr_log(reader, "You are probably connecting your reader via a serial port, NCAm has more flexibility switching to custom_baudrates when using an USB->serial converter, preferably based on FTDI chip."); }
 		}
 		nuts.flags &= ~ASYNC_SPD_MASK;
 		nuts.flags |= ASYNC_SPD_CUST;
@@ -367,7 +367,7 @@ void IO_Serial_Flush(struct s_reader *reader)
 	struct timeb starttotal, endtotal;
 	struct timeb start, end;
 	cs_ftimeus(&starttotal);
-	endtotal = starttotal;
+	endtotal = starttotal; 
 	cs_ftimeus(&start);
 	end = start;
 	int64_t gone = 0;
@@ -376,13 +376,13 @@ void IO_Serial_Flush(struct s_reader *reader)
 		n++;
 		cs_ftimeus(&end);
 		gone = comp_timebus(&end, &start);
-		rdr_log_dbg(reader, D_DEVICE, "Flush readed byte Nr %d value %.2x time_us %"PRId64, n, b, gone);
+		rdr_log(reader,"Flush readed byte Nr %d value %.2x time_us %"PRId64, n, b, gone);
 		cs_ftimeus(&start); // Reset timer
 		end = start;
 	}
 	cs_ftimeus(&endtotal);
 	gone = comp_timebus(&endtotal, &starttotal);
-	rdr_log_dbg(reader, D_DEVICE, "Buffers readed  %d bytes total time_us %"PRId64, n, gone);
+	rdr_log(reader,"Buffers readed  %d bytes total time_us %"PRId64, n, gone);
 }
 
 void IO_Serial_Sendbreak(struct s_reader *reader, int32_t duration)

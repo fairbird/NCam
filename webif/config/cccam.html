@@ -1,7 +1,7 @@
 		<input name="part" type="hidden" value="cccam">
 		<TABLE CLASS="config">
 			<TR><TH COLSPAN="2">Edit Cccam Config</TH></TR>
-			<TR><TD><A data-p="port_9">Port:</A></TD><TD><input name="port" class="medium" type="text" maxlength="128" value="##PORT##"></TD></TR>
+			<TR><TD><A data-p="port_9">Port:</A></TD><TD>port,port,port,port,port,port...<BR><input name="port" class="longer" type="text" maxlength="256" value="##PORT##"></TD></TR>
 			<TR><TD><A data-p="serverip_10">Serverip:</A></TD><TD><input name="serverip" class="medium" type="text" maxlength="15" value="##SERVERIP##"></TD></TR>
 			<TR><TD><A>Reshare:</A></TD><TD><input name="reshare" class="short" type="text" maxlength="2" value="##RESHARE##"> -1 no reshare or lowest value off cccreshare reader account</TD></TR>
 			<TR><TD><A>Ignore reshare:</A></TD>
@@ -22,7 +22,15 @@
 					<input name="stealth" value="0" type="hidden"><input name="stealth" value="1" type="checkbox" ##STEALTH##><label></label>
 				</TD>
 			</TR>
-			<TR><TD><A>Node Id:</A></TD><TD><input name="nodeid" class="medium" type="text" maxlength="16" value="##NODEID##"></TD></TR>
+			<TR><TD><A>Generator Node Id:</A></TD><TD>
+			<form>
+			<input type="button" value="Generate" onclick="randomstring()">&nbsp;
+			<input id="randomfield" type="text" class="medium" maxlength="16" value="">
+			</form>
+			</TD>
+			</TR>
+			<TR><TD><A>Node Id:</A></TD><TD><label>Important to respect all characters (0-9 and A-F) hexadecimal.</label>&nbsp;<br/>
+			<input name="nodeid" class="medium" type="text" maxlength="16" value="##NODEID##"></TD></TR>
 			<TR><TD><A>Keep clients connected:</A></TD>
 				<TD>
 					<input name="keepconnected" value="0" type="hidden"><input name="keepconnected" value="1" type="checkbox" ##KEEPCONNECTED##><label></label>
@@ -31,16 +39,16 @@
 			<TR><TD><A>Version:</A></TD>
 				<TD>
 					<select name="version">
-						<option value="2.0.11" ##VERSIONSELECTED0##>2.0.11</option>
-						<option value="2.1.1" ##VERSIONSELECTED1##>2.1.1</option>
-						<option value="2.1.2" ##VERSIONSELECTED2##>2.1.2</option>
-						<option value="2.1.3" ##VERSIONSELECTED3##>2.1.3</option>
-						<option value="2.1.4" ##VERSIONSELECTED4##>2.1.4</option>
-						<option value="2.2.0" ##VERSIONSELECTED5##>2.2.0</option>
-						<option value="2.2.1" ##VERSIONSELECTED6##>2.2.1</option>
-						<option value="2.3.0" ##VERSIONSELECTED7##>2.3.0</option>
-						<option value="2.3.1" ##VERSIONSELECTED8##>2.3.1</option>
-						<option value="2.3.2" ##VERSIONSELECTED9##>2.3.2</option>
+						<option value="2.0.9" ##VERSIONSELECTED0##>2.0.9</option>
+						<option value="2.0.11" ##VERSIONSELECTED1##>2.0.11</option>
+						<option value="2.1.1" ##VERSIONSELECTED2##>2.1.1</option>
+						<option value="2.1.2" ##VERSIONSELECTED3##>2.1.2</option>
+						<option value="2.1.3" ##VERSIONSELECTED4##>2.1.3</option>
+						<option value="2.1.4" ##VERSIONSELECTED5##>2.1.4</option>
+						<option value="2.2.0" ##VERSIONSELECTED6##>2.2.0</option>
+						<option value="2.2.1" ##VERSIONSELECTED7##>2.2.1</option>
+						<option value="2.3.0" ##VERSIONSELECTED8##>2.3.0</option>
+						<option value="2.3.1" ##VERSIONSELECTED9##>2.3.1</option>
 					</select>
 				</TD>
 			</TR>
@@ -64,5 +72,11 @@
 						<option value="3" ##RESHAREMODE3##>3 - reshare user-services</option>
 						<option value="4" ##RESHAREMODE4##>4 - reshare only cards (default)</option>
 					</select>
+				</TD>
+			</TR>
+			<TR><TD>CCcam.cfg:</TD><TD><input name="cccfgfile" type="text" size="80" maxlength="80" value="##CCCFGFILE##"></TD></TR>
+			<TR><TD><A>Auto Sid Block:</A></TD>
+				<TD>
+					<input name="autosidblock" value="0" type="hidden"><input name="autosidblock" value="1" type="checkbox" ##AUTOSIDBLOCK##><label></label>
 				</TD>
 			</TR>

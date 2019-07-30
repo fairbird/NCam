@@ -1,10 +1,10 @@
 	<input name="part" type="hidden" value="dvbapi">
-	<input name="enabled" type="hidden" value="0">
+	<input name="dvbapi_enabled" type="hidden" value="0">
 	<input name="au" type="hidden" value="0">
 	<input name="write_sdt_prov" type="hidden" value="0">
 	<TABLE CLASS="config">
 		<TR><TH COLSPAN="2">Edit DVB Api Config</TH></TR>
-		<TR><TD><A>Enabled:</A></TD><TD><input name="enabled" type="checkbox" value="1" ##ENABLEDCHECKED##><label></label>
+		<TR><TD><A>Enabled:</A></TD><TD><input name="dvbapi_enabled" type="checkbox" value="1" ##ENABLEDCHECKED##><label></label>
 		<TR><TD><A>AU:</A></TD><TD><input name="au" type="checkbox" value="1" ##AUCHECKED##><label></label>
 		<TR><TD><A>Boxtype:</A></TD><TD><select name="boxtype">##BOXTYPE##</select></TD></TR>
 		<TR><TD><A data-p="user_2">User:</A></TD><TD><input name="user" class="longer" type="text" maxlength="63" value="##USERNAME##"></TD></TR>
@@ -34,8 +34,8 @@
 		<TR><TD><A>ecm.info type:</A></TD>
 			<TD>
 				<select name="ecminfo_type">
-					<option value="0" ##ECMINFOTYPESELECTED0##>0 - oscam</option>
-					<option value="1" ##ECMINFOTYPESELECTED1##>1 - oscam (ecmtime in ms)</option>
+					<option value="0" ##ECMINFOTYPESELECTED0##>0 - ncam</option>
+					<option value="1" ##ECMINFOTYPESELECTED1##>1 - ncam (ecmtime in ms)</option>
 					<option value="2" ##ECMINFOTYPESELECTED2##>2 - wicardd</option>
 					<option value="3" ##ECMINFOTYPESELECTED3##>3 - mgcamd</option>
 					<option value="4" ##ECMINFOTYPESELECTED4##>4 - cccam</option>
@@ -53,7 +53,7 @@
 			</TD>
 		</TR>
 		<TR><TD><A>Write detected prov name to srvid:</A></TD><TD><input name="write_sdt_prov" type="checkbox" value="1" ##WRITESDTPROVCHECKED##><label></label>
-		<!-- <TR><TD><A>API for extended CWs</A></TD>
+		<TR><TD><A>API for extended CWs</A></TD>
 			<TD>
 				<select name="extended_cw_api">
 					<option value="0" ##EXTENDEDCWAPISELECTED0##>0 - none (disabled)</option>
@@ -61,4 +61,18 @@
 					<option value="2" ##EXTENDEDCWAPISELECTED2##>2 - OE2.0</option>
 				</select>
 			</TD>
-		</TR> -->
+		</TR>
+		<TR><TD><A>Max pids for extended CWs</A></TD>
+			<TD>
+				<select name="extended_cw_pids">
+					<option value="2" ##EXTENDEDCWPIDSSELECTED2##>2</option>
+					<option value="3" ##EXTENDEDCWPIDSSELECTED3##>3</option>
+					<option value="4" ##EXTENDEDCWPIDSSELECTED4##>4</option>
+					<option value="5" ##EXTENDEDCWPIDSSELECTED5##>5</option>
+					<option value="6" ##EXTENDEDCWPIDSSELECTED6##>6</option>
+					<option value="7" ##EXTENDEDCWPIDSSELECTED7##>7</option>
+					<option value="8" ##EXTENDEDCWPIDSSELECTED8##>8</option>
+					<option value="64" ##EXTENDEDCWPIDSSELECTED64##>64</option>
+				</select>
+			</TD>
+		</TR>

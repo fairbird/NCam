@@ -1,0 +1,19 @@
+.TH ncam.cacheex 5
+.SH NAME
+\fBncam..cacheex\fR - global ECM length matching configuration file for NCAm
+.SH SYNOPSIS
+ECM length matching
+.SH DESCRIPTIONS
+.PP
+\fBm\fP:\fB[CAID]\fP[:]\fB[provider ID]\fP[:]\fB[service ID]\fP[:]\fB[ECM PID]\fP[:]\fB[CHID]\fP[:]\fB[ECM length 1[,ECM length 2]...]]\fP=\fB[CAID]\fP[:]\fB[provider ID]\fP[:]\fB[service ID]\fP[:]\fB[ECM PID]\fP[:]\fB[CHID]\fP[:]\fB[ECM length 1[,ECM length 2]...]]\fP
+.RS 3n
+ ECM length matching from remote cache exchange partner to local 
+ cache, \fIfor cache exchange pull mode (cacheex = 1) only\fR
+.RE
+.SH ANNONTATIONS
+\fIPlease use Unix text file format only.\fR
+.SH EXAMPLES
+ m:1234:::::93=5678:::::93  # matching CAID 1234 and CAID 5678 with 
+                            # ECM length 93
+.SH "SEE ALSO"
+\fBlist_smargo\fR(1), \fBncam\fR(1), \fBncam.ac\fR(5), \fBncam.cert\fR(5), \fBncam.conf\fR(5), \fBncam.dvbapi\fR(5), \fBncam.fakecws\fR(5), \fBncam.guess\fR(5), \fBncam.ird\fR(5), \fBncam.provid\fR(5), \fBncam.ratelimit\fR(5), \fBncam.server\fR(5), \fBncam.services\fR(5), \fBncam.srvid \fR(5), \fBncam.srvid2\fR(5),\fBncam.user\fR(5)

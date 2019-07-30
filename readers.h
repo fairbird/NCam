@@ -2,7 +2,6 @@
 #define READERS_H_
 
 extern const struct s_cardsystem reader_nagra;
-extern const struct s_cardsystem reader_nagracak7;
 extern const struct s_cardsystem reader_irdeto;
 extern const struct s_cardsystem reader_cryptoworks;
 extern const struct s_cardsystem reader_viaccess;
@@ -17,6 +16,8 @@ extern const struct s_cardsystem reader_tongfang;
 extern const struct s_cardsystem reader_bulcrypt;
 extern const struct s_cardsystem reader_griffin;
 extern const struct s_cardsystem reader_dgcrypt;
+extern const struct s_cardsystem reader_streamguard;
+extern const struct s_cardsystem reader_jet;
 extern const struct s_cardsystem reader_emu;
 
 #endif
