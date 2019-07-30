@@ -7,4 +7,4 @@ Copyright (C) 2015-2019 developed by RAED (fairbird).
 
 NCam is based on the oscam: http://www.streamboard.tv/svn/oscam
 
-And also oscam-emu: https://github.com/oscam-emu/oscam-emu
+And also oscam-emu: https://github.com/oscam-emu/oscam-patched
