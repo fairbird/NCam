@@ -525,7 +525,7 @@ if (display) {
 	return OK;
 }
 
-static int32_t mcrHelloncam(struct s_reader *reader)
+static int32_t mcrHelloNcam(struct s_reader *reader)
 {
 	// Display "NCam" on MCR display
 	char helloNcam[5] = {'O', 'S', 'C', 'a', 'm'};

@@ -618,21 +618,22 @@ static int32_t _ghttp_http_get(struct s_client *client, uint32_t hash, int odd)
 
 	if(encauth)    // basic auth login
 	{
-		ret = snprintf((char *)req, sizeof(req), "POST /api/e/%x/%x/%x/%x/%x/%x HTTP/1.1\r\nHost: %s\r\nAuthorization: Basic %s\r\nContent-Length: %d\r\n\r\n",
-				er->onid, er->tsid, er->pid, er->srvid, er->caid, er->prid, context->host_id, encauth, er->ecmlen);
+		ret = snprintf((char *)req, sizeof(req), "GET /api/c/%d/%x HTTP/1.1\r\nHost: %s\r\nAuthorization: Basic %s\r\n\r\n",
+					odd ? 81 : 80, hash, context->host_id, encauth);
+
 		NULLFREE(encauth);
 	}
 	else
 	{
 		if(context->session_id)    // session exists
 		{
-			ret = snprintf((char *)req, sizeof(req), "POST /api/e/%s/%x/%x/%x/%x/%x/%x HTTP/1.1\r\nHost: %s\r\nContent-Length: %d\r\n\r\n",
-					context->session_id, er->onid, er->tsid, er->pid, er->srvid, er->caid, er->prid, context->host_id, er->ecmlen);
+			ret = snprintf((char *)req, sizeof(req), "GET /api/c/%s/%d/%x HTTP/1.1\r\nHost: %s\r\n\r\n",
+						context->session_id, odd ? 81 : 80, hash, context->host_id);
 		}
 		else     // no credentials configured, assume no session required
 		{
-			ret = snprintf((char *)req, sizeof(req), "POST /api/e/%x/%x/%x/%x/%x/%x HTTP/1.1\r\nHost: %s\r\nContent-Length: %d\r\n\r\n",
-					er->onid, er->tsid, er->pid, er->srvid, er->caid, er->prid, context->host_id, er->ecmlen);
+			ret = snprintf((char *)req, sizeof(req), "GET /api/c/%d/%x HTTP/1.1\r\nHost: %s\r\n\r\n",
+						odd ? 81 : 80, hash, context->host_id);
 		}
 	}
 

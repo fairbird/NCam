@@ -130,6 +130,7 @@ static void camd33_auth_client(uint8_t *camdbug)
 	}
 
 	for(rc = -1, account = cfg.account; (usr) && (account) && (rc < 0); account = account->next)
+	{
 		if(streq((char *)usr, account->usr) && streq((char *)pwd, account->pwd))
 		{
 			rc = cs_auth_client(cl, account, NULL);
