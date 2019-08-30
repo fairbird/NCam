@@ -1758,7 +1758,7 @@ void dvbapi_start_filter(int32_t demux_id, int32_t pidindex, uint16_t pid, uint1
 
 void dvbapi_start_sdt_filter(int32_t demux_id)
 {
-	dvbapi_start_filter(demux_id, demux[demux_id].pidindex, 0x11, 0x001, 0x01, 0x42, 0xFF, 0, TYPE_SDT);
+	dvbapi_start_filter(demux_id, demux[demux_id].pidindex, 0x0011, 0x001, 0x01, 0x42, 0xFF, 0, TYPE_SDT);
 	demux[demux_id].sdt_filter = 0;
 }
 
@@ -1769,7 +1769,7 @@ void dvbapi_start_pat_filter(int32_t demux_id)
 	// Don't use it
 	return;
 #endif
-	dvbapi_start_filter(demux_id, demux[demux_id].pidindex, 0x00, 0x001, 0x01, 0x00, 0xFF, 0, TYPE_PAT);
+	dvbapi_start_filter(demux_id, demux[demux_id].pidindex, 0x0000, 0x001, 0x01, 0x00, 0xFF, 0, TYPE_PAT);
 }
 
 void dvbapi_start_pmt_filter(int32_t demux_id)
@@ -2477,9 +2477,14 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, uint32_t idx, bool enable, bo
 void dvbapi_stop_all_descrambling(uint32_t msgid)
 {
 	int32_t j;
+
 	for(j = 0; j < MAX_DEMUX; j++)
 	{
-		if(demux[j].program_number == 0) { continue; }
+		if(demux[j].program_number == 0)
+		{
+			continue;
+		}
+
 		dvbapi_stop_descrambling(j, msgid);
 	}
 }
@@ -2487,9 +2492,14 @@ void dvbapi_stop_all_descrambling(uint32_t msgid)
 void dvbapi_stop_all_cat_emm_sdt_filtering(uint32_t msgid)
 {
 	int32_t j;
+
 	for(j = 0; j < MAX_DEMUX; j++)
 	{
-		if(demux[j].program_number == 0) { continue; }
+		if(demux[j].program_number == 0)
+		{
+			continue;
+		}
+
 		dvbapi_stop_filter(j, TYPE_EMM, msgid);
 		dvbapi_stop_filter(j, TYPE_SDT, msgid);
 		dvbapi_stop_filter(j, TYPE_CAT, msgid);
@@ -3823,7 +3833,7 @@ static void dvbapi_priority_read_entry_extra(int32_t demux_id)
 	}
 }
 
-static void dvbapi_parse_ca_descriptor(int32_t demux_id, const uint8_t *buffer, uint8_t descriptor_length)
+static void dvbapi_parse_pmt_ca_descriptor(int32_t demux_id, const uint8_t *buffer, uint8_t descriptor_length)
 {
 	uint16_t i, ca_system_id, ca_pid;
 	uint32_t ca_provider = 0, ca_data = 0;
@@ -3918,7 +3928,7 @@ static void dvbapi_parse_pmt_descriptors(int32_t demux_id, const uint8_t *buffer
 			}
 			case 0x09: // CA descriptor
 			{
-				dvbapi_parse_ca_descriptor(demux_id, buffer + i + 2, descriptor_length);
+				dvbapi_parse_pmt_ca_descriptor(demux_id, buffer + i + 2, descriptor_length);
 				break;
 			}
 			case 0x59: // Subtitling descriptor (DVB)
@@ -4090,7 +4100,7 @@ static void dvbapi_parse_pmt_program_info(int32_t demux_id, const uint8_t *buffe
 
 		if(descriptor_tag == 0x09) // We only care about CA descriptors at program level
 		{
-			dvbapi_parse_ca_descriptor(demux_id, buffer + i + 2, descriptor_length);
+			dvbapi_parse_pmt_ca_descriptor(demux_id, buffer + i + 2, descriptor_length);
 		}
 	}
 }
@@ -4751,7 +4761,7 @@ int32_t dvbapi_parse_capmt(const uint8_t *buffer, uint32_t length, int32_t connf
 	}
 }
 
-static void dvbapi_parse_pmt(int32_t demux_id, const uint8_t *buffer, uint32_t length, uint32_t msgid)
+static void dvbapi_parse_pmt(int32_t demux_id, const uint8_t *buffer, uint16_t length, uint32_t msgid)
 {
 	uint16_t program_number = b2i(2, buffer + 3);
 	if(program_number != demux[demux_id].program_number)
@@ -5175,13 +5185,13 @@ static void dvbapi_parse_sdt(int32_t demux_id, const uint8_t *buffer, uint16_t l
 		}
 
 		dvbapi_stop_filter(demux_id, TYPE_SDT, msgid);
+		break;
 	}
 }
 
-static void dvbapi_parse_pat(int32_t demux_id, uint8_t *buffer, uint32_t length, uint32_t msgid)
+static void dvbapi_parse_pat(int32_t demux_id, const uint8_t *buffer, uint16_t length, uint32_t msgid)
 {
-	uint16_t srvid;
-	uint32_t i;
+	uint16_t i, srvid;
 
 	dvbapi_stop_filter(demux_id, TYPE_PAT, msgid);
 
@@ -5551,11 +5561,11 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uint8_t *buffer,
 	struct s_ecmpid *curpid = NULL;
 	int32_t pid = demux[demux_id].demux_fd[filter_num].pidindex;
 	uint16_t filtertype = demux[demux_id].demux_fd[filter_num].type;
-	uint32_t sctlen = SCT_LEN(buffer);
+	uint16_t sctlen = SCT_LEN(buffer);
 
-	if((uint32_t) len < sctlen) // invalid CAT length
+	if(len < sctlen)
 	{
-		cs_log_dbg(D_DVBAPI, "Received filterdata with total length 0x%03X but section length is 0x%03X -> invalid length!", len, sctlen);
+		cs_log_dbg(D_DVBAPI, "Received filter data with total length 0x%03X but section length is 0x%03X -> invalid length!", len, sctlen);
 		return;
 	}
 
@@ -5613,7 +5623,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uint8_t *buffer,
 		ECM_REQUEST *er;
 		if(len != 0)  // len = 0 receiver encountered an internal bufferoverflow!
 		{
-			cs_log_dump_dbg(D_DVBAPI, buffer, sctlen, "Demuxer %d Filter %d fetched ECM data (ecmlength = 0x%03X):",
+			cs_log_dump_dbg(D_DVBAPI, buffer, sctlen, "Demuxer %d filter %d fetched ECM data (length = 0x%03X):",
 				demux_id, filter_num + 1, sctlen);
 
 			if(sctlen > MAX_ECM_SIZE) // ecm too long to handle!
@@ -5983,7 +5993,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uint8_t *buffer,
 	{
 		if(len != 0)  // len = 0 receiver encountered an internal buffer overflow!
 		{
-			cs_log_dump_dbg(D_DVBAPI, buffer, sctlen, "Demuxer %d Filter %d fetched EMM data (emmlength = 0x%03X):",
+			cs_log_dump_dbg(D_DVBAPI, buffer, sctlen, "Demuxer %d filter %d fetched EMM data (length = 0x%03X):",
 				demux_id, filter_num + 1, sctlen);
 
 			if(sctlen > MAX_EMM_SIZE) // emm too long to handle!
@@ -6049,7 +6059,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uint8_t *buffer,
 	
 	if(filtertype == TYPE_SDT)
 	{
-		cs_log_dump_dbg(D_DVBAPI, buffer, sctlen, "Demuxer %d Filter %d fetched SDT data (length = 0x%03X):",
+		cs_log_dump_dbg(D_DVBAPI, buffer, sctlen, "Demuxer %d filter %d fetched SDT data (length = 0x%03X):",
 			demux_id, filter_num + 1, sctlen);
 
 		dvbapi_parse_sdt(demux_id, buffer, sctlen, msgid);
@@ -6057,7 +6067,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uint8_t *buffer,
 
 	if(filtertype == TYPE_PAT)
 	{
-		cs_log_dump_dbg(D_DVBAPI, buffer, sctlen, "Demuxer %d Filter %d fetched PAT data (length = 0x%03X):",
+		cs_log_dump_dbg(D_DVBAPI, buffer, sctlen, "Demuxer %d filter %d fetched PAT data (length = 0x%03X):",
 			demux_id, filter_num + 1, sctlen);
 
 		dvbapi_parse_pat(demux_id, buffer, sctlen, msgid);
@@ -6065,7 +6075,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uint8_t *buffer,
 
 	if(filtertype == TYPE_PMT)
 	{
-		cs_log_dump_dbg(D_DVBAPI, buffer, sctlen, "Demuxer %d Filter %d fetched PMT data (length = 0x%03X):",
+		cs_log_dump_dbg(D_DVBAPI, buffer, sctlen, "Demuxer %d filter %d fetched PMT data (length = 0x%03X):",
 			demux_id, filter_num + 1, sctlen);
 
 		dvbapi_parse_pmt(demux_id, buffer, sctlen, msgid);
@@ -6073,7 +6083,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uint8_t *buffer,
 
 	if(filtertype == TYPE_CAT)
 	{
-		cs_log_dump_dbg(D_DVBAPI, buffer, sctlen, "Demuxer %d Filter %d fetched CAT data (length = 0x%03X):",
+		cs_log_dump_dbg(D_DVBAPI, buffer, sctlen, "Demuxer %d filter %d fetched CAT data (length = 0x%03X):",
 			demux_id, filter_num + 1, sctlen);
 
 		dvbapi_parse_cat(demux_id, buffer, sctlen, msgid);
