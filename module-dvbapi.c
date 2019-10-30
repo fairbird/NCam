@@ -2572,7 +2572,11 @@ void dvbapi_stop_descrambling(int32_t demux_id, uint32_t msgid)
 	}
 	demux[demux_id].pidindex = -1;
 	demux[demux_id].curindex = -1;
-	
+	if(ca_descramblers_used > 0) // it should never go below 0, but you never know
+	{
+		ca_descramblers_used--; // decrease number of used descramblers
+	}
+
 	if(!cfg.dvbapi_listenport && cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX)
 	{
 		unlink(ECMINFO_FILE);
@@ -8748,10 +8752,6 @@ int8_t remove_streampid_from_list(uint8_t cadevice, uint16_t pid, uint32_t idx)
 
 				if(removed)
 				{
-					if(ca_descramblers_used > 0) // it should never go below 0, but you never know
-					{
-						ca_descramblers_used--; // decrease number of used descramblers
-					}
 					cs_log_dbg(D_DVBAPI, "Remove streampid %04X using indexer %d from ca%d", pid, idx, cadevice);
 				}
 
