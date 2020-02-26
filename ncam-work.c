@@ -11,6 +11,9 @@
 #include "ncam-string.h"
 #include "ncam-work.h"
 #include "reader-common.h"
+#ifdef READER_NAGRA_MERLIN
+#include "reader-nagracak7.h"
+#endif
 #include "module-cccam.h"
 #include "module-cccam-data.h"
 #include "module-cccshare.h"
@@ -284,6 +287,11 @@ void *work_thread(void *ptr)
 			case ACTION_READER_POLL_STATUS:
 				cardreader_poll_status(reader);
 				break;
+#ifdef READER_NAGRA_MERLIN
+			case ACTION_READER_RENEW_SK:
+				CAK7_getCamKey(reader);
+				break;
+#endif
 			case ACTION_READER_INIT:
 				if(!cl->init_done)
 					{ reader_init(reader); }
