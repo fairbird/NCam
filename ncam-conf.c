@@ -511,7 +511,7 @@ FILE *create_config_file(const char *conf_filename)
 	}
 	fprintf(f, "# %s generated automatically by NCAM %s\n",
 			conf_filename, CS_VERSION);
-	fprintf(f, "# Read more: https://www.tunisia-sat.com/forums/threads/3539021/\n\n");
+	fprintf(f, "# Read more: https://forum.openvision.tech/index.php\n\n");
 	return f;
 }
 

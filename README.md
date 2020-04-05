@@ -3,7 +3,7 @@ NCam: Open Source Conditional Access Module [![Build Status](https://travis-ci.o
 
 Copyright (C) 2012-2018 developed by Javilonas: https://github.com/javilonas/NCam
 
-Copyright (C) 2015-2019 developed by RAED (fairbird).
+Copyright (C) 2015-2020 Updated and patched by RAED (Fairbird) and Open Vision Developers.
 
 NCam is based on the oscam: http://www.streamboard.tv/svn/oscam
 
