@@ -1934,6 +1934,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er)
 
 			rdr->currenthops = card->hop;
 			rdr->card_status = CARD_INSERTED;
+			if(rdr->from_cccam_cfg && cfg.cccam_cfg_reconnect_attempts > 0) { rdr->reconnect_attempts = 0; }
 
 			cs_log_dbg( D_READER, "%s sending ecm for sid %04X(%d) to card %08x, hop %d, ecmtask %d",
 						getprefix(), cur_er->srvid, cur_er->ecmlen, card->id, card->hop, cur_er->idx);

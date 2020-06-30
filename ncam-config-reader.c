@@ -1183,7 +1183,6 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_FUNC("lb_priority_services"   , OFS(lb_prio_sidtabs),       reader_lb_prio_services_fn),
 	DEF_OPT_INT32("inactivitytimeout"   , OFS(tcp_ito),                 DEFAULT_INACTIVITYTIMEOUT),
 	DEF_OPT_INT32("reconnecttimeout"    , OFS(tcp_rto),                 DEFAULT_TCP_RECONNECT_TIMEOUT),
-	DEF_OPT_INT32("reconnectdelay"      , OFS(tcp_reconnect_delay),     60000),
 	DEF_OPT_INT32("resetcycle"          , OFS(resetcycle),              0),
 	DEF_OPT_INT32("autorestartseconds"  , OFS(autorestartseconds),      0),
 	DEF_OPT_INT8("restartforresetcycle" , OFS(restartforresetcycle),    0),
@@ -1458,9 +1457,6 @@ int32_t init_readerdb(void)
 	if(!configured_readers)
 		configured_readers = ll_create("configured_readers");
 
-	if(cfg.cc_cfgfile)
-		read_cccamcfg(CCCAMCFGREADER);
-
 	struct s_reader *rdr;
 	if(!cs_malloc(&rdr, sizeof(struct s_reader)))
 	{
@@ -1499,7 +1495,26 @@ int32_t init_readerdb(void)
 		chk_reader(trim(strtolower(token)), trim(value), rdr);
 	}
 	NULLFREE(token);
+#if defined(MODULE_CCCAM) || defined(MODULE_NEWCAMD) || defined(MODULE_CAMD35) || defined(MODULE_RADEGAST)
+	read_cccamcfg("CCcam.cfg");
+#endif
 	LL_ITER itr = ll_iter_create(configured_readers);
+	while((rdr = ll_iter_next(&itr)) && rdr->from_cccam_cfg) //free duplicate reader
+	{
+		struct s_reader *rdr2;
+		LL_ITER iter = ll_iter_create(configured_readers);
+		while((rdr2 = ll_iter_next(&iter)))
+		{
+			if(rdr != rdr2 && !strcmp(rdr->device, rdr2->device)
+			   && rdr->r_port == rdr2->r_port && !strcmp(rdr->r_usr, rdr2->r_usr)
+			   && !strcmp(rdr->r_pwd, rdr2->r_pwd)){
+				rdr = ll_iter_remove(&itr);
+				free_reader(rdr);
+				break;
+			}
+		}
+	}
+	itr = ll_iter_create(configured_readers);
 	while((rdr = ll_iter_next(&itr)) && rdr->from_cccam_cfg)   //free duplicate reader
 	{
 		struct s_reader *rdr2;
@@ -1587,7 +1602,7 @@ int32_t write_server(void)
 	LL_ITER itr = ll_iter_create(configured_readers);
 	while((rdr = ll_iter_next(&itr)))
 	{
-		if(rdr->label[0])
+		if(rdr->label[0] && !rdr->cccam_cfg_save)
 		{
 			fprintf(f, "[reader]\n");
 			config_list_apply_fixups(reader_opts, rdr);

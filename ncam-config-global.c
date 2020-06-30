@@ -414,6 +414,12 @@ static const struct config_list global_opts[] =
 	DEF_OPT_INT8("double_check"             , OFS(double_check),        0),
 	DEF_OPT_INT8("disablecrccws"            , OFS(disablecrccws),            0),
 	DEF_OPT_FUNC("disablecrccws_only_for"   , OFS(disablecrccws_only_for),     chk_ftab_fn),
+	DEF_OPT_STR("cccam_cfg_path"            , OFS(cccam_cfg_path)                , NULL),
+	DEF_OPT_INT8("cccam_cfg_save"           , OFS(cccam_cfg_save)                , 0),
+#ifdef MODULE_CCCAM
+	DEF_OPT_INT32("cccam_cfg_reconnect_delay"   , OFS(cccam_cfg_reconnect_delay)     , 0),
+	DEF_OPT_INT8("cccam_cfg_reconnect_attempts" , OFS(cccam_cfg_reconnect_attempts)  , 0),
+#endif
 	DEF_LAST_OPT
 };
 

@@ -1676,12 +1676,13 @@ struct s_reader
 	int8_t          cc_hop;                         // For non-cccam reader: hop for virtual cards
 	int8_t          cc_reshare;
 	int32_t         cc_reconnect;                   // reconnect on ecm-request timeout
-	int8_t          from_cccam_cfg;                 // created from cccam.cfg
 #endif
+	int8_t		from_cccam_cfg;			// created from cccam.cfg
+	int8_t		cccam_cfg_save;
 	int8_t          tcp_connected;
 	int32_t         tcp_ito;                        // inactivity timeout
 	int32_t         tcp_rto;                        // reconnect timeout
-	int32_t         tcp_reconnect_delay;            // max tcp connection block delay
+	int8_t		reconnect_attempts;
 
 	struct timeb    tcp_block_connect_till;         // time tcp connect ist blocked
 	int32_t         tcp_block_delay;                // incrementing block time
@@ -2427,6 +2428,10 @@ struct s_config
 #ifdef MODULE_SERIAL
 	struct s_twin *twin_list;
 #endif
+	char		*cccam_cfg_path;
+	int8_t		cccam_cfg_save;
+	int32_t		cccam_cfg_reconnect_delay;	// max tcp connection block delay
+	int8_t		cccam_cfg_reconnect_attempts;
 };
 
 struct s_clientinit

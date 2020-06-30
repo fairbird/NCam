@@ -63,6 +63,8 @@ LOCALCARDS                    config/global_localcards.html                     
 SUPPRESSCMD08                 config/global_suppresscmd08.html                            MODULE_CAMD35,MODULE_CAMD35_TCP
 GETBLOCKEMMAUPROVID           config/global_getblockemmauprovid.html                      MODULE_CAMD35,MODULE_CAMD35_TCP
 UNLOCKPARENTAL                config/global_unlockparental.html                           READER_SECA,READER_VIACCESS
+CONFIGCCCAMCFG                config/global_cccamcfg.html                                 MODULE_CCCAM,MODULE_NEWCAMD,MODULE_CAMD35,MODULE_RADEGAST
+CONFIGCCCAMCFGCCCAM           config/global_cccamcfg_cccam.html                           MODULE_CCCAM
 CONFIGLCD                     config/lcd.html                                             LCDSUPPORT
 CONFIGLOADBALANCER            config/loadbalancer.html                                    WITH_LB
 CONFIGLOADBALANCERCTRL        config/loadbalancer_control.html                            WITH_LB
@@ -120,9 +122,10 @@ FILEMENU                      files/menu.html
 FILEMENUANTICASC              files/menu_anticasc.html                                    CS_ANTICASC
 FILEMENUCONSTCW               files/menu_constantcw.html                                  MODULE_CONSTCW
 FILEMENUDVBAPI                files/menu_dvbapi.html                                      HAVE_DVBAPI
-FILEMENUGBOX                  files/menu_gbox.html	                                  MODULE_GBOX
+FILEMENUGBOX                  files/menu_gbox.html	                                      MODULE_GBOX
 FILEMENUFAKECWS               files/menu_fakecws.html                                     CS_CACHEEX
 FILEMENUTWIN                  files/menu_twin.html                                        MODULE_SERIAL
+FILEMENUCCCAMCFG              files/menu_cccamcfg.html                                    MODULE_CCCAM,MODULE_NEWCAMD,MODULE_CAMD35,MODULE_RADEGAST
 FILEMENUSOFTCAMKEY            files/menu_softcamkey.html                                  WITH_EMU
 
 AUTOCONF                      ghttp/autoconf.html                                         MODULE_GHTTP

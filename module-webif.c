@@ -20,6 +20,7 @@
 #include "module-webif-tpl.h"
 #include "ncam-conf-mk.h"
 #include "ncam-config.h"
+#include "ncam-conf.h"
 #include "ncam-files.h"
 #include "ncam-garbage.h"
 #include "ncam-cache.h"
@@ -138,9 +139,10 @@ static bool use_srvid2 = false;
 #define MNU_GBX_FSTAINF     27
 #define MNU_GBX_FEXPINF     28
 #define MNU_GBX_INFOLOG     29
-#define MNU_CFG_FSOFTCAMKEY 30
-
-#define MNU_CFG_TOTAL_ITEMS 31 // sum of items above. Use it for "All inactive" in function calls too.
+#define MNU_CFG_CCCAMCFG    30
+#define MNU_CFG_FSOFTCAMKEY 31
+ 
+#define MNU_CFG_TOTAL_ITEMS 32 // sum of items above. Use it for "All inactive" in function calls too.
 
 static void set_status_info_var(struct templatevars *vars, char *varname, int no_data, char *fmt, double value)
 {
@@ -741,6 +743,17 @@ static char *send_ncam_config_global(struct templatevars *vars, struct uriparams
 		{ tpl_addVar(vars, TPLADD, "ENABLELEDSELECTED1", "selected"); }
 	else if(cfg.enableled == 2)
 		{ tpl_addVar(vars, TPLADD, "ENABLELEDSELECTED2", "selected"); }
+#endif
+
+	tpl_addVar(vars, TPLADD, "CCCAM_CFG_PATCH", cfg.cccam_cfg_path);
+	tpl_addVar(vars, TPLADD, "CCCAM_CFG_SAVE", (cfg.cccam_cfg_save == 1) ? "checked" : "");
+
+#ifdef MODULE_CCCAM
+	if(cfg.cccam_cfg_reconnect_delay)
+		{ tpl_printf(vars, TPLADD, "CCCAM_CFG_RECONNECT_DELAY", "%d", cfg.cccam_cfg_reconnect_delay); }
+
+	if(cfg.cccam_cfg_reconnect_attempts)
+		{ tpl_printf(vars, TPLADD, "CCCAM_CFG_RECONNECT_ATTEMPTS", "%d", cfg.cccam_cfg_reconnect_attempts); }
 #endif
 
 	return tpl_getTpl(vars, "CONFIGGLOBAL");
@@ -1943,7 +1956,7 @@ static char *send_ncam_reader(struct templatevars *vars, struct uriparams *param
 	while((rdr = ll_iter_next(&itr)))
 	{
 		struct s_client *cl = rdr->client;
-		if(rdr->label[0] && rdr->typ)
+		if(rdr->label[0] && rdr->typ && !rdr->cccam_cfg_save)
 		{
 			total_readers += 1;
 
@@ -6861,8 +6874,9 @@ static char *send_ncam_files(struct templatevars * vars, struct uriparams * para
 		{ "expired.info",    MNU_GBX_FEXPINF,   FTYPE_GBOX },     // id 28
 		{ "info.log",        MNU_GBX_INFOLOG,   FTYPE_GBOX },     // id 29
 #endif
+		{ "CCcam.cfg",       MNU_CFG_CCCAMCFG,  FTYPE_CONFIG },   // id 30
 #ifdef WITH_EMU
-		{ "SoftCam.Key",     MNU_CFG_FSOFTCAMKEY,FTYPE_CONFIG },  // id 30
+		{ "SoftCam.Key",     MNU_CFG_FSOFTCAMKEY,FTYPE_CONFIG },  // id 31
 #endif
 		{ NULL, 0, 0 },
 	};
@@ -7050,6 +7064,9 @@ static char *send_ncam_files(struct templatevars * vars, struct uriparams * para
 		tpl_addVar(vars, TPLADD, "WRITEPROTECTION", tpl_getTpl(vars, "WRITEPROTECTION"));
 		tpl_addVar(vars, TPLADD, "BTNDISABLED", "DISABLED");
 	}
+
+	if(!cfg.cccam_cfg_path)
+		{ tpl_addVar(vars, TPLADD, "VIEW_FILEMENUCCCAMCFG", tpl_getTpl(vars, "FILEMENUCCCAMCFG")); }
 
 	if(!apicall)
 		{ return tpl_getTpl(vars, "FILE"); }

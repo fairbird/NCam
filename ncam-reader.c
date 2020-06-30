@@ -731,13 +731,30 @@ void clear_block_delay(struct s_reader *rdr)
 
 void block_connect(struct s_reader *rdr)
 {
+	if(rdr->typ == R_CCCAM && rdr->from_cccam_cfg && cfg.cccam_cfg_reconnect_attempts > 0)
+	{
+		if(cfg.cccam_cfg_reconnect_attempts <= rdr->reconnect_attempts)
+		{
+			remove_reader_from_active(rdr);
+			struct s_client *cl = rdr->client;
+			if(cl) { kill_thread(cl); }
+			ll_remove(configured_readers, rdr);
+			free_reader(rdr);
+			//rdr_log(rdr, "invalid C: line disabled");
+			return;
+		}
+		else
+		{
+			rdr->reconnect_attempts++;
+		}
+	}
 	if(!rdr->tcp_block_delay)
 		{ rdr->tcp_block_delay = 100; } //starting blocking time, 100ms
 	cs_ftime(&rdr->tcp_block_connect_till);
 	add_ms_to_timeb(&rdr->tcp_block_connect_till, rdr->tcp_block_delay);
 	rdr->tcp_block_delay *= 4; //increment timeouts
-	if(rdr->tcp_block_delay >= rdr->tcp_reconnect_delay)
-		{ rdr->tcp_block_delay = rdr->tcp_reconnect_delay; }
+	if(rdr->typ == R_CCCAM && rdr->from_cccam_cfg && cfg.cccam_cfg_reconnect_delay > 4)
+		{ rdr->tcp_block_delay = cfg.cccam_cfg_reconnect_delay * 1000; }
 	rdr_log_dbg(rdr, D_TRACE, "tcp connect blocking delay set to %d", rdr->tcp_block_delay);
 }
 
@@ -956,6 +973,21 @@ void network_tcp_connection_close(struct s_reader *reader, char *reason)
 	// so we need to reset them aswell
 	if(reader->typ == R_NEWCAMD)
 		{ cl->ncd_msgid = 0; }
+
+	if(reader->typ == R_CCCAM && reader->from_cccam_cfg && cfg.cccam_cfg_reconnect_attempts > 0)
+	{
+		if(cfg.cccam_cfg_reconnect_attempts <= reader->reconnect_attempts)
+		{
+			remove_reader_from_active(reader);
+			if(cl) { kill_thread(cl); }
+			ll_remove(configured_readers, reader);
+			//rdr_log(reader, "invalid C: line disabled");
+		}
+		else
+		{
+			reader->reconnect_attempts++;
+		}
+	}
 }
 
 int32_t casc_process_ecm(struct s_reader *reader, ECM_REQUEST *er)
