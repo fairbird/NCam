@@ -862,7 +862,6 @@ static const struct config_list cccam_opts[] =
 	DEF_OPT_INT8("minimizecards"		, OFS(cc_minimize_cards),	1),
 	DEF_OPT_INT8("keepconnected"		, OFS(cc_keep_connected),	1),
 	DEF_OPT_UINT32("recv_timeout"		, OFS(cc_recv_timeout),		DEFAULT_CC_RECV_TIMEOUT),
-	DEF_OPT_STR("cccfgfile"			, OFS(cc_cfgfile),		NULL),
 	DEF_OPT_INT8("autosidblock"		, OFS(cc_autosidblock),		1),
 	DEF_LAST_OPT
 };
