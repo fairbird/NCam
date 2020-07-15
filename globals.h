@@ -2429,6 +2429,7 @@ struct s_config
 #endif
 	char		*cccam_cfg_path;
 	int8_t		cccam_cfg_save;
+	int8_t          repetitions_forced;
 	int32_t		cccam_cfg_reconnect_delay;	// max tcp connection block delay
 	int8_t		cccam_cfg_reconnect_attempts;
 };

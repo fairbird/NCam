@@ -696,33 +696,6 @@ static void ins7E_fn(const char *token, char *value, void *setting, long var_siz
 		{ fprintf_conf(f, token, "\n"); }
 }
 
-static void des_and_3des_key_fn(const char *token, char *value, void *setting, FILE *f)
-{
-	uint8_t *var = setting;
-	if(value)
-	{
-		int32_t len = strlen(value);
-		if(((len != 16) && (len != 32)) || (key_atob_l(value, var, len)))
-		{
-			if(len > 0)
-				{ fprintf(stderr, "reader %s parse error, %s=%s\n", token, token, value); }
-			memset(var, 0, 17);
-		}
-		else
-		{
-			var[16] = len/2;
-		}
-		return;
-	}
-	if(var[16])
-	{
-		char tmp[var[16] * 2 + 1];
-		fprintf_conf(f, token, "%s\n", cs_hexdump(0, var, var[16], tmp, sizeof(tmp)));
-	}
-	else if(cfg.http_full_cfg)
-		{ fprintf_conf(f, token, "\n"); }
-}
-
 static void atr_fn(const char *token, char *value, void *setting, FILE *f)
 {
 	struct s_reader *rdr = setting;
