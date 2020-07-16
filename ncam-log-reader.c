@@ -34,7 +34,7 @@ static const char *reader_desc_txt(struct s_reader *reader)
 	else if(reader->ph.desc)
 		{ return reader->ph.desc; }
 	else
-		{ return reader_get_type_desc(reader); }
+		{ return reader_get_type_desc(reader, 1); }
 }
 
 static char *format_sensitive(char *result, int remove_sensitive)

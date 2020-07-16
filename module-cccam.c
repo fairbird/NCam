@@ -1026,16 +1026,8 @@ int32_t cc_send_cli_data(struct s_client *cl)
 	memcpy(buf + 29, rdr->cc_version, sizeof(rdr->cc_version)); // cccam version (ascii)
 	memcpy(buf + 61, rdr->cc_build, sizeof(rdr->cc_build)); // build number (ascii)
 
-	// multics seed already detected, now send multics 'WHO' for getting and confirming multics server
-	if(cc->multics_mode == 1)
-	{
-		memcpy(buf + 57, "W", 1);
-		memcpy(buf + 58, "H", 1);
-		memcpy(buf + 59, "O", 1);
-	}
-
-	//newbox seed already detected, now send newbox 'WHO' for getting and confirming newbox server
-	if(cc->newbox_mode == 1)
+	// multics or newbox seed already detected, now send multics 'WHO' for getting and confirming multics or newbox server
+	if(cc->multics_mode == 1 || cc->newbox_mode == 1)
 	{
 		memcpy(buf + 57, "W", 1);
 		memcpy(buf + 58, "H", 1);
@@ -2773,9 +2765,17 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 				if(data[33] == 'M' && data[34] == 'C' && data[35] == 'S')
 				{
 					cc->multics_mode = 2; // multics server finaly confirmed.
-					cc->multics_version[0] = data[37];
-					cc->multics_version[1] = data[38];
-					cs_log_dbg(D_READER, "multics detected: %s!", getprefix());
+					if (data[31] == 'H' && data[32] == 'B')
+					{
+						cc->multics_mode = 3;
+						memcpy(cc->multics_version, data+29, 2);
+						cs_log_dbg(D_READER, "multics hellboy detected: %s!", getprefix());
+					}
+					else
+					{
+						memcpy(cc->multics_version, data+37, 2);
+						cs_log_dbg(D_READER, "multics detected: %s!", getprefix());
+					}
 				}
 
 				cs_log_dbg(D_READER, "%s remote server %s running v%s (%s)", getprefix(), cs_hexdump(0,
@@ -4571,17 +4571,18 @@ int32_t cc_cli_connect(struct s_client *cl)
 	uint8_t a = (data[0]^'M') + data[1] + data[2];
 	uint8_t b = data[4] + (data[5]^'C') + data[6];
 	uint8_t c = data[8] + data[9] + (data[10]^'S');
-	if((a == data[3]) && (b == data[7]) && (c == data[11]))
-	{
-		cc->multics_mode = 1; //detected multics seed.
-		cs_log_dbg(D_READER, "multics seed detected: %s", rdr->label);
-	}
 
 	// detect newbox seed
 	uint8_t d = (data[0]^'N') + data[1] + data[2];
 	uint8_t e = data[4] + (data[5]^'B') + data[6];
 	uint8_t f = data[8] + data[9] + (data[10]^'x');
-	if((d == data[3]) && (e == data[7]) && (f == data[11]))
+
+	if((a == data[3]) && (b == data[7]) && (c == data[11]))
+	{
+		cc->multics_mode = 1; //detected multics seed.
+		cs_log_dbg(D_READER, "multics seed detected: %s", rdr->label);
+	}
+	else if((d == data[3]) && (e == data[7]) && (f == data[11]))
 	{
 		cc->newbox_mode = 1; //detected newbox seed.
 		cs_log_dbg(D_READER, "newbox seed detected: %s", rdr->label);
@@ -4898,7 +4899,7 @@ bool cccam_client_extended_mode(struct s_client *cl)
 
 bool cccam_client_multics_mode(struct s_client *cl)
 {
-	return cl && cl->cc && ((struct cc_data *)cl->cc)->multics_mode == 2;
+	return cl && cl->cc && ((struct cc_data *)cl->cc)->multics_mode > 1;
 }
 
 bool cccam_client_newbox_mode(struct s_client *cl)

@@ -722,7 +722,7 @@ int32_t dvbapi_net_send(uint32_t request, int32_t socket_fd, uint32_t msgid, int
 						{
 							dvbapi_net_add_str(packet, &size, "local"); // from
 						}
-						dvbapi_net_add_str(packet, &size, reader_get_type_desc(er->selected_reader)); // protocol
+						dvbapi_net_add_str(packet, &size, reader_get_type_desc(er->selected_reader, 1)); // protocol
 						hops = er->selected_reader->currenthops;
 					}
 					break;
@@ -6682,7 +6682,7 @@ static void *dvbapi_main_local(void *cli)
 	}
 
 #if defined WITH_COOLAPI || defined WITH_COOLAPI2 || defined WITH_NEUTRINO
-	system("pzapit -rz");
+	if(system("pzapit -rz") == 0) { printf("ok"); }
 #endif
 	cs_ftime(&start); // register start time
 
@@ -8082,7 +8082,7 @@ void dvbapi_write_ecminfo_file(struct s_client *client, ECM_REQUEST *er, uint8_t
 						from_name = "local";
 						from_device = er->selected_reader->device;
 					}
-					proto_name = reader_get_type_desc(er->selected_reader);
+					proto_name = reader_get_type_desc(er->selected_reader, 1);
 					hops = er->selected_reader->currenthops;
 				}
 				else

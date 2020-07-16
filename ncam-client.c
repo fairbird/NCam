@@ -5,6 +5,7 @@
 #include "cscrypt/md5.h"
 #include "module-anticasc.h"
 #include "module-cccam.h"
+#include "module-cccam-data.h"
 #include "module-webif.h"
 #include "ncam-array.h"
 #include "ncam-conf-chk.h"
@@ -82,36 +83,64 @@ const char *remote_txt(void)
 
 const char *client_get_proto(struct s_client *cl)
 {
-	const char *ctyp;
+	const char *ctyp = "unknown";
 	switch(cl->typ)
 	{
-	case 's':
-		ctyp = "server";
-		break;
-	case 'h':
-		ctyp = "http";
-		break;
-	case 'p':
-	case 'r':
-		ctyp = reader_get_type_desc(cl->reader);
-		break;
+		case 's':
+			ctyp = "server";
+			break;
+
+		case 'h':
+			ctyp = "http";
+			break;
+
+		case 'p':
+		case 'r':
+			ctyp = reader_get_type_desc(cl->reader, 1);
+			break;
+
 #ifdef CS_ANTICASC
-	case 'a':
-		ctyp = "anticascader";
-		break;
+		case 'a':
+			ctyp = "anticascader";
+			break;
+
 #endif
-	case 'c':
-		if(cccam_client_multics_mode(cl) && cccam_client_newbox_mode(cl))
-		{
-			ctyp = "cccam";
+		case 'c':
+#ifdef MODULE_CCCAM
+			if(cccam_client_multics_mode(cl))
+			{
+				if(cl->cc && ((struct cc_data *)cl->cc)->multics_mode)
+				{
+					switch(((struct cc_data *)cl->cc)->multics_mode)
+					{
+						case 2:
+							ctyp = "cccam_mcs";
+							break;
+
+						case 3:
+							ctyp = "cccam_mcs_HB";
+							break;
+
+						default:
+							break;
+					}
+				}
+			}
+			else
+#endif 
+			if(cccam_client_newbox_mode(cl))
+			{
+				ctyp = "cccam";
+				break;
+			}
+			else if(cccam_client_extended_mode(cl))
+			{
+				ctyp = "cccam_ext";
+				break;
+			} /* fallthrough */
+		default:
+			ctyp = get_module(cl)->desc;
 			break;
-		}
-		else if(cccam_client_extended_mode(cl)){
-			ctyp = "cccam_ext";
-			break;
-		} /* fallthrough */
-	default:
-		ctyp = get_module(cl)->desc;
 	}
 	return ctyp;
 }

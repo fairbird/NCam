@@ -228,8 +228,8 @@ struct cc_data
 	LLIST *extended_ecm_idx;
 
 	// multics detection
-	int8_t multics_mode;
-	int8_t multics_version[2];
+	uint8_t multics_mode;
+	uint8_t multics_version[2];
 
 	// newbox detection
 	int8_t newbox_mode;

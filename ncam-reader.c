@@ -2,6 +2,7 @@
 
 #include "globals.h"
 #include "module-cccam.h"
+#include "module-cccam-data.h"
 #include "module-led.h"
 #include "module-stat.h"
 #include "module-dvbapi.h"
@@ -492,7 +493,7 @@ struct s_reader *get_reader_by_label(char *lbl)
 	return rdr;
 }
 
-const char *reader_get_type_desc(struct s_reader *rdr)
+const char *reader_get_type_desc(struct s_reader *rdr, int32_t extended)
 {
 	const char *desc = "unknown";
 	if(rdr->crdr && rdr->crdr->desc)
@@ -504,20 +505,32 @@ const char *reader_get_type_desc(struct s_reader *rdr)
 	}
 	if(rdr->typ == R_NEWCAMD && rdr->ncd_proto == NCD_524)
 		{ desc = "newcamd524"; }
-	else if (rdr->typ == R_CCCAM)
-	//else if(rdr->typ == R_CCCAM && cccam_client_multics_mode(rdr->client) && cccam_client_newbox_mode(rdr->client))
+	else if(rdr->typ == R_CCCAM)
 	{
-//		desc = "cccam";
-//		if(extended && cccam_client_extended_mode(rdr->client)) desc = "cccam_ext";
-		if (cccam_client_multics_mode(rdr->client) && cccam_client_newbox_mode(rdr->client))
-			desc = "cccam";
-		else
+		desc = "cccam";
+		if(extended && cccam_client_extended_mode(rdr->client)) desc = "cccam_ext";
+#ifdef MODULE_CCCAM
+		if(cccam_client_multics_mode(rdr->client))
 		{
-			if (cccam_client_extended_mode(rdr->client))
-				desc = "cccam_ext";
-			else
-				desc = "cccam";
+			if(rdr->client->cc && ((struct cc_data *)rdr->client->cc)->multics_mode)
+			{
+				switch(((struct cc_data *)rdr->client->cc)->multics_mode)
+				{
+					case 2:
+						desc = "cccam_mcs";
+						break;
+
+					case 3:
+						desc = "cccam_mcs_HB";
+						break;
+
+					default:
+						break;
+				}
+			}
 		}
+		//else if(cccam_client_newbox_mode(rdr->client)) { desc = "cccam"; }
+#endif
 	}
 	return desc;
 }
