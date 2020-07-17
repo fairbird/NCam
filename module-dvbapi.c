@@ -6682,7 +6682,10 @@ static void *dvbapi_main_local(void *cli)
 	}
 
 #if defined WITH_COOLAPI || defined WITH_COOLAPI2 || defined WITH_NEUTRINO
-	if(system("pzapit -rz") == 0) { printf("ok"); }
+	if(system("pzapit -rz") == -1)
+	{
+		cs_log_dbg(D_DVBAPI, "pzapit: command not found");
+	}
 #endif
 	cs_ftime(&start); // register start time
 
