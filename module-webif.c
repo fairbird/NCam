@@ -1473,6 +1473,14 @@ static char *send_ncam_config_webif(struct templatevars *vars, struct uriparams 
 		free(namelist);
 	}
 
+	tpl_addVar(vars, TPLADD, "HTTPBCOLOR", cfg.http_backround_color);
+	tpl_addVar(vars, TPLADD, "HTTPTCOLOR", cfg.http_text_color);
+	if(cfg.http_style)
+	{
+		tpl_addVar(vars, TPLADD, "HTTPCOLOR", "checked");
+		tpl_addVar(vars, TPLADD, "VIEW_STYLE", tpl_getTpl(vars, "STYLE")); 
+	}
+
 	if(cfg.http_prepend_embedded_css)
 		{ tpl_addVar(vars, TPLADD, "HTTPPREPENDEMBEDDEDCSS", "checked"); }
 
@@ -8718,6 +8726,8 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 			tpl_addVar(vars, TPLADD, "CS_REVISION", CS_REVISION);
 			tpl_addVar(vars, TPLADD, "DATE_BUILD", DATE_BUILD);
 			tpl_addVar(vars, TPLADD, "CS_TARGET", CS_TARGET);
+			tpl_addVar(vars, TPLADD, "HTTPBCOLOR", cfg.http_backround_color);
+			tpl_addVar(vars, TPLADD, "HTTPTCOLOR", cfg.http_text_color);
 			tpl_addVar(vars, TPLADD, "HTTPNCAMLABEL", xml_encode(vars,cfg.http_ncam_label));
 			if (!boxtype_is("generic"))
 			{
@@ -8752,12 +8762,13 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 				tpl_addVar(vars, TPLADD, "WITHQUERY", pgidx == 15 ? "1" : "0");
 				tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 			}
+			if(cfg.http_style)
+				{ tpl_addVar(vars, TPLADD, "VIEW_STYLE", tpl_getTpl(vars, "STYLE")); }
 #ifdef WEBIF_JQUERY
 			tpl_printf(vars, TPLADD, "SRCJQUERY", "jquery.js?v=%s", CS_SVN_VERSION);
 #else
 			tpl_addVar(vars, TPLADD, "SRCJQUERY", cfg.http_extern_jquery);
 #endif
-
 			if(picon_exists("LOGO")||strlen(tpl_getTpl(vars, "IC_LOGO"))>3)
 			{
 				tpl_addVar(vars, TPLADD, "LOGO_INS", tpl_getTpl(vars, "LOGOBITIMG"));

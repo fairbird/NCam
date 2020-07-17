@@ -48,6 +48,19 @@
 				</TD>
 			</TR>
 			<TR><TH COLSPAN="2">Css style settings</TH></TR>
+			<TR><TD>Style colors:</TD>
+				<TD class="invisible">
+					<TABLE>
+						<TR>
+							<TD><input name="http_style" value="0" type="hidden"><input name="http_style" type="checkbox" value="1" ##HTTPCOLOR##></TD>
+							<TD>&nbsp;&nbsp;&nbsp;&nbsp;Background:</TD><TD><input id="backround" name="http_backround_color" type="color" value="##HTTPBCOLOR##"></TD>
+							<TD>&nbsp;&nbsp;Text:</TD><TD><input id="text" name="http_text_color" type="color" value="##HTTPTCOLOR##"></TD>
+							<TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD><input type="reset" onclick="reset_style(); return false;"></TD>
+							<script>function reset_style() { document.getElementById("backround").value = "#4066a7"; document.getElementById("text").value = "#000000"; }</script>
+						</TR>
+					</TABLE>
+				</TD>
+			</TR>
 			<TR><TD><A>Http prepend embedded css:</A></TD><TD><input name="http_prepend_embedded_css" value="0" type="hidden"><input name="http_prepend_embedded_css" type="checkbox" value="1" ##HTTPPREPENDEMBEDDEDCSS##><label></label></TD></TR>
 			<TR><TD><A>Http css:</A></TD>
  				<TD>

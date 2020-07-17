@@ -2124,6 +2124,9 @@ struct s_config
 	IN_ADDR_T       http_srvip;
 	char            *http_user;
 	char            *http_pwd;
+	int8_t          http_style;
+	char            *http_backround_color;
+	char            *http_text_color;
 	char            *http_css;
 	int8_t          http_prepend_embedded_css;
 	char            *http_jscript;

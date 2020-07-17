@@ -156,6 +156,7 @@ BODY                          include/body.html
 CCENTITLEMENTS                include/cccamentitlements.html                              MODULE_CCCAM
 CCENTITLETOOLTIP              include/cccamentitletooltip.html                            MODULE_CCCAM
 CSS                           include/css.css
+STYLE                         include/style.html
 FOOTER                        include/footer.html
 FOUNDENTITLEMENTS             include/foundentitlements.html
 HEADER                        include/header.html
