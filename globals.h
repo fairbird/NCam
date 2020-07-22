@@ -367,7 +367,7 @@ typedef uint8_t uint8_t;
  *         constants
  * =========================== */
 #define CS_VERSION    "OpenVision"
-#define DATE_BUILD    "16-07-2020"
+#define DATE_BUILD    "22-07-2020"
 #define CS_REVISION   "r1"
 #ifndef CS_SVN_VERSION
 #define CS_SVN_VERSION "stable"
