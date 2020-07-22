@@ -1500,7 +1500,10 @@ int32_t init_readerdb(void)
 	}
 	NULLFREE(token);
 #if defined(MODULE_CCCAM) || defined(MODULE_NEWCAMD) || defined(MODULE_CAMD35) || defined(MODULE_RADEGAST)
-	read_cccamcfg("CCcam.cfg");
+	if(cfg.cccam_cfg_enabled)
+	{
+		read_cccamcfg("CCcam.cfg");
+	}
 #endif
 	LL_ITER itr = ll_iter_create(configured_readers);
 	while((rdr = ll_iter_next(&itr)) && rdr->from_cccam_cfg) //free duplicate reader

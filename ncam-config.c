@@ -1558,7 +1558,7 @@ void read_cccamcfg(char *file)
 				}
 			}
 
-			if(!cfg.repetitions_forced && found) { continue; }
+			if(!cfg.cccam_cfg_repetitions_forced && found) { continue; }
 			if(!cs_malloc(&rdr, sizeof(struct s_reader))) { continue; }
 
 			memset(rdr, 0, sizeof(struct s_reader));

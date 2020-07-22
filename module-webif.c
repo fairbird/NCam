@@ -744,10 +744,11 @@ static char *send_ncam_config_global(struct templatevars *vars, struct uriparams
 	else if(cfg.enableled == 2)
 		{ tpl_addVar(vars, TPLADD, "ENABLELEDSELECTED2", "selected"); }
 #endif
-
-	tpl_addVar(vars, TPLADD, "CCCAM_CFG_PATCH", cfg.cccam_cfg_path);
+	tpl_printf(vars, TPLADD, "TMP", "CCCAMCFGENABLEDSELECTED%d", cfg.cccam_cfg_enabled);
+	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
+	tpl_addVar(vars, TPLADD, "CCCAM_CFG_PATH", cfg.cccam_cfg_path);
 	tpl_addVar(vars, TPLADD, "CCCAM_CFG_SAVE", (cfg.cccam_cfg_save == 1) ? "checked" : "");
-	tpl_addVar(vars, TPLADD, "REPETITIONS_FORCED", (cfg.repetitions_forced == 1) ? "checked" : "");
+	tpl_addVar(vars, TPLADD, "CCCAM_CFG_REPETITIONS_FORCED", (cfg.cccam_cfg_repetitions_forced == 1) ? "checked" : "");
 
 #ifdef MODULE_CCCAM
 	if(cfg.cccam_cfg_reconnect_delay)
