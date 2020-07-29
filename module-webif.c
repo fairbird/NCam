@@ -2342,13 +2342,18 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 	}
 
 	// Stealth mode
-	if(!apicall)
+	if(!rdr->ncd_mgcamd)
 	{
-		tpl_addVar(vars, TPLADD, "NDCSTEALTHCHECKED", (rdr->ncd_stealth == 1) ? "checked" : "");
-	}
-	else
-	{
-		tpl_addVar(vars, TPLADD, "NDCSTEALTHCHECKEDVALUE", (rdr->ncd_stealth == 1) ? "1" : "0");
+		if(!apicall)
+		{
+			tpl_addVar(vars, TPLADD, "NDCSTEALTHCHECKED", (rdr->ncd_stealth == 1) ? "checked" : "");
+		}
+		else
+		{
+			tpl_addVar(vars, TPLADD, "NDCSTEALTHCHECKEDVALUE", (rdr->ncd_stealth == 1) ? "1" : "0");
+		}
+
+		tpl_addVar(vars, TPLADD, "VIEW_READERCONFIGNCDSTEALTH", tpl_getTpl(vars, "READERCONFIGNCDSTEALTH"));
 	}
 
 #ifdef MODULE_GHTTP

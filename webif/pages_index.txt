@@ -217,6 +217,7 @@ READERCONFIGVIDEOGUARD        readerconfig/readerconfig_hwreader_videoguard.html
 READERCONFIGTONGFANG          readerconfig/readerconfig_hwreader_tongfang.html            READER_TONGFANG
 READERCONFIGJET               readerconfig/readerconfig_hwreader_jet.html                 READER_JET
 READERCONFIGLBWEIGHT          readerconfig/readerconfig_lbweight.html                     WITH_LB
+READERCONFIGNCDSTEALTH        readerconfig/readerconfig_ndcstealth.html                   MODULE_NEWCAMD
 READERCONFIGNCD525BIT         readerconfig/readerconfig_ncd525bit.html                    MODULE_NEWCAMD
 READERCONFIGNCD524BIT         readerconfig/readerconfig_ncd524bit.html                    MODULE_NEWCAMD
 READERCONFIGRADEGASTBIT       readerconfig/readerconfig_radegastbit.html                  MODULE_RADEGAST

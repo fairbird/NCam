@@ -1330,7 +1330,6 @@ struct s_client
 	uint16_t        idx;
 
 	int8_t          ncd_proto;
-	int8_t          ncd_stealth;
 	uint8_t         ncd_header[12];
 
 	//camd35
@@ -1663,6 +1662,8 @@ struct s_reader
 	int8_t          ncd_connect_on_init;
 	int8_t          ncd_disable_server_filt;
 	int8_t          ncd_proto;
+	int8_t          ncd_mgcamd;
+	int8_t          ncd_stealth;
 	int8_t          currenthops;                    // number of hops (cccam & gbox)
 	int8_t          sh4_stb;                        // to set sh4 type box used to identify sci type.
 #ifdef MODULE_CCCAM

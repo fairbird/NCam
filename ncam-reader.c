@@ -505,6 +505,8 @@ const char *reader_get_type_desc(struct s_reader *rdr, int32_t extended)
 	}
 	if(rdr->typ == R_NEWCAMD && rdr->ncd_proto == NCD_524)
 		{ desc = "newcamd524"; }
+	else if(rdr->typ == R_NEWCAMD && rdr->ncd_mgcamd)
+		{ desc = "mgcamd"; }
 	else if(rdr->typ == R_CCCAM)
 	{
 		desc = "cccam";
