@@ -1189,6 +1189,7 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_INT32("autorestartseconds"  , OFS(autorestartseconds),      0),
 	DEF_OPT_INT8("restartforresetcycle" , OFS(restartforresetcycle),    0),
 	DEF_OPT_INT8("disableserverfilter"  , OFS(ncd_disable_server_filt), 1),
+	DEF_OPT_INT8("ncd_stealth"          , OFS(ncd_stealth),             1),
 	DEF_OPT_INT8("connectoninit"        , OFS(ncd_connect_on_init),     1),
 	DEF_OPT_UINT8("keepalive"           , OFS(keepalive),               0),
 	DEF_OPT_INT8("smargopatch"          , OFS(smargopatch),             0),

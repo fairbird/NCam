@@ -1330,6 +1330,7 @@ struct s_client
 	uint16_t        idx;
 
 	int8_t          ncd_proto;
+	int8_t          ncd_stealth;
 	uint8_t         ncd_header[12];
 
 	//camd35

@@ -21,7 +21,7 @@
 
 const int32_t CWS_NETMSGSIZE = 1024; // csp 0.8.9 (default: 400). This is CWS_NETMSGSIZE. The old default was 240
 
-#define NCD_CLIENT_ID 0x8888
+//#define NCD_CLIENT_ID 0x8181
 #define CWS_FIRSTCMDNO 0xE0
 
 typedef enum
@@ -72,6 +72,17 @@ typedef struct custom_data
 
 #define REQ_SIZE 2
 
+static int32_t ndc_id(struct s_client *cl)
+{
+	uint16_t ndc_id;
+	if(cl->reader->ncd_stealth)
+		{ ndc_id = 0x0000; }
+	else
+		{ ndc_id = 0x8181; }
+
+	return ndc_id;
+}
+
 static int32_t network_message_send(int32_t handle, uint16_t *netMsgId, uint8_t *buffer, int32_t len,
 									uint8_t *deskey, comm_type_t commType, uint16_t sid, custom_data_t *cd)
 {
@@ -113,7 +124,7 @@ static int32_t network_message_send(int32_t handle, uint16_t *netMsgId, uint8_t 
 	if(sid)
 	{
 		if(cl->reader && cl->reader->ncd_disable_server_filt
-			&& sid != NCD_CLIENT_ID && cl->ncd_proto != NCD_524) // mgclient send header
+			&& sid != ndc_id(cl) && cl->ncd_proto != NCD_524) // mgclient send header
 		{
 			memcpy(netbuf + 4, cl->ncd_header + 4, 7);
 		}
@@ -523,7 +534,7 @@ static int32_t connect_newcamd_server(void)
 	cs_strncpy((char *)buf + idx, (const char *)passwdcrypt, sizeof(buf) - idx);
 
 	network_message_send(handle, 0, buf, idx + strlen((char *)passwdcrypt) + 1, key,
-						COMMTYPE_CLIENT, NCD_CLIENT_ID, NULL);
+						COMMTYPE_CLIENT, ndc_id(cl), NULL);
 
 	// 3.1 Get login answer
 	login_answer = network_cmd_no_data_receive(handle, &cl->ncd_msgid, key, COMMTYPE_CLIENT);
@@ -1875,7 +1886,8 @@ const char *newcamd_get_client_name(uint16_t client_id)
 		{ 0x7363, "Scam" },
 		{ 0x7763, "WinCSC" },
 		{ 0x7878, "tsdecrypt" },
-		{ 0x8888, "Ncam" },
+		{ 0x8181, "NCam" },
+		{ 0x8888, "OSCam" },
 		{ 0x9911, "ACamd" },
 		{ 0x9922, "DVBplug" },
 		{ 0xFFFF, NULL }

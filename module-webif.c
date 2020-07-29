@@ -2341,6 +2341,16 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 		tpl_addVar(vars, TPLADD, "DISABLESERVERFILTERVALUE", (rdr->ncd_disable_server_filt == 1) ? "1" : "0");
 	}
 
+	// Stealth mode
+	if(!apicall)
+	{
+		tpl_addVar(vars, TPLADD, "NDCSTEALTHCHECKED", (rdr->ncd_stealth == 1) ? "checked" : "");
+	}
+	else
+	{
+		tpl_addVar(vars, TPLADD, "NDCSTEALTHCHECKEDVALUE", (rdr->ncd_stealth == 1) ? "1" : "0");
+	}
+
 #ifdef MODULE_GHTTP
 	// Use SSL
 	if(!apicall)
