@@ -11,7 +11,7 @@
 #include "ncam-string.h"
 #include "ncam-time.h"
 
-extern int32_t exit_ncam;
+extern int32_t exit_oscam;
 
 struct STDEVICE
 {
@@ -31,31 +31,31 @@ struct read_thread_param
 #define BUFFLEN 1024
 #define PROCDIR "/proc/stpti4_core/"
 
-/* These functions are in libncam_stapi.a */
-extern uint32_t ncam_stapi_Capability(char *name);
-extern char *ncam_stapi_LibVersion(void);
-extern uint32_t ncam_stapi_Open(char *name, uint32_t *sessionhandle);
-extern uint32_t ncam_stapi_SignalAllocate(uint32_t sessionhandle, uint32_t *signalhandle);
-extern uint32_t ncam_stapi_FilterAllocate(uint32_t sessionhandle, uint32_t *filterhandle);
-extern uint32_t ncam_stapi_SlotInit(uint32_t sessionhandle, uint32_t signalhandle, uint32_t *bufferhandle, uint32_t *slothandle, uint16_t pid);
-extern uint32_t ncam_stapi_FilterSet(uint32_t filterhandle, uint8_t *filt, uint8_t *mask);
-extern uint32_t ncam_stapi_FilterAssociate(uint32_t filterhandle, uint32_t slothandle);
-extern uint32_t ncam_stapi_SlotDeallocate(uint32_t slothandle);
-extern uint32_t ncam_stapi_BufferDeallocate(uint32_t bufferhandle);
-extern uint32_t ncam_stapi_FilterDeallocate(uint32_t filterhandle);
-extern uint32_t ncam_stapi_Close(uint32_t sessionhandle);
-extern uint32_t ncam_stapi_CheckVersion(void);
-extern uint32_t ncam_stapi_DescramblerAssociate(uint32_t deschandle, uint32_t slot);
-extern uint32_t ncam_stapi_DescramblerDisassociate(uint32_t deschandle, uint32_t slot);
-extern uint32_t ncam_stapi_DescramblerAllocate(uint32_t sessionhandle, uint32_t *deschandle);
-extern uint32_t ncam_stapi_DescramblerDeallocate(uint32_t deschandle);
-extern uint32_t ncam_stapi_DescramblerSet(uint32_t deschandle, int32_t parity, uint8_t *cw);
-extern uint32_t ncam_stapi_SignalWaitBuffer(uint32_t signalhandle, uint32_t *qbuffer, int32_t timeout);
-extern uint32_t ncam_stapi_BufferReadSection(uint32_t bufferhandle, uint32_t *filterlist, int32_t maxfilter, uint32_t *filtercount, int32_t *crc, uint8_t *buf, int32_t bufsize, uint32_t *size);
-extern uint32_t ncam_stapi_SignalAbort(uint32_t signalhandle);
-extern uint32_t ncam_stapi_PidQuery(char *name, uint16_t pid);
-extern uint32_t ncam_stapi_BufferFlush(uint32_t bufferhandle);
-extern uint32_t ncam_stapi_SlotClearPid(uint32_t slot);
+/* These functions are in liboscam_stapi.a */
+extern uint32_t oscam_stapi_Capability(char *name);
+extern char *oscam_stapi_LibVersion(void);
+extern uint32_t oscam_stapi_Open(char *name, uint32_t *sessionhandle);
+extern uint32_t oscam_stapi_SignalAllocate(uint32_t sessionhandle, uint32_t *signalhandle);
+extern uint32_t oscam_stapi_FilterAllocate(uint32_t sessionhandle, uint32_t *filterhandle);
+extern uint32_t oscam_stapi_SlotInit(uint32_t sessionhandle, uint32_t signalhandle, uint32_t *bufferhandle, uint32_t *slothandle, uint16_t pid);
+extern uint32_t oscam_stapi_FilterSet(uint32_t filterhandle, uint8_t *filt, uint8_t *mask);
+extern uint32_t oscam_stapi_FilterAssociate(uint32_t filterhandle, uint32_t slothandle);
+extern uint32_t oscam_stapi_SlotDeallocate(uint32_t slothandle);
+extern uint32_t oscam_stapi_BufferDeallocate(uint32_t bufferhandle);
+extern uint32_t oscam_stapi_FilterDeallocate(uint32_t filterhandle);
+extern uint32_t oscam_stapi_Close(uint32_t sessionhandle);
+extern uint32_t oscam_stapi_CheckVersion(void);
+extern uint32_t oscam_stapi_DescramblerAssociate(uint32_t deschandle, uint32_t slot);
+extern uint32_t oscam_stapi_DescramblerDisassociate(uint32_t deschandle, uint32_t slot);
+extern uint32_t oscam_stapi_DescramblerAllocate(uint32_t sessionhandle, uint32_t *deschandle);
+extern uint32_t oscam_stapi_DescramblerDeallocate(uint32_t deschandle);
+extern uint32_t oscam_stapi_DescramblerSet(uint32_t deschandle, int32_t parity, uint8_t *cw);
+extern uint32_t oscam_stapi_SignalWaitBuffer(uint32_t signalhandle, uint32_t *qbuffer, int32_t timeout);
+extern uint32_t oscam_stapi_BufferReadSection(uint32_t bufferhandle, uint32_t *filterlist, int32_t maxfilter, uint32_t *filtercount, int32_t *crc, uint8_t *buf, int32_t bufsize, uint32_t *size);
+extern uint32_t oscam_stapi_SignalAbort(uint32_t signalhandle);
+extern uint32_t oscam_stapi_PidQuery(char *name, uint16_t pid);
+extern uint32_t oscam_stapi_BufferFlush(uint32_t bufferhandle);
+extern uint32_t oscam_stapi_SlotClearPid(uint32_t slot);
 
 // Local functions
 static void *stapi_read_thread(void *);
@@ -70,6 +70,27 @@ extern DEMUXTYPE demux[MAX_DEMUX];
 static int32_t stapi_on;
 static pthread_mutex_t filter_lock;
 static struct STDEVICE dev_list[PTINUM];
+
+#ifdef WITH_WI
+static void parse_pmt_filename(char *pmtfile, int *dmxid, int *channel)
+{
+	int i, len;
+	char file[132];
+
+	len = strlen(pmtfile);
+
+	for(i = 0; i < len; i++)
+	{
+		if (isdigit(pmtfile[i]))
+			file[i] = pmtfile[i];
+		else
+			file[i] = ' ';
+	}
+	file[i] = '\0';
+
+	sscanf(file, "%d %d", dmxid, channel);
+}
+#endif
 
 static void stapi_off(void)
 {
@@ -92,9 +113,11 @@ static void stapi_off(void)
 		{
 			if(dev_list[i].SignalHandle > 0)
 			{
-				ncam_stapi_SignalAbort(dev_list[i].SignalHandle);
+				oscam_stapi_SignalAbort(dev_list[i].SignalHandle);
 			}
+#ifndef WITH_WI
 			pthread_cancel(dev_list[i].thread);
+#endif
 		}
 	}
 
@@ -105,14 +128,20 @@ static void stapi_off(void)
 
 int32_t stapi_open(void)
 {
+	stapi_on = 1;
+	int32_t i;
+#ifdef WITH_WI
+	WiWrapper_Init(cfg.dvbapi_wi_sosket_id);
+	cs_log("Wi socket id: %d", cfg.dvbapi_wi_sosket_id);
+	WiDemux_Init();
+	cs_log_dbg(D_DVBAPI, "[%s] dvbapi_priority(%p)", __func__, dvbapi_priority);
+#else
 	uint32_t ErrorCode;
 
 	DIR *dirp;
 	struct dirent entry, *dp = NULL;
 	struct stat buf;
-	int32_t i;
 	char pfad[80];
-	stapi_on = 1;
 	int32_t stapi_priority = 0;
 
 	dirp = opendir(PROCDIR);
@@ -121,9 +150,16 @@ int32_t stapi_open(void)
 		cs_log("opendir failed (errno=%d %s)", errno, strerror(errno));
 		return 0;
 	}
-
+#endif
 	memset(dev_list, 0, sizeof(struct STDEVICE)*PTINUM);
 
+#ifdef WITH_WI
+	// ST_DeviceName_t  PTI_DeviceName[]={"PTI","PTI1","SWTS0","PTI2","SWTS1","SWTS2","PTI6","PTI7"};
+	oscam_stapi_Open("PTI", &dev_list[0].SessionHandle);
+	cs_strncpy(dev_list[0].name, "stapi", sizeof(dev_list[0].name));  // pmt1_x.tmp
+	oscam_stapi_Open("PTI1", &dev_list[1].SessionHandle);
+	cs_strncpy(dev_list[1].name, "stapi1", sizeof(dev_list[1].name)); // pmt2_x.tmp
+#else
 	if(dvbapi_priority)
 	{
 		struct s_dvbapi_priority *p;
@@ -143,7 +179,7 @@ int32_t stapi_open(void)
 		return 0;
 	}
 
-	ncam_stapi_CheckVersion();
+	oscam_stapi_CheckVersion();
 
 	i = 0;
 	while(!cs_readdir_r(dirp, &entry, &dp))
@@ -176,7 +212,7 @@ int32_t stapi_open(void)
 			continue;
 		}
 
-		ErrorCode = ncam_stapi_Open(dp->d_name, &dev_list[i].SessionHandle);
+		ErrorCode = oscam_stapi_Open(dp->d_name, &dev_list[i].SessionHandle);
 		if(ErrorCode != 0)
 		{
 			cs_log("STPTI_Open ErrorCode: %d", ErrorCode);
@@ -184,12 +220,12 @@ int32_t stapi_open(void)
 		}
 
 		//debug
-		//ncam_stapi_Capability(dp->d_name);
+		//oscam_stapi_Capability(dp->d_name);
 
 		cs_strncpy(dev_list[i].name, dp->d_name, sizeof(dev_list[i].name));
 		cs_log("PTI: %s open %d", dp->d_name, i);
 
-		ErrorCode = ncam_stapi_SignalAllocate(dev_list[i].SessionHandle, &dev_list[i].SignalHandle);
+		ErrorCode = oscam_stapi_SignalAllocate(dev_list[i].SessionHandle, &dev_list[i].SignalHandle);
 		if(ErrorCode != 0)
 			{ cs_log("SignalAllocate: ErrorCode: %d SignalHandle: %x", ErrorCode, dev_list[i].SignalHandle); }
 
@@ -199,10 +235,15 @@ int32_t stapi_open(void)
 	closedir(dirp);
 
 	if(i == 0) { return 0; }
+#endif
 
 	SAFE_MUTEX_INIT(&filter_lock, NULL);
 
-	for(i = 0; i < PTINUM; i++)
+#ifdef WITH_WI
+	for(i = 0; i < 1; i++)
+#else
+ 	for(i = 0; i < PTINUM; i++)
+#endif
 	{
 		if(dev_list[i].SessionHandle == 0)
 			{ continue; }
@@ -222,7 +263,7 @@ int32_t stapi_open(void)
 
 	atexit(stapi_off);
 
-	cs_log("libncam_stapi v.%s initialized", ncam_stapi_LibVersion());
+	cs_log("liboscam_stapi v.%s initialized", oscam_stapi_LibVersion());
 	return 1;
 }
 
@@ -231,10 +272,10 @@ int32_t stapi_activate_section_filter(int32_t fd, uint8_t *filter, uint8_t *mask
 	int n = 0, ret = 852049;
 	while(n < 3 && ret == 852049)
 	{
-		ret = ncam_stapi_FilterSet(fd, filter, mask);
+		ret = oscam_stapi_FilterSet(fd, filter, mask);
 		if(ret)
 		{
-			cs_log_dbg(D_DVBAPI, "Error: ncam_stapi_FilterSet; %d", ret);
+			cs_log_dbg(D_DVBAPI, "Error: oscam_stapi_FilterSet; %d", ret);
 			cs_sleepms(50);
 			n++;
 		}
@@ -264,6 +305,10 @@ int32_t stapi_set_filter(int32_t demux_id, uint16_t pid, uint8_t *filter, uint8_
 
 	cs_log_dbg(D_DVBAPI, "pmt file %s demux_id %d", pmtfile, demux_id);
 
+#ifdef WITH_WI
+	int dmxid, channel;
+	parse_pmt_filename(pmtfile, &dmxid, &channel);
+#endif
 	for(p = dvbapi_priority; p != NULL; p = p->next)
 	{
 		if(p->type != 's') { continue; } // stapi rule?
@@ -274,7 +319,11 @@ int32_t stapi_set_filter(int32_t demux_id, uint16_t pid, uint8_t *filter, uint8_
 			if(strcmp(dev_list[i].name, p->devname) == 0 && p->disablefilter == 0) // check device name and if filtering is enabled!
 			{
 				cs_log_dbg(D_DVBAPI, "set stapi filter on %s for pid %04X", dev_list[i].name, pids[0]);
-				ret = stapi_do_set_filter(demux_id, &dev_list[i].demux_fd[demux_id][num], pids, 1, filter, mask, i);
+#ifdef WITH_WI
+				ret = stapi_do_set_filter((dmxid << 8) | (channel << 0), &dev_list[i].demux_fd[demux_id][num], pids, 1, filter, mask, i);
+#else
+ 				ret = stapi_do_set_filter(demux_id, &dev_list[i].demux_fd[demux_id][num], pids, 1, filter, mask, i);
+#endif
 				if(ret > 0) // success
 				{
 					cs_log_dbg(D_DVBAPI, "%s filter %d set (pid %04X)", dev_list[i].name, num, pid);
@@ -331,6 +380,7 @@ int32_t stapi_remove_filter(int32_t demux_id, int32_t num, char *pmtfile)
 	return ret;
 }
 
+#ifndef WITH_WI
 static uint32_t check_slot(int32_t dev_id, uint32_t checkslot, FILTERTYPE *skipfilter)
 {
 	int32_t d, f, l;
@@ -351,20 +401,81 @@ static uint32_t check_slot(int32_t dev_id, uint32_t checkslot, FILTERTYPE *skipf
 	}
 	return 0;
 }
-
+#endif
 
 static int32_t stapi_do_set_filter(int32_t demux_id, FILTERTYPE *filter, uint16_t *pids, int32_t pidcount, uint8_t *filt, uint8_t *mask, int32_t dev_id)
 {
-	uint32_t FilterAssociateError = 0;
 	int32_t k, ret = 0;
 
 	filter->fd = 0;
-	filter->BufferHandle[0] = 0;
 	filter->SlotHandle[0] = 0;
 
 	if(dev_list[dev_id].SessionHandle == 0) { return 0; }
+#ifdef WITH_WI
+	int section = 0;
+	int continues = 0;
 
-	uint32_t FilterAllocateError = ncam_stapi_FilterAllocate(dev_list[dev_id].SessionHandle, &filter->fd);
+	if((filt[0] & 0xF0) == 0x80)
+	{
+		section   = 1;
+		continues = 1;
+	}
+	else
+	{
+		section   = 0;
+		continues = 0;
+	}
+
+	switch(filter->type)
+	{
+	case TYPE_ECM:
+		section   = 1;
+		continues = 1;
+		break;
+	case TYPE_EMM:
+		section   = 0;
+		continues = 0;
+		break;
+	case TYPE_SDT:
+	case TYPE_PAT:
+	case TYPE_PMT:
+		section   = 0;
+		continues = 0;
+		break;
+	default:
+		break;
+	}
+
+	ret = WiDemux_FilterStart(demux_id, pids[0], 16, filt, mask, section, continues, 0, 0, 0, 0);
+
+	if(ret == -1)
+	{
+		cs_log("[%s] problem : pid=[%04x]", __func__, pids[0]);
+		return 0;
+	}
+
+	filter->fd = ret;
+	filter->NumSlots = 1;
+
+	for(k = 1; k < pidcount; k++)
+	{
+		ret = WiDemux_FilterStart(demux_id, pids[k], 16, filt, mask, section, continues, 0, 0, 0, 0);
+
+		if(ret == -1)
+		{
+			cs_log("[%s] problem1 : pid %d=[%04x]",  __func__, k, pids[k]);
+			return 0;
+		}
+
+		filter->NumSlots++;
+		filter->SlotHandle[k] = ret;
+	}
+
+	return filter->fd; // no error
+#else
+	filter->BufferHandle[0] = 0;
+	uint32_t FilterAssociateError = 0;
+	uint32_t FilterAllocateError = oscam_stapi_FilterAllocate(dev_list[dev_id].SessionHandle, &filter->fd);
 
 	if(FilterAllocateError != 0)
 	{
@@ -377,7 +488,7 @@ static int32_t stapi_do_set_filter(int32_t demux_id, FILTERTYPE *filter, uint16_
 	{
 		uint16_t pid = pids[k];
 
-		uint32_t QuerySlot = ncam_stapi_PidQuery(dev_list[dev_id].name, pid);
+		uint32_t QuerySlot = oscam_stapi_PidQuery(dev_list[dev_id].name, pid);
 		int32_t SlotInit = 1;
 
 		if(QuerySlot != 0)
@@ -391,21 +502,21 @@ static int32_t stapi_do_set_filter(int32_t demux_id, FILTERTYPE *filter, uint16_
 			}
 			else
 			{
-				cs_log("overtake: clear pid: %d", ncam_stapi_SlotClearPid(QuerySlot));
+				cs_log("overtake: clear pid: %d", oscam_stapi_SlotClearPid(QuerySlot));
 				SlotInit = 1;
 			}
 		}
 
 		if(SlotInit == 1)
 		{
-			ret = ncam_stapi_SlotInit(dev_list[dev_id].SessionHandle, dev_list[dev_id].SignalHandle, &filter->BufferHandle[k], &filter->SlotHandle[k], pid);
+			ret = oscam_stapi_SlotInit(dev_list[dev_id].SessionHandle, dev_list[dev_id].SignalHandle, &filter->BufferHandle[k], &filter->SlotHandle[k], pid);
 		}
 
-		FilterAssociateError = ncam_stapi_FilterAssociate(filter->fd, filter->SlotHandle[k]);
+		FilterAssociateError = oscam_stapi_FilterAssociate(filter->fd, filter->SlotHandle[k]);
 		filter->NumSlots++;
 	}
 
-	uint32_t FilterSetError = ncam_stapi_FilterSet(filter->fd, filt, mask);
+	uint32_t FilterSetError = oscam_stapi_FilterSet(filter->fd, filt, mask);
 
 	if(ret || FilterAllocateError || FilterAssociateError || FilterSetError)
 	{
@@ -418,28 +529,47 @@ static int32_t stapi_do_set_filter(int32_t demux_id, FILTERTYPE *filter, uint16_
 	{
 		return filter->fd; // return fd of filter
 	}
+#endif
 }
 
 static int32_t stapi_do_remove_filter(int32_t UNUSED(demux_id), FILTERTYPE *filter, int32_t dev_id)
 {
 	if(filter->fd == 0) { return 0; }
 
-	uint32_t BufferDeallocateError = 0, SlotDeallocateError = 0;
-
 	if(dev_list[dev_id].SessionHandle == 0) { return 0; }
 
 	int32_t k;
+#ifdef WITH_WI
+	if(filter->NumSlots > 1)
+	{
+		for(k = 1; k < filter->NumSlots; k++)
+		{
+			WiDemux_FilterStop(filter->SlotHandle[k]);
+		}
+	}
+
+	if(WiDemux_FilterStop(filter->fd) == 0)
+	{
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+#else
+	uint32_t BufferDeallocateError = 0, SlotDeallocateError = 0;
+
 	for(k = 0; k < filter->NumSlots; k++)
 	{
 		uint32_t checkslot = check_slot(dev_id, filter->SlotHandle[k], filter);
 
 		if(checkslot == 0)
 		{
-			BufferDeallocateError = ncam_stapi_BufferDeallocate(filter->BufferHandle[k]);
-			SlotDeallocateError = ncam_stapi_SlotDeallocate(filter->SlotHandle[k]);
+			BufferDeallocateError = oscam_stapi_BufferDeallocate(filter->BufferHandle[k]);
+			SlotDeallocateError = oscam_stapi_SlotDeallocate(filter->SlotHandle[k]);
 		}
 	}
-	uint32_t FilterDeallocateError = ncam_stapi_FilterDeallocate(filter->fd);
+	uint32_t FilterDeallocateError = oscam_stapi_FilterDeallocate(filter->fd);
 
 	memset(filter, 0, sizeof(FILTERTYPE));
 
@@ -453,6 +583,7 @@ static int32_t stapi_do_remove_filter(int32_t UNUSED(demux_id), FILTERTYPE *filt
 	{
 		return 1;
 	}
+#endif
 }
 
 static void stapi_cleanup_thread(void *dev)
@@ -460,9 +591,9 @@ static void stapi_cleanup_thread(void *dev)
 	int32_t dev_index = (int)dev;
 
 	int32_t ErrorCode;
-	ErrorCode = ncam_stapi_Close(dev_list[dev_index].SessionHandle);
+	ErrorCode = oscam_stapi_Close(dev_list[dev_index].SessionHandle);
 
-	cs_log("libncam_stapi: PTI %s closed - %d\n", dev_list[dev_index].name, ErrorCode);
+	cs_log("liboscam_stapi: PTI %s closed - %d\n", dev_list[dev_index].name, ErrorCode);
 	dev_list[dev_index].SessionHandle = 0;
 }
 
@@ -476,15 +607,17 @@ static void *stapi_read_thread(void *sparam)
 	dev_index = para->id;
 
 	SAFE_SETSPECIFIC(getclient, para->cli);
+#ifndef WITH_WI
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+	int32_t error_count = 0;
+#endif
 	pthread_cleanup_push(stapi_cleanup_thread, (void *) dev_index);
 
-	int32_t error_count = 0;
-
-	while(!exit_ncam)
+	while(!exit_oscam)
 	{
 		QueryBufferHandle = 0;
-		ErrorCode = ncam_stapi_SignalWaitBuffer(dev_list[dev_index].SignalHandle, &QueryBufferHandle, 1000);
+#ifndef WITH_WI
+		ErrorCode = oscam_stapi_SignalWaitBuffer(dev_list[dev_index].SignalHandle, &QueryBufferHandle, 1000);
 
 		switch(ErrorCode)
 		{
@@ -503,7 +636,7 @@ static void *stapi_read_thread(void *sparam)
 			if(QueryBufferHandle != 0)
 			{
 				cs_log("SignalWaitBuffer error: %d", ErrorCode);
-				ncam_stapi_BufferFlush(QueryBufferHandle);
+				oscam_stapi_BufferFlush(QueryBufferHandle);
 				continue;
 			}
 			cs_log("SignalWaitBuffer: index %d ErrorCode: %d - QueryBuffer: %x", dev_index, ErrorCode, QueryBufferHandle);
@@ -516,14 +649,14 @@ static void *stapi_read_thread(void *sparam)
 			continue;
 			break;
 		}
-
+#endif
 		uint32_t NumFilterMatches = 0;
 		int32_t demux_id = 0, filter_num = 0;
 		DataSize = 0;
 		uint32_t k;
 
 		uint32_t MatchedFilterList[10];
-		ErrorCode = ncam_stapi_BufferReadSection(QueryBufferHandle, MatchedFilterList, 10, &NumFilterMatches, &CRCValid, buf, BUFFLEN, &DataSize);
+		ErrorCode = oscam_stapi_BufferReadSection(QueryBufferHandle, MatchedFilterList, 10, &NumFilterMatches, &CRCValid, buf, BUFFLEN, &DataSize);
 
 		if(ErrorCode != 0)
 		{
@@ -542,6 +675,32 @@ static void *stapi_read_thread(void *sparam)
 			{
 				for(j = 0; j < MAX_FILTER; j++)
 				{
+#ifdef WITH_WI
+					for(dev_index = 0; dev_index < PTINUM; dev_index++)
+					{
+						if(dev_list[dev_index].demux_fd[i][j].fd == MatchedFilterList[k])
+						{
+							demux_id = i;
+							filter_num = j;
+
+							dvbapi_process_input(demux_id, filter_num, buf, DataSize, 0);
+							goto _read_end;
+						}
+
+						if(dev_list[dev_index].demux_fd[i][j].NumSlots > 1)
+						{
+							int32_t l;
+							for(l = 1; l < dev_list[dev_index].demux_fd[i][j].NumSlots; l++)
+							{
+								if(dev_list[dev_index].demux_fd[i][j].SlotHandle[l] == MatchedFilterList[k])
+								{
+									dvbapi_process_input(i, j, buf, DataSize, 0);
+									goto _read_end;
+								}
+							}
+						}
+					}
+#else
 					if(dev_list[dev_index].demux_fd[i][j].fd == MatchedFilterList[k])
 					{
 						demux_id = i;
@@ -549,9 +708,19 @@ static void *stapi_read_thread(void *sparam)
 
 						dvbapi_process_input(demux_id, filter_num, buf, DataSize, 0);
 					}
+#endif
 				}
 			}
+#if defined(WITH_WI) && (CC_TBD == 1)
+			if(i == MAX_DEMUX)
+			{
+				WiDemux_FilterStop(MatchedFilterList[k]);
+			}
+#endif
 		}
+#ifdef WITH_WI
+_read_end :
+#endif
 		SAFE_MUTEX_UNLOCK(&filter_lock);
 	}
 
@@ -566,6 +735,7 @@ static void *stapi_read_thread(void *sparam)
 #define DE_START 0
 #define DE_STOP 1
 
+#ifndef WITH_WI
 static void stapi_DescramblerAssociate(int32_t demux_id, uint16_t pid, int32_t mode, int32_t n)
 {
 	uint32_t Slot = 0;
@@ -573,7 +743,7 @@ static void stapi_DescramblerAssociate(int32_t demux_id, uint16_t pid, int32_t m
 
 	if(dev_list[n].SessionHandle == 0) { return; }
 
-	Slot = ncam_stapi_PidQuery(dev_list[n].name, pid);
+	Slot = oscam_stapi_PidQuery(dev_list[n].name, pid);
 	if(!Slot) { return; }
 
 	if(demux[demux_id].DescramblerHandle[n] == 0) { return; }
@@ -589,7 +759,7 @@ static void stapi_DescramblerAssociate(int32_t demux_id, uint16_t pid, int32_t m
 			}
 		}
 
-		ErrorCode = ncam_stapi_DescramblerAssociate(demux[demux_id].DescramblerHandle[n], Slot);
+		ErrorCode = oscam_stapi_DescramblerAssociate(demux[demux_id].DescramblerHandle[n], Slot);
 		cs_log_dbg(D_DVBAPI, "set pid %04x on %s", pid, dev_list[n].name);
 
 		if(ErrorCode != 0)
@@ -606,7 +776,7 @@ static void stapi_DescramblerAssociate(int32_t demux_id, uint16_t pid, int32_t m
 	}
 	else
 	{
-		ErrorCode = ncam_stapi_DescramblerDisassociate(demux[demux_id].DescramblerHandle[n], Slot);
+		ErrorCode = oscam_stapi_DescramblerDisassociate(demux[demux_id].DescramblerHandle[n], Slot);
 		if(ErrorCode != 0)
 			{ cs_log_dbg(D_DVBAPI, "DescramblerDisassociate %d", ErrorCode); }
 
@@ -625,6 +795,7 @@ static void stapi_DescramblerAssociate(int32_t demux_id, uint16_t pid, int32_t m
 
 	return;
 }
+#endif
 
 static void stapi_startdescrambler(int32_t demux_id, int32_t dev_index, int32_t mode)
 {
@@ -633,7 +804,7 @@ static void stapi_startdescrambler(int32_t demux_id, int32_t dev_index, int32_t 
 	if(mode == DE_START && demux[demux_id].DescramblerHandle[dev_index] == 0)
 	{
 		uint32_t DescramblerHandle = 0;
-		ErrorCode = ncam_stapi_DescramblerAllocate(dev_list[dev_index].SessionHandle, &DescramblerHandle);
+		ErrorCode = oscam_stapi_DescramblerAllocate(dev_list[dev_index].SessionHandle, &DescramblerHandle);
 		if(ErrorCode != 0)
 		{
 			cs_log("DescramblerAllocate: ErrorCode: %d SignalHandle: %x", ErrorCode, dev_list[dev_index].SignalHandle);
@@ -645,7 +816,7 @@ static void stapi_startdescrambler(int32_t demux_id, int32_t dev_index, int32_t 
 
 	if(mode == DE_STOP && demux[demux_id].DescramblerHandle[dev_index] > 0)
 	{
-		ErrorCode = ncam_stapi_DescramblerDeallocate(demux[demux_id].DescramblerHandle[dev_index]);
+		ErrorCode = oscam_stapi_DescramblerDeallocate(demux[demux_id].DescramblerHandle[dev_index]);
 
 		if(ErrorCode != 0)
 			{ cs_log("DescramblerDeallocate: ErrorCode: %d", ErrorCode); }
@@ -675,14 +846,71 @@ int32_t stapi_set_pid(int32_t demux_id, int32_t UNUSED(num), uint32_t idx, uint1
 	return 1;
 }
 
+#if defined(WITH_WI) && defined(WITH_EXTENDED_CW)
+int32_t stapi_write_cw(int32_t demux_id, uint8_t *cw, uint16_t *STREAMpids, int32_t STREAMpidcount, char *pmtfile, int cw_ex_mode, int cw_ex_algo)
+#else
 int32_t stapi_write_cw(int32_t demux_id, uint8_t *cw, uint16_t *STREAMpids, int32_t STREAMpidcount, char *pmtfile)
+#endif
 {
+	if(!pmtfile) { return 0; }
+#ifdef WITH_WI
+	int32_t n;
+	int dmxid, channel;
+
+	for(n = 0; n < PTINUM; n++)
+	{
+		if(dev_list[n].SessionHandle == 0) { continue; }
+		if(demux[demux_id].DescramblerHandle[n] == 0)
+		{
+			struct s_dvbapi_priority *p;
+			for(p = dvbapi_priority; p != NULL; p = p->next)
+			{
+				if(p->type != 's') { continue; }
+				if(strcmp(pmtfile, p->pmtfile) != 0)
+					{ continue; }
+
+				parse_pmt_filename(pmtfile, &dmxid, &channel);
+				if(strcmp(dev_list[n].name, p->devname) == 0)
+				{
+					cs_log_dbg(D_DVBAPI, "start descrambling PTI: %s", dev_list[n].name);
+					stapi_startdescrambler(demux_id, n, DE_START);
+				}
+			}
+		}
+
+		if(demux[demux_id].DescramblerHandle[n] == 0) { continue; }
+#ifdef WITH_EXTENDED_CW
+		if (cw_ex_mode == CW_MODE_MULTIPLE_CW)
+		{
+			if (cw_ex_algo == CW_ALGO_CSA)
+			{
+				WiDemux_DescramblerKeyExt((dmxid << 8) | (channel << 0), STREAMpids, STREAMpidcount, cw, 2);
+			}
+			else
+			{
+				WiDemux_DescramblerKeyExt((dmxid << 8) | (channel << 0), STREAMpids, STREAMpidcount, cw, 3);
+			}
+		}
+		else
+		{
+			if(cw_ex_algo == CW_ALGO_AES128)
+			{
+				WiDemux_DescramblerKeyExt((dmxid << 8) | (channel << 0), STREAMpids, STREAMpidcount, cw, 4);
+			}
+			else
+			{
+				WiDemux_DescramblerKeyExt((dmxid << 8) | (channel << 0), STREAMpids, STREAMpidcount, cw, 1);
+			}
+		}
+#else
+		WiDemux_DescramblerKeyExt((dmxid << 8) | (channel << 0), STREAMpids, STREAMpidcount, cw, 1);
+#endif
+	}
+#else
 	int32_t ErrorCode, l, n, k;
 	uint8_t nullcw[8];
 	memset(nullcw, 0, 8);
 	char *text[] = { "even", "odd" };
-
-	if(!pmtfile) { return 0; }
 
 	for(n = 0; n < PTINUM; n++)
 	{
@@ -734,7 +962,7 @@ int32_t stapi_write_cw(int32_t demux_id, uint8_t *cw, uint16_t *STREAMpids, int3
 			{
 				if(demux[demux_id].DescramblerHandle[n] == 0) { continue; }
 
-				ErrorCode = ncam_stapi_DescramblerSet(demux[demux_id].DescramblerHandle[n], l, cw + (l * 8));
+				ErrorCode = oscam_stapi_DescramblerSet(demux[demux_id].DescramblerHandle[n], l, cw + (l * 8));
 				if(ErrorCode != 0)
 					{ cs_log("DescramblerSet: ErrorCode: %d", ErrorCode); }
 
@@ -743,11 +971,11 @@ int32_t stapi_write_cw(int32_t demux_id, uint8_t *cw, uint16_t *STREAMpids, int3
 			}
 		}
 	}
-
+#endif
 	return 1;
 }
 
-// Needed for compatability with libncam_stapi.a
+// Needed for compatability with liboscam_stapi.a
 #undef cs_log
 void cs_log(const char *fmt, ...)
 {

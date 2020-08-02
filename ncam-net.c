@@ -10,7 +10,7 @@
 #include "ncam-work.h"
 
 extern CS_MUTEX_LOCK gethostbyname_lock;
-extern int32_t exit_ncam;
+extern int32_t exit_oscam;
 
 #ifndef IPV6SUPPORT
 static int32_t inet_byteorder = 0;
@@ -760,7 +760,7 @@ int32_t start_listener(struct s_module *module, struct s_port *port)
 		setsockopt(port->fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&keep_alive, sizeof(keep_alive));
 	}
 
-	while(timeout-- && !exit_ncam)
+	while(timeout-- && !exit_oscam)
 	{
 		if(bind(port->fd, (struct sockaddr *)&sad, sad_len) < 0)
 		{

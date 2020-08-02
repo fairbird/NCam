@@ -763,7 +763,20 @@ uint8_t emu_read_keyfile(struct s_reader *rdr, const char *opath)
 		return 0;
 	}
 
+#ifdef WITH_WI
+	char tmp[1024] = { 0, };
+	snprintf(tmp, 1023, "%s%c", opath, 'e');
+	if(access(tmp, R_OK) == 0)
+	{
+		emu_set_keyfile_path(tmp);
+	}
+	else
+	{
+		emu_set_keyfile_path(opath);
+	}
+#else
 	emu_set_keyfile_path(opath);
+#endif
 
 	while (fgets(line, 1200, file))
 	{

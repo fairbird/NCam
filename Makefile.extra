@@ -618,9 +618,18 @@ android-arm-libusb:
 		LIBUSB_LIB=$(LIBUSB_LIB) \
 		$(MAKEFLAGS)
 
+android-arm-stapi:
+	$(MAKE) --no-print-directory \
+		CROSS=$(CROSS) \
+		LIB_RT= \
+		LIB_PTHREAD= \
+		USE_LIBCRYPTO=1 \
+		CONF_DIR=/data/plugin/ncam \
+		USE_WI=1 \
+		$(MAKEFLAGS)
+
 uclinux:
 	$(MAKE) --no-print-directory \
 		LIB_DL= STRIP=true \
 		CROSS=m68k-uclinux- \
 		$(MAKEFLAGS)
-

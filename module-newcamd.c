@@ -687,6 +687,11 @@ static int32_t newcamd_recv(struct s_client *client, uint8_t *buf, int32_t UNUSE
 
 	client->last = time((time_t *) 0);
 
+#ifdef WITH_WI
+	if(rs == 5)
+		{ cs_sleepms(10); } // mg when init.
+#endif
+
 	if(rc == -1)
 	{
 		if(rs > 0)
@@ -1763,6 +1768,24 @@ static int32_t newcamd_send_ecm(struct s_client *client, ECM_REQUEST *er)
 
 static int32_t newcamd_send_emm(EMM_PACKET *ep)
 {
+#ifdef WITH_WI
+	if(!newcamd_connect())
+	{
+		return -1;
+	}
+
+	uint8_t *buf;
+	if(!cs_malloc(&buf, ep->emmlen))
+	{
+		return -1;
+	}
+
+	memcpy(buf, ep->emm, ep->emmlen);
+	int32_t rc = ((newcamd_send(buf, ep->emmlen, 0) < 1) ? 0 : 1);
+	NULLFREE(buf);
+
+	return rc;
+#else
 	uint8_t buf[ep->emmlen];
 
 	if(!newcamd_connect())
@@ -1773,6 +1796,7 @@ static int32_t newcamd_send_emm(EMM_PACKET *ep)
 	memcpy(buf, ep->emm, ep->emmlen);
 
 	return (newcamd_send(buf, ep->emmlen, 0) < 1) ? 0 : 1;
+#endif
 }
 
 static int32_t newcamd_recv_chk(struct s_client *client, uint8_t *dcw, int32_t *rc, uint8_t *buf, int32_t n)

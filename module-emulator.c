@@ -42,17 +42,10 @@ extern char cs_confdir[128];
 static int8_t emu_key_data_mutex_init = 0;
 pthread_mutex_t emu_key_data_mutex;
 
-// Version info
-
-static inline uint32_t get_nemu_version(void)
-{
-	return atoi("$Version: 788 $" + 10);
-}
-
 static void set_hexserial_to_version(struct s_reader *rdr)
 {
 	char cVersion[32];
-	uint32_t version = get_nemu_version();
+	uint32_t version = EMU_VERSION;
 	uint8_t hversion[2];
 	memset(hversion, 0, 2);
 	snprintf(cVersion, sizeof(cVersion), "%04d", version);
@@ -904,7 +897,7 @@ void add_emu_reader(void)
 	}
 #endif
 
-	cs_log("NCam version %d", get_nemu_version());
+	cs_log("NCam version %d", EMU_VERSION);
 }
 
 #endif // WITH_EMU

@@ -98,8 +98,16 @@ endif
 TARGET := $(shell $(CC) -dumpmachine 2>/dev/null)
 
 # Process USE_ variables
-DEFAULT_STAPI_LIB = -L./stapi -lncam_stapi
-DEFAULT_STAPI5_LIB = -L./stapi -lncam_stapi5
+ifdef USE_WI
+override USE_STAPI=1
+override CFLAGS += -DWITH_WI=1
+override LDFLAGS += -DWITH_WI=1
+DEFAULT_STAPI_LIB = -L./stapi -lwi
+DEFAULT_STAPI_FLAGS = -I./stapi/include
+else
+DEFAULT_STAPI_LIB = -L./stapi -loscam_stapi
+endif
+DEFAULT_STAPI5_LIB = -L./stapi -loscam_stapi5
 DEFAULT_COOLAPI_LIB = -lnxp -lrt
 DEFAULT_COOLAPI2_LIB = -llnxUKAL -llnxcssUsr -llnxscsUsr -llnxnotifyqUsr -llnxplatUsr -lrt
 DEFAULT_SU980_LIB = -lentropic -lrt
@@ -583,7 +591,7 @@ NCAm build system documentation\n\
                     Example: 'make EXTRA_FLAGS=-DBLAH=1'\n\
 \n\
    EXTRA_LIBS     - Add text to LIBS (affects linking).\n\
-                    Example: 'make EXTRA_LIBS=\"-L./stapi -lncam_stapi\"'\n\
+                    Example: 'make EXTRA_LIBS=\"-L./stapi -loscam_stapi\"'\n\
 \n\
  Use flags:\n\
    Use flags are used to request additional libraries or features to be used\n\
@@ -619,7 +627,7 @@ NCAm build system documentation\n\
                          STAPI_LIB='$(DEFAULT_STAPI_LIB)'\n\
                      Using USE_STAPI=1 adds to '-stapi' to PLUS_TARGET.\n\
                      In order for USE_STAPI to work you have to create stapi\n\
-                     directory and put libncam_stapi.a file in it.\n\
+                     directory and put liboscam_stapi.a file in it.\n\
 \n\
    USE_STAPI5=1    - Request linking with STAPI5. The variables that control\n\
                      USE_STAPI5=1 build are:\n\
@@ -629,7 +637,7 @@ NCAm build system documentation\n\
                          STAPI5_LIB='$(DEFAULT_STAPI5_LIB)'\n\
                      Using USE_STAPI5=1 adds to '-stapi' to PLUS_TARGET.\n\
                      In order for USE_STAPI5 to work you have to create stapi\n\
-                     directory and put libncam_stapi5.a file in it.\n\
+                     directory and put liboscam_stapi5.a file in it.\n\
 \n\
    USE_COOLAPI=1  - Request support for Coolstream API (libnxp) aka NeutrinoHD\n\
                     box. The variables that control the build are:\n\
@@ -806,6 +814,8 @@ NCAm build system documentation\n\
      make CROSS=mipsel-linux-uclibc- USE_AZBOX=1\n\n\
    Build NCAm for ARM with MCA support:\n\
      make CROSS=arm-none-linux-gnueabi- USE_MCA=1\n\n\
+   Build NCAm for Android with STAPI and changed configuration directory:\n\
+     make CROSS=arm-linux-androideabi- USE_WI=1 CONF_DIR=/data/plugin/ncam\n\n\
    Build NCAm with libusb and PCSC:\n\
      make USE_LIBUSB=1 USE_PCSC=1\n\n\
    Build NCAm with static libusb:\n\

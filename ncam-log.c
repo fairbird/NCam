@@ -14,7 +14,7 @@
 #define MAX_LOG_LIST_BACKLOG 10000
 
 extern char *syslog_ident;
-extern int32_t exit_ncam;
+extern int32_t exit_oscam;
 
 char *LOG_LIST = "log_list";
 int8_t logStarted = 0;
@@ -181,7 +181,7 @@ static void log_list_add(struct s_log *log)
 
 static void cs_write_log_int(char *txt)
 {
-	if(exit_ncam == 1)
+	if(exit_oscam == 1)
 	{
 		cs_write_log(txt, 1, 0, 0);
 	}
@@ -375,7 +375,7 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 	cs_write_log(txt, do_flush, log->header_date_offset, log->header_time_offset);
 
 #if defined(WEBIF) || defined(MODULE_MONITOR)
-	if(!exit_ncam && cfg.loghistorylines && log_history)
+	if(!exit_oscam && cfg.loghistorylines && log_history)
 	{
 		struct s_log_history *hist;
 
@@ -495,7 +495,7 @@ static void write_to_log_int(char *txt, uint8_t header_len, uint8_t hdr_logcount
 		log->cl_typ = cl->typ;
 	}
 
-	if(exit_ncam == 1 || cfg.disablelog)  //Exit or log disabled. if disabled, just display on webif/monitor
+	if(exit_oscam == 1 || cfg.disablelog)  //Exit or log disabled. if disabled, just display on webif/monitor
 	{
 		char buf[LOG_BUF_SIZE];
 		cs_strncpy(buf, log->txt, LOG_BUF_SIZE);

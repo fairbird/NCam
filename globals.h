@@ -95,6 +95,15 @@
 #define in_port_t uint16_t
 #endif
 #define tcdrain(fd) ioctl(fd, TCSBRK, 1)
+#if defined(WITH_STAPI) || defined(WITH_WI)
+#ifndef WITH_WI
+#define WITH_WI 1
+#endif
+#ifndef WITH_STAPI
+#define WITH_STAPI 1
+#endif
+#include "wi.h"
+#endif
 #endif
 
 #ifdef __uClinux__
@@ -2314,6 +2323,9 @@ struct s_config
 	int8_t      dvbapi_read_sdt;
 	int8_t      dvbapi_write_sdt_prov;
 	int8_t      dvbapi_extended_cw_api;
+#ifdef WITH_WI
+	int8_t      dvbapi_wi_sosket_id;
+#endif
 #endif
 
 #ifdef CS_ANTICASC

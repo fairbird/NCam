@@ -25,7 +25,7 @@
 #include "ncam-work.h"
 #include "reader-irdeto.h"
 #include "cscrypt/md5.h" 
-extern int32_t exit_ncam;
+extern int32_t exit_oscam;
 
 #if defined (__CYGWIN__)
 #define F_NOTIFY 0
@@ -377,7 +377,9 @@ static const struct box_devices devices[BOX_COUNT] =
 static int32_t selected_box = -1;
 static int32_t selected_api = -1;
 static int32_t maxfilter = MAX_FILTER;
+#ifndef WITH_WI
 static int32_t dir_fd = -1;
+#endif
 static uint16_t last_client_proto_version = 0;
 static char *last_client_name = NULL;
 static uint32_t ca_descramblers_total = 0; // total number of available descramblers in box
@@ -897,11 +899,30 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 {
 	int32_t ret = -1, n = -1, i, filterfd = -1;
 
-	for(i = 0; i < maxfilter && demux[demux_id].demux_fd[i].fd > 0; i++) { ; }
+#ifdef WITH_WI
+	int32_t more_cnt = 0;
 
+	for(i = 0; i < maxfilter && demux[demux_id].demux_fd[i].fd > 0; i++)
+	{
+		if(demux[demux_id].demux_fd[i].NumSlots > 1)
+			{ more_cnt += (maxfilter && demux[demux_id].demux_fd[i].NumSlots - 1); }
+	}
+	i += more_cnt;
+#else
+	for(i = 0; i < maxfilter && demux[demux_id].demux_fd[i].fd > 0; i++) { ; }
+#endif
 	if(i >= maxfilter)
 	{
+#ifdef WITH_WI
+		cs_log_dbg(D_DVBAPI, "no free filter (%d %d)", i, maxfilter);
+
+		for(i = 0; i < maxfilter && demux[demux_id].demux_fd[i].fd > 0; i++)
+		{
+			cs_log_dbg(D_DVBAPI, "fd[0x%08x] pid[0x%04x]", demux[demux_id].demux_fd[i].fd, demux[demux_id].demux_fd[i].pid);
+		}
+#else
 		cs_log_dbg(D_DVBAPI, "no free filter");
+#endif
 		return -1;
 	}
 	n = i;
@@ -1107,8 +1128,11 @@ static int32_t dvbapi_get_descrambler_info(void)
 	// Ask device for exact number of ca descramblers
 	snprintf(device_path2, sizeof(device_path2), devices[selected_box].ca_device, ca_offset);
 	snprintf(device_path, sizeof(device_path), devices[selected_box].path, 0);
-	strncat(device_path, device_path2, sizeof(device_path) - strlen(device_path));
-
+#ifndef __ANDROID__
+ 	strncat(device_path, device_path2, sizeof(device_path) - strlen(device_path));
+#else
+	strncat(device_path, device_path2, sizeof(device_path) - strlen(device_path) -1);
+#endif
 	if((fd = open(device_path, O_RDWR | O_NONBLOCK)) < 0)
 	{
 		cs_log("ERROR: Can't open device %s (errno=%d %s)", device_path, errno, strerror(errno));
@@ -1177,10 +1201,12 @@ static int32_t dvbapi_detect_api(void)
 		cfg.dvbapi_listenport = 0;
 	}
 
-	int32_t i = 0, n = 0, devnum = -1, dmx_fd = 0, filtercount = 0;
+	int32_t i = 0, n = 0, devnum = -1, filtercount = 0;
 	char device_path[128], device_path2[128];
 	static LLIST *ll_max_fd; 
 	ll_max_fd = ll_create("ll_max_fd");
+#ifndef WITH_WI
+	int32_t dmx_fd = 0;
 	LL_ITER itr;
 
 	struct s_open_fd
@@ -1188,6 +1214,7 @@ static int32_t dvbapi_detect_api(void)
 		uint32_t fd;
 	};
 	struct s_open_fd *open_fd;
+#endif
 
 	while(i < BOX_COUNT)
 	{
@@ -1195,9 +1222,18 @@ static int32_t dvbapi_detect_api(void)
 		{
 			snprintf(device_path2, sizeof(device_path2), devices[i].demux_device, 0);
 			snprintf(device_path, sizeof(device_path), devices[i].path, n);
-			strncat(device_path, device_path2, sizeof(device_path) - strlen(device_path));
-
+#ifndef __ANDROID__
+ 			strncat(device_path, device_path2, sizeof(device_path) - strlen(device_path));
+#else
+			strncat(device_path, device_path2, sizeof(device_path) - strlen(device_path) -1);
+#endif
 			filtercount = 0;
+#ifdef WITH_WI
+			if(devices[i].api == STAPI)
+			{
+				filtercount = 32; // wi
+			}
+#else
 			while((dmx_fd = open(device_path, O_RDWR | O_NONBLOCK)) > 0 && filtercount < MAX_FILTER)
 			{
 				filtercount++;
@@ -1209,9 +1245,11 @@ static int32_t dvbapi_detect_api(void)
 				open_fd->fd = dmx_fd;
 				ll_append(ll_max_fd, open_fd);
 			}
+#endif
 
 			if(filtercount > 0)
 			{
+#ifndef WITH_WI
 				itr = ll_iter_create(ll_max_fd);
 				while((open_fd = ll_iter_next(&itr)))
 				{
@@ -1223,6 +1261,7 @@ static int32_t dvbapi_detect_api(void)
 					while(close(dmx_fd) < 0);
 					ll_iter_remove_data(&itr);
 				}
+#endif
 				devnum = i;
 				selected_api = devices[devnum].api;
 				selected_box = devnum;
@@ -1338,7 +1377,11 @@ int32_t dvbapi_open_device(int32_t type, int32_t num, int32_t adapter)
 	{
 		snprintf(device_path2, sizeof(device_path2), devices[selected_box].demux_device, num);
 		snprintf(device_path, sizeof(device_path), devices[selected_box].path, adapter);
-		strncat(device_path, device_path2, sizeof(device_path) - strlen(device_path));
+#ifndef __ANDROID__
+ 		strncat(device_path, device_path2, sizeof(device_path) - strlen(device_path));
+#else
+		strncat(device_path, device_path2, sizeof(device_path) - strlen(device_path) -1);
+#endif
 	}
 	else
 	{
@@ -1358,7 +1401,11 @@ int32_t dvbapi_open_device(int32_t type, int32_t num, int32_t adapter)
 
 		snprintf(device_path2, sizeof(device_path2), devices[selected_box].ca_device, num + ca_offset);
 		snprintf(device_path, sizeof(device_path), devices[selected_box].path, adapter);
+#ifndef __ANDROID__
 		strncat(device_path, device_path2, sizeof(device_path) - strlen(device_path));
+#else
+		strncat(device_path, device_path2, sizeof(device_path) - strlen(device_path) -1);
+#endif
 	}
 
 	if(cfg.dvbapi_boxtype == BOXTYPE_SAMYGO)
@@ -5552,7 +5599,7 @@ void *dvbapi_event_thread(void *cli)
 	SAFE_SETSPECIFIC(getclient, client);
 	set_thread_name(__func__);
 
-	while(!exit_ncam)
+	while(!exit_oscam)
 	{
 		cs_sleepms(750);
 		event_handler(0);
@@ -6650,6 +6697,9 @@ static void *dvbapi_main_local(void *cli)
 
 	if(cfg.dvbapi_pmtmode != 4 && cfg.dvbapi_pmtmode != 5 && cfg.dvbapi_pmtmode != 6)
 	{
+#ifdef WITH_WI
+		event_handler(SIGRTMIN + 1);
+#else
 		struct sigaction signal_action;
 		signal_action.sa_handler = event_handler;
 		sigemptyset(&signal_action.sa_mask);
@@ -6663,6 +6713,7 @@ static void *dvbapi_main_local(void *cli)
 			fcntl(dir_fd, F_NOTIFY, DN_MODIFY | DN_CREATE | DN_DELETE | DN_MULTISHOT);
 			event_handler(SIGRTMIN + 1);
 		}
+#endif
 	}
 	else
 	{
@@ -6689,7 +6740,7 @@ static void *dvbapi_main_local(void *cli)
 #endif
 	cs_ftime(&start); // register start time
 
-	while(!exit_ncam)
+	while(!exit_oscam)
 	{
 		if(pausecam)  // for dbox2, STAPI or PC in standby mode dont parse any ecm/emm or try to start next filter
 		{
@@ -7524,7 +7575,9 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 			i, (er->rc >= E_NOTFOUND ? "no " : ""), j, er->caid, er->prid, er->pid, er->chid, er->vpid);
 
 		uint32_t status = dvbapi_check_ecm_delayed_delivery(i, er);
+#ifndef WITH_WI
 		uint32_t comparecw0 = 0, comparecw1 = 0;
+#endif
 		char ecmd5[17 * 3];
 		cs_hexdump(0, er->ecmd5, 16, ecmd5, sizeof(ecmd5));
 
@@ -7550,7 +7603,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				er->rc = E_NOTFOUND;
 			}
 		}
-
+#ifndef WITH_WI
 		// Check only against last_cw[0] (index 0) - No need to check the rest
 		// Skip check for BISS1 - cw could be indeed zero
 		// Skip check for BISS2 - we use the extended cw, so the "simple" cw is always zero
@@ -7574,7 +7627,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				nocw_write = 1;
 			}
 		}
-
+#endif
 		if(status == 3)   // table reset
 		{
 			cs_log_dbg(D_DVBAPI, "Demuxer %d luckyshot new controlword ecm response hash %s (ecm table reset)", i, ecmd5);
@@ -7838,7 +7891,28 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 		{
 #if defined(WITH_STAPI) || defined(WITH_STAPI5)
 		case STAPI:
+#if defined(WITH_WI) && defined(WITH_EXTENDED_CW)
+			{
+				uint8_t cw[4][16];
+
+				if(er->cw_ex.algo == CW_ALGO_AES128)
+				{
+					memcpy(cw, er->cw_ex.session_word, 32);
+				}
+				else
+				{
+					memcpy(cw, er->cw, 16);
+					if(er->cw_ex.mode == CW_MODE_MULTIPLE_CW)
+					{
+						memcpy(cw[1], er->cw_ex.audio, 16);
+					}
+				}
+
+				stapi_write_cw(i, (uint8_t*) cw, demux[i].STREAMpids, demux[i].STREAMpidcount, demux[i].pmt_file, er->cw_ex.mode, er->cw_ex.algo);
+			}
+#else
 			stapi_write_cw(i, er->cw, demux[i].STREAMpids, demux[i].STREAMpidcount, demux[i].pmt_file);
+#endif
 			break;
 #endif
 		default:

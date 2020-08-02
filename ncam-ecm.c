@@ -29,7 +29,7 @@ extern CS_MUTEX_LOCK ecmcache_lock;
 extern struct ecm_request_t *ecmcwcache;
 extern uint16_t len4caid[256];
 extern uint32_t ecmcwcache_size;
-extern int32_t exit_ncam;
+extern int32_t exit_oscam;
 
 extern CS_MUTEX_LOCK ecm_pushed_deleted_lock;
 extern struct ecm_request_t	*ecm_pushed_deleted;
@@ -147,14 +147,14 @@ static void *cw_process(void)
 	cs_ftime(&n_request_time);
 	add_ms_to_timeb(&n_request_time, 60 * 1000);
 
-	while(!exit_ncam)
+	while(!exit_oscam)
 	{
 		if(cw_process_wakeups == 0) // No waiting wakeups, proceed to sleep
 		{
 			sleepms_on_cond(__func__, &cw_process_sleep_cond_mutex, &cw_process_sleep_cond, msec_wait);
 		}
 		cw_process_wakeups = 0; // We've been woken up, reset the counter
-		if(exit_ncam)
+		if(exit_oscam)
 			{ break; }
 
 		next_check = 0;

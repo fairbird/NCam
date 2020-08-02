@@ -21,7 +21,7 @@
 #define STREAM_SUBTITLE  0x03
 #define STREAM_TELETEXT  0x04
 
-extern int32_t exit_ncam;
+extern int32_t exit_oscam;
 
 typedef struct
 {
@@ -1421,7 +1421,7 @@ static void *stream_client_handler(void *arg)
 	data->have_emm_data = 0;
 	data->reset_key_data = 1;
 
-	while (!exit_ncam && clientStatus != -1 && streamConnectErrorCount < 3
+	while (!exit_oscam && clientStatus != -1 && streamConnectErrorCount < 3
 			&& streamDataErrorCount < 15)
 	{
 		streamfd = connect_to_stream(http_buf, 1024, stream_path);
@@ -1436,7 +1436,7 @@ static void *stream_client_handler(void *arg)
 		streamStatus = 0;
 		bytesRead = 0;
 
-		while (!exit_ncam && clientStatus != -1 && streamStatus != -1
+		while (!exit_oscam && clientStatus != -1 && streamStatus != -1
 				&& streamConnectErrorCount < 3 && streamDataErrorCount < 15)
 		{
 			if (data->key.pvu_csa_used)
@@ -1643,7 +1643,7 @@ void *stream_server(void *UNUSED(a))
 		return NULL;
 	}
 
-	while (!exit_ncam)
+	while (!exit_oscam)
 	{
 		clilen = sizeof(cliaddr);
 		connfd = accept(glistenfd,(struct sockaddr *)&cliaddr, &clilen);
@@ -1712,7 +1712,7 @@ void *stream_key_delayer(void *UNUSED(arg))
 	emu_stream_cw_item *item;
 	struct timeb t_now;
 
-	while (!exit_ncam)
+	while (!exit_oscam)
 	{
 		cs_ftime(&t_now);
 

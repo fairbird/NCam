@@ -10,7 +10,7 @@
 #include "ncam-time.h"
 #include "ncam-reader.h"
 
-extern int32_t exit_ncam;
+extern int32_t exit_oscam;
 
 #define HSIC_CRC 0xA5
 #define SSSP_MAX_PID 8
@@ -1186,7 +1186,7 @@ static void *ncam_ser_fork(void *pthreadparam)
 	SAFE_MUTEX_UNLOCK(&mutex);
 	SAFE_COND_SIGNAL(&cond);
 
-	while(!exit_ncam)
+	while(!exit_oscam)
 	{
 		cl->login = time((time_t *)0);
 		cl->pfd = init_ncam_ser_device(cl);

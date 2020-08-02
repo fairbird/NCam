@@ -42,7 +42,7 @@ extern char cs_confdir[];
 extern uint32_t ecmcwcache_size;
 extern uint8_t cs_http_use_utf8;
 extern uint32_t cfg_sidtab_generation;
-extern int32_t exit_ncam;
+extern int32_t exit_oscam;
 extern uint8_t cacheex_peer_id[8];
 
 extern char *entitlement_type[];
@@ -641,7 +641,6 @@ static char *send_ncam_config_global(struct templatevars *vars, struct uriparams
 
 	tpl_printf(vars, TPLADD, "TMP", "NETPRIO%d", cfg.netprio);
 	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
-
 	tpl_printf(vars, TPLADD, "PIDFILE", "%s", ESTR(cfg.pidfile));
 
 
@@ -1674,6 +1673,11 @@ static char *send_ncam_config_dvbapi(struct templatevars *vars, struct uriparams
 	//extended_cw_api
 	tpl_printf(vars, TPLADD, "TMP", "EXTENDEDCWAPISELECTED%d", cfg.dvbapi_extended_cw_api);
 	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
+
+#ifdef WITH_WI
+	//wi_sosket_id
+	tpl_printf(vars, TPLAPPEND, "WISOCKETID", "		<TR><TD>Wi socket id:</TD><TD><input name=\"""wi_sosket_id""\" class=\"""withunit short""\" type=\"""text""\" maxlength=\"""2""\" value=\"""%d""\"></TD></TR>", cfg.dvbapi_wi_sosket_id);
+#endif
 
 	//write_sdt_prov
 	if(cfg.dvbapi_write_sdt_prov > 0)
@@ -8962,7 +8966,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 		}
 		NULLFREE(filebuf);
 	}
-	while(*keepalive == 1 && !exit_ncam);
+	while(*keepalive == 1 && !exit_oscam);
 	return 0;
 }
 
@@ -9217,11 +9221,11 @@ static void *http_server(void *UNUSED(d))
 	struct SOCKADDR remote;
 	memset(&remote, 0, sizeof(remote));
 
-	while(!exit_ncam)
+	while(!exit_oscam)
 	{
 		if((s = accept(sock, (struct sockaddr *) &remote, &len)) < 0)
 		{
-			if(exit_ncam)
+			if(exit_oscam)
 				{ break; }
 			if(errno != EAGAIN && errno != EINTR)
 			{

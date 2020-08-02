@@ -83,7 +83,7 @@ const char *syslog_ident = "ncam";
 static char *ncam_pidfile;
 static char default_pidfile[64];
 
-int32_t exit_ncam = 0;
+int32_t exit_oscam = 0;
 static struct s_module modules[CS_MAX_MOD];
 
 struct s_client *first_client = NULL;  //Pointer to clients list, first client is master
@@ -795,8 +795,8 @@ void cs_exit(int32_t sig)
 		return;
 	}
 
-	if(!exit_ncam)
-		{ exit_ncam = sig ? sig : 1; }
+	if(!exit_oscam)
+		{ exit_oscam = sig ? sig : 1; }
 }
 
 static char *read_line_from_file(char *fname, char *buf, int bufsz)
@@ -1139,9 +1139,9 @@ static void cs_waitforcardinit(void)
 				{ cs_sleepms(300); } // wait a little bit
 			//alarm(cfg.cmaxidle + cfg.ctimeout / 1000 + 1);
 		}
-		while(!card_init_done && !exit_ncam);
+		while(!card_init_done && !exit_oscam);
 
-		if(cfg.waitforcards_extra_delay > 0 && !exit_ncam)
+		if(cfg.waitforcards_extra_delay > 0 && !exit_oscam)
 			{ cs_sleepms(cfg.waitforcards_extra_delay); }
 		cs_log("init for all local cards done");
 	}
@@ -1210,7 +1210,7 @@ static void process_clients(void)
 	pfd[pfdcount].events = POLLIN | POLLPRI;
 	cl_list[pfdcount] = NULL;
 
-	while(!exit_ncam)
+	while(!exit_oscam)
 	{
 		pfdcount = 1;
 
@@ -1378,7 +1378,7 @@ static void *reader_check(void)
 	struct s_reader *rdr;
 	set_thread_name(__func__);
 	cs_pthread_cond_init(__func__, &reader_check_sleep_cond_mutex, &reader_check_sleep_cond);
-	while(!exit_ncam)
+	while(!exit_oscam)
 	{
 		for(cl = first_client->next; cl ; cl = cl->next)
 		{
@@ -1424,7 +1424,7 @@ static void * card_poll(void) {
 	SAFE_MUTEX_INIT(&card_poll_sleep_cond_mutex, NULL);
 	SAFE_COND_INIT(&card_poll_sleep_cond, NULL);
 	set_thread_name(__func__);
-	while (!exit_ncam) {
+	while (!exit_oscam) {
 		cs_readlock(__func__, &readerlist_lock);
 		for (rdr=first_active_reader; rdr; rdr=rdr->next) {
 			if (rdr->enable && rdr->card_status == CARD_INSERTED) {
@@ -1512,7 +1512,7 @@ static void restart_daemon(void)
 
 void cs_restart_ncam(void)
 {
-	exit_ncam = 99;
+	exit_oscam = 99;
 	cs_log("restart ncam requested");
 }
 
@@ -1524,7 +1524,7 @@ int32_t cs_get_restartmode(void)
 
 void cs_exit_ncam(void)
 {
-	exit_ncam = 1;
+	exit_oscam = 1;
 	cs_log("exit ncam requested");
 }
 
@@ -2011,5 +2011,5 @@ int32_t main(int32_t argc, char *argv[])
 	// This prevents the compiler from removing config_mak from the final binary
 	syslog_ident = config_mak;
 
-	return exit_ncam;
+	return exit_oscam;
 }
