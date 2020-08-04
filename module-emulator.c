@@ -104,9 +104,10 @@ static void refresh_entitlements(struct s_reader *rdr)
 	uint32_t i;
 	uint16_t caid;
 	KeyData *tmpKeyData;
+#ifdef WITH_LIBCRYPTO
 	LL_ITER itr;
 	biss2_rsa_key_t *item;
-
+#endif
 	cs_clear_entitlement(rdr);
 
 	for (i = 0; i < StreamKeys.keyCount; i++)
@@ -173,12 +174,14 @@ static void refresh_entitlements(struct s_reader *rdr)
 							Biss2Keys.EmuKeys[i].keyName, Biss2Keys.EmuKeys[i].keyLength, 0);
 	}
 
+#ifdef WITH_LIBCRYPTO
 	// RSA keys (EMM keys) for BISS2 mode CA
 	itr = ll_iter_create(rdr->ll_biss2_rsa_keys);
 	while ((item = ll_iter_next(&itr)))
 	{
 		emu_add_entitlement(rdr, 0x2610, 0, item->ekid, "RSAPRI", 8, 0);
 	}
+#endif
 }
 
 static int32_t emu_do_ecm(struct s_reader *rdr, const ECM_REQUEST *er, struct s_ecm_answer *ea)
@@ -241,9 +244,10 @@ static int32_t emu_card_info(struct s_reader *rdr)
 			emu_set_keyfile_path("/var/keys/");
 		}
 	}
-
+#ifdef WITH_LIBCRYPTO
 	// Read BISS2 mode CA RSA keys from PEM files
 	biss_read_pem(rdr, BISS2_MAX_RSA_KEYS);
+#endif
 	cs_log("Total keys in memory: W:%d V:%d N:%d I:%d F:%d G:%d P:%d T:%d A:%d",
 			CwKeys.keyCount, ViKeys.keyCount, NagraKeys.keyCount, IrdetoKeys.keyCount,
 			BissSWs.keyCount, Biss2Keys.keyCount, PowervuKeys.keyCount, TandbergKeys.keyCount,

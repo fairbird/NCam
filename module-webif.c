@@ -6873,7 +6873,7 @@ static char *send_ncam_files(struct templatevars * vars, struct uriparams * para
 	// id are used
 	// new entry after last entry before first ifdef entry
 	// ifdef must be add to end
-		//{ "ncam.version",   MNU_CFG_FVERSION,  FTYPE_VERSION },	// id 0
+		{ "ncam.version",   MNU_CFG_FVERSION,  FTYPE_VERSION },		// id 0
 		{ "ncam.conf",      MNU_CFG_FCONF,     FTYPE_CONFIG },		// id 1
 		{ "ncam.user",      MNU_CFG_FUSER,     FTYPE_CONFIG },		// id 2
 		{ "ncam.server",    MNU_CFG_FSERVER,   FTYPE_CONFIG },		// id 3

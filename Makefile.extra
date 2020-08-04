@@ -598,7 +598,6 @@ android-arm:
 		ANDROID_NDK=1 \
 		USE_SSL=1 \
 		SSL_LIB=$(SSL_LIB) \
-		USE_LIBCRYPTO=1 \
 		LIBCRYPTO_LIB=$(LIBCRYPTO_LIB) \
 		EXTRA_FLAGS="-pie -I. -s" \
 		$(MAKEFLAGS)
@@ -611,7 +610,6 @@ android-arm-libusb:
 		ANDROID_NDK=1 \
 		USE_SSL=1 \
 		SSL_LIB=$(SSL_LIB) \
-		USE_LIBCRYPTO=1 \
 		LIBCRYPTO_LIB=$(LIBCRYPTO_LIB) \
 		EXTRA_FLAGS="-pie -I. -s" \
 		USE_LIBUSB=1 \
@@ -623,10 +621,50 @@ android-arm-stapi:
 		CROSS=$(CROSS) \
 		LIB_RT= \
 		LIB_PTHREAD= \
-		USE_LIBCRYPTO=1 \
 		CONF_DIR=/data/plugin/ncam \
 		USE_WI=1 \
 		$(MAKEFLAGS)
+
+android-ndk: ndk
+	$(MAKE) --no-print-directory \
+		CC="$(NDK_ROOT)/toolchains/llvm/prebuilt/linux-x86_64/bin/$(target)-clang $(flags)" \
+		STRIP=$(NDK_ROOT)/toolchains/llvm/prebuilt/linux-x86_64/bin/$(host)-strip \
+		LIB_RT= \
+		LIB_PTHREAD= \
+		EXTRA_FLAGS="$(EXTRA_FLAGS)" \
+		EXTRA_LDFLAGS="$(EXTRA_LDFLAGS) $(ldflags)" \
+		$(MAKEFLAGS)
+
+ndk:
+ifdef ANDROID_NDK
+NDK_ROOT = $(ANDROID_NDK)
+endif
+ifndef ARCH
+ARCH = arm
+endif
+ifndef API
+API = 16
+endif
+flags = $(FLAGS) -fpic -fno-addrsig -ffunction-sections -fdata-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -Wno-invalid-command-line-argument -Wno-unused-command-line-argument -DANDROID -D__ANDROID_API__=$(API)
+ifeq ($(ARCH),arm)
+host = arm-linux-androideabi
+target = armv7a-linux-androideabi$(API)
+ifdef USE_WI
+flags += -march=armv7-a -mcpu=cortex-a8 -mfloat-abi=softfp -mfpu=neon
+ldflags = -march=armv7-a -Wl,--fix-cortex-a8
+else
+flags += -march=armv7-a -mtune=cortex-a9 -mfloat-abi=softfp -mfpu=vfpv3-d16
+endif
+else ifeq ($(ARCH),x86)
+host = i686-linux-android
+target = $(host)$(API)
+else ifeq ($(ARCH),arm64)
+host = aarch64-linux-android
+target = $(host)$(API)
+else ifeq ($(ARCH),x86_64)
+host = x86_64-linux-android
+target = $(host)$(API)
+endif
 
 uclinux:
 	$(MAKE) --no-print-directory \

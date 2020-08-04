@@ -82,6 +82,9 @@ A million repetitions of "a"
 
 #include <stdio.h>
 #include <string.h>
+#ifdef __ANDROID__
+#include <endian.h>
+#endif
 
 #include "sha1.h"
 

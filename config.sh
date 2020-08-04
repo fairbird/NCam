@@ -459,7 +459,6 @@ menu_addons() {
 		WEBIF_JQUERY		"Jquery onboard (if disabled webload)"	$(check_test "WEBIF_JQUERY") \
 		TOUCH			"Touch Web Interface"			$(check_test "TOUCH") \
 		WITH_SSL		"OpenSSL support"			$(check_test "WITH_SSL") \
-		DVBCISSA_BISS2		"BISS2 support"			        $(check_test "DVBCISSA_BISS2") \
 		HAVE_DVBAPI		"DVB API"				$(check_test "HAVE_DVBAPI") \
                 WITH_NEUTRINO           "Neutrino support"                      $(check_test "WITH_NEUTRINO") \
 		READ_SDT_CHARSETS	"DVB API read-sdt charsets"		$(check_test "READ_SDT_CHARSETS") \

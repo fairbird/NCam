@@ -8,10 +8,12 @@
 #include "ncam-string.h"
 #include "module-emulator-biss.h"
 #include "ncam-aes.h"
+#ifdef WITH_LIBCRYPTO
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 //#include <openssl/rsa.h>
 #include <openssl/x509.h>
+#endif
 
 // DVB-CISSA v1 IV as defined in ETSI TS 103 127
 static const uint8_t dvb_cissa_iv[16] =
@@ -628,6 +630,7 @@ int8_t biss_ecm(struct s_reader *rdr, const uint8_t *ecm, uint16_t caid, uint16_
 	}
 }
 
+#ifdef WITH_LIBCRYPTO
 static uint16_t parse_session_data_descriptor(const uint8_t *data, uint16_t esid, uint16_t onid, uint32_t *keysAdded)
 {
 	uint8_t descriptor_tag = data[0];
@@ -889,5 +892,6 @@ uint16_t biss_read_pem(struct s_reader *rdr, uint8_t max_keys)
 
 	return count;
 }
+#endif
 
 #endif // WITH_EMU
