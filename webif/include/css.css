@@ -378,6 +378,8 @@ tr.disabled td:first-child img.icon,
 tr.disabledreader td:first-child img.icon {background-color:#B0B0B0}
 tr.disabled td:first-child a:hover img.icon,
 tr.disabledreader td:first-child a:hover img.icon {background-color:#CECECE}
+.readers tr.undefined td {background-color:#FFA}
+.readers tr.connected td {background-color:#BCFFAD}
 /* colors for status rows in status.html depend on status */
 tr.a td {background-color:#3F0}
 tr.c td {background-color:#F1F5E6}

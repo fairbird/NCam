@@ -56,6 +56,8 @@ pthread_key_t getssl;
 static CS_MUTEX_LOCK http_lock;
 CS_MUTEX_LOCK *lock_cs;
 
+static void webif_add_client_proto(struct templatevars *vars, struct s_client *cl, const char *proto, int8_t apicall);
+
 static uint8_t useLocal = 1;
 #define PRINTF_LOCAL_D useLocal ? "%'d" : "%d"
 #define PRINTF_LOCAL_F useLocal ? "%'.0f" : "%.0f"
@@ -1966,6 +1968,7 @@ static char *send_ncam_reader(struct templatevars *vars, struct uriparams *param
 	ll_iter_reset(&itr); //going to iterate all configured readers
 	while((rdr = ll_iter_next(&itr)))
 	{
+		const char *proto = reader_get_type_desc(rdr, 1); // set extended flag, it will be further processed with cccam_client_extended_mode
 		struct s_client *cl = rdr->client;
 		if(rdr->label[0] && rdr->typ && !rdr->cccam_cfg_save)
 		{
@@ -1998,21 +2001,58 @@ static char *send_ncam_reader(struct templatevars *vars, struct uriparams *param
 			{
 				tpl_printf(vars, TPLAPPEND, "EXISTING_INS", ",'%s'", urlencode(vars, rdr->label));
 			}
-			tpl_addVar(vars, TPLADD, "CTYP", reader_get_type_desc(rdr, 1)); // set extended flag, it will be further processed with cccam_client_extended_mode
-			tpl_addVar(vars, TPLADD, "CTYPSORT", reader_get_type_desc(rdr, 1)); // // set extended flag, it will be further processed with cccam_client_extended_mode
+			tpl_addVar(vars, TPLADD, "CTYP", proto);
+			tpl_addVar(vars, TPLADD, "READERCLASS", rdr->enable ? "undefined" : "disabled");
+			tpl_addVar(vars, TPLADD, "READERIP", "");
 
-			tpl_addVar(vars, TPLADD, "READERCLASS", rdr->enable ? "enabledreader" : "disabledreader");
-
-			if(rdr->enable) { active_readers += 1; }
-			else { disabled_readers += 1; }
-
-			if(rdr->tcp_connected) {
-				connected_readers += 1;
-				tpl_addVar(vars, TPLADD, "READERIP", cs_inet_ntoa(rdr->client->ip));
+			if(rdr->enable)
+			{
+				active_readers += 1;
+				tpl_addVar(vars, TPLADD, "RSTATUS", "enabled");
+				if(is_network_reader(rdr))
+				{
+					tpl_addVar(vars, TPLADD, "READERIP", cs_inet_ntoa(rdr->client->ip));
+				}
 			}
 			else
 			{
-				tpl_addVar(vars, TPLADD, "READERIP", "offline");
+				disabled_readers += 1;
+			}
+
+			if(rdr->tcp_connected)
+			{
+				connected_readers += 1;
+
+				proto = client_get_proto(rdr->client);
+
+				webif_add_client_proto(vars, rdr->client, proto, apicall);
+
+				if(rdr->card_status == CARD_INSERTED)
+				{
+					tpl_addVar(vars, TPLADDONCE, "RSTATUS", "online");
+					tpl_addVar(vars, TPLADDONCE, "READERCLASS", "connected");
+				}
+			}
+			else
+			{
+				/* default initial values */
+				tpl_addVar(vars, TPLADD, "CLIENTPROTO", proto);
+				tpl_addVar(vars, TPLADD, "CLIENTPROTOSORT", "");
+				tpl_addVar(vars, TPLADD, "CLIENTPROTOTITLE", "");
+				tpl_addVar(vars, TPLADD, "PROTOICON", "");
+
+				if(rdr->enable && !is_network_reader(rdr))
+				{
+					connected_readers += 1;
+					if(rdr->card_status == CARD_INSERTED)
+					{
+						tpl_addVar(vars, TPLADDONCE, "READERCLASS", "connected");
+					}
+				}
+				else
+				{
+					tpl_addVar(vars, TPLADD, "RSTATUS", "offline");
+				}
 			}
 
 			if(rdr->description)

@@ -368,11 +368,13 @@ $(function () {
 		waitForMsg();
 		if ($(this).data('next-action') == 'enable') {
 			$(this).data('next-action', 'disable').attr('title', 'Disable Reader: ' + $(this).data('reader-name') + $(this).data('desc'));
-			$(rowid).attr('class', 'enabledreader');
+			$(rowid).attr('class', 'undefined');
+			$(rowid + ' > td.readercol19').text('enabled');
 			img.attr('src', 'image?i=ICDIS').attr('alt', 'Disable');
 		} else {
 			$(this).data('next-action', 'enable').attr('title', 'Enable Reader: ' + $(this).data('reader-name') + $(this).data('desc'));
-			$(rowid).attr('class', 'disabledreader');
+			$(rowid).attr('class', 'disabled');
+			$(rowid + ' > td.readercol19').text('offline (disabled)');
 			img.attr('src', 'image?i=ICENA').attr('alt', 'Enable');
 		}
 		parameters = parameters_old;
@@ -844,6 +846,17 @@ function updateReaderpage(data) {
 		}
 		if (!is_nopoll('readercol9')) {
 			$(uid + " td.readercol9").text(item.stats.emmwritten);
+		}
+		if (!is_nopoll('readercol2')) {
+			if (data.ncam.piconenabled == "1" && item.protoicon) {
+				$(uid + " > td.readercol2").append('<img class="protoicon" title="Protocol ' + item.protocol + ' ' +
+					 item.protocolext + '" alt="IC_' + item.protoicon + '" src="image?i=IC_' + item.protoicon + '"></img>');
+			} else {
+				$(uid + " > td.readercol2").attr('title', item.protocolext).text(item.protocol);
+			}
+		}
+		if (!is_nopoll('readercol19')) {
+			$(uid + " > td.readercol19").html(item.status + "<BR>" + item.ip);
 		}
 		if (!is_nopoll('readercol10')) {
 			$(uid + " td.readercol10").text(item.stats.emmskipped);
