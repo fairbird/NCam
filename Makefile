@@ -156,6 +156,14 @@ endif
 
 DEFAULT_UTF8_FLAGS = -DWITH_UTF8
 
+ifdef USE_COMPRESS
+	ifeq "$(shell upx --version 2>/dev/null)" ""
+		override USE_COMPRESS =
+	else
+		UPX_VER = $(shell upx --version 2>&1 | head -1 | cut -d' ' -f2 2>/dev/null)
+	endif
+endif
+
 # Function to initialize USE related variables
 #   Usage: $(eval $(call prepare_use_flags,FLAG_NAME,PLUS_TARGET_TEXT))
 define prepare_use_flags
@@ -188,6 +196,7 @@ $(eval $(call prepare_use_flags,LIBCRYPTO,))
 $(eval $(call prepare_use_flags,LIBUSB,libusb))
 $(eval $(call prepare_use_flags,PCSC,pcsc))
 $(eval $(call prepare_use_flags,UTF8))
+$(eval $(call prepare_use_flags,COMPRESS,upx))
 
 # Add PLUS_TARGET and EXTRA_TARGET to TARGET
 ifdef NO_PLUS_TARGET
@@ -231,7 +240,12 @@ LIST_SMARGO_BIN := $(BINDIR)/list_smargo-$(VER)$(SVN_REV)-$(subst cygwin,cygwin.
 
 # Build list_smargo-.... only when WITH_LIBUSB build is requested.
 ifndef USE_LIBUSB
-            override LIST_SMARGO_BIN =
+	override LIST_SMARGO_BIN =
+endif
+
+ifdef USE_COMPRESS
+	UPX_INFO = $(shell echo '| Compress:\n|  UPX      = upx $(USE_COMPRESS) ($(UPX_VER))\n')
+	UPX_COMMAND = upx $(USE_COMPRESS) $(NCAM_BIN)
 endif
 
 SRC-$(CONFIG_LIB_AES) += cscrypt/aes.c
@@ -425,6 +439,7 @@ all:
 | Tools:\n\
 |  CROSS    = $(CROSS_DIR)$(CROSS)\n\
 |  CC       = $(CC)\n\
+$(UPX_INFO)\
 | Settings:\n\
 |  CONF_DIR = $(CONF_DIR)\n\
 |  CC_OPTS  = $(strip $(CC_OPTS))\n\
@@ -455,6 +470,7 @@ $(NCAM_BIN): $(NCAM_BIN).debug
 	$(SAY) "STRIP	$@"
 	$(Q)cp $(NCAM_BIN).debug $(NCAM_BIN)
 	$(Q)$(STRIP) $(NCAM_BIN)
+	$(Q)$(UPX_COMMAND)
 
 $(LIST_SMARGO_BIN): utils/list_smargo.c
 	$(SAY) "BUILD	$@"
