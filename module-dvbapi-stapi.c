@@ -141,7 +141,7 @@ int32_t stapi_open(void)
 	DIR *dirp;
 	struct dirent entry, *dp = NULL;
 	struct stat buf;
-	char pfad[80];
+	char pfad[274];
 	int32_t stapi_priority = 0;
 
 	dirp = opendir(PROCDIR);
