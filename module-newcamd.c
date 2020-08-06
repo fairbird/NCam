@@ -74,12 +74,12 @@ typedef struct custom_data
 
 static int32_t ndc_id(struct s_client *cl)
 {
-	uint16_t ndc_id = 0x8181; // NCam
+	uint16_t ret = 0x8181; // NCam
 	if(cl->reader->ncd_mgcamd)
-		{ ndc_id = 0x6D67; } // mgcamd
+		{ ret = 0x6D67; } // mgcamd
 	else if(cl->reader->ncd_stealth)
-		{ ndc_id = 0x0000; } // generic
-	return ndc_id;
+		{ ret = 0x0000; } // generic
+	return ret;
 }
 
 static int32_t network_message_send(int32_t handle, uint16_t *netMsgId, uint8_t *buffer, int32_t len,

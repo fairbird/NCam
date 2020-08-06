@@ -141,7 +141,6 @@ int32_t stapi_open(void)
 	DIR *dirp;
 	struct dirent entry, *dp = NULL;
 	struct stat buf;
-	char pfad[274];
 	int32_t stapi_priority = 0;
 
 	dirp = opendir(PROCDIR);
@@ -186,7 +185,9 @@ int32_t stapi_open(void)
 	{
 		if(!dp) { break; }
 
-		snprintf(pfad, sizeof(pfad), "%s%s", PROCDIR, dp->d_name);
+		int n = snprintf(0, 0, "%s%s", PROCDIR, dp->d_name);
+		char *pfad = (char *)malloc(n + 1);
+		snprintf(pfad, n + 1, "%s%s", PROCDIR, dp->d_name);
 		if(stat(pfad, &buf) != 0)
 			{ continue; }
 
