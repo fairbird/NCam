@@ -123,7 +123,7 @@ int gxdvbapi_init(void)
 	SAFE_MUTEX_INIT(&filter_lock, NULL);
 	SAFE_MUTEX_INIT(&desc_lock, NULL);
 
-	ncam_gxapi_init();
+	oscam_gxapi_init();
 
 	return 0;
 }
@@ -184,7 +184,7 @@ int gxapi_open_filter(gxapi_filter_open *pOpenParams, unsigned int *pFilterHandl
 	//memcpy(SectionParam.SoftFilterData, pOpenParams->SoftFilterData, pOpenParams->SoftFilterDepth);
 	//memcpy(SectionParam.SoftFilterMask, pOpenParams->SoftFilterMask, pOpenParams->SoftFilterDepth);
 
-	ret = ncam_gxapi_open_filter(&SectionParam, &Handle);
+	ret = oscam_gxapi_open_filter(&SectionParam, &Handle);
 	if(ret != 0)
 	{
 		cs_log("ERROR: %s, %d", __FUNCTION__, __LINE__);
@@ -210,7 +210,7 @@ int gxapi_open_filter(gxapi_filter_open *pOpenParams, unsigned int *pFilterHandl
 
 int gxapi_get_slotid_by_pid(unsigned short pid, int demux_idx)
 {
-	return ncam_gxapi_get_slotid_by_pid(pid, demux_idx);
+	return oscam_gxapi_get_slotid_by_pid(pid, demux_idx);
 }
 
 int gxapi_close_filter(unsigned int FilterHandle)
@@ -236,7 +236,7 @@ int gxapi_close_filter(unsigned int FilterHandle)
 		return -1;
 	}
 
-	ret = ncam_gxapi_close_filter(pFilter->hFilter);
+	ret = oscam_gxapi_close_filter(pFilter->hFilter);
 	if(ret != 0)
 	{
 		cs_log("ERROR: %s, %d", __FUNCTION__, __LINE__);
@@ -318,7 +318,7 @@ int gxapi_open_desc(gxapi_desc_open *pOpenParams, unsigned int *pDescHandle)
 	OpenParam.demux_idx = pOpenParams->DemuxID;
 	OpenParam.Pid = pOpenParams->Pid;
 
-	ret = ncam_gxapi_open_descrambler(&OpenParam, &Inst_p->DesHandle);
+	ret = oscam_gxapi_open_descrambler(&OpenParam, &Inst_p->DesHandle);
 	if(ret != 0)
 	{
 		SAFE_MUTEX_UNLOCK(&desc_lock);
@@ -371,7 +371,7 @@ again:
 		return -1;
 	}
 
-	ret = ncam_gxapi_close_descrambler(Inst_p->DesHandle);
+	ret = oscam_gxapi_close_descrambler(Inst_p->DesHandle);
 	if(ret != 0)
 	{
 		SAFE_MUTEX_UNLOCK(&desc_lock);
@@ -423,7 +423,7 @@ int gxapi_set_desc(int demux_id, unsigned short StreamPid, unsigned char *pOddCW
 			memcpy(Inst_p->EvenKey, pEvenCW, 8);
 			memcpy(Inst_p->OddKey, pOddCW, 8);
 
-			ret = ncam_gxapi_set_descrambler(Inst_p->DesHandle, &DescramblerData);
+			ret = oscam_gxapi_set_descrambler(Inst_p->DesHandle, &DescramblerData);
 			if(ret != 0)
 			{
 				//cs_log("error, set cw!!");
@@ -485,7 +485,7 @@ int gxapi_set_desc_by_handle(unsigned int DescHandle, unsigned char *pOddCW, uns
 	memcpy(DescramblerData.EvenKey, Inst_p->EvenKey, 8);
 	memcpy(DescramblerData.OddKey, Inst_p->OddKey, 8);
 
-	ret = ncam_gxapi_set_descrambler(Inst_p->DesHandle, &DescramblerData);
+	ret = oscam_gxapi_set_descrambler(Inst_p->DesHandle, &DescramblerData);
 	if(ret != 0)
 	{
 		cs_log("error, set cw!!");

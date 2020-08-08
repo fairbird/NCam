@@ -41,6 +41,8 @@ if (CMAKE_CROSSCOMPILING)
         set (NCAmOperatingSystem "DIR-825")
     elseif (NCAM_SYSTEM_NAME MATCHES "AZBox")
         set (NCAmOperatingSystem "AZBox")
+    elseif (NCAM_SYSTEM_NAME MATCHES "GXAPI")
+        set (NCAmOperatingSystem "GXAPI")
     elseif (NCAM_SYSTEM_NAME MATCHES "SU980")
         set (NCAmOperatingSystem "SU980")
     elseif (NCAM_SYSTEM_NAME MATCHES "WETEK")
@@ -195,6 +197,10 @@ elseif (NCAmOperatingSystem MATCHES "AZBox")
 	add_definitions ("-DWITH_AZBOX=1")
 	set (USE_AZBOX "USE_AZBOX")
 	set (DEFAULT_CS_CONFDIR "/PLUGINS/OpenXCAS/ncamCAS")
+elseif (NCAmOperatingSystem MATCHES "GXAPI")
+	add_definitions ("-DWITH_GXAPI=1 -I${CMAKE_CURRENT_SOURCE_DIR}/extapi/goceed")
+	set (USE_GXAPI "USE_GXAPI")
+	set (DEFAULT_CS_CONFDIR "/home/gx/ncam")
 elseif (NCAmOperatingSystem MATCHES "SU980")
 	set (USE_SU980 "USE_SU980")
 	add_definitions ("-DWITH_SU980=1")
@@ -569,7 +575,7 @@ GENERATE_NCAM_CONFIG("${CMAKE_CURRENT_SOURCE_DIR}/config.h")
 # Build config.mak and related files
 # FIXME: Create USE_FLAGS and pass them to config.sh using --use-flags
 execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --objdir ${CMAKE_CURRENT_BINARY_DIR} --use-flags  "${USE_STAPI} ${USE_STAPI5} /
-${USE_COOLAPI} ${USE_SU980} ${USE_WETEK} ${USE_AZBOX} ${USE_MCA} ${USE_SSL} ${USE_LIBCRYPTO} ${USE_LIBUSB} ${USE_PCSC}" --make-config.mak)
+${USE_COOLAPI} ${USE_SU980} ${USE_WETEK} ${USE_AZBOX} ${USE_GXAPI} ${USE_MCA} ${USE_SSL} ${USE_LIBCRYPTO} ${USE_LIBUSB} ${USE_PCSC}" --make-config.mak)
 # Generate webif/pages.c
 execute_process (COMMAND make --no-print-directory --quiet -C ${CMAKE_CURRENT_SOURCE_DIR}/webif)
 
@@ -759,13 +765,18 @@ elseif (NCAmOperatingSystem MATCHES "AZBox")
     add_library(xcas STATIC IMPORTED)
     set_property(TARGET xcas PROPERTY IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/extapi/openxcas/libOpenXCASAPI.a)
     set (xcas_link "xcas")
+elseif (NCAmOperatingSystem MATCHES "GXAPI")
+	add_library(gx STATIC IMPORTED)
+	set_property(TARGET gx PROPERTY IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/extapi/goceed/liboscam_gxapi.a)
+	set (gx_link "gx")
+	target_link_libraries (${exe_name} -L${CMAKE_CURRENT_SOURCE_DIR}/extapi/goceed -loscam_gxapi)
 elseif (NCAmOperatingSystem MATCHES "SU980")
     target_link_libraries (${exe_name} rt entropic)
 elseif (NCAmOperatingSystem MATCHES "WETEK")
     target_link_libraries (${exe_name} rt entropic)
 endif (NCAmOperatingSystem MATCHES "Linux")
 
-target_link_libraries (${exe_name} ${libusb_link} ${rt_link} ${setupapi_link} ${ole32_link} ${shell32_link} ${pthread_link} ${dl_link} ${xcas_link} ${libpcsc_link} ${ssl_link} ${crypto_link})
+target_link_libraries (${exe_name} ${libusb_link} ${rt_link} ${setupapi_link} ${ole32_link} ${shell32_link} ${pthread_link} ${dl_link} ${xcas_link} ${gx_link} ${libpcsc_link} ${ssl_link} ${crypto_link})
 
 #----------------------- put svnversion in the build ------------------------------
 # at every target rebuild, we re-build the ncam.c compilation...

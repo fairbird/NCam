@@ -25,8 +25,6 @@
 //#define IPV6SUPPORT 1
 #define MODULE_MONITOR 1
 
-#define WITH_GXAPI 1
-
 //#define MODULE_CAMD33 1
 #define MODULE_CAMD35 1
 #define MODULE_CAMD35_TCP 1
@@ -62,7 +60,7 @@
 #define READER_DGCRYPT 1
 
 #define CARDREADER_PHOENIX 1
-//#define CARDREADER_INTERNAL 1
+#define CARDREADER_INTERNAL 1
 //#define CARDREADER_MP35 1
 //#define CARDREADER_SC8IN1 1
 //#define CARDREADER_SMARGO 1
@@ -99,7 +97,7 @@
 #endif
 
 #ifdef WITH_GXAPI
-#define CARDREADER_GXAPI 1
+//#define CARDREADER_GXAPI 1
 #endif
 
 #ifdef READER_DRE

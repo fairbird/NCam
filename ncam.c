@@ -1692,7 +1692,9 @@ static void find_conf_dir(void)
 			"/var/etc/",
 			"/var/ncam/",
 			"/config/ncam/",
+#ifdef WITH_GXAPI
 			"/home/gx/local/ncam/",
+#endif
 #ifdef WITH_WI
 			"/data/plugin/ncam/",
 #endif

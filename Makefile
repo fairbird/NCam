@@ -112,7 +112,8 @@ else
 DEFAULT_STAPI_LIB = -L./stapi -loscam_stapi
 endif
 DEFAULT_STAPI5_LIB = -L./stapi -loscam_stapi5
-DEFAULT_GXAPI_LIB = -L./extapi/goceed -lncam_gxapi
+DEFAULT_GXAPI_LIB = -L./extapi/goceed -loscam_gxapi
+DEFAULT_GXAPI_FLAGS = -I ./extapi/goceed
 DEFAULT_COOLAPI_LIB = -lnxp -lrt
 DEFAULT_COOLAPI2_LIB = -llnxUKAL -llnxcssUsr -llnxscsUsr -llnxnotifyqUsr -llnxplatUsr -lrt
 DEFAULT_SU980_LIB = -lentropic -lrt
@@ -704,6 +705,15 @@ NCAm build system documentation\n\
                      extapi/openxcas/libOpenXCASAPI.a library that is shipped\n\
                      with NCAm is compiled for MIPSEL.\n\
 \n\
+   USE_GXAPI=1    - Request support for GXAPI (GX)\n\
+                    box. The variables that control the build are:\n\
+                         GXAPI_FLAGS='$(DEFAULT_GXAPI_FLAGS)'\n\
+                         GXAPI_CFLAGS='$(DEFAULT_GXAPI_FLAGS)'\n\
+                         GXAPI_LDFLAGS='$(DEFAULT_GXAPI_FLAGS)'\n\
+                         GXAPI_LIB='$(DEFAULT_GXAPI_LIB)'\n\
+                     Using USE_GXAPI=1 adds to '-gxapi' to PLUS_TARGET.\n\
+                     extapi/goceed/liboscam_gxapi.a library that is shipped\n\
+\n\
    USE_MCA=1      - Request support for Matrix Cam Air (MCA).\n\
                     The variables that control the build are:\n\
                          MCA_FLAGS='$(DEFAULT_MCA_FLAGS)'\n\
@@ -802,6 +812,7 @@ NCAm build system documentation\n\
     make dm500         - Builds NCAm for Dreambox (DM500)\n\
     make sh4           - Builds NCAm for SH4 boxes\n\
     make azbox         - Builds NCAm for AZBox STBs\n\
+    make gx            - Builds NCAm for GX boxes\n\
     make mca           - Builds NCAm for Matrix Cam Air (MCA)\n\
     make coolstream    - Builds NCAm for Coolstream HD1\n\
     make coolstream2   - Builds NCAm for Coolstream HD2\n\
@@ -836,6 +847,8 @@ NCAm build system documentation\n\
      make CROSS=arm-pnx8400-linux-uclibcgnueabi- USE_COOLAPI2=1\n\n\
    Build NCAm for MIPSEL with AZBOX support:\n\
      make CROSS=mipsel-linux-uclibc- USE_AZBOX=1\n\n\
+   Build NCAm for GX with GXAPI support:\n\
+     make CROSS=csky-linux- USE_GXAPI=1\n\n\
    Build NCAm for ARM with MCA support:\n\
      make CROSS=arm-none-linux-gnueabi- USE_MCA=1\n\n\
    Build NCAm for Android with STAPI and changed configuration directory:\n\

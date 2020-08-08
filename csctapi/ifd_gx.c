@@ -84,7 +84,7 @@ static int32_t gxapi_init(struct s_reader *reader)
 		param.auto_parity = 1;
 		//param.debug_info = O_BDBG|O_CDBG;
 
-		crdr_data->smc_handle =  ncam_gxapi_open_smc(SMC_DEV_NAME,&param);
+		crdr_data->smc_handle =  oscam_gxapi_open_smc(SMC_DEV_NAME,&param);
 		if(crdr_data->smc_handle <= 0)
 		{
 			DEBF("Error %s;%d \n",__FUNCTION__,__LINE__);
@@ -115,7 +115,7 @@ static int32_t gxapi_close(struct s_reader *reader)
 
 	}
 
-	if(ncam_gxapi_close_smc(crdr_data->smc_handle) < 0)
+	if(oscam_gxapi_close_smc(crdr_data->smc_handle) < 0)
 	{
 		DEBF("%s;%d \n", __FUNCTION__, __LINE__);
 		return ERROR;
@@ -139,7 +139,7 @@ static int32_t gxapi_getstatus(struct s_reader *reader, int32_t *in)
 
 	*in = 0;
 
-	ret = ncam_gxapi_get_status(crdr_data->smc_handle, &state);
+	ret = oscam_gxapi_get_status(crdr_data->smc_handle, &state);
 	if(ret < 0)
 	{
 		DEBF("Error:%s !!ret = %d \n",__FUNCTION__,ret);
@@ -167,7 +167,7 @@ static int32_t gxapi_reset(struct s_reader *reader, ATR *atr)
 		return ERROR;
 	}
 
-	ret = ncam_gxapi_reset(crdr_data->smc_handle, atrbuf, 33/*sizeof(atrbuf)*/, &retLen);
+	ret = oscam_gxapi_reset(crdr_data->smc_handle, atrbuf, 33/*sizeof(atrbuf)*/, &retLen);
 	if(ret >= 0)
 	{
 		DEBF("STB_SC_reset OK!! \n");
@@ -239,7 +239,7 @@ static int32_t gxapi_transmit(struct s_reader *reader, unsigned char *sent, uint
 		return ERROR;
 	}
 
-	ret = ncam_gxapi_send_cmd(crdr_data->smc_handle, sent, size);
+	ret = oscam_gxapi_send_cmd(crdr_data->smc_handle, sent, size);
 	if(ret < 0)
 	{
 		ERRF("Error:%s !!ret = %d \n",__FUNCTION__,ret);
@@ -272,7 +272,7 @@ static int32_t gxapi_receive(struct s_reader *reader, unsigned char *sent, uint3
 
 	if(RecvReserved == 0)
 	{
-		ret = ncam_gxapi_get_reply(crdr_data->smc_handle, Recvbuf, SMC_RECV_MAX);
+		ret = oscam_gxapi_get_reply(crdr_data->smc_handle, Recvbuf, SMC_RECV_MAX);
 		if(ret < 0)
 		{
 			ERRF("Error:%s !!ret = %d \n", __FUNCTION__, ret);
@@ -288,7 +288,7 @@ static int32_t gxapi_receive(struct s_reader *reader, unsigned char *sent, uint3
 	RecvReserved -= size;
 	ret = size;
 #else
-	ret = ncam_gxapi_get_reply(crdr_data->smc_handle, sent, size);
+	ret = oscam_gxapi_get_reply(crdr_data->smc_handle, sent, size);
 	if(ret < 0)
 	{
 		ERRF("Error:%s !!ret = %d \n",__FUNCTION__,ret);
@@ -356,7 +356,7 @@ static int32_t gxapi_writesettings(struct s_reader *reader, struct s_cardreader_
 	config.time.wdt = 100 * s->F / s->D;
 	//configed to auto when open, so just ignore it
 	//cs_log("bud = %d, egt = %d,tgt = %d,twdt = %d,wdt = %d,etu = %d\n",config.time.baud_rate,config.time.egt,config.time.tgt,config.time.twdt,config.time.wdt,config.time.etu);
-	ret = ncam_gxapi_configure_all(crdr_data->smc_handle, &config);
+	ret = oscam_gxapi_configure_all(crdr_data->smc_handle, &config);
 	if(ret < 0)
 	{
 		DEBF("%s;%d \n", __FUNCTION__, __LINE__);
@@ -383,7 +383,7 @@ static int32_t gxapi_set_baudrate(struct s_reader *reader, unsigned int baudrate
 	config.time.etu = (float)372/((float)baudrate/9600);
 	//DEBF("goxceed_set_baudrate %d \n", config.time.etu);
 
-	ret = ncam_gxapi_configure_all(crdr_data->smc_handle,&config);
+	ret = oscam_gxapi_configure_all(crdr_data->smc_handle,&config);
 	if(ret < 0)
 	{
 		DEBF("%s;%d \n",__FUNCTION__,__LINE__);
@@ -420,7 +420,7 @@ static int32_t gxapi_setparity (struct s_reader *reader, uchar parity)
 		return ERROR;
 	}
 
-	ret = ncam_gxapi_configure_all(crdr_data->smc_handle,&config);
+	ret = oscam_gxapi_configure_all(crdr_data->smc_handle,&config);
 	if(ret < 0)
 	{
 		DEBF("Error,%s;%d \n",__FUNCTION__,__LINE__);

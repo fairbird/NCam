@@ -217,25 +217,25 @@ typedef struct
 /*****************************function define*******************************/
 
 #if defined(HAVE_DVBAPI) && defined(WITH_GXAPI)
-extern int ncam_gxapi_init(void);
-extern int ncam_gxapi_close(void);
-extern int ncam_gxapi_open_filter(filteropen_t *OpenParam_p, unsigned int *Handle_p);
-extern int ncam_gxapi_close_filter(int Handle);
-extern int ncam_gxapi_flush_filter(int Handle);
-extern int ncam_gxapi_get_slotid_by_pid(unsigned short pid, int demux_idx);
-extern int ncam_gxapi_open_descrambler(descrambleropen_t *OpenParam_p, int *Handle_p);
-extern int ncam_gxapi_close_descrambler(int Handle);
-extern int ncam_gxapi_set_descrambler(int Handle, descramblerset_t *DescramblerData_p);
+extern int oscam_gxapi_init(void);
+extern int oscam_gxapi_close(void);
+extern int oscam_gxapi_open_filter(filteropen_t *OpenParam_p, unsigned int *Handle_p);
+extern int oscam_gxapi_close_filter(int Handle);
+extern int oscam_gxapi_flush_filter(int Handle);
+extern int oscam_gxapi_get_slotid_by_pid(unsigned short pid, int demux_idx);
+extern int oscam_gxapi_open_descrambler(descrambleropen_t *OpenParam_p, int *Handle_p);
+extern int oscam_gxapi_close_descrambler(int Handle);
+extern int oscam_gxapi_set_descrambler(int Handle, descramblerset_t *DescramblerData_p);
 
-extern int ncam_gxapi_open_smc(const char *name, GxSmcParams *param);
-extern int ncam_gxapi_reset(int handle, uint8_t *AtrBuf, size_t BufSize, size_t *RetLen);
-extern int ncam_gxapi_configure(int handle, const GxSmcTimeParams *time);
-extern int ncam_gxapi_configure_all(int handle, const GxSmcConfigs *config);
-extern int ncam_gxapi_send_cmd(int handle, const uint8_t *Cmd, size_t CmdLen);
-extern int ncam_gxapi_get_reply_entend(int handle, uint8_t *ReplyBuf, size_t BufSize, size_t timeout);
-extern int ncam_gxapi_get_reply(int handle, uint8_t *ReplyBuf, size_t BufSize);
-extern int ncam_gxapi_get_status (int handle, GxSmcCardStatus *state);
-extern int ncam_gxapi_close_smc(int handle);
+extern int oscam_gxapi_open_smc(const char *name, GxSmcParams *param);
+extern int oscam_gxapi_reset(int handle, uint8_t *AtrBuf, size_t BufSize, size_t *RetLen);
+extern int oscam_gxapi_configure(int handle, const GxSmcTimeParams *time);
+extern int oscam_gxapi_configure_all(int handle, const GxSmcConfigs *config);
+extern int oscam_gxapi_send_cmd(int handle, const uint8_t *Cmd, size_t CmdLen);
+extern int oscam_gxapi_get_reply_entend(int handle, uint8_t *ReplyBuf, size_t BufSize, size_t timeout);
+extern int oscam_gxapi_get_reply(int handle, uint8_t *ReplyBuf, size_t BufSize);
+extern int oscam_gxapi_get_status (int handle, GxSmcCardStatus *state);
+extern int oscam_gxapi_close_smc(int handle);
 #endif
 
 #endif

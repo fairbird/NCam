@@ -394,11 +394,19 @@ enum stream_type
 	STREAM_SUBTITLE
 };
 
-#define MAX_DEMUX       16 // Max number of demuxes supported by NCam - each channel/service occupies one demux
+#ifdef WITH_GXAPI
+#define MAX_DEMUX       16
+#else
+#define MAX_DEMUX       32 // Max number of demuxes supported by NCam - each channel/service occupies one demux
+#endif
 #define MAX_ECM_PIDS    24 // Max number of ECM pids per demux
 #define MAX_EMM_PIDS    24 // Max number of EMM pids per demux
 #define MAX_STREAM_PIDS 32 // Max number of pids other than ECM and EMM (e.g. audio, video, subtitle, etc) per demux (hardware descramblers might have a capacity of 30 pids)
+#ifdef WITH_GXAPI
 #define MAX_FILTER      48
+#else
+#define MAX_FILTER      64
+#endif
 
 #define PTINUM          10
 #define SLOTNUM         20
