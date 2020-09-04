@@ -8093,28 +8093,74 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 #if defined(WITH_WI) && defined(WITH_EXTENDED_CW)
 			{
 				uint8_t cw[4][16];
-#if 0		//	CW 의 Audio 와 Video 가 바뀌어서 전달되는 경우 디버깅
-				memcpy(cw[1], er->cw, 16);
-				if(er->cw_ex.mode == CW_MODE_MULTIPLE_CW)
+				if(er->cw_ex.mode != demux[i].ECMpids[j].useMultipleIndices)
 				{
-					memcpy(cw[0], er->cw_ex.audio, 16);
+					uint32_t idx;
+
+					for(k = 0; k < demux[i].STREAMpidcount; k++)
+					{
+						if(demux[i].ECMpids[j].useMultipleIndices)
+						{
+							idx = demux[i].ECMpids[j].index[k];
+						}
+						else
+						{
+							idx = demux[i].ECMpids[j].index[0];
+						}
+						dvbapi_set_pid(i, k, idx, false, false, er->msgid); // disable streampid
+					}
+
+					for(k = 0; k < MAX_STREAM_INDICES; k++)
+					{
+						demux[i].ECMpids[j].index[k] = INDEX_INVALID;
+					}
 				}
 
-				cs_log_dump(cw, 4 * 16, "Copied CW");
-#else
-				if(er->cw_ex.algo == CW_ALGO_AES128)
+				if(er->cw_ex.mode == CW_MODE_MULTIPLE_CW)
 				{
-					memcpy(cw, er->cw_ex.session_word, 32);
+					int32_t key_pos_a = 0;
+					demux[i].ECMpids[j].useMultipleIndices = 1;
+
+					for(k = 0; k < demux[i].STREAMpidcount; k++)
+					{
+						if(demux[i].STREAMpidsType[k] == STREAM_VIDEO)
+						{
+							if (k < 2)
+							{
+								memcpy(cw[k], er->cw, 16);
+							}
+							else
+							{
+								memcpy(cw[1], er->cw, 16);
+							}
+							//cs_log_dbg(D_DVBAPI, "STREAM_VIDEO: demux[i]:%d k:%d",i, k);
+							//cs_log_dump_dbg(D_DVBAPI, cw[k], 16, "VIDEO CW :");
+						}
+						else if(demux[i].STREAMpidsType[k] == STREAM_AUDIO)
+						{
+							if(key_pos_a < 4)
+							{
+								memcpy(cw[k], er->cw_ex.audio[key_pos_a], 16);
+								key_pos_a++;
+								//cs_log_dbg(D_DVBAPI, "STREAM_AUDIO: demux[i]:%d k:%d key_pos_audio:%d",i, k, key_pos_a);
+								//cs_log_dump_dbg(D_DVBAPI, cw[k], 16, "AUDIO CW :");
+							}
+						}
+					}
 				}
 				else
 				{
-					memcpy(cw, er->cw, 16);
-					if(er->cw_ex.mode == CW_MODE_MULTIPLE_CW)
+					demux[i].ECMpids[j].useMultipleIndices = 0;
+
+					if(er->cw_ex.algo == CW_ALGO_AES128)
 					{
-						memcpy(cw[1], er->cw_ex.audio, 16);
+						memcpy(cw, er->cw_ex.session_word, 32);
+					}
+					else
+					{
+						memcpy(cw, er->cw, 16);
 					}
 				}
-#endif
 				stapi_write_cw(i, (uint8_t*) cw, demux[i].STREAMpids, demux[i].STREAMpidcount, demux[i].pmt_file, er->cw_ex.mode, er->cw_ex.algo);
 			}
 #else
