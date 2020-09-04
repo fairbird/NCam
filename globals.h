@@ -1581,6 +1581,7 @@ struct s_reader
 	uint8_t         cak7_camstate;
 	uint8_t         cak7_aes_key[32];
 	uint8_t         cak7_aes_iv[16];
+	struct timeb    last_refresh;
 #endif
 #ifdef CS_CACHEEX
 	CECSP           cacheex; //CacheEx Settings
