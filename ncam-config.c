@@ -1483,7 +1483,7 @@ void read_cccamcfg(char *file)
 	if(!fp) { return; }
 
 	int32_t port, c = 0, n = 0, l = 0, r = 0;
-	char token[MAXLINESIZE], line[MAXLINESIZE], typ, host[128], uname[64], upass[64];
+	char token[MAXLINESIZE], line[MAXLINESIZE], typ, host[128], u_name[64], u_pass[64];
 
 	struct s_reader *rdr;
 
@@ -1503,7 +1503,7 @@ void read_cccamcfg(char *file)
 			char emus[4] = "\x0";
 #endif
 #if defined(MODULE_CAMD35) || defined(MODULE_RADEGAST)
-			int32_t caid = 0, prid = 0;
+			int32_t u_caid = 0, u_prid = 0;
 #endif
 #if defined(MODULE_NEWCAMD) || defined(MODULE_CAMD35) || defined(MODULE_RADEGAST)
 			int32_t reshare = -1;
@@ -1513,14 +1513,14 @@ void read_cccamcfg(char *file)
 			case 'C':
 #ifdef MODULE_CCCAM
 				proto = "cccam";
-				ret = sscanf(line, "%c:%s%d%s%s%s", &typ, host, &port, uname, upass, emus);
+				ret = sscanf(line, "%c:%s%d%s%s%s", &typ, host, &port, u_name, u_pass, emus);
 				paracount = 5;
 #endif
 				break;
 			case 'N':
 #ifdef MODULE_NEWCAMD
 				proto = "newcamd";
-				ret = sscanf(line, "%c:%s%d%s%s%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%d", &typ, host, &port, uname, upass,
+				ret = sscanf(line, "%c:%s%d%s%s%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%d", &typ, host, &port, u_name, u_pass,
 							 &ncd_key[0], &ncd_key[1], &ncd_key[2], &ncd_key[3], &ncd_key[4],
 							 &ncd_key[5], &ncd_key[6], &ncd_key[7], &ncd_key[8], &ncd_key[9],
 							 &ncd_key[10], &ncd_key[11], &ncd_key[12], &ncd_key[13], &reshare);
@@ -1530,14 +1530,14 @@ void read_cccamcfg(char *file)
 			case 'L':
 #ifdef MODULE_CAMD35
 				proto = "camd35";
-				ret = sscanf(line, "%c:%s%d%s%s%x%x%d", &typ, host, &port, uname, upass, &caid, &prid, &reshare);
+				ret = sscanf(line, "%c:%s%d%s%s%x%x%d", &typ, host, &port, u_name, u_pass, &u_caid, &u_prid, &reshare);
 				paracount = 5;
 #endif
 				break;
 			case 'R':
 #ifdef MODULE_RADEGAST
 				proto = "radegast";
-				ret = sscanf(line, "%c:%s%d%x%x%d", &typ, host, &port, &caid, &prid, &reshare);
+				ret = sscanf(line, "%c:%s%d%x%x%d", &typ, host, &port, &u_caid, &u_prid, &reshare);
 				paracount = 3;
 #endif
 				break;
@@ -1550,8 +1550,8 @@ void read_cccamcfg(char *file)
 			while((prdr = ll_iter_next(&itr)))
 			{
 				if(strcasecmp(prdr->device, host) == 0 && prdr->r_port == port &&
-					strcmp(prdr->r_usr, uname) == 0 && strcmp(prdr->r_pwd, upass) == 0 &&
-					host[0] && port && uname[0] && upass[0])
+					strcmp(prdr->r_usr, u_name) == 0 && strcmp(prdr->r_pwd, u_pass) == 0 &&
+					host[0] && port && u_name[0] && u_pass[0])
 				{
 					found = 1;
 					break;
@@ -1567,12 +1567,12 @@ void read_cccamcfg(char *file)
 			chk_reader("protocol", proto, rdr);
 			cs_strncpy(rdr->device, host, sizeof(rdr->device));
 			rdr->r_port = port;
-			cs_strncpy(rdr->r_usr, uname, sizeof(rdr->r_usr));
-			cs_strncpy(rdr->r_pwd, upass, sizeof(rdr->r_pwd));
+			cs_strncpy(rdr->r_usr, u_name, sizeof(rdr->r_usr));
+			cs_strncpy(rdr->r_pwd, u_pass, sizeof(rdr->r_pwd));
 			if(line[0] == 'R')
 				{ snprintf(token, sizeof(token), "%s_%d", host, port); }
 			else
-				{ snprintf(token, sizeof(token), "%s_%d_%s", host, port, uname); }
+				{ snprintf(token, sizeof(token), "%s_%d_%s", host, port, u_name); }
 			cs_strncpy(rdr->label, token, sizeof(rdr->label));
 			if(rdr->grp < 1) { rdr->grp = 0x8000000000000000ULL; }
 			rdr->audisabled = 1;
@@ -1615,14 +1615,14 @@ void read_cccamcfg(char *file)
 #ifdef MODULE_CCCAM
 				rdr->cc_reshare = reshare;	
 #endif
-				if(caid)
+				if(u_caid)
 				{
-					snprintf(token, sizeof(token), "%x", caid);
+					snprintf(token, sizeof(token), "%x", u_caid);
 					chk_caidtab(token, &rdr->ctab);
 				}
-				if(prid)
+				if(u_prid)
 				{
-					snprintf(token, sizeof(token), "%x:%x", caid, prid);
+					snprintf(token, sizeof(token), "%x:%x", u_caid, u_prid);
 					chk_ftab(token, &rdr->ftab);
 				}
 #endif
@@ -1633,14 +1633,14 @@ void read_cccamcfg(char *file)
 #ifdef MODULE_CCCAM
 				rdr->cc_reshare = reshare;	
 #endif
-				if(caid)
+				if(u_caid)
 				{
-					snprintf(token, sizeof(token), "%x", caid);
+					snprintf(token, sizeof(token), "%x", u_caid);
 					chk_caidtab(token, &rdr->ctab);
 				}
-				if(prid)
+				if(u_prid)
 				{
-					snprintf(token, sizeof(token), "%x:%x", caid, prid);
+					snprintf(token, sizeof(token), "%x:%x", u_caid, u_prid);
 					chk_ftab(token, &rdr->ftab);
 				}
 #endif
