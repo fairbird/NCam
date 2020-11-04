@@ -236,7 +236,7 @@ elseif (NCAmOperatingSystem MATCHES "FriendlyARM")
 endif (NCAmOperatingSystem MATCHES "Linux")
 
 set (CS_CONFDIR ${DEFAULT_CS_CONFDIR} CACHE STRING "Default path for the config files")
-add_definitions ("-DCS_CONFDIR=\\\"${CS_CONFDIR}\\\"")
+add_definitions ("-D'CS_CONFDIR=\"${CS_CONFDIR}\"'")
 
 if (dl_link)
 	add_definitions("-DWITH_DL")
