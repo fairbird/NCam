@@ -1154,7 +1154,7 @@ static int32_t dvbapi_get_descrambler_info(void)
 	// Ask device for exact number of ca descramblers
 	snprintf(device_path2, sizeof(device_path2), devices[selected_box].ca_device, ca_offset);
 	snprintf(device_path, sizeof(device_path), devices[selected_box].path, 0);
-	cs_strncpy(device_path + strlen(device_path), device_path2, strlen(device_path2));
+	cs_strncpy(device_path + strlen(device_path), device_path2, strlen(device_path2) + 1);
 
 	if((fd = open(device_path, O_RDWR | O_NONBLOCK)) < 0)
 	{
@@ -1245,7 +1245,7 @@ static int32_t dvbapi_detect_api(void)
 		{
 			snprintf(device_path2, sizeof(device_path2), devices[i].demux_device, 0);
 			snprintf(device_path, sizeof(device_path), devices[i].path, n);
-			cs_strncpy(device_path + strlen(device_path), device_path2, strlen(device_path2));
+			cs_strncpy(device_path + strlen(device_path), device_path2, strlen(device_path2) + 1);
 
 			filtercount = 0;
 #ifdef WITH_WI
@@ -1403,7 +1403,7 @@ int32_t dvbapi_open_device(int32_t type, int32_t num, int32_t adapter)
 	{
 		snprintf(device_path2, sizeof(device_path2), devices[selected_box].demux_device, num);
 		snprintf(device_path, sizeof(device_path), devices[selected_box].path, adapter);
-		cs_strncpy(device_path + strlen(device_path), device_path2, strlen(device_path2));
+		cs_strncpy(device_path + strlen(device_path), device_path2, strlen(device_path2) + 1);
 	}
 	else
 	{
@@ -1423,7 +1423,7 @@ int32_t dvbapi_open_device(int32_t type, int32_t num, int32_t adapter)
 
 		snprintf(device_path2, sizeof(device_path2), devices[selected_box].ca_device, num + ca_offset);
 		snprintf(device_path, sizeof(device_path), devices[selected_box].path, adapter);
-		cs_strncpy(device_path + strlen(device_path), device_path2, strlen(device_path2));
+		cs_strncpy(device_path + strlen(device_path), device_path2, strlen(device_path2) + 1);
 	}
 
 	if(cfg.dvbapi_boxtype == BOXTYPE_SAMYGO)
@@ -5544,8 +5544,8 @@ void event_handler(int32_t UNUSED(signal))
 			continue;
 		}
 #endif
-		cs_strncpy(dest, TMPDIR, strlen(TMPDIR));
-		cs_strncpy(dest + strlen(dest), dp->d_name, strlen(dp->d_name));
+		cs_strncpy(dest, TMPDIR, sizeof(TMPDIR));
+		cs_strncpy(dest + strlen(dest), dp->d_name, strlen(dp->d_name) + 1);
 		pmt_fd = open(dest, O_RDONLY);
 		if(pmt_fd < 0)
 		{
@@ -8077,7 +8077,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 		case STAPI:
 #if defined(WITH_WI) && defined(WITH_EXTENDED_CW)
 			{
-				uint8_t cw[4][16];
+				uint8_t cw[4][16] = {{0}};
 				if(er->cw_ex.mode != demux[i].ECMpids[j].useMultipleIndices)
 				{
 					uint32_t idx;

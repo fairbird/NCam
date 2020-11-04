@@ -6712,7 +6712,7 @@ static char *send_ncam_script(struct templatevars * vars, struct uriparams * par
 					if((scriptparam != NULL) && (sizeof(scriptparam) > 0))
 					{
 						cs_strncpy(system_str + strlen(system_str), " ", 2);
-						cs_strncpy(system_str + strlen(system_str), scriptparam, strlen(scriptparam));
+						cs_strncpy(system_str + strlen(system_str), scriptparam, strlen(scriptparam) + 1);
 					}
 
 					fp = popen(system_str,"r");
