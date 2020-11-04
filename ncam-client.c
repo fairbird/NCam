@@ -106,38 +106,12 @@ const char *client_get_proto(struct s_client *cl)
 
 #endif
 		case 'c':
-#ifdef MODULE_CCCAM
-			if(cccam_client_multics_mode(cl))
-			{
-				if(cl->cc && ((struct cc_data *)cl->cc)->multics_mode)
-				{
-					switch(((struct cc_data *)cl->cc)->multics_mode)
-					{
-						case 2:
-							ctyp = "cccam_mcs";
-							break;
-
-						case 3:
-							ctyp = "cccam_mcs_HB";
-							break;
-
-						default:
-							break;
-					}
-				}
-			}
-			else
-#endif 
-			if(cccam_client_newbox_mode(cl))
-			{
-				ctyp = "cccam";
-				break;
-			}
-			else if(cccam_client_extended_mode(cl))
+			if(cccam_client_extended_mode(cl))
 			{
 				ctyp = "cccam_ext";
 				break;
 			} /* fallthrough */
+
 		default:
 			ctyp = get_module(cl)->desc;
 			break;

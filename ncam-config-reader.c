@@ -110,7 +110,9 @@ static void protocol_fn(const char *token, char *value, void *setting, FILE *f)
 			{ "scam",       R_SCAM },
 			{ "ghttp",      R_GHTTP },
 			{ "mgcamd",     R_NEWCAMD },
+			{ "mgcamd_mcs", R_NEWCAMD },
 			{ "newcamd",    R_NEWCAMD },
+			{ "newcamd_mcs",R_NEWCAMD },
 			{ "newcamd525", R_NEWCAMD },
 			{ "newcamd524", R_NEWCAMD },
 			{ "drecas",     R_DRECAS },
@@ -140,7 +142,7 @@ static void protocol_fn(const char *token, char *value, void *setting, FILE *f)
 		if(rdr->typ == R_NEWCAMD)
 		{
 			rdr->ncd_proto = streq(value, "newcamd524") ? NCD_524 : NCD_525;
-			rdr->ncd_mgcamd = streq(value, "mgcamd") ? 1 : 0;
+			rdr->ncd_mgcamd = streq(value, "mgcamd") ? 1 : streq(value, "mgcamd_mcs") ? 1 : 0;
 		}
 		if(!rdr->typ)
 			{
@@ -149,7 +151,7 @@ static void protocol_fn(const char *token, char *value, void *setting, FILE *f)
 			}
 		return;
 	}
-	fprintf_conf(f, token, "%s\n", reader_get_type_desc(rdr, 0));
+	fprintf_conf(f, token, "%s\n", reader_get_type_desc(rdr, 1));
 }
 
 static void device_fn(const char *token, char *value, void *setting, FILE *f)

@@ -2764,7 +2764,6 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 				// multics server response
 				if(data[33] == 'M' && data[34] == 'C' && data[35] == 'S')
 				{
-					cc->multics_mode = 2; // multics server finaly confirmed.
 					if (data[31] == 'H' && data[32] == 'B')
 					{
 						cc->multics_mode = 3;
@@ -2773,6 +2772,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 					}
 					else
 					{
+						cc->multics_mode = 2;
 						memcpy(cc->multics_version, data+37, 2);
 						cs_log_dbg(D_READER, "multics detected: %s!", getprefix());
 					}
@@ -4899,7 +4899,7 @@ bool cccam_client_extended_mode(struct s_client *cl)
 
 bool cccam_client_multics_mode(struct s_client *cl)
 {
-	return cl && cl->cc && ((struct cc_data *)cl->cc)->multics_mode > 1;
+	return cl && cl->cc && ((struct cc_data *)cl->cc)->multics_mode > 0;
 }
 
 bool cccam_client_newbox_mode(struct s_client *cl)

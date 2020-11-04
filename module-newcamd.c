@@ -519,6 +519,21 @@ static int32_t connect_newcamd_server(void)
 		return -2;
 	}
 
+	// detect multics seed
+	uint8_t a = (keymod[0] ^ 'M') + keymod[1] + keymod[2];
+	uint8_t b = keymod[4] + (keymod[5] ^ 'C') + keymod[6];
+	uint8_t c = keymod[8] + keymod[9] + (keymod[10] ^ 'S');
+
+	if((a == keymod[3]) && (b == keymod[7]) && (c == keymod[11]))
+	{
+		cl->reader->ncd_multics_mode = 1; // detected multics seed
+		cs_log_dbg(D_READER, "multics seed detected: %s", cl->reader->r_usr);
+	}
+	else
+	{
+		cl->reader->ncd_multics_mode = 0;
+	}
+
 	cs_log_dump_dbg(D_CLIENT, keymod, sizeof(cl->reader->ncd_key), "server init sequence:");
 	nc_des_login_key_get(keymod, cl->reader->ncd_key, sizeof(cl->reader->ncd_key), key);
 

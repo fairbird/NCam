@@ -1676,6 +1676,7 @@ struct s_reader
 	int8_t          ncd_stealth;
 	int8_t          currenthops;                    // number of hops (cccam & gbox)
 	int8_t          sh4_stb;                        // to set sh4 type box used to identify sci type.
+	int8_t          ncd_multics_mode;
 #ifdef MODULE_CCCAM
 	char            cc_version[7];                  // cccam version
 	char            cc_build[7];                    // cccam build number

@@ -1968,7 +1968,7 @@ static char *send_ncam_reader(struct templatevars *vars, struct uriparams *param
 	ll_iter_reset(&itr); //going to iterate all configured readers
 	while((rdr = ll_iter_next(&itr)))
 	{
-		const char *proto = reader_get_type_desc(rdr, 1); // set extended flag, it will be further processed with cccam_client_extended_mode
+		const char *proto = reader_get_type_desc(rdr, 0);
 		struct s_client *cl = rdr->client;
 		if(rdr->label[0] && rdr->typ && !rdr->cccam_cfg_save)
 		{
@@ -3928,37 +3928,26 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 			memset(mcs_ver, 0, sizeof(mcs_ver));
 			mcs_ver[0] = 0x30; // version 0
 			uint8_t nbx_ver = 0;
-			if (cc->multics_version[0] | (cc->multics_version[1] << 8))
+			if(cc->multics_mode > 1 && (cc->multics_version[0] | (cc->multics_version[1] << 8)))
 			{
-				if(cc->multics_mode > 1)
-				{
-					snprintf(mcs_ver, sizeof(mcs_ver), "%d", cc->multics_version[0] | (cc->multics_version[1] << 8));
-				}
+				snprintf(mcs_ver, sizeof(mcs_ver), "%d", cc->multics_version[0] | (cc->multics_version[1] << 8));
 			}
-			else if (cc->newbox_version[0] | (cc->newbox_version[1] << 8))
+			else if(cc->newbox_mode > 1 && (cc->newbox_version[0] | (cc->newbox_version[1] << 8)))
 			{
 				nbx_ver = cc->newbox_version[0] | (cc->newbox_version[1] << 8);
 			}
 
 			tpl_printf(vars, TPLADD, "CLIENTPROTO", "%s (%s-%s)", (char *)proto, cc->remote_version, cc->remote_build);
 			tpl_printf(vars, TPLADD, "CLIENTPROTOSORT", "%s (%s-%s)", (char *)proto, cc->remote_version, cc->remote_build);
-			if(cccam_client_multics_mode(cl))
+			if(cc->multics_mode == 2)
 			{
-				switch(cc->multics_mode)
-				{
-					case 2:
-						tpl_printf(vars, TPLADD, "CLIENTPROTOTITLE", "Multics, revision r%s", mcs_ver);
-						break;
-
-					case 3:
-						tpl_printf(vars, TPLADD, "CLIENTPROTOTITLE", "Multics Hellboy, revision r%s", mcs_ver);
-						break;
-
-					default:
-						break;
-				}
+				tpl_printf(vars, TPLADD, "CLIENTPROTOTITLE", "Multics, revision r%s", mcs_ver);
 			}
-			else if(cccam_client_newbox_mode(cl))
+			else if(cc->multics_mode == 3)
+			{
+				tpl_printf(vars, TPLADD, "CLIENTPROTOTITLE", "Multics Hellboy, revision r%s", mcs_ver);
+			}
+			else if(cc->newbox_mode == 2)
 			{
 				tpl_printf(vars, TPLADD, "CLIENTPROTOTITLE", "Newbox, revision r%d", nbx_ver);
 			}
@@ -3970,86 +3959,77 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 			if(cfg.http_showpicons)
 			{
 				char picon_name[32];
-
-				int8_t is_other_proto = 0;
-				if(cccam_client_multics_mode(cl) || cccam_client_newbox_mode(cl)) { is_other_proto = 1; }
-
-				switch(is_other_proto)
+				if(cc->multics_mode > 1)
 				{
-					case 1:
-						if(cccam_client_multics_mode(cl))
+					snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%s_r_%s", proto, mcs_ver);
+					if(picon_exists(picon_name))
+					{
+						if(!apicall)
 						{
-							snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%s_r_%s", proto, mcs_ver);
-							if(picon_exists(picon_name))
-							{
-								if (!apicall)
-								{
-									tpl_addVar(vars, TPLADD, "CCA", (char *)proto);
-									tpl_addVar(vars, TPLADD, "CCB", "r");
-									tpl_printf(vars, TPLADD, "CCC", "%s", mcs_ver);
-									tpl_addVar(vars, TPLADD, "CCD", "");
-									tpl_addVar(vars, TPLADD, "CLIENTPROTO", tpl_getTpl(vars, "PROTOCCCAMPIC"));
-								}
-								else
-								{
-									tpl_printf(vars, TPLADDONCE, "PROTOICON", "%s_r_%s", proto, mcs_ver);
-								}
-							}
-							else
-							{
-								tpl_printf(vars, TPLADD, "CLIENTPROTOTITLE", "Multics, revision r%s missing icon: IC_%s_r_%s.tpl",
-									mcs_ver, proto, mcs_ver);
-							}
-						}
-						else if(cccam_client_newbox_mode(cl))
-						{
-							snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%s_r_%d", (char *)proto, nbx_ver);
-							if(picon_exists(picon_name))
-							{
-								if (!apicall)
-								{
-									tpl_addVar(vars, TPLADD, "CCA", (char *)proto);
-									tpl_addVar(vars, TPLADD, "CCB", "r");
-									tpl_printf(vars, TPLADD, "CCC", "%d", nbx_ver);
-									tpl_addVar(vars, TPLADD, "CCD", "");
-									tpl_addVar(vars, TPLADD, "CLIENTPROTO", tpl_getTpl(vars, "PROTOCCCAMPIC"));
-								}
-								else
-								{
-									tpl_printf(vars, TPLADDONCE, "PROTOICON", "%s_r_%d",(char *)proto, nbx_ver);
-								}
-							}
-							else
-							{
-								tpl_printf(vars, TPLADD, "CLIENTPROTOTITLE", "Newbox, revision r%d missing icon: IC_%s_r_%d.tpl",
-									 nbx_ver, (char *)proto, nbx_ver);
-							}
-						}
-						break;
-
-					default:
-						snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%s_%s_%s", (char *)proto, cc->remote_version, cc->remote_build);
-						if(picon_exists(picon_name))
-						{
-							if (!apicall)
-							{
-								tpl_addVar(vars, TPLADD, "CCA", (char *)proto);
-								tpl_addVar(vars, TPLADD, "CCB", cc->remote_version);
-								tpl_addVar(vars, TPLADD, "CCC", cc->remote_build);
-								tpl_addVar(vars, TPLADD, "CCD", cc->extended_mode ? cc->remote_ncam : "");
-								tpl_addVar(vars, TPLADD, "CLIENTPROTO", tpl_getTpl(vars, "PROTOCCCAMPIC"));
-							}
-							else
-							{
-								tpl_printf(vars, TPLADDONCE, "PROTOICON", "%s_%s_%s",(char *)proto, cc->remote_version, cc->remote_build);
-							}
+							tpl_addVar(vars, TPLADD, "CCA", (char *)proto);
+							tpl_addVar(vars, TPLADD, "CCB", "r");
+							tpl_printf(vars, TPLADD, "CCC", "%s", mcs_ver);
+							tpl_addVar(vars, TPLADD, "CCD", "");
+							tpl_addVar(vars, TPLADD, "CLIENTPROTO", tpl_getTpl(vars, "PROTOCCCAMPIC"));
 						}
 						else
 						{
-							tpl_printf(vars, TPLADD, "CLIENTPROTOTITLE", "%s missing icon: IC_%s_%s_%s.tpl",
-								 cc->extended_mode ? cc->remote_ncam : "", (char *)proto, cc->remote_version, cc->remote_build);
+							tpl_printf(vars, TPLADDONCE, "PROTOICON", "%s_r_%s", proto, mcs_ver);
 						}
-						break;
+					}
+					else
+					{
+						tpl_printf(vars, TPLADD, "CLIENTPROTOTITLE", "Multics, revision r%s missing icon: IC_%s_r_%s.tpl",
+							mcs_ver, proto, mcs_ver);
+					}
+				}
+				else if(cc->newbox_mode == 2)
+				{
+					snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%s_r_%d", (char *)proto, nbx_ver);
+					if(picon_exists(picon_name))
+					{
+						if(!apicall)
+						{
+							tpl_addVar(vars, TPLADD, "CCA", (char *)proto);
+							tpl_addVar(vars, TPLADD, "CCB", "r");
+							tpl_printf(vars, TPLADD, "CCC", "%d", nbx_ver);
+							tpl_addVar(vars, TPLADD, "CCD", "");
+							tpl_addVar(vars, TPLADD, "CLIENTPROTO", tpl_getTpl(vars, "PROTOCCCAMPIC"));
+						}
+						else
+						{
+							tpl_printf(vars, TPLADDONCE, "PROTOICON", "%s_r_%d",(char *)proto, nbx_ver);
+						}
+					}
+					else
+					{
+						tpl_printf(vars, TPLADD, "CLIENTPROTOTITLE", "Newbox, revision r%d missing icon: IC_%s_r_%d.tpl",
+							 nbx_ver, (char *)proto, nbx_ver);
+					}
+				}
+				else
+				{
+					snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%s_%s_%s", (char *)proto, cc->remote_version, cc->remote_build);
+					if(picon_exists(picon_name))
+					{
+						if (!apicall)
+						{
+							tpl_addVar(vars, TPLADD, "CCA", (char *)proto);
+							tpl_addVar(vars, TPLADD, "CCB", cc->remote_version);
+							tpl_addVar(vars, TPLADD, "CCC", cc->remote_build);
+							tpl_addVar(vars, TPLADD, "CCD", cc->extended_mode ? cc->remote_ncam : "");
+							tpl_addVar(vars, TPLADD, "CLIENTPROTO", tpl_getTpl(vars, "PROTOCCCAMPIC"));
+						}
+						else
+						{
+							tpl_printf(vars, TPLADDONCE, "PROTOICON", "%s_%s_%s",(char *)proto, cc->remote_version, cc->remote_build);
+						}
+					}
+					else
+					{
+						tpl_printf(vars, TPLADD, "CLIENTPROTOTITLE", "%s missing icon: IC_%s_%s_%s.tpl",
+								cc->extended_mode ? cc->remote_ncam : "", (char *)proto, cc->remote_version, cc->remote_build);
+					}
 				}
 			}
 		}

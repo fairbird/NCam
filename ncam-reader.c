@@ -503,36 +503,34 @@ const char *reader_get_type_desc(struct s_reader *rdr, int32_t extended)
 		if(rdr->ph.desc)
 			{ desc = rdr->ph.desc; }
 	}
-	if(rdr->typ == R_NEWCAMD && rdr->ncd_proto == NCD_524)
-		{ desc = "newcamd524"; }
-	else if(rdr->typ == R_NEWCAMD && rdr->ncd_mgcamd)
-		{ desc = "mgcamd"; }
+	if(rdr->typ == R_NEWCAMD)
+	{
+		if(rdr->ncd_proto == NCD_524)
+		{
+			desc = "newcamd524";
+		}
+		else if(rdr->ncd_mgcamd)
+		{
+			if(rdr->ncd_multics_mode)
+			{
+				desc = "mgcamd_mcs";
+			}
+			else
+			{
+				desc = "mgcamd";
+			}
+		}
+		else if(rdr->ncd_multics_mode)
+		{
+			desc = "newcamd_mcs";
+		}
+	}
 	else if(rdr->typ == R_CCCAM)
 	{
 		desc = "cccam";
-		if(extended && cccam_client_extended_mode(rdr->client)) desc = "cccam_ext";
-#ifdef MODULE_CCCAM
-		if(cccam_client_multics_mode(rdr->client))
-		{
-			if(rdr->client->cc && ((struct cc_data *)rdr->client->cc)->multics_mode)
-			{
-				switch(((struct cc_data *)rdr->client->cc)->multics_mode)
-				{
-					case 2:
-						desc = "cccam_mcs";
-						break;
-
-					case 3:
-						desc = "cccam_mcs_HB";
-						break;
-
-					default:
-						break;
-				}
-			}
-		}
+		if(extended && cccam_client_extended_mode(rdr->client)) { desc = "cccam_ext"; }
+		else if(cccam_client_multics_mode(rdr->client)) { desc = "cccam_mcs"; }
 		//else if(cccam_client_newbox_mode(rdr->client)) { desc = "cccam"; }
-#endif
 	}
 	return desc;
 }
