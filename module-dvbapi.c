@@ -668,12 +668,12 @@ int32_t dvbapi_net_send(uint32_t request, int32_t socket_fd, uint32_t msgid, int
 
 			if(cfg.dvbapi_extended_cw_api == 1)
 			{
-				strcat(capabilities, ",e1mk"); // extended cw, key follows mode - supports CSA, DES, AES128
+				cs_strncpy(capabilities + strlen(capabilities), ",e1mk", 6); // extended cw, key follows mode - supports CSA, DES, AES128
 			}
 
 			if(cfg.dvbapi_extended_cw_api == 2)
 			{
-				strcat(capabilities, ",e2"); // usage of DES algo signalled through PID index - CSA and DES only
+				cs_strncpy(capabilities + strlen(capabilities), ",e2", 4); // usage of DES algo signalled through PID index - CSA and DES only
 			}
 
 			*info_len = snprintf((char *) &packet[size], sizeof(packet) - size, "NCam %s, build %s (%s); %s",
@@ -1154,11 +1154,7 @@ static int32_t dvbapi_get_descrambler_info(void)
 	// Ask device for exact number of ca descramblers
 	snprintf(device_path2, sizeof(device_path2), devices[selected_box].ca_device, ca_offset);
 	snprintf(device_path, sizeof(device_path), devices[selected_box].path, 0);
-#ifndef __ANDROID__
- 	strncat(device_path, device_path2, sizeof(device_path) - strlen(device_path));
-#else
-	strncat(device_path, device_path2, sizeof(device_path) - strlen(device_path) -1);
-#endif
+	cs_strncpy(device_path + strlen(device_path), device_path2, strlen(device_path2));
 
 	if((fd = open(device_path, O_RDWR | O_NONBLOCK)) < 0)
 	{
@@ -1249,11 +1245,7 @@ static int32_t dvbapi_detect_api(void)
 		{
 			snprintf(device_path2, sizeof(device_path2), devices[i].demux_device, 0);
 			snprintf(device_path, sizeof(device_path), devices[i].path, n);
-#ifndef __ANDROID__
- 			strncat(device_path, device_path2, sizeof(device_path) - strlen(device_path));
-#else
-			strncat(device_path, device_path2, sizeof(device_path) - strlen(device_path) -1);
-#endif
+			cs_strncpy(device_path + strlen(device_path), device_path2, strlen(device_path2));
 
 			filtercount = 0;
 #ifdef WITH_WI
@@ -1411,11 +1403,7 @@ int32_t dvbapi_open_device(int32_t type, int32_t num, int32_t adapter)
 	{
 		snprintf(device_path2, sizeof(device_path2), devices[selected_box].demux_device, num);
 		snprintf(device_path, sizeof(device_path), devices[selected_box].path, adapter);
-#ifndef __ANDROID__
- 		strncat(device_path, device_path2, sizeof(device_path) - strlen(device_path));
-#else
-		strncat(device_path, device_path2, sizeof(device_path) - strlen(device_path) -1);
-#endif
+		cs_strncpy(device_path + strlen(device_path), device_path2, strlen(device_path2));
 	}
 	else
 	{
@@ -1435,11 +1423,7 @@ int32_t dvbapi_open_device(int32_t type, int32_t num, int32_t adapter)
 
 		snprintf(device_path2, sizeof(device_path2), devices[selected_box].ca_device, num + ca_offset);
 		snprintf(device_path, sizeof(device_path), devices[selected_box].path, adapter);
-#ifndef __ANDROID__
- 		strncat(device_path, device_path2, sizeof(device_path) - strlen(device_path));
-#else
-		strncat(device_path, device_path2, sizeof(device_path) - strlen(device_path) -1);
-#endif
+		cs_strncpy(device_path + strlen(device_path), device_path2, strlen(device_path2));
 	}
 
 	if(cfg.dvbapi_boxtype == BOXTYPE_SAMYGO)
@@ -2146,10 +2130,10 @@ void dvbapi_add_emmpid(int32_t demux_id, uint16_t caid, uint16_t emmpid, uint32_
 	char cadatatext[40];
 	cs_strncpy(typetext, ":", sizeof(typetext));
 
-	if(type & 0x01) { strcat(typetext, "UNIQUE:"); }
-	if(type & 0x02) { strcat(typetext, "SHARED:"); }
-	if(type & 0x04) { strcat(typetext, "GLOBAL:"); }
-	if(type & 0xF8) { strcat(typetext, "UNKNOWN:"); }
+	if(type & 0x01) { cs_strncpy(typetext + strlen(typetext), "UNIQUE:", 8); }
+	if(type & 0x02) { cs_strncpy(typetext + strlen(typetext), "SHARED:", 8); }
+	if(type & 0x04) { cs_strncpy(typetext + strlen(typetext), "GLOBAL:", 8); }
+	if(type & 0xF8) { cs_strncpy(typetext + strlen(typetext), "UNKNOWN:", 9); }
 
 	if(cadata > 0)
 	{

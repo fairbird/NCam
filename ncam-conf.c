@@ -502,7 +502,7 @@ FILE *create_config_file(const char *conf_filename)
 {
 	char temp_file[256];
 	get_config_filename(temp_file, sizeof(temp_file), conf_filename);
-	strncat(temp_file, ".tmp", sizeof(temp_file) - strlen(temp_file) - 1);
+	cs_strncpy(temp_file + strlen(temp_file), ".tmp", 5);
 	FILE *f = fopen(temp_file, "w");
 	if(!f)
 	{
@@ -519,10 +519,10 @@ bool flush_config_file(FILE *f, const char *conf_filename)
 {
 	char dst_file[256], tmp_file[256], bak_file[256];
 	get_config_filename(dst_file, sizeof(dst_file), conf_filename);
-	memcpy(tmp_file, dst_file, sizeof(tmp_file));
-	memcpy(bak_file, dst_file, sizeof(bak_file));
-	strncat(tmp_file, ".tmp", sizeof(tmp_file) - strlen(tmp_file) - 1);
-	strncat(bak_file, ".bak", sizeof(bak_file) - strlen(bak_file) - 1);
+	cs_strncpy(tmp_file, dst_file, sizeof(tmp_file));
+	cs_strncpy(tmp_file + strlen(tmp_file), ".tmp", 5);
+	cs_strncpy(bak_file, dst_file, sizeof(bak_file));
+	cs_strncpy(bak_file + strlen(bak_file), ".bak", 5);
 	if(f)
 	{
 		fclose(f);

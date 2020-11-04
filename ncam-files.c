@@ -39,9 +39,9 @@ char *get_tmp_dir(void)
 	p--;
 	if(*p != '/' && *p != '\\')
 	{
-		strcat(cs_tmpdir, "/");
+		cs_strncpy(cs_tmpdir + strlen(cs_tmpdir), "/", 2);
 	}
-	strcat(cs_tmpdir, "_ncam");
+	cs_strncpy(cs_tmpdir + strlen(cs_tmpdir), "_ncam", 6);
 #else
 	cs_strncpy(cs_tmpdir, "/tmp/.ncam", sizeof(cs_tmpdir));
 #endif

@@ -633,10 +633,9 @@ int8_t get_stats_linux(const pid_t pid, struct pstat* result)
 	// convert pid to string
 	char pid_s[20];
 	snprintf(pid_s, sizeof(pid_s), "%d", pid);
-	char stat_filepath[30] = "/proc/"; strncat(stat_filepath, pid_s,
-			sizeof(stat_filepath) - strlen(stat_filepath) -1);
-	strncat(stat_filepath, "/stat", sizeof(stat_filepath) -
-			strlen(stat_filepath) -1);
+	char stat_filepath[30] = "/proc/";
+	cs_strncpy(stat_filepath + strlen(stat_filepath), pid_s, sizeof(pid_s));
+	cs_strncpy(stat_filepath + strlen(stat_filepath), "/stat", 6);
 
 	FILE *f_pstat = fopen(stat_filepath, "r");
 	if (f_pstat == NULL) {

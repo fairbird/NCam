@@ -570,7 +570,7 @@ struct s_auth *init_userdb(void)
 				if(!strcmp(probe->usr, trim(value)))
 				{
 					fprintf(stderr, "Warning: duplicate account '%s'\n", value);
-					strncat(value, "_x", sizeof(probe->usr) - strlen(value) - 1);
+					cs_strncpy(value + strlen(value), "_x", 3);
 				}
 			}
 		}

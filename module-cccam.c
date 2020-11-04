@@ -2654,14 +2654,14 @@ void move_card_to_end(struct s_client *cl, struct cc_card *card_to_move)
     }
 }*/
 
-void addParam(char *param, char *value)
+static void addParam(char *param, char *value)
 {
 	if(strlen(param) < 4)
-		{ strcat(param, value); }
+		cs_strncpy(param + strlen(param), value, 4);
 	else
 	{
-		strcat(param, ",");
-		strcat(param, value);
+		cs_strncpy(param + strlen(param), ",", 2);
+		cs_strncpy(param + strlen(param), value, 4);
 	}
 }
 
@@ -3109,7 +3109,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 								addParam(param, "SLP");
 							}
 
-							strcat(param, "]");
+							cs_strncpy(param + strlen(param), "]", 2);
 						}
 
 						uint8_t token[256];

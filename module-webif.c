@@ -6711,8 +6711,8 @@ static char *send_ncam_script(struct templatevars * vars, struct uriparams * par
 
 					if((scriptparam != NULL) && (sizeof(scriptparam) > 0))
 					{
-						strcat(system_str, " ");
-						strcat(system_str, scriptparam);
+						cs_strncpy(system_str + strlen(system_str), " ", 2);
+						cs_strncpy(system_str + strlen(system_str), scriptparam, strlen(scriptparam));
 					}
 
 					fp = popen(system_str,"r");
@@ -8709,7 +8709,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 			if(authok != 1)
 			{
 				snprintf(authheadertmp, sizeof(authheadertmp), "WWW-Authenticate: Digest algorithm=\"MD5\", realm=\"%s\", qop=\"auth\", opaque=\"%s\", nonce=\"%s\"", AUTHREALM, opaque, expectednonce);
-				if(authok == 2) { strncat(authheadertmp, ", stale=true", sizeof(authheadertmp) - strlen(authheadertmp) - 1); }
+				if(authok == 2) { cs_strncpy(authheadertmp + strlen(authheadertmp), ", stale=true", 13); }
 			}
 			else
 				{ snprintf(authheadertmp, sizeof(authheadertmp), "Authentication-Info: nextnonce=\"%s\"", expectednonce); }

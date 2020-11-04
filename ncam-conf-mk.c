@@ -944,27 +944,30 @@ char *mk_t_allowedtimeframe(struct s_auth *account)
 		for(day=0;day<SIZE_SHORTDAY;day++) {
 			for(hours=0;hours<24;hours++) {
 				for(minutes=0;minutes<60;minutes++) {
-					if(CHECK_BIT(account->allowedtimeframe[day][hours][minutes/30],(minutes % 30))) {
-							if(value_in_day == 0) {
-							strcat(result,&sepday[0]);
-							strcat(result,shortDay[day]);
-							strcat(result,"@");
+					if(CHECK_BIT(account->allowedtimeframe[day][hours][minutes/30],(minutes % 30)))
+					{
+						if(value_in_day == 0)
+						{
+							cs_strncpy(result + strlen(result), &sepday[0], sizeof(sepday));
+							cs_strncpy(result + strlen(result), shortDay[day], sizeof(shortDay));
+							cs_strncpy(result + strlen(result), "@", 2);
 							value_in_day = 1;
 							intime=0;
 							sepday[0]=';';
 							septime[0]='\0';
 						}
-						if(!intime) {
-							strcat(result,&septime[0]);
+						if(!intime)
+						{
+							cs_strncpy(result + strlen(result), &septime[0], sizeof(septime));
 							snprintf(mytime,6,"%02d:%02d", hours, minutes);
-							strcat(result,mytime);
-							strcat(result,"-");
+							cs_strncpy(result + strlen(result), mytime, sizeof(mytime));
+							cs_strncpy(result + strlen(result), "-", 2);
 							septime[0]=',';
 							intime=1;
 						}
 						// Special case 23H59 is enabled we close the day at 24H00
 						if(((hours*60)+minutes)==1439) {
-							strcat(result,"24:00");
+							cs_strncpy(result + strlen(result), "24:00", 6);
 							intime=0;
 							septime[0]='\0';
 							value_in_day = 0;
@@ -972,7 +975,7 @@ char *mk_t_allowedtimeframe(struct s_auth *account)
 					}
 					else if(intime) {
 							snprintf(mytime,6,"%02d:%02d", hours, minutes);
-							strcat(result,mytime);
+							cs_strncpy(result + strlen(result), mytime, sizeof(mytime));
 							septime[0]=',';
 							intime=0;
 						}
