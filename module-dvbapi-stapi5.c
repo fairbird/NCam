@@ -180,9 +180,9 @@ int32_t stapi_open(void)
 	{
 		if(!dp) { break; }
 
-		int n = snprintf(0, 0, "%s%s", PROCDIR, dp->d_name);
-		char *pfad = (char *)malloc(n + 1);
-		snprintf(pfad, n + 1, "%s%s", PROCDIR, dp->d_name);
+		char pfad[strlen(PROCDIR) + strlen(dp->d_name) + 1];
+		cs_strncpy(pfad, PROCDIR, strlen(PROCDIR));
+		cs_strncpy(pfad + strlen(pfad), dp->d_name, strlen(dp->d_name));
 		if(stat(pfad, &buf) != 0)
 			{ continue; }
 

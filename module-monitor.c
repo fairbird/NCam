@@ -355,7 +355,7 @@ static void monitor_process_info(void)
 static void monitor_send_details(char *txt, uint32_t tid)
 {
 	char buf[256];
-	snprintf(buf, 255, "[D-----]%8X|%s\n", tid, txt);
+	snprintf(buf, sizeof(buf), "[D-----]%8X|%s\n", tid, txt);
 	monitor_send_info(buf, 0);
 }
 
@@ -386,10 +386,9 @@ static void monitor_process_details_master(char *buf, uint32_t pid)
 	snprintf(buf, 256, "ClientMaxIdle=%d sec", cfg.cmaxidle);
 	monitor_send_details(buf, pid);
 	if(cfg.max_log_size)
-		{ snprintf(buf + 200, 56, "%d Kb", cfg.max_log_size); }
+		{ snprintf(buf, 256, "MaxLogsize=%d Kb", cfg.max_log_size); }
 	else
-		{ cs_strncpy(buf + 200, "unlimited", 56); }
-	snprintf(buf, 256, "MaxLogsize=%s", buf + 200);
+		{ cs_strncpy(buf, "MaxLogsize=unlimited", 256); }
 	monitor_send_details(buf, pid);
 	snprintf(buf, 256, "ClientTimeout=%u ms", cfg.ctimeout);
 	monitor_send_details(buf, pid);
@@ -518,7 +517,7 @@ static void monitor_process_details(char *arg)
 {
 	uint32_t tid = 0; //using threadid 8 positions hex see ncam-log.c //FIXME untested but pid isnt working anyway with threading
 	struct s_client *cl = NULL, *cl1;
-	char sbuf[256];
+	char sbuf[256] = {0};
 
 	if(!arg)
 		{ cl = first_client; } // no arg - show master

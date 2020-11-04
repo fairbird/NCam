@@ -5560,7 +5560,8 @@ void event_handler(int32_t UNUSED(signal))
 			continue;
 		}
 #endif
-		snprintf(dest, sizeof(dest), "%s%s", TMPDIR, dp->d_name);
+		cs_strncpy(dest, TMPDIR, strlen(TMPDIR));
+		cs_strncpy(dest + strlen(dest), dp->d_name, strlen(dp->d_name));
 		pmt_fd = open(dest, O_RDONLY);
 		if(pmt_fd < 0)
 		{
