@@ -1,1 +1,11 @@
-			<TR><TD>Stealth mode:</TD><TD><input name="ncd_stealth" type="hidden" value="0"><input name="ncd_stealth" type="checkbox" value="1" ##NDCSTEALTHCHECKED##><label></label></TD></TR>
+			<TR><TD>Stealth mode:</TD>
+				<TD><select name="ncd_stealth">
+						<option value="0" ##NDCSTEALTHSELECTED0##>0 - disabled</option>
+						<option value="1" ##NDCSTEALTHSELECTED1##>1 - mgcamd</option>
+						<option value="2" ##NDCSTEALTHSELECTED2##>2 - mpcs</option>
+						<option value="3" ##NDCSTEALTHSELECTED3##>3 - evocamd</option>
+						<option value="4" ##NDCSTEALTHSELECTED4##>4 - generic</option>
+						<option value="5" ##NDCSTEALTHSELECTED5##>5 - OSCam</option>
+					</select>
+				</TD>
+			</TR>

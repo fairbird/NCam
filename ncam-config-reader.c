@@ -142,7 +142,7 @@ static void protocol_fn(const char *token, char *value, void *setting, FILE *f)
 		if(rdr->typ == R_NEWCAMD)
 		{
 			rdr->ncd_proto = streq(value, "newcamd524") ? NCD_524 : NCD_525;
-			rdr->ncd_mgcamd = streq(value, "mgcamd") ? 1 : streq(value, "mgcamd_mcs") ? 1 : 0;
+			rdr->ncd_stealth = streq(value, "mgcamd") ? 1 : streq(value, "mgcamd_mcs") ? 1 : rdr->ncd_stealth;
 		}
 		if(!rdr->typ)
 			{
@@ -1192,7 +1192,7 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_INT32("autorestartseconds"  , OFS(autorestartseconds),      0),
 	DEF_OPT_INT8("restartforresetcycle" , OFS(restartforresetcycle),    0),
 	DEF_OPT_INT8("disableserverfilter"  , OFS(ncd_disable_server_filt), 1),
-	DEF_OPT_INT8("ncd_stealth"          , OFS(ncd_stealth),             1),
+	DEF_OPT_INT8("ncd_stealth"          , OFS(ncd_stealth),             4),
 	DEF_OPT_INT8("connectoninit"        , OFS(ncd_connect_on_init),     1),
 	DEF_OPT_UINT8("keepalive"           , OFS(keepalive),               0),
 	DEF_OPT_INT8("smargopatch"          , OFS(smargopatch),             0),

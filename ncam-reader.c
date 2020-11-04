@@ -509,7 +509,7 @@ const char *reader_get_type_desc(struct s_reader *rdr, int32_t extended)
 		{
 			desc = "newcamd524";
 		}
-		else if(rdr->ncd_mgcamd)
+		else if(rdr->ncd_stealth == 1)
 		{
 			if(rdr->ncd_multics_mode)
 			{

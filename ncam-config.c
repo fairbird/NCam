@@ -1508,6 +1508,9 @@ void read_cccamcfg(char *file)
 #if defined(MODULE_NEWCAMD) || defined(MODULE_CAMD35) || defined(MODULE_RADEGAST)
 			int32_t reshare = -1;
 #endif
+#ifdef MODULE_NEWCAMD
+			int32_t stealth = 4;
+#endif
 			switch(line[0])
 			{
 			case 'C':
@@ -1520,10 +1523,10 @@ void read_cccamcfg(char *file)
 			case 'N':
 #ifdef MODULE_NEWCAMD
 				proto = "newcamd";
-				ret = sscanf(line, "%c:%s%d%s%s%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%d", &typ, host, &port, u_name, u_pass,
+				ret = sscanf(line, "%c:%s%d%s%s%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%d%d", &typ, host, &port, u_name, u_pass,
 							 &ncd_key[0], &ncd_key[1], &ncd_key[2], &ncd_key[3], &ncd_key[4],
 							 &ncd_key[5], &ncd_key[6], &ncd_key[7], &ncd_key[8], &ncd_key[9],
-							 &ncd_key[10], &ncd_key[11], &ncd_key[12], &ncd_key[13], &reshare);
+							 &ncd_key[10], &ncd_key[11], &ncd_key[12], &ncd_key[13], &reshare, &stealth);
 				paracount = 5;
 #endif
 				break;
@@ -1594,9 +1597,11 @@ void read_cccamcfg(char *file)
 				c++;
 				break;
 			case 'N':
+#ifdef MODULE_NEWCAMD
 #ifdef MODULE_CCCAM
 				rdr->cc_reshare = reshare;	
 #endif
+				rdr->ncd_stealth = stealth;
 				if(ret >= 19)
 				{
 					int i;
@@ -1608,10 +1613,11 @@ void read_cccamcfg(char *file)
 				}
 				char connectoninit[2] = "1";
 				chk_reader("connectoninit", connectoninit, rdr);
+#endif
 				n++;
 				break;
 			case 'L':
-#if defined(MODULE_CAMD35)
+#ifdef MODULE_CAMD35
 #ifdef MODULE_CCCAM
 				rdr->cc_reshare = reshare;	
 #endif
@@ -1629,7 +1635,7 @@ void read_cccamcfg(char *file)
 				l++;
 				break;
 			case 'R':
-#if defined(MODULE_RADEGAST)
+#ifdef MODULE_RADEGAST
 #ifdef MODULE_CCCAM
 				rdr->cc_reshare = reshare;	
 #endif

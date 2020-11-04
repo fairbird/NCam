@@ -21,7 +21,6 @@
 
 const int32_t CWS_NETMSGSIZE = 1024; // csp 0.8.9 (default: 400). This is CWS_NETMSGSIZE. The old default was 240
 
-//#define NCD_CLIENT_ID 0x8181
 #define CWS_FIRSTCMDNO 0xE0
 
 typedef enum
@@ -74,11 +73,27 @@ typedef struct custom_data
 
 static int32_t ndc_id(struct s_client *cl)
 {
-	uint16_t ret = 0x8181; // NCam
-	if(cl->reader->ncd_mgcamd)
-		{ ret = 0x6D67; } // mgcamd
-	else if(cl->reader->ncd_stealth)
-		{ ret = 0x0000; } // generic
+	uint16_t ret;
+	switch(cl->reader->ncd_stealth)
+	{
+	case 1:
+		ret = 0x6D67;  // mgcamd
+		break;
+	case 2:
+		ret = 0x6D63; // "mpcs"
+		break;
+	case 3:
+		ret = 0x6576; // evocamd
+		break;
+	case 4:
+		ret = 0x0000; // generic
+		break;
+	case 5:
+		ret = 0x8888; // OSCam
+		break;
+	default:
+		ret = 0x8181; // NCam
+	}
 	return ret;
 }
 
