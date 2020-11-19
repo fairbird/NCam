@@ -101,8 +101,14 @@ static int32_t ecm_ratelimit_findspace(struct s_reader *reader, ECM_REQUEST *er,
 		if(reader->rlecmh[h].srvid == er->srvid && reader->rlecmh[h].caid == rl.caid && reader->rlecmh[h].provid == rl.provid
 				&& (!reader->rlecmh[h].chid || (reader->rlecmh[h].chid == rl.chid)))
 		{
-			int64_t gone = comp_timeb(&actualtime, &reader->rlecmh[h].last);
-			cs_log_dbg(D_CLIENT, "ratelimiter found srvid %04X for %"PRId64" ms in slot %d/%d of reader %s", er->srvid, gone, h + 1, MAXECMRATELIMIT, reader->label);
+			int64_t gone = 0;
+#ifdef WITH_DEBUG
+			if(cs_dblevel & D_CLIENT)
+			{			
+				gone = comp_timeb(&actualtime, &reader->rlecmh[h].last);
+				cs_log_dbg(D_CLIENT, "ratelimiter found srvid %04X for %"PRId64" ms in slot %d/%d of reader %s", er->srvid, gone, h + 1, MAXECMRATELIMIT, reader->label);
+			}
+#endif
 
 			// check ecmunique if enabled and ecmunique time is done
 			if(reader_mode && reader->ecmunique)
@@ -115,10 +121,15 @@ static int32_t ecm_ratelimit_findspace(struct s_reader *reader, ECM_REQUEST *er,
 						if(er->ecm[0] == reader->rlecmh[h].kindecm)
 						{
 							// same ecm type!
-							char ecmd5[17 * 3];
-							cs_hexdump(0, reader->rlecmh[h].ecmd5, 16, ecmd5, sizeof(ecmd5));
-							cs_log_dbg(D_CLIENT, "ratelimiter ecm %s in this slot for next %d ms!", ecmd5,
-										  (int)(reader->rlecmh[h].ratelimittime - gone));
+#ifdef WITH_DEBUG
+							if(cs_dblevel & D_CLIENT)
+							{							
+								char ecmd5[17 * 3];
+								cs_hexdump(0, reader->rlecmh[h].ecmd5, 16, ecmd5, sizeof(ecmd5));
+								cs_log_dbg(D_CLIENT, "ratelimiter ecm %s in this slot for next %d ms!", ecmd5,
+											(int)(reader->rlecmh[h].ratelimittime - gone));
+							}
+#endif
 
 							struct ecm_request_t *erold = NULL;
 							if(!cs_malloc(&erold, sizeof(struct ecm_request_t)))
@@ -220,10 +231,16 @@ static int32_t ecm_ratelimit_findspace(struct s_reader *reader, ECM_REQUEST *er,
 			if(reader_mode) { cs_log_dbg(D_CLIENT, "ratelimiter added srvid %04X to slot %d/%d of reader %s", er->srvid, h + 1, maxecms, reader->label); }
 			return h; // free slot found -> assign it!
 		}
-		else { 
-			int64_t gone = comp_timeb(&actualtime, &reader->rlecmh[h].last);
-		cs_log_dbg(D_CLIENT, "ratelimiter srvid %04X for %"PRId64" ms present in slot %d/%d of reader %s", reader->rlecmh[h].srvid, gone , h + 1,
-			maxecms, reader->label); }  //occupied slots
+		else // occupied slots
+		{
+#ifdef WITH_DEBUG
+			if(cs_dblevel & D_CLIENT)
+			{
+				int64_t gone = comp_timeb(&actualtime, &reader->rlecmh[h].last);
+				cs_log_dbg(D_CLIENT, "ratelimiter srvid %04X for %"PRId64" ms present in slot %d/%d of reader %s",
+							reader->rlecmh[h].srvid, gone , h + 1, maxecms, reader->label);
+			}
+#endif
 	}
 
 	foundspace = dvbapi_override_prio(reader, er, maxecms, &actualtime);
