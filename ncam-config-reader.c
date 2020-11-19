@@ -1197,6 +1197,9 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_UINT8("keepalive"           , OFS(keepalive),               0),
 	DEF_OPT_INT8("smargopatch"          , OFS(smargopatch),             0),
 	DEF_OPT_INT8("autospeed"            , OFS(autospeed),               1),
+#ifdef WITH_CARDLIST
+	DEF_OPT_INT8("cardlist"             , OFS(cardlist),                1),
+#endif
 	DEF_OPT_UINT8("sc8in1_dtrrts_patch" , OFS(sc8in1_dtrrts_patch),     0),
 	DEF_OPT_INT8("fallback"             , OFS(fallback),                1),
 	DEF_OPT_FUNC_X("fallback_percaid"   , OFS(fallback_percaid),        ftab_fn, FTAB_READER | FTAB_FBPCAID),

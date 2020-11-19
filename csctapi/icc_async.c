@@ -13,6 +13,9 @@
 #include "../cscrypt/mdc2.h"
 #include "../cscrypt/idea.h"
 #endif
+#ifdef WITH_CARDLIST
+#include "../cardlist.h"
+#endif
 
 #define OK 0
 #define ERROR 1
@@ -218,6 +221,14 @@ int32_t ICC_Async_Activate(struct s_reader *reader, ATR *atr, uint16_t deprecate
 	rdr_log(reader, "ATR: %s", cs_hexdump(1, atrarr, atr_size, tmp, sizeof(tmp)));
 	memcpy(reader->card_atr, atrarr, atr_size);
 	reader->card_atr_length = atr_size;
+#ifdef WITH_CARDLIST
+	memcpy(current.atr, cs_hexdump(1, atrarr, atr_size, tmp, sizeof(tmp)), atr_size * 3 - 1);
+	findatr(reader);
+	if(strlen(current.info))
+	{
+		rdr_log(reader, "%s %s", strlen(current.providername) ? current.providername : "card system", current.info);
+	}
+#endif
 
 	// Get ICC reader->convention
 	if(ATR_GetConvention(atr, &(reader->convention)) != ATR_OK)

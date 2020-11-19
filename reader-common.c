@@ -37,7 +37,11 @@ static void reader_nullcard(struct s_reader *reader)
 	reader->csystem = NULL;
 	memset(reader->hexserial, 0, sizeof(reader->hexserial));
 	memset(reader->prid, 0xFF, sizeof(reader->prid));
+#ifdef WITH_CARDLIST
+	if(reader->card_status != CARD_NEED_INIT) { reader->caid = 0; }
+#else
 	reader->caid = 0;
+#endif
 	reader->nprov = 0;
 	cs_clear_entitlement(reader);
 }

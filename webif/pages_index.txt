@@ -200,6 +200,7 @@ GBOXCCCAMRESHAREBIT           readerconfig/readerconfig_gboxcccresharebit.html  
 READERCONFIGGHTTPBIT          readerconfig/readerconfig_ghttpbit.html                     MODULE_GHTTP
 READERCONFIGHOPBIT            readerconfig/readerconfig_hopbit.html                       MODULE_CCCAM
 READERCONFIGSTDHWREADERBIT    readerconfig/readerconfig_hwreader.html                     WITH_CARDREADER
+READERCONFIGCARDLIST          readerconfig/readerconfig_hwreader_cardlist.html            WITH_CARDLIST
 READERCONFIGCRYPTOWORKS       readerconfig/readerconfig_hwreader_cryptoworks.html         READER_CRYPTOWORKS
 READERCONFIGBOXKEY            readerconfig/readerconfig_hwreader_boxkey.html              READER_NAGRA,READER_IRDETO,READER_SECA,READER_VIACCESS
 READERCONFIGIRDETO            readerconfig/readerconfig_hwreader_irdeto.html              READER_IRDETO

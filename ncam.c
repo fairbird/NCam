@@ -426,6 +426,9 @@ static void write_versionfile(bool use_stdout)
 		case CLOCK_TYPE_MONOTONIC: write_conf(CLOCKFIX, "Clockfix with monotonic clock"); break;
 	}
 	write_conf(IPV6SUPPORT, "IPv6 support");
+#ifdef WITH_CARDLIST
+	write_conf(WITH_CARDLIST, "Cardlist support");
+#endif
 	write_conf(WITH_EMU, "Emulator support");
 	write_conf(WITH_SOFTCAM, "Built-in SoftCam.Key");
 

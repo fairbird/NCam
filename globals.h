@@ -1854,6 +1854,10 @@ struct s_reader
 #ifdef MODULE_GHTTP
 	uint8_t         ghttp_use_ssl;
 #endif
+#ifdef WITH_CARDLIST
+	int8_t          cardlist;
+	int8_t          cardlist_reset;
+#endif
 #ifdef WITH_EMU
 	FTAB            emu_auproviders;                // AU providers for Emu reader
 	int8_t          emu_datecodedenabled;           // date-coded keys for BISS
