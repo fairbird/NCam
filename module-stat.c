@@ -1831,8 +1831,6 @@ void stat_get_best_reader(ECM_REQUEST *er)
 	cs_log_dbg(D_LB, "loadbalancer: --------------------------------------------");
 
 
-
-#ifdef WITH_DEBUG
 	if(cs_dblevel & D_LB)
 	{
 		//loadbalancer debug output:
@@ -1869,7 +1867,6 @@ void stat_get_best_reader(ECM_REQUEST *er)
 		cs_log_dbg(D_LB, "loadbalancer: client %s for %s: n=%d selected readers: %s",
 					  username(er->client), ecmbuf, nr, buf);
 	}
-#endif
 	return;
 }
 

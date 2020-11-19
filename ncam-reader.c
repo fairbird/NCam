@@ -224,11 +224,15 @@ static int32_t ecm_ratelimit_findspace(struct s_reader *reader, ECM_REQUEST *er,
 		maxecms = MAXECMRATELIMIT; // no limits right now!
 	}
 
-	for(h = 0; h < maxecms; h++)    // check for free slot
+	for(h = 0; h < maxecms; h++) // check for free slot
 	{
 		if(reader->rlecmh[h].last.time == -1)
 		{
-			if(reader_mode) { cs_log_dbg(D_CLIENT, "ratelimiter added srvid %04X to slot %d/%d of reader %s", er->srvid, h + 1, maxecms, reader->label); }
+			if(reader_mode)
+			{
+				cs_log_dbg(D_CLIENT, "ratelimiter added srvid %04X to slot %d/%d of reader %s",
+							er->srvid, h + 1, maxecms, reader->label);
+			}
 			return h; // free slot found -> assign it!
 		}
 		else // occupied slots
@@ -241,6 +245,7 @@ static int32_t ecm_ratelimit_findspace(struct s_reader *reader, ECM_REQUEST *er,
 							reader->rlecmh[h].srvid, gone , h + 1, maxecms, reader->label);
 			}
 #endif
+		}
 	}
 
 	foundspace = dvbapi_override_prio(reader, er, maxecms, &actualtime);

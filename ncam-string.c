@@ -314,6 +314,7 @@ int32_t word_atob(char *asc)
 	{
 		return rc;
 	}
+
 	if(cs_strlen(trim(asc)) != 4)
 	{
 		rc = -1;
@@ -354,7 +355,7 @@ int32_t dyn_word_atob(char *asc)
 	{
 		for(i = 0, rc = 0; i < len; i++)
 		{
-			if(!gethexval_within_range(asc[0]) || !gethexval_within_range(asc[1]) || !gethexval_within_range(asc[2]) || !gethexval_within_range(asc[3]))
+			if(!gethexval_within_range(asc[i]))
 			{
 				return -1;
 			}
