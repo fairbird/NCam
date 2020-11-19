@@ -39,9 +39,9 @@ char *get_tmp_dir(void)
 	p--;
 	if(*p != '/' && *p != '\\')
 	{
-		cs_strncpy(cs_tmpdir + strlen(cs_tmpdir), "/", 2);
+		cs_strncpy(cs_tmpdir + cs_strlen(cs_tmpdir), "/", 2);
 	}
-	cs_strncpy(cs_tmpdir + strlen(cs_tmpdir), "_ncam", 6);
+	cs_strncpy(cs_tmpdir + cs_strlen(cs_tmpdir), "_ncam", 6);
 #else
 	cs_strncpy(cs_tmpdir, "/tmp/.ncam", sizeof(cs_tmpdir));
 #endif
@@ -53,7 +53,7 @@ char *get_tmp_dir_filename(char *dest, size_t destlen, const char *filename)
 {
 	char *tmp_dir = get_tmp_dir();
 	const char *slash = "/";
-	if(tmp_dir[strlen(tmp_dir) - 1] == '/')
+	if(tmp_dir[cs_strlen(tmp_dir) - 1] == '/')
 	{
 		slash = "";
 	}
@@ -177,7 +177,7 @@ char *get_gbox_filename(char *dest, size_t destlen, const char *filename)
 	const char *slash = "/";
 	if(cfg.gbox_tmp_dir != NULL)
 	{
-		if(cfg.gbox_tmp_dir[strlen(cfg.gbox_tmp_dir) - 1] == '/')
+		if(cfg.gbox_tmp_dir[cs_strlen(cfg.gbox_tmp_dir) - 1] == '/')
 		{
 			slash = "";
 		}
@@ -185,7 +185,7 @@ char *get_gbox_filename(char *dest, size_t destlen, const char *filename)
 	}
 	else
 	{
-		if(tmp_dir[strlen(tmp_dir) - 1] == '/') { slash = ""; }
+		if(tmp_dir[cs_strlen(tmp_dir) - 1] == '/') { slash = ""; }
 		snprintf(dest, destlen, "%s%s%s", tmp_dir, slash, filename);
 	}
 	return dest;

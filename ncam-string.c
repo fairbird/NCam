@@ -39,6 +39,15 @@ bool cs_realloc(void *result, size_t size)
 	return !!*tmp;
 }
 
+/* Calling strlen directly e.g. strlen(somechar) can cause segmentation fault if pointer to somechar is NULL! */
+size_t cs_strlen(const char* str)
+{
+	if(!str)
+		{ return 0; }
+	else
+		{ return strlen(str); }
+}
+
 /* Allocates a new empty string and copies str into it. You need to free() the result. */
 char *cs_strdup(const char *str)
 {
@@ -46,9 +55,9 @@ char *cs_strdup(const char *str)
 	if(!str)
 		{ return NULL; }
 
-	if(cs_malloc(&newstr, strlen(str) + 1))
+	if(cs_malloc(&newstr, cs_strlen(str) + 1))
 	{
-		cs_strncpy(newstr, str, strlen(str) + 1);
+		cs_strncpy(newstr, str, cs_strlen(str) + 1);
 		return newstr;
 	}
 	return NULL;
@@ -66,7 +75,7 @@ void cs_strncpy(char *destination, const char *source, size_t num)
 		return;
 	}
 
-	uint32_t l, size = strlen(source);
+	uint32_t l, size = cs_strlen(source);
 	if(size > num - 1)
 		{ l = num - 1; }
 	else
@@ -116,7 +125,7 @@ char *trim(char *txt)
 		*p2 = '\0';
 	}
 
-	l = strlen(txt);
+	l = cs_strlen(txt);
 	if(l > 0)
 	{
 		for(p1 = txt + l - 1; l > 0 && ((*p1 == ' ') || (*p1 == '\t') || (*p1 == '\n') || (*p1 == '\r')); *p1-- = '\0', l--)
@@ -129,7 +138,7 @@ char *trim2(char *txt)
 {
 	int32_t i, n;
 
-	for(i = n = 0; i < (int32_t)strlen(txt); i++)
+	for(i = n = 0; i < (int32_t)cs_strlen(txt); i++)
 	{
 		if(txt[i] == ' ' || txt[i] == '\t') continue;
 		if(txt[i] == '#') {break;}
@@ -228,7 +237,7 @@ uint32_t cs_atoi(char *asc, int32_t l, int32_t val_on_err)
 int32_t byte_atob(char *asc)
 {
 	int32_t rc;
-	if(strlen(trim(asc)) != 2)
+	if(cs_strlen(trim(asc)) != 2)
 	{
 		rc = -1;
 	}
@@ -244,7 +253,7 @@ int32_t byte_atob(char *asc)
 int32_t word_atob(char *asc)
 {
 	int32_t rc;
-	if(strlen(trim(asc)) != 4)
+	if(cs_strlen(trim(asc)) != 4)
 	{
 		rc = -1;
 	}
@@ -265,7 +274,7 @@ int32_t word_atob(char *asc)
 int32_t dyn_word_atob(char *asc)
 {
 	int32_t rc = (-1);
-	int32_t i, len = strlen(trim(asc));
+	int32_t i, len = cs_strlen(trim(asc));
 
 	if(len <= 6 && len > 0)
 	{
@@ -366,7 +375,7 @@ uint32_t a2i(char *asc, int32_t bytes)
 	int32_t i, n;
 	uint32_t rc;
 
-	for(rc = i = 0, n = strlen(trim(asc)) - 1; i < abs(bytes) << 1; n--, i++)
+	for(rc = i = 0, n = cs_strlen(trim(asc)) - 1; i < abs(bytes) << 1; n--, i++)
 	{
 		if(n >= 0)
 		{
@@ -741,7 +750,7 @@ void b64prepare(void)
 /* Decodes a base64-encoded string. The given array will be used directly for output and is thus modified! */
 int32_t b64decode(uint8_t *result)
 {
-	int32_t i, len = strlen((char *)result), j = 0, bits = 0, char_count = 0;
+	int32_t i, len = cs_strlen((char *)result), j = 0, bits = 0, char_count = 0;
 
 	if(!b64decoder[0]) { b64prepare(); }
 

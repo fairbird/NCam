@@ -14,7 +14,7 @@ const char *weekdstr = "SUNMONTUEWEDTHUFRISATALL";
 char *mk_t_caidtab(CAIDTAB *caidtab)
 {
 	if (!caidtab || !caidtab->ctnum) return "";
-	// Max entry length is strlen("1234&ffff:1234,") == 15
+	// Max entry length is cs_strlen("1234&ffff:1234,") == 15
 	int32_t i, maxlen = 16 * caidtab->ctnum, pos = 0;
 	char *ret;
 	if (!cs_malloc(&ret, maxlen))
@@ -42,7 +42,7 @@ char *mk_t_caidtab(CAIDTAB *caidtab)
 char *mk_t_tuntab(TUNTAB *ttab)
 {
 	if (!ttab || !ttab->ttnum) return "";
-	// Each entry max length is strlen("aaaa.bbbb:cccc,") == 15
+	// Each entry max length is cs_strlen("aaaa.bbbb:cccc,") == 15
 	int32_t i, maxlen = 16 * ttab->ttnum, pos = 0;
 	char *ret;
 	if (!cs_malloc(&ret, maxlen))
@@ -108,10 +108,10 @@ char *mk_t_ftab(FTAB *ftab)
 {
 	if (!ftab || !ftab->nfilts) return "";
 	// Worst case scenario where each entry have different
-	// caid, ident and only one length in it is strlen("1234:123456,") == 12
+	// caid, ident and only one length in it is cs_strlen("1234:123456,") == 12
 	int32_t i, j, maxlen = 13 * ftab->nfilts, pos = 0;
 	for(i = 0; i < ftab->nfilts; i++)
-		maxlen += ftab->filts[i].nprids * 7; /* strlen("123456,") == 7 */
+		maxlen += ftab->filts[i].nprids * 7; /* cs_strlen("123456,") == 7 */
 	char *ret;
 	if (!cs_malloc(&ret, maxlen))
 		return "";
@@ -558,7 +558,7 @@ char *mk_t_logfile(void)
 
 	if(cfg.logtostdout == 1) { needed += 7; }
 	if(cfg.logtosyslog == 1) { needed += 7; }
-	if(cfg.logfile) { needed += strlen(cfg.logfile); }
+	if(cfg.logfile) { needed += cs_strlen(cfg.logfile); }
 	if(needed == 1 || !cs_malloc(&value, needed)) { return ""; }
 
 	if(cfg.logtostdout == 1)
@@ -585,7 +585,7 @@ char *mk_t_ecm_whitelist(struct s_ecm_whitelist *ecm_whitelist)
 {
 	if (!ecm_whitelist || !ecm_whitelist->ewnum) return "";
 	// Worst case scenario where each entry have different
-	// caid, ident and only one length in it is strlen("1234@123456:01;") == 15
+	// caid, ident and only one length in it is cs_strlen("1234@123456:01;") == 15
 	int32_t i, maxlen = 16 * ecm_whitelist->ewnum, pos = 0;
 	char *ret;
 	if (!cs_malloc(&ret, maxlen))
@@ -623,7 +623,7 @@ char *mk_t_ecm_hdr_whitelist(struct s_ecm_hdr_whitelist *ecm_hdr_whitelist)
 {
 	if (!ecm_hdr_whitelist || !ecm_hdr_whitelist->ehnum) return "";
 	// Worst case scenario where each entry have different
-	// caid, provid and only one header in it is strlen("1234@123456:0102030405060708091011121314151617181920;") == 52 ((sizeof(header) / 2) + 12)
+	// caid, provid and only one header in it is cs_strlen("1234@123456:0102030405060708091011121314151617181920;") == 52 ((sizeof(header) / 2) + 12)
 	int32_t i, r, maxlen = 53 * ecm_hdr_whitelist->ehnum, pos = 0;
 	char *ret;
 	if (!cs_malloc(&ret, maxlen))
@@ -713,7 +713,7 @@ char *mk_t_cltab(CLASSTAB *clstab)
 char *mk_t_caidvaluetab(CAIDVALUETAB *caidvaluetab)
 {
 	if (!caidvaluetab || !caidvaluetab->cvnum) return "";
-	// Max entry length is strlen("1234@65535,") == 11
+	// Max entry length is cs_strlen("1234@65535,") == 11
 	int32_t i, maxlen = 12 * caidvaluetab->cvnum, pos = 0;
 	char *ret;
 	if (!cs_malloc(&ret, maxlen))
@@ -948,9 +948,9 @@ char *mk_t_allowedtimeframe(struct s_auth *account)
 					{
 						if(value_in_day == 0)
 						{
-							cs_strncpy(result + strlen(result), &sepday[0], sizeof(sepday));
-							cs_strncpy(result + strlen(result), shortDay[day], sizeof(shortDay));
-							cs_strncpy(result + strlen(result), "@", 2);
+							cs_strncpy(result + cs_strlen(result), &sepday[0], sizeof(sepday));
+							cs_strncpy(result + cs_strlen(result), shortDay[day], sizeof(shortDay));
+							cs_strncpy(result + cs_strlen(result), "@", 2);
 							value_in_day = 1;
 							intime=0;
 							sepday[0]=';';
@@ -958,16 +958,16 @@ char *mk_t_allowedtimeframe(struct s_auth *account)
 						}
 						if(!intime)
 						{
-							cs_strncpy(result + strlen(result), &septime[0], sizeof(septime));
+							cs_strncpy(result + cs_strlen(result), &septime[0], sizeof(septime));
 							snprintf(mytime,6,"%02d:%02d", hours, minutes);
-							cs_strncpy(result + strlen(result), mytime, sizeof(mytime));
-							cs_strncpy(result + strlen(result), "-", 2);
+							cs_strncpy(result + cs_strlen(result), mytime, sizeof(mytime));
+							cs_strncpy(result + cs_strlen(result), "-", 2);
 							septime[0]=',';
 							intime=1;
 						}
 						// Special case 23H59 is enabled we close the day at 24H00
 						if(((hours*60)+minutes)==1439) {
-							cs_strncpy(result + strlen(result), "24:00", 6);
+							cs_strncpy(result + cs_strlen(result), "24:00", 6);
 							intime=0;
 							septime[0]='\0';
 							value_in_day = 0;
@@ -975,7 +975,7 @@ char *mk_t_allowedtimeframe(struct s_auth *account)
 					}
 					else if(intime) {
 							snprintf(mytime,6,"%02d:%02d", hours, minutes);
-							cs_strncpy(result + strlen(result), mytime, sizeof(mytime));
+							cs_strncpy(result + cs_strlen(result), mytime, sizeof(mytime));
 							septime[0]=',';
 							intime=0;
 						}
@@ -996,5 +996,5 @@ char *mk_t_allowedtimeframe(struct s_auth *account)
  */
 void free_mk_t(char *value)
 {
-	if(strlen(value) > 0) { NULLFREE(value); }
+	if(cs_strlen(value) > 0) { NULLFREE(value); }
 }

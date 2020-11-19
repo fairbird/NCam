@@ -525,11 +525,11 @@ if (display) {
 	return OK;
 }
 
-static int32_t mcrHelloNcam(struct s_reader *reader)
+static int32_t mcrHelloNCam(struct s_reader *reader)
 {
 	// Display "NCam" on MCR display
-	char helloNcam[5] = {'O', 'S', 'C', 'a', 'm'};
-	return MCR_DisplayText(reader, &helloNcam[0], 5, 100, 1);
+	char helloNCam[5] = {'O', 'S', 'C', 'a', 'm'};
+	return MCR_DisplayText(reader, &helloNCam[0], 5, 100, 1);
 }
 
 static int32_t mcr_generateStatisticsForDisplay(struct s_reader *reader)
@@ -945,7 +945,7 @@ static int32_t Sc8in1_Init(struct s_reader *reader)
 	// Gimmick
 	if(crdr_data->mcr_type)
 	{
-		mcrHelloNcam(reader);
+		mcrHelloNCam(reader);
 	}
 
 	return OK;
@@ -1039,7 +1039,7 @@ static int32_t Sc8in1_Close(struct s_reader *reader)
 static int32_t Sc8in1_SetSlotForReader(struct s_reader *reader)
 {
 	// Sets the slot for the reader if it is not set already
-	int32_t pos = strlen(reader->device) - 2; //this is where : should be located; is also valid length of physical device name
+	int32_t pos = cs_strlen(reader->device) - 2; //this is where : should be located; is also valid length of physical device name
 	if(reader->device[pos] != 0x3a)  //0x3a = ":"
 		{ rdr_log(reader, "ERROR: '%c' detected instead of slot separator `:` at second to last position of device %s", reader->device[pos], reader->device); }
 	reader->slot = (uint16_t)reader->device[pos + 1] - 0x30;
@@ -1057,7 +1057,7 @@ static int32_t Sc8in1_InitLocks(struct s_reader *reader)
 	Sc8in1_SetSlotForReader(reader);
 
 	// Get device name
-	int32_t pos = strlen(reader->device) - 2;
+	int32_t pos = cs_strlen(reader->device) - 2;
 	if(pos <= 0)
 	{
 		return ERROR;
@@ -1148,7 +1148,7 @@ static void sc8in1_display(struct s_reader *reader, char *message)
 	if(!crdr_data->mcr_type)
 		{ return; }
 	char msg[4] = "   ";
-	if(strlen(message) >= 3)
+	if(cs_strlen(message) >= 3)
 	{
 		msg[0] = message[0];
 		msg[1] = message[1];
@@ -1169,7 +1169,7 @@ static int32_t sc8in1_init(struct s_reader *reader)
 		return OK;
 	}
 	//get physical device name
-	int32_t pos = strlen(reader->device) - 2; //this is where : should be located; is also valid length of physical device name
+	int32_t pos = cs_strlen(reader->device) - 2; //this is where : should be located; is also valid length of physical device name
 	if(pos <= 0 || reader->device[pos] != 0x3a)  //0x3a = ":"
 		{ rdr_log(reader, "ERROR: '%c' detected instead of slot separator `:` at second to last position of device %s", reader->device[pos], reader->device); }
 	// Check if serial port is open already

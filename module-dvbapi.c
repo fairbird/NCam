@@ -668,12 +668,12 @@ int32_t dvbapi_net_send(uint32_t request, int32_t socket_fd, uint32_t msgid, int
 
 			if(cfg.dvbapi_extended_cw_api == 1)
 			{
-				cs_strncpy(capabilities + strlen(capabilities), ",e1mk", 6); // extended cw, key follows mode - supports CSA, DES, AES128
+				cs_strncpy(capabilities + cs_strlen(capabilities), ",e1mk", 6); // extended cw, key follows mode - supports CSA, DES, AES128
 			}
 
 			if(cfg.dvbapi_extended_cw_api == 2)
 			{
-				cs_strncpy(capabilities + strlen(capabilities), ",e2", 4); // usage of DES algo signalled through PID index - CSA and DES only
+				cs_strncpy(capabilities + cs_strlen(capabilities), ",e2", 4); // usage of DES algo signalled through PID index - CSA and DES only
 			}
 
 			*info_len = snprintf((char *) &packet[size], sizeof(packet) - size, "NCam %s, build %s (%s); %s",
@@ -1154,7 +1154,7 @@ static int32_t dvbapi_get_descrambler_info(void)
 	// Ask device for exact number of ca descramblers
 	snprintf(device_path2, sizeof(device_path2), devices[selected_box].ca_device, ca_offset);
 	snprintf(device_path, sizeof(device_path), devices[selected_box].path, 0);
-	cs_strncpy(device_path + strlen(device_path), device_path2, strlen(device_path2) + 1);
+	cs_strncpy(device_path + cs_strlen(device_path), device_path2, cs_strlen(device_path2) + 1);
 
 	if((fd = open(device_path, O_RDWR | O_NONBLOCK)) < 0)
 	{
@@ -1245,7 +1245,7 @@ static int32_t dvbapi_detect_api(void)
 		{
 			snprintf(device_path2, sizeof(device_path2), devices[i].demux_device, 0);
 			snprintf(device_path, sizeof(device_path), devices[i].path, n);
-			cs_strncpy(device_path + strlen(device_path), device_path2, strlen(device_path2) + 1);
+			cs_strncpy(device_path + cs_strlen(device_path), device_path2, cs_strlen(device_path2) + 1);
 
 			filtercount = 0;
 #ifdef WITH_WI
@@ -1403,7 +1403,7 @@ int32_t dvbapi_open_device(int32_t type, int32_t num, int32_t adapter)
 	{
 		snprintf(device_path2, sizeof(device_path2), devices[selected_box].demux_device, num);
 		snprintf(device_path, sizeof(device_path), devices[selected_box].path, adapter);
-		cs_strncpy(device_path + strlen(device_path), device_path2, strlen(device_path2) + 1);
+		cs_strncpy(device_path + cs_strlen(device_path), device_path2, cs_strlen(device_path2) + 1);
 	}
 	else
 	{
@@ -1423,7 +1423,7 @@ int32_t dvbapi_open_device(int32_t type, int32_t num, int32_t adapter)
 
 		snprintf(device_path2, sizeof(device_path2), devices[selected_box].ca_device, num + ca_offset);
 		snprintf(device_path, sizeof(device_path), devices[selected_box].path, adapter);
-		cs_strncpy(device_path + strlen(device_path), device_path2, strlen(device_path2) + 1);
+		cs_strncpy(device_path + cs_strlen(device_path), device_path2, cs_strlen(device_path2) + 1);
 	}
 
 	if(cfg.dvbapi_boxtype == BOXTYPE_SAMYGO)
@@ -2130,10 +2130,10 @@ void dvbapi_add_emmpid(int32_t demux_id, uint16_t caid, uint16_t emmpid, uint32_
 	char cadatatext[40];
 	cs_strncpy(typetext, ":", sizeof(typetext));
 
-	if(type & 0x01) { cs_strncpy(typetext + strlen(typetext), "UNIQUE:", 8); }
-	if(type & 0x02) { cs_strncpy(typetext + strlen(typetext), "SHARED:", 8); }
-	if(type & 0x04) { cs_strncpy(typetext + strlen(typetext), "GLOBAL:", 8); }
-	if(type & 0xF8) { cs_strncpy(typetext + strlen(typetext), "UNKNOWN:", 9); }
+	if(type & 0x01) { cs_strncpy(typetext + cs_strlen(typetext), "UNIQUE:", 8); }
+	if(type & 0x02) { cs_strncpy(typetext + cs_strlen(typetext), "SHARED:", 8); }
+	if(type & 0x04) { cs_strncpy(typetext + cs_strlen(typetext), "GLOBAL:", 8); }
+	if(type & 0xF8) { cs_strncpy(typetext + cs_strlen(typetext), "UNKNOWN:", 9); }
 
 	if(cadata > 0)
 	{
@@ -3075,20 +3075,20 @@ void dvbapi_read_priority(void)
 	while(fgets(token, sizeof(token), fp))
 	{
 		// Ignore comments and empty lines
-		if(token[0] == '#' || token[0] == '/' || token[0] == '\n' || token[0] == '\r' || token[0] == '\0' || strlen(token) > 100)
+		if(token[0] == '#' || token[0] == '/' || token[0] == '\n' || token[0] == '\r' || token[0] == '\0' || cs_strlen(token) > 100)
 		{
 			continue;
 		}
 		memset(str1, 0, 128);
 
-		for(i = 0; i < (int)strlen(token) && token[i] == ' '; i++) { ; }
+		for(i = 0; i < (int)cs_strlen(token) && token[i] == ' '; i++) { ; }
 
-		if(i == (int)strlen(token) - 1) // empty line or all spaces
+		if(i == (int)cs_strlen(token) - 1) // empty line or all spaces
 		{
 			continue;
 		}
 
-		for(i = 0; i < (int)strlen(token); i++)
+		for(i = 0; i < (int)cs_strlen(token); i++)
 		{
 			if(token[i] == '@')
 			{
@@ -3096,11 +3096,11 @@ void dvbapi_read_priority(void)
 			}
 		}
 
-		for(i = 0; i < (int)strlen(token); i++)
+		for(i = 0; i < (int)cs_strlen(token); i++)
 		{
 			if((token[i] == ':' || token[i] == ' ') && token[i + 1] == ':') // if "::" or " :"
 			{
-				memmove(token + i + 2, token + i + 1, strlen(token) - i + 1); // insert extra position
+				memmove(token + i + 2, token + i + 1, cs_strlen(token) - i + 1); // insert extra position
 				token[i + 1] = '0'; // and fill it with NULL
 			}
 
@@ -4987,7 +4987,7 @@ static void dvbapi_write_sdt_info(int32_t demux_id, const char *provider_name, c
 		}
 	}
 
-	if(strlen(provider_name) && caid != NO_CAID_VALUE)
+	if(cs_strlen(provider_name) && caid != NO_CAID_VALUE)
 	{
 		get_providername_or_null(provid, caid, tmp, sizeof(tmp));
 
@@ -5004,7 +5004,7 @@ static void dvbapi_write_sdt_info(int32_t demux_id, const char *provider_name, c
 		}
 	}
 
-	if(strlen(service_name))
+	if(cs_strlen(service_name))
 	{
 		get_servicename_or_null(cur_client(), demux[demux_id].program_number, provid, caid, tmp, sizeof(tmp));
 
@@ -5151,7 +5151,7 @@ static uint32_t dvbapi_extract_sdt_string(char *buf, uint32_t buflen, const uint
 	}
 
 	ptr_in = (const uint8_t *)tmpbuf;
-	in_bytes = strlen(tmpbuf);
+	in_bytes = cs_strlen(tmpbuf);
 	ptr_out = (uint8_t *)buf;
 	out_bytes = buflen;
 
@@ -5207,7 +5207,7 @@ static uint32_t dvbapi_extract_sdt_string(char *buf, uint32_t buflen, const uint
 		cs_log_dbg(D_DVBAPI, "sdt-info dbg: iso_mode: -3 offset: %u", offset);
 	}
 
-	cs_log_dump_dbg(D_DVBAPI, (uint8_t *)buf, strlen(buf), "sdt-info dbg: encoded string:");
+	cs_log_dump_dbg(D_DVBAPI, (uint8_t *)buf, cs_strlen(buf), "sdt-info dbg: encoded string:");
 	NULLFREE(tmpbuf);
 	return 1;
 }
@@ -5357,7 +5357,7 @@ int32_t dvbapi_init_listenfd(void)
 	memset(&servaddr, 0, sizeof(struct sockaddr_un));
 	servaddr.sun_family = AF_UNIX;
 	cs_strncpy(servaddr.sun_path, devices[selected_box].cam_socket_path, sizeof(servaddr.sun_path));
-	clilen = sizeof(servaddr.sun_family) + strlen(servaddr.sun_path);
+	clilen = sizeof(servaddr.sun_family) + cs_strlen(servaddr.sun_path);
 
 	if(((unlink(devices[selected_box].cam_socket_path) < 0) && (errno != ENOENT))
 		|| ((listenfd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
@@ -5519,12 +5519,12 @@ void event_handler(int32_t UNUSED(signal))
 			break;
 		}
 
-		if(strlen(dp->d_name) < 7)
+		if(cs_strlen(dp->d_name) < 7)
 		{
 			continue;
 		}
 
-		if(strncmp(dp->d_name, "pmt", 3) != 0 || strncmp(dp->d_name + strlen(dp->d_name) - 4, ".tmp", 4) != 0)
+		if(strncmp(dp->d_name, "pmt", 3) != 0 || strncmp(dp->d_name + cs_strlen(dp->d_name) - 4, ".tmp", 4) != 0)
 		{
 			continue;
 		}
@@ -5545,7 +5545,7 @@ void event_handler(int32_t UNUSED(signal))
 		}
 #endif
 		cs_strncpy(dest, TMPDIR, sizeof(TMPDIR));
-		cs_strncpy(dest + strlen(dest), dp->d_name, strlen(dp->d_name) + 1);
+		cs_strncpy(dest + cs_strlen(dest), dp->d_name, cs_strlen(dp->d_name) + 1);
 		pmt_fd = open(dest, O_RDONLY);
 		if(pmt_fd < 0)
 		{

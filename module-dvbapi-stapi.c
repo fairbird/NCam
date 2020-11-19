@@ -77,7 +77,7 @@ static void parse_pmt_filename(char *pmtfile, int *dmxid, int *channel)
 	int i, len;
 	char file[132];
 
-	len = strlen(pmtfile);
+	len = cs_strlen(pmtfile);
 
 	for(i = 0; i < len; i++)
 	{
@@ -185,9 +185,9 @@ int32_t stapi_open(void)
 	{
 		if(!dp) { break; }
 
-		char pfad[strlen(PROCDIR) + strlen(dp->d_name) + 1];
-		cs_strncpy(pfad, PROCDIR, strlen(PROCDIR) + 1);
-		cs_strncpy(pfad + strlen(pfad), dp->d_name, strlen(dp->d_name) + 1);
+		char pfad[cs_strlen(PROCDIR) + cs_strlen(dp->d_name) + 1];
+		cs_strncpy(pfad, PROCDIR, cs_strlen(PROCDIR) + 1);
+		cs_strncpy(pfad + cs_strlen(pfad), dp->d_name, cs_strlen(dp->d_name) + 1);
 		if(stat(pfad, &buf) != 0)
 			{ continue; }
 

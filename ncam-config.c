@@ -97,7 +97,7 @@ static void chk_entry4sidtab(char *value, struct s_sidtab *sidtab, int32_t what)
 	uint16_t *slist = (uint16_t *) 0;
 	uint32_t *llist = (uint32_t *) 0;
 	uint32_t caid;
-	char buf[strlen(value) + 1];
+	char buf[cs_strlen(value) + 1];
 	cs_strncpy(buf, value, sizeof(buf));
 	b = (what == 1) ? sizeof(uint32_t) : sizeof(uint16_t);
 	for(i = 0, ptr = strtok_r(value, ",", &saveptr1); ptr; ptr = strtok_r(NULL, ",", &saveptr1))
@@ -195,15 +195,15 @@ static void show_sidtab(struct s_sidtab *sidtab)
 		cs_log("label=%s", sidtab->label);
 		snprintf(buf, sizeof(buf), "caid(%d)=", sidtab->num_caid);
 		for(i = 0; i < sidtab->num_caid; i++)
-			{ snprintf(buf + strlen(buf), 1024 - (buf - saveptr), "%04X ", sidtab->caid[i]); }
+			{ snprintf(buf + cs_strlen(buf), 1024 - (buf - saveptr), "%04X ", sidtab->caid[i]); }
 		cs_log("%s", buf);
 		snprintf(buf, sizeof(buf), "provider(%d)=", sidtab->num_provid);
 		for(i = 0; i < sidtab->num_provid; i++)
-			{ snprintf(buf + strlen(buf), 1024 - (buf - saveptr), "%08X ", sidtab->provid[i]); }
+			{ snprintf(buf + cs_strlen(buf), 1024 - (buf - saveptr), "%08X ", sidtab->provid[i]); }
 		cs_log("%s", buf);
 		snprintf(buf, sizeof(buf), "services(%d)=", sidtab->num_srvid);
 		for(i = 0; i < sidtab->num_srvid; i++)
-			{ snprintf(buf + strlen(buf), 1024 - (buf - saveptr), "%04X ", sidtab->srvid[i]); }
+			{ snprintf(buf + cs_strlen(buf), 1024 - (buf - saveptr), "%04X ", sidtab->srvid[i]); }
 		cs_log("%s", buf);
 	}
 }
@@ -236,7 +236,7 @@ int32_t init_sidtab(void)
 	while(fgets(token, MAXLINESIZE, fp))
 	{
 		int32_t l;
-		if((l = strlen(trim(token))) < 3) { continue; }
+		if((l = cs_strlen(trim(token))) < 3) { continue; }
 		if((token[0] == '[') && (token[l - 1] == ']'))
 		{
 			token[l - 1] = 0;
@@ -300,7 +300,7 @@ int32_t init_provid(void)
 		tmp = trim(token);
 
 		if(tmp[0] == '#') { continue; }
-		if((l = strlen(tmp)) < 11) { continue; }
+		if((l = cs_strlen(tmp)) < 11) { continue; }
 		if(!(payload = strchr(token, '|'))) { continue; }
 
 		*payload++ = '\0';
@@ -332,12 +332,12 @@ int32_t init_provid(void)
 			return (1);
 		}
 
-		ptr1 = token + strlen(token) + 1;
+		ptr1 = token + cs_strlen(token) + 1;
 		for(i = 0; i < new_provid->nprovid ; i++)
 		{
 			new_provid->provid[i] = a2i(ptr1, 3);
 
-			ptr1 = ptr1 + strlen(ptr1) + 1;
+			ptr1 = ptr1 + cs_strlen(ptr1) + 1;
 		}
 
 		for(i = 0, ptr1 = strtok_r(payload, "|", &saveptr1); ptr1; ptr1 = strtok_r(NULL, "|", &saveptr1), i++)
@@ -356,7 +356,7 @@ int32_t init_provid(void)
 			}
 		}
 
-		if(strlen(new_provid->prov) == 0)
+		if(cs_strlen(new_provid->prov) == 0)
 		{
 			NULLFREE(new_provid->provid);
 			NULLFREE(new_provid);
@@ -469,7 +469,7 @@ int32_t init_srvid(void)
 		tmp = trim(token);
 
 		if(tmp[0] == '#') { continue; }
-		if((l = strlen(tmp)) < 6) { continue; }
+		if((l = cs_strlen(tmp)) < 6) { continue; }
 		if(!(srvidasc = strchr(token, ':'))) { continue; }
 		if(!(payload = strchr(token, '|'))) { continue; }
 		*payload++ = '\0';
@@ -498,9 +498,9 @@ int32_t init_srvid(void)
 		}
 
 		// allow empty strings as "||"
-		if(payload[0] == '|' && (strlen(payload)+2 < max_payload_length))
+		if(payload[0] == '|' && (cs_strlen(payload)+2 < max_payload_length))
 		{
-			memmove(payload+1, payload, strlen(payload)+1);
+			memmove(payload+1, payload, cs_strlen(payload)+1);
 			payload[0] = ' ';
 		}
 
@@ -508,9 +508,9 @@ int32_t init_srvid(void)
 		{
 			if(payload[k-1] == '|' && payload[k] == '|')
 			{
-				if(strlen(payload+k)+2 < max_payload_length-k)
+				if(cs_strlen(payload+k)+2 < max_payload_length-k)
 				{
-					memmove(payload+k+1, payload+k, strlen(payload+k)+1);
+					memmove(payload+k+1, payload+k, cs_strlen(payload+k)+1);
 					payload[k] = ' ';
 				}
 				else
@@ -523,7 +523,7 @@ int32_t init_srvid(void)
 		for(i = 0, ptr1 = strtok_r(payload, "|", &saveptr1); ptr1 && (i < 4) ; ptr1 = strtok_r(NULL, "|", &saveptr1), ++i)
 		{
 			// check if string is in cache
-			len2 = strlen(ptr1);
+			len2 = cs_strlen(ptr1);
 			pos = 0;
 			for(j = 0; j < len2; ++j) { pos += (uint8_t)ptr1[j]; }
 			pos = pos % 1024;
@@ -539,7 +539,7 @@ int32_t init_srvid(void)
 
 			offset[i] = len;
 			cs_strncpy(tmptxt + len, trim(ptr1), sizeof(tmptxt) - len);
-			len += strlen(ptr1) + 1;
+			len += cs_strlen(ptr1) + 1;
 		}
 
 		char *tmpptr = NULL;
@@ -561,7 +561,7 @@ int32_t init_srvid(void)
 				*ptrs[i] = tmpptr + offset[i];
 				// store string in stringcache
 				tmp = *ptrs[i];
-				len2 = strlen(tmp);
+				len2 = cs_strlen(tmp);
 				pos = 0;
 				for(j = 0; j < len2; ++j) { pos += (uint8_t)tmp[j]; }
 				pos = pos % 1024;
@@ -644,7 +644,7 @@ int32_t init_srvid(void)
 					for(j = 0;  j < srvid->caid[i].nprovid; j++)
 					{
 						srvid->caid[i].provid[j] = dyn_word_atob(ptr2) & 0xFFFFFF;
-						ptr2 = ptr2 + strlen(ptr2) + 1;
+						ptr2 = ptr2 + cs_strlen(ptr2) + 1;
 					}
 				}
 				else
@@ -659,7 +659,7 @@ int32_t init_srvid(void)
 			if(prov)
 				{ ptr1 = ptr2; }
 			else 
-				{ ptr1 = ptr1 + strlen(ptr1) + 1; }
+				{ ptr1 = ptr1 + cs_strlen(ptr1) + 1; }
 		}
 
 		nr++;
@@ -751,7 +751,7 @@ int32_t init_fakecws(void)
 	{
 		if(sscanf(token, " %62s ", cw_string) == 1)
 		{
-			if(strlen(cw_string) == 32)
+			if(cs_strlen(cw_string) == 32)
 			{
 				if(cs_atob(cw, cw_string, 16) == 16)
 				{
@@ -784,7 +784,7 @@ int32_t init_fakecws(void)
 			}
 			else
 			{
-				cs_log("skipping fake cw %s because of wrong length (%u != 32)!", cw_string, (uint32_t)strlen(cw_string));
+				cs_log("skipping fake cw %s because of wrong length (%u != 32)!", cw_string, (uint32_t)cs_strlen(cw_string));
 			}
 		}
 	}
@@ -810,7 +810,7 @@ int32_t init_fakecws(void)
 	{
 		if(sscanf(token, " %62s ", cw_string) == 1)
 		{
-			if(strlen(cw_string) == 32)
+			if(cs_strlen(cw_string) == 32)
 			{
 				if(cs_atob(cw, cw_string, 16) == 16)
 				{
@@ -888,15 +888,15 @@ static struct s_rlimit *ratelimit_read_int(void)
 	while(fgets(token, sizeof(token), fp))
 	{
 		line++;
-		if(strlen(token) <= 1) { continue; }
+		if(cs_strlen(token) <= 1) { continue; }
 		if(token[0] == '#' || token[0] == '/') { continue; }
-		if(strlen(token) > 1024) { continue; }
+		if(cs_strlen(token) > 1024) { continue; }
 
-		for(i = 0; i < (int)strlen(token); i++)
+		for(i = 0; i < (int)cs_strlen(token); i++)
 		{
 			if((token[i] == ':' || token[i] == ' ') && token[i + 1] == ':')
 			{
-				memmove(token + i + 2, token + i + 1, strlen(token) - i + 1);
+				memmove(token + i + 2, token + i + 1, cs_strlen(token) - i + 1);
 				token[i + 1] = '0';
 			}
 			if(token[i] == '#' || token[i] == '/')
@@ -911,7 +911,7 @@ static struct s_rlimit *ratelimit_read_int(void)
 
 		ret = sscanf(token, "%4x:%6x:%4x:%4x:%d:%d:%d:%1023s", &caid, &provid, &srvid, &chid, &ratelimitecm, &ratelimittime, &srvidholdtime, str1);
 		if(ret < 1) { continue; }
-		cs_strncpy(str1 + strlen(str1), ",", 2);
+		cs_strncpy(str1 + cs_strlen(str1), ",", 2);
 		if(!cs_malloc(&entry, sizeof(struct s_rlimit)))
 		{
 			fclose(fp);
@@ -1011,7 +1011,7 @@ int32_t init_tierid(void)
 		tmp = trim(token);
 
 		if(tmp[0] == '#') { continue; }
-		if((l = strlen(tmp)) < 6) { continue; }
+		if((l = cs_strlen(tmp)) < 6) { continue; }
 		if(!(payload = strchr(token, '|'))) { continue; }
 		if(!(tieridasc = strchr(token, ':'))) { continue; }
 		*payload++ = '\0';
@@ -1179,15 +1179,15 @@ static struct s_global_whitelist *global_whitelist_read_int(void)
 	while(fgets(token, sizeof(token), fp))
 	{
 		line++;
-		if(strlen(token) <= 1) { continue; }
+		if(cs_strlen(token) <= 1) { continue; }
 		if(token[0] == '#' || token[0] == '/') { continue; }
-		if(strlen(token) > 1024) { continue; }
+		if(cs_strlen(token) > 1024) { continue; }
 
-		for(i = 0; i < (int)strlen(token); i++)
+		for(i = 0; i < (int)cs_strlen(token); i++)
 		{
 			if((token[i] == ':' || token[i] == ' ') && token[i + 1] == ':')
 			{
-				memmove(token + i + 2, token + i + 1, strlen(token) - i + 1);
+				memmove(token + i + 2, token + i + 1, cs_strlen(token) - i + 1);
 				token[i + 1] = '0';
 			}
 			if(token[i] == '#' || token[i] == '/')
@@ -1223,7 +1223,7 @@ static struct s_global_whitelist *global_whitelist_read_int(void)
 			str1[0] = 0;
 			cfg.global_whitelist_use_m = 1;
 		}
-		cs_strncpy(str1 + strlen(str1), ",", 2);
+		cs_strncpy(str1 + cs_strlen(str1), ",", 2);
 		char *p = str1, *p2 = str1;
 		while(*p)
 		{
@@ -1323,9 +1323,9 @@ void init_len4caid(void)
 		*value++ = '\0';
 		if((ptr = strchr(value, '#')))
 			{ * ptr = '\0'; }
-		if(strlen(trim(token)) != 2)
+		if(cs_strlen(trim(token)) != 2)
 			{ continue; }
-		if(strlen(trim(value)) != 4)
+		if(cs_strlen(trim(value)) != 4)
 			{ continue; }
 		if((i = byte_atob(token)) < 0)
 			{ continue; }
@@ -1355,15 +1355,15 @@ static struct s_twin *twin_read_int(void)
 	while(fgets(token, sizeof(token), fp))
 	{
 		line++;
-		if(strlen(token) <= 1) { continue; }
+		if(cs_strlen(token) <= 1) { continue; }
 		if(token[0] == '#' || token[0] == '/') { continue; }
-		if(strlen(token) > 1024) { continue; }
+		if(cs_strlen(token) > 1024) { continue; }
 
-		for(i = 0; i < (int)strlen(token); i++)
+		for(i = 0; i < (int)cs_strlen(token); i++)
 		{
 			if((token[i] == ':' || token[i] == ' ') && token[i + 1] == ':')
 			{
-				memmove(token + i + 2, token + i + 1, strlen(token) - i + 1);
+				memmove(token + i + 2, token + i + 1, cs_strlen(token) - i + 1);
 				token[i + 1] = '0';
 			}
 			if(token[i] == '#' || token[i] == '/' || token[i] == '"')
@@ -1385,7 +1385,7 @@ static struct s_twin *twin_read_int(void)
 // 		sscanf(hfreq, "%4x", &freq);
 // 		snprintf(hsrvid, 4, "%x", srvid);
 // 		sscanf(hsrvid, "%4x", &srvid);
-		cs_strncpy(str1 + strlen(str1), ",", 2);
+		cs_strncpy(str1 + cs_strlen(str1), ",", 2);
 
 		if(!cs_malloc(&entry, sizeof(struct s_twin)))
 		{
@@ -1470,10 +1470,10 @@ void read_cccamcfg(char *file)
 	FILE *fp;
 	if(cfg.cccam_cfg_path && strncmp(file, "CCcam.cfg", 9) == 0)
 	{
-		uint32_t pathLength = strlen(cfg.cccam_cfg_path);
+		uint32_t pathLength = cs_strlen(cfg.cccam_cfg_path);
 		if (cfg.cccam_cfg_path[pathLength - 1] == '/' || cfg.cccam_cfg_path[pathLength - 1] == '\\')
 			{ cfg.cccam_cfg_path[pathLength - 1] = '\0'; }
-		pathLength = strlen(cfg.cccam_cfg_path) + 1 + strlen(file) + 1;
+		pathLength = cs_strlen(cfg.cccam_cfg_path) + 1 + cs_strlen(file) + 1;
 		file = (char *)malloc(pathLength);
 		snprintf(file, pathLength, "%s/CCcam.cfg", cfg.cccam_cfg_path);
 		fp = fopen(file, "r");

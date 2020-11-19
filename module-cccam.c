@@ -959,16 +959,16 @@ void cc_check_version(char *cc_version, char *cc_build)
 	int32_t i;
 	for(i = 0; i < CC_VERSIONS; i++)
 	{
-		if(!memcmp(cc_version, version[i], strlen(version[i])))
+		if(!memcmp(cc_version, version[i], cs_strlen(version[i])))
 		{
-			memcpy(cc_build, build[i], strlen(build[i]) + 1);
+			memcpy(cc_build, build[i], cs_strlen(build[i]) + 1);
 			cs_log_dbg(D_CLIENT, "cccam: auto build set for version: %s build: %s", cc_version, cc_build);
 			return;
 		}
 	}
 
-	memcpy(cc_version, version[CC_DEFAULT_VERSION], strlen(version[CC_DEFAULT_VERSION]));
-	memcpy(cc_build, build[CC_DEFAULT_VERSION], strlen(build[CC_DEFAULT_VERSION]));
+	memcpy(cc_version, version[CC_DEFAULT_VERSION], cs_strlen(version[CC_DEFAULT_VERSION]));
+	memcpy(cc_build, build[CC_DEFAULT_VERSION], cs_strlen(build[CC_DEFAULT_VERSION]));
 
 	cs_log_dbg(D_CLIENT, "cccam: auto version set: %s build: %s", cc_version, cc_build);
 
@@ -2656,12 +2656,12 @@ void move_card_to_end(struct s_client *cl, struct cc_card *card_to_move)
 
 static void addParam(char *param, char *value)
 {
-	if(strlen(param) < 4)
-		cs_strncpy(param + strlen(param), value, 4);
+	if(cs_strlen(param) < 4)
+		cs_strncpy(param + cs_strlen(param), value, 4);
 	else
 	{
-		cs_strncpy(param + strlen(param), ",", 2);
-		cs_strncpy(param + strlen(param), value, 4);
+		cs_strncpy(param + cs_strlen(param), ",", 2);
+		cs_strncpy(param + cs_strlen(param), value, 4);
 	}
 }
 
@@ -2789,7 +2789,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 					snprintf((char *)token, sizeof(token), "PARTNER: Ncam v%s, build r%s (%s) [EXT,SID,SLP]",
 								CS_VERSION, CS_SVN_VERSION, CS_TARGET);
 
-					cc_cmd_send(cl, token, strlen((char *)token) + 1, MSG_CW_NOK1);
+					cc_cmd_send(cl, token, cs_strlen((char *)token) + 1, MSG_CW_NOK1);
 				}
 
 				cc->cmd05_mode = MODE_PLAIN;
@@ -2855,7 +2855,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 			}
 			else if(l == 0x2c)
 			{
-				memcpy(cc->cmd05_aeskey, data + strlen(rdr->r_pwd), 16);
+				memcpy(cc->cmd05_aeskey, data + cs_strlen(rdr->r_pwd), 16);
 				cc->cmd05_mode = MODE_AES;
 				//
 				// 45 bytes: set aes128 key, Key=16 bytes [Offset=len(username)]
@@ -2863,7 +2863,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 			}
 			else if(l == 0x2d)
 			{
-				memcpy(cc->cmd05_aeskey, data + strlen(rdr->r_usr), 16);
+				memcpy(cc->cmd05_aeskey, data + cs_strlen(rdr->r_usr), 16);
 				cc->cmd05_mode = MODE_AES;
 				//
 				//Unknown!!
@@ -3109,14 +3109,14 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 								addParam(param, "SLP");
 							}
 
-							cs_strncpy(param + strlen(param), "]", 2);
+							cs_strncpy(param + cs_strlen(param), "]", 2);
 						}
 
 						uint8_t token[256];
 						snprintf((char *)token, sizeof(token), "PARTNER: Ncam v%s, build r%s (%s)%s",
 								CS_VERSION, CS_SVN_VERSION, CS_TARGET, param);
 
-						cc_cmd_send(cl, token, strlen((char *)token) + 1, MSG_CW_NOK1);
+						cc_cmd_send(cl, token, cs_strlen((char *)token) + 1, MSG_CW_NOK1);
 					}
 				}
 				else
@@ -4272,7 +4272,7 @@ int32_t cc_srv_connect(struct s_client *cl)
 
 		// receive passwd / 'CCcam'
 		memcpy(cc->block, save_block, sizeof(struct cc_crypt_block));
-		cc_crypt(&cc->block[DECRYPT], (uint8_t *) pwd, strlen(pwd), ENCRYPT);
+		cc_crypt(&cc->block[DECRYPT], (uint8_t *) pwd, cs_strlen(pwd), ENCRYPT);
 		cc_crypt(&cc->block[DECRYPT], buf, 6, DECRYPT);
 		
 		// illegal buf-bytes could kill the logger!
@@ -4327,11 +4327,11 @@ int32_t cc_srv_connect(struct s_client *cl)
 		cs_log("account '%s' has cccmaxhops = -1: user will not see any card!", usr);
 	}
 
-	if(!cs_malloc(&cc->prefix, strlen(cl->account->usr) + 20))
+	if(!cs_malloc(&cc->prefix, cs_strlen(cl->account->usr) + 20))
 	{
 		return -1;
 	}
-	snprintf(cc->prefix, strlen(cl->account->usr) + 20, "cccam(s) %s:", cl->account->usr);
+	snprintf(cc->prefix, cs_strlen(cl->account->usr) + 20, "cccam(s) %s:", cl->account->usr);
 
 #ifdef CS_CACHEEX
 	if(cl->account->cacheex.mode < 2)
@@ -4483,12 +4483,12 @@ int32_t cc_cli_connect(struct s_client *cl)
 	}
 	if(!cc->prefix)
 	{
-		if(!cs_malloc(&cc->prefix, strlen(cl->reader->label) + 20))
+		if(!cs_malloc(&cc->prefix, cs_strlen(cl->reader->label) + 20))
 		{
 		return -1;
 	}
 	}
-	snprintf(cc->prefix, strlen(cl->reader->label) + 20, "cccam(r) %s:", cl->reader->label);
+	snprintf(cc->prefix, cs_strlen(cl->reader->label) + 20, "cccam(r) %s:", cl->reader->label);
 
 	int32_t handle, n;
 	uint8_t data[20];
@@ -4606,7 +4606,7 @@ int32_t cc_cli_connect(struct s_client *cl)
 	cc_cmd_send(cl, hash, 20, MSG_NO_HEADER); // send crypted hash to server
 
 	memset(buf, 0, CC_MAXMSGSIZE);
-	memcpy(buf, rdr->r_usr, strlen(rdr->r_usr));
+	memcpy(buf, rdr->r_usr, cs_strlen(rdr->r_usr));
 	cs_log_dump_dbg(D_CLIENT, buf, 20, "cccam: username '%s':", buf);
 	cc_cmd_send(cl, buf, 20, MSG_NO_HEADER); // send usr '0' padded -> 20 bytes
 
@@ -4616,7 +4616,7 @@ int32_t cc_cli_connect(struct s_client *cl)
 	//cs_log_dbg(D_CLIENT, "cccam: 'CCcam' xor");
 	memcpy(buf, "CCcam", 5);
 	cs_strncpy(pwd, rdr->r_pwd, sizeof(pwd));
-	cc_crypt(&cc->block[ENCRYPT], (uint8_t *)pwd, strlen(pwd), ENCRYPT);
+	cc_crypt(&cc->block[ENCRYPT], (uint8_t *)pwd, cs_strlen(pwd), ENCRYPT);
 	cc_cmd_send(cl, buf, 6, MSG_NO_HEADER); // send 'CCcam' xor w/ pwd
 
 	if((n = cc_recv_to(cl, data, 20)) != 20)

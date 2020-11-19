@@ -514,7 +514,7 @@ static char *get_ecm_historystring(struct s_client *cl)
 			}
 			k++;
 		}
-		if(strlen(value) == 0)
+		if(cs_strlen(value) == 0)
 		{
 			NULLFREE(value);
 			return "";
@@ -767,7 +767,7 @@ static char *send_ncam_config_loadbalancer(struct templatevars *vars, struct uri
 {
 	setActiveSubMenu(vars, MNU_CFG_LOADBAL);
 
-	if(strlen(getParam(params, "button")) > 0)
+	if(cs_strlen(getParam(params, "button")) > 0)
 	{
 		if(cfg.http_readonly)
 		{
@@ -1096,9 +1096,9 @@ static char *send_ncam_config_gbox(struct templatevars *vars, struct uriparams *
 	{
 		gbox_get_online_peers();
 		// init var
-		len_gbox_save_gsms=strlen(getParam(params, "gbox_msg_type"));
-		len_gbox_msg_type=strlen(getParam(params, "gbox_msg_type"));
-		len_gbox_msg_txt=strlen(getParam(params, "gbox_msg_txt"));
+		len_gbox_save_gsms=cs_strlen(getParam(params, "gbox_msg_type"));
+		len_gbox_msg_type=cs_strlen(getParam(params, "gbox_msg_type"));
+		len_gbox_msg_txt=cs_strlen(getParam(params, "gbox_msg_txt"));
 		if(len_gbox_msg_txt>GBOX_MAX_MSG_TXT) { len_gbox_msg_txt=GBOX_MAX_MSG_TXT; }
 		// retrieve value from Webif
 		cs_strncpy(local_gbox_save_gsms, getParam(params, "gbox_save_gsms"), len_gbox_save_gsms+1);
@@ -1131,9 +1131,9 @@ static char *send_ncam_config_gbox(struct templatevars *vars, struct uriparams *
 	if(streq(getParam(params, "action"), "Send GSMS"))
 	{
 		// init var
-		len_gbox_msg_type=strlen(getParam(params, "gbox_msg_type"));
-		len_gbox_dest_peers=strlen(trim(getParam(params, "gbox_dest_peers")));
-		len_gbox_msg_txt=strlen(getParam(params, "gbox_msg_txt"));
+		len_gbox_msg_type=cs_strlen(getParam(params, "gbox_msg_type"));
+		len_gbox_dest_peers=cs_strlen(trim(getParam(params, "gbox_dest_peers")));
+		len_gbox_msg_txt=cs_strlen(getParam(params, "gbox_msg_txt"));
 		if(len_gbox_msg_txt>GBOX_MAX_MSG_TXT) { len_gbox_msg_txt=GBOX_MAX_MSG_TXT; }
 		// retrieve value from Webif
 		cs_strncpy(local_gbox_msg_type, getParam(params, "gbox_msg_type"), len_gbox_msg_type+1);
@@ -1146,13 +1146,13 @@ static char *send_ncam_config_gbox(struct templatevars *vars, struct uriparams *
 		{
 			s=trim(ptr1);
 			if ((n < GBOX_MAX_DEST_PEERS) && (s[strspn(s, "0123456789abcdefABCDEF")] == 0))
-			{ cfg.gbox_dest_peers[n++] = a2i(trim(ptr1), strlen(trim(ptr1))); }
+			{ cfg.gbox_dest_peers[n++] = a2i(trim(ptr1), cs_strlen(trim(ptr1))); }
 		}
 		cfg.gbox_dest_peers_num = n;
 		/*
 			Start sending GBox SMS
 		*/
-		if((strlen(cfg.gbox_msg_txt) > 5))
+		if((cs_strlen(cfg.gbox_msg_txt) > 5))
 		{
 			isbroadcast=strstr(local_gbox_dest_peers, "FFFF");
 			if(isbroadcast == NULL)
@@ -1416,8 +1416,8 @@ static char *send_ncam_config_cccam(struct templatevars *vars, struct uriparams 
 
 static bool is_ext(const char *path, const char *ext)
 {
-	size_t lenpath = strlen(path);
-	size_t lenext = strlen(ext);
+	size_t lenpath = cs_strlen(path);
+	size_t lenext = cs_strlen(ext);
 	if(lenext > lenpath)
 		{ return 0; }
 	return memcmp(path + lenpath - lenext, ext, lenext) == 0;
@@ -1604,7 +1604,7 @@ static char *send_ncam_config_serial(struct templatevars *vars, struct uriparams
 
 	if(cfg.ser_device)
 	{
-		char sdevice[strlen(cfg.ser_device)];
+		char sdevice[cs_strlen(cfg.ser_device)];
 		cs_strncpy(sdevice, cfg.ser_device, sizeof(sdevice));
 		char *ptr, *saveptr1 = NULL;
 		char delimiter[2];
@@ -1800,7 +1800,7 @@ static bool picon_exists(char *name)
 	if(!tpl_path)
 		{ return false; }
 	snprintf(picon_name, sizeof(picon_name) - 1, "IC_%s", name);
-	return strlen(tpl_getTplPath(picon_name, tpl_path, path, sizeof(path) - 1)) && file_exists(path);
+	return cs_strlen(tpl_getTplPath(picon_name, tpl_path, path, sizeof(path) - 1)) && file_exists(path);
 }
 
 static void clear_rdr_stats(struct s_reader *rdr)
@@ -1977,7 +1977,7 @@ static char *send_ncam_reader(struct templatevars *vars, struct uriparams *param
 			// used for API and WebIf
 			tpl_addVar(vars, TPLADD, "READERNAME", xml_encode(vars, rdr->label));
 
-			MD5((uint8_t *)rdr->label, strlen(rdr->label), md5tmp);
+			MD5((uint8_t *)rdr->label, cs_strlen(rdr->label), md5tmp);
 			int z;
 			tpl_addVar(vars, TPLADD, "LABELMD5","id_");
 			for (z = 0; z < MD5_DIGEST_LENGTH; z++)
@@ -2279,13 +2279,13 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 			if((strcmp((*params).params[i], "reader")) && (strcmp((*params).params[i], "action")))
 			{
 				if(!strcmp((*params).params[i], "services"))
-					{ snprintf(servicelabels + strlen(servicelabels), sizeof(servicelabels) - strlen(servicelabels), "%s,", (*params).values[i]); }
+					{ snprintf(servicelabels + cs_strlen(servicelabels), sizeof(servicelabels) - cs_strlen(servicelabels), "%s,", (*params).values[i]); }
 				else if(!strcmp((*params).params[i], "lb_whitelist_services"))
-					{ snprintf(servicelabelslb + strlen(servicelabelslb), sizeof(servicelabelslb) - strlen(servicelabelslb), "%s,", (*params).values[i]); }
+					{ snprintf(servicelabelslb + cs_strlen(servicelabelslb), sizeof(servicelabelslb) - cs_strlen(servicelabelslb), "%s,", (*params).values[i]); }
 				else if(!strcmp((*params).params[i], "lb_priority_services"))
-					{ snprintf(servicelabelslbprio + strlen(servicelabelslbprio), sizeof(servicelabelslbprio) - strlen(servicelabelslbprio), "%s,", (*params).values[i]); }
+					{ snprintf(servicelabelslbprio + cs_strlen(servicelabelslbprio), sizeof(servicelabelslbprio) - cs_strlen(servicelabelslbprio), "%s,", (*params).values[i]); }
 				else
-					/*if(strlen((*params).values[i]) > 0)*/
+					/*if(cs_strlen((*params).values[i]) > 0)*/
 					{ chk_reader((*params).params[i], (*params).values[i], rdr); }
 			}
 			//printf("param %s value %s\n",(*params).params[i], (*params).values[i]);
@@ -2450,7 +2450,7 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 	}
 	tpl_printf(vars, TPLADD, "CACHEEX_MAXHOP", "%d", rdr->cacheex.maxhop);
 	value = mk_t_cacheex_hitvaluetab(&rdr->cacheex.filter_caidtab);
-	//if (strlen(value) > 0)
+	//if (cs_strlen(value) > 0)
 	tpl_printf(vars, TPLADD, "CACHEEX_ECM_FILTER", "%s", value);
 	free_mk_t(value);
 
@@ -2834,7 +2834,7 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 	else
 	{
 		value = mk_t_service(&rdr->sidtabs);
-		if(strlen(value) > 0)
+		if(cs_strlen(value) > 0)
 			{ tpl_addVar(vars, TPLADD, "SERVICES", value); }
 		free_mk_t(value);
 	}
@@ -2915,7 +2915,7 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 	}
 
 	value = mk_t_emmbylen(rdr);
-	if(strlen(value) > 0)
+	if(cs_strlen(value) > 0)
 		{ tpl_addVar(vars, TPLADD, "BLOCKEMMBYLEN", value); }
 	free_mk_t(value);
 
@@ -3169,7 +3169,7 @@ static char *send_ncam_reader_stats(struct templatevars *vars, struct uriparams 
 	{
 		char *rcs = getParam(params, "rc");
 		int32_t retval = 0;
-		if(strlen(rcs) > 0)
+		if(cs_strlen(rcs) > 0)
 		{
 			int8_t rc;
 			rc = atoi(rcs);
@@ -3190,7 +3190,7 @@ static char *send_ncam_reader_stats(struct templatevars *vars, struct uriparams 
 	if(strcmp(getParam(params, "action"), "deleterecord") == 0)
 	{
 		char *record = getParam(params, "record");
-		if(strlen(record) > 0)
+		if(cs_strlen(record) > 0)
 		{
 			int32_t retval = 0;
 			uint32_t caid, provid, sid, cid, len;
@@ -3311,11 +3311,11 @@ static char *send_ncam_reader_stats(struct templatevars *vars, struct uriparams 
 
 #ifdef WITH_LB
 	int32_t rc2hide = (-1);
-	if(strlen(getParam(params, "hide")) > 0)
+	if(cs_strlen(getParam(params, "hide")) > 0)
 		{ rc2hide = atoi(getParam(params, "hide")); }
 	
 	int32_t rc2show = (-1);
-	if(strlen(getParam(params, "show")) > 0)
+	if(cs_strlen(getParam(params, "show")) > 0)
 		{ rc2show = atoi(getParam(params, "show")); }
 
 	if(rdr->lb_stat)
@@ -3484,7 +3484,7 @@ static char *send_ncam_user_config_edit(struct templatevars *vars, struct uripar
 	if(account == NULL)
 	{
 		i = 1;
-		while(strlen(user) < 1)
+		while(cs_strlen(user) < 1)
 		{
 			snprintf(user, sizeof(user) / sizeof(char) - 1, "NEWUSER%d", i);
 			for(account = cfg.account; account != NULL && strcmp(user, account->usr) != 0; account = account->next) { ; }
@@ -3522,7 +3522,7 @@ static char *send_ncam_user_config_edit(struct templatevars *vars, struct uripar
 			{
 
 				if(!strcmp((*params).params[i], "services"))
-					{ snprintf(servicelabels + strlen(servicelabels), sizeof(servicelabels) - strlen(servicelabels), "%s,", (*params).values[i]); }
+					{ snprintf(servicelabels + cs_strlen(servicelabels), sizeof(servicelabels) - cs_strlen(servicelabels), "%s,", (*params).values[i]); }
 				else
 					{ chk_account((*params).params[i], (*params).values[i], account); }
 			}
@@ -3636,7 +3636,7 @@ static char *send_ncam_user_config_edit(struct templatevars *vars, struct uripar
 	else
 	{
 		value = mk_t_service(&account->sidtabs);
-		if(strlen(value) > 0)
+		if(cs_strlen(value) > 0)
 			{ tpl_addVar(vars, TPLADD, "SERVICES", value); }
 		free_mk_t(value);
 	}
@@ -3742,7 +3742,7 @@ static char *send_ncam_user_config_edit(struct templatevars *vars, struct uripar
 	tpl_printf(vars, TPLADD, "CACHEEX_MAXHOP", "%d", account->cacheex.maxhop);
 
 	value = mk_t_cacheex_hitvaluetab(&account->cacheex.filter_caidtab);
-	//if (strlen(value) > 0)
+	//if (cs_strlen(value) > 0)
 	tpl_printf(vars, TPLADD, "CACHEEX_ECM_FILTER", "%s", value);
 	free_mk_t(value);
 
@@ -4527,7 +4527,7 @@ static char *send_ncam_user_config(struct templatevars *vars, struct uriparams *
 		webif_add_client_proto(vars, latestclient, proto, apicall);
 
 		tpl_addVar(vars, TPLADD, "CLASSNAME", classname);
-		MD5((uint8_t *)account->usr, strlen(account->usr), md5tmp);
+		MD5((uint8_t *)account->usr, cs_strlen(account->usr), md5tmp);
 		int z;
 		tpl_addVar(vars, TPLADD, "USERMD5","id_");
 		for (z = 0; z < MD5_DIGEST_LENGTH; z++)
@@ -4579,7 +4579,7 @@ static char *send_ncam_user_config(struct templatevars *vars, struct uriparams *
 		// append row to table template
 		if(!apicall)
 			{ tpl_addVar(vars, TPLAPPEND, "USERCONFIGS", tpl_getTpl(vars, "USERCONFIGLISTBIT")); }
-		else if(!filter || strcmp(filter, account->usr) == 0 || strcmp(filter, "all") == 0 || strlen(filter) == 0)
+		else if(!filter || strcmp(filter, account->usr) == 0 || strcmp(filter, "all") == 0 || cs_strlen(filter) == 0)
 		{
 			if(apicall == 1){
 				tpl_addVar(vars, TPLAPPEND, "APIUSERCONFIGS", tpl_getTpl(vars, "APIUSERCONFIGLISTBIT"));
@@ -4839,7 +4839,7 @@ static char *send_ncam_entitlement(struct templatevars *vars, struct uriparams *
 	int32_t show_global_list = sharelist_ && sharelist_[0] == '1';
 
 	struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
-	if(show_global_list || strlen(reader_) || (rdr && rdr->typ == R_CCCAM))
+	if(show_global_list || cs_strlen(reader_) || (rdr && rdr->typ == R_CCCAM))
 	{
 
 		if(show_global_list || (rdr && rdr->typ == R_CCCAM && rdr->enable))
@@ -4894,7 +4894,7 @@ static char *send_ncam_entitlement(struct templatevars *vars, struct uriparams *
 		else
 		{
 #else
-	if(strlen(reader_))
+	if(cs_strlen(reader_))
 	{
 		{
 			struct s_reader *rdr;
@@ -5161,7 +5161,7 @@ static char *send_ncam_logpoll(struct templatevars * vars, struct uriparams * pa
 
 #ifdef WITH_DEBUG
 	char *debuglvl = getParam(params, "debug");
-	if(strlen(debuglvl) > 0) {
+	if(cs_strlen(debuglvl) > 0) {
 		int32_t dblvl = atoi(debuglvl);
 		if(cs_dblevel != dblvl) {
 			if(dblvl >= 0 && dblvl <= 65535) { cs_dblevel = dblvl; }
@@ -5200,7 +5200,7 @@ static char *send_ncam_logpoll(struct templatevars * vars, struct uriparams * pa
 			cs_strncpy(str_out, p_txt, pos1);
 			uint64_t id = hist->counter;
 
-			size_t b64_str_in = strlen(xml_encode(vars, str_out));
+			size_t b64_str_in = cs_strlen(xml_encode(vars, str_out));
 			size_t b64_str_out = 32 + BASE64_LENGTH(b64_str_in);
 			char *b64_str_out_buf;
 			if(!cs_malloc(&b64_str_out_buf, b64_str_out))
@@ -5243,7 +5243,7 @@ static char *send_ncam_status(struct templatevars * vars, struct uriparams * par
 	{
 		char *cptr = getParam(params, "threadid");
 		struct s_client *cl = NULL;
-		if(strlen(cptr) > 1)
+		if(cs_strlen(cptr) > 1)
 			{ sscanf(cptr, "%p", (void **)(void *)&cl); }
 
 		if(cl && is_valid_client(cl))
@@ -5288,7 +5288,7 @@ static char *send_ncam_status(struct templatevars * vars, struct uriparams * par
 	}
 
 	char *debuglvl = getParam(params, "debug");
-	if(strlen(debuglvl) > 0)
+	if(cs_strlen(debuglvl) > 0)
 	{
 #ifndef WITH_DEBUG
 		cs_log("*** Warning: Debug Support not compiled in ***");
@@ -5300,7 +5300,7 @@ static char *send_ncam_status(struct templatevars * vars, struct uriparams * par
 	}
 
 	char *hide = getParam(params, "hide");
-	if(strlen(hide) > 0)
+	if(cs_strlen(hide) > 0)
 	{
 		struct s_client *hideidx = NULL;
 		sscanf(hide, "%p", (void **)(void *)&hideidx);
@@ -5310,7 +5310,7 @@ static char *send_ncam_status(struct templatevars * vars, struct uriparams * par
 	}
 
 	char *hideidle = getParam(params, "hideidle");
-	if(strlen(hideidle) > 0)
+	if(cs_strlen(hideidle) > 0)
 	{
 		if(atoi(hideidle) == 2)
 		{
@@ -5685,7 +5685,7 @@ static char *send_ncam_status(struct templatevars * vars, struct uriparams * par
 								tpl_addVar(vars, TPLADD, "LBLVALUE", xml_encode(vars, cl->lastreader));
 								if(strstr(cl->lastreader, " (cache)"))
 								{
-									char lastreader_tmp[strlen(cl->lastreader) - 8];
+									char lastreader_tmp[cs_strlen(cl->lastreader) - 8];
 									tpl_addVar(vars, TPLADD, "CLIENTLBVALUE", tpl_getVar(vars, "LBLRPSTRVALUE"));
 									cs_strncpy(lastreader_tmp, cl->lastreader, sizeof(lastreader_tmp));
 									tpl_addVar(vars, TPLADD, "LBLVALUEENC", urlencode(vars, lastreader_tmp));
@@ -6399,7 +6399,7 @@ static char *send_ncam_services_edit(struct templatevars * vars, struct uriparam
 	if(sidtab == NULL)
 	{
 		i = 1;
-		while(strlen(label) < 1)
+		while(cs_strlen(label) < 1)
 		{
 			snprintf(label, sizeof(label) / sizeof(char) - 1, "newservice%d", i);
 			for(sidtab = cfg.sidtab; sidtab != NULL && strcmp(label, sidtab->label) != 0; sidtab = sidtab->next) { ; }
@@ -6623,7 +6623,7 @@ static char *send_ncam_shutdown(struct templatevars * vars, FILE * f, struct uri
 			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 			tpl_printf(vars, TPLADD, "SECONDS", "%d", SHUTDOWNREFRESH);
 			char *result = tpl_getTpl(vars, "SHUTDOWN");
-			send_headers(f, 200, "OK", extraheader, "text/html", 0, strlen(result), NULL, 0);
+			send_headers(f, 200, "OK", extraheader, "text/html", 0, cs_strlen(result), NULL, 0);
 			webif_write(result, f);
 			cs_log("Shutdown requested by WebIF from %s", cs_inet_ntoa(GET_IP()));
 		}
@@ -6652,7 +6652,7 @@ static char *send_ncam_shutdown(struct templatevars * vars, FILE * f, struct uri
 			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 			tpl_addVar(vars, TPLADD, "SECONDS", "5");
 			char *result = tpl_getTpl(vars, "SHUTDOWN");
-			send_headers(f, 200, "OK", extraheader, "text/html", 0, strlen(result), NULL, 0);
+			send_headers(f, 200, "OK", extraheader, "text/html", 0, cs_strlen(result), NULL, 0);
 			webif_write(result, f);
 			cs_log("Restart requested by WebIF from %s", cs_inet_ntoa(GET_IP()));
 		}
@@ -6716,8 +6716,8 @@ static char *send_ncam_script(struct templatevars * vars, struct uriparams * par
 
 					if((scriptparam != NULL) && (sizeof(scriptparam) > 0))
 					{
-						cs_strncpy(system_str + strlen(system_str), " ", 2);
-						cs_strncpy(system_str + strlen(system_str), scriptparam, strlen(scriptparam) + 1);
+						cs_strncpy(system_str + cs_strlen(system_str), " ", 2);
+						cs_strncpy(system_str + cs_strlen(system_str), scriptparam, cs_strlen(scriptparam) + 1);
 					}
 
 					fp = popen(system_str,"r");
@@ -6789,7 +6789,7 @@ static void webif_process_logfile(struct templatevars * vars, struct uriparams *
 	snprintf(targetfile, targetfile_len, "%s", cfg.logfile);
 	if(strcmp(getParam(params, "clear"), "logfile") == 0)
 	{
-		if(strlen(targetfile) > 0)
+		if(cs_strlen(targetfile) > 0)
 		{
 			FILE *file = fopen(targetfile, "w");
 			fclose(file);
@@ -6845,7 +6845,7 @@ static void webif_process_userfile(struct templatevars * vars, struct uriparams 
 	snprintf(targetfile, targetfile_len, "%s", cfg.usrfile);
 	if(strcmp(getParam(params, "clear"), "usrfile") == 0)
 	{
-		if(strlen(targetfile) > 0)
+		if(cs_strlen(targetfile) > 0)
 		{
 			FILE *file = fopen(targetfile, "w");
 			fclose(file);
@@ -6977,15 +6977,15 @@ static char *send_ncam_files(struct templatevars * vars, struct uriparams * para
 	}
 
 	char *stoplog = getParam(params, "stoplog");
-	if(strlen(stoplog) > 0)
+	if(cs_strlen(stoplog) > 0)
 		{ cs_disable_log(atoi(stoplog)); }
 
 	char *stopusrlog = getParam(params, "stopusrlog");
-	if(strlen(stopusrlog) > 0)
+	if(cs_strlen(stopusrlog) > 0)
 		{ cfg.disableuserfile = atoi(stopusrlog); }
 
 	char *debuglvl = getParam(params, "debug");
-	if(strlen(debuglvl) > 0)
+	if(cs_strlen(debuglvl) > 0)
 	{
 #ifndef WITH_DEBUG
 		cs_log("*** Warning: Debug Support not compiled in ***");
@@ -7046,13 +7046,13 @@ static char *send_ncam_files(struct templatevars * vars, struct uriparams * para
 	{
 		if(strcmp(getParam(params, "action"), "Save") == 0)
 		{
-			if((strlen(targetfile) > 0) /*&& (file_exists(targetfile) == 1)*/)
+			if((cs_strlen(targetfile) > 0) /*&& (file_exists(targetfile) == 1)*/)
 			{
 				FILE *fpsave;
 				char *fcontent = getParam(params, "filecontent");
 				if((fpsave = fopen(targetfile, "w")))
 				{
-					int32_t i, lastpos = 0, len = strlen(fcontent) + 1;
+					int32_t i, lastpos = 0, len = cs_strlen(fcontent) + 1;
 					//write submitted file line by line to disk and remove windows linebreaks
 					for(i = 0; i < len; ++i)
 					{
@@ -7096,7 +7096,7 @@ static char *send_ncam_files(struct templatevars * vars, struct uriparams * para
 			}
 		}
 
-		if((strlen(targetfile) > 0) && (file_exists(targetfile) == 1))
+		if((cs_strlen(targetfile) > 0) && (file_exists(targetfile) == 1))
 		{
 			FILE *fp;
 			char buffer[256];
@@ -7280,7 +7280,7 @@ static bool process_single_emm(struct templatevars * vars, struct s_reader * rdr
 
 		if('\0' != emmdata[0])
 		{
-			len = strlen(emmdata);
+			len = cs_strlen(emmdata);
 			tpl_addVar(vars, TPLADD, "EP", strtoupper(emmdata));
 			if(key_atob_l(emmdata, emmhex, len))
 			{
@@ -7332,7 +7332,7 @@ static bool process_emm_file(struct templatevars * vars, struct s_reader * rdr, 
 				while(fgets(line, sizeof(line), fp))
 				{
 					++rlines;
-					len = strlen(remove_white_chars(line));
+					len = cs_strlen(remove_white_chars(line));
 
 					// wrong emm
 					if(len > (sizeof(emmhex) * 2) ||
@@ -7493,7 +7493,7 @@ static char *send_ncam_EMM(struct templatevars * vars, struct uriparams * params
 	for( i = 0 ; i < num_emm_types; i++ )
 	{
 		snprintf(filename, sizeof(filename), "%s%s%s%s", getParam(params, "label"), "_", emm_types[i], ".log");
-		snprintf(targetfile, sizeof(targetfile), "%s%s%s", emm_path, emm_path[strlen(emm_path) - 1] == '/' ? "" : "/", filename);
+		snprintf(targetfile, sizeof(targetfile), "%s%s%s", emm_path, emm_path[cs_strlen(emm_path) - 1] == '/' ? "" : "/", filename);
 		snprintf(emm_txt, sizeof(emm_txt), "%s_TXT", emm_names[i]);
 		tpl_addVar(vars, TPLADD, emm_txt, filename);
 
@@ -8057,7 +8057,7 @@ static char *send_ncam_image(struct templatevars * vars, FILE * f, struct uripar
 	char *wanted;
 	if(image == NULL) { wanted = getParam(params, "i"); }
 	else { wanted = image; }
-	if(strlen(wanted) > 3 && wanted[0] == 'I' && wanted[1] == 'C')
+	if(cs_strlen(wanted) > 3 && wanted[0] == 'I' && wanted[1] == 'C')
 	{
 		if(etagheader == 0)
 		{
@@ -8068,7 +8068,7 @@ static char *send_ncam_image(struct templatevars * vars, FILE * f, struct uripar
 			if(tpl_path)
 			{
 				char path[255];
-				if(strlen(tpl_getTplPath(wanted, tpl_path, path, 255)) > 0 && file_exists(path))
+				if(cs_strlen(tpl_getTplPath(wanted, tpl_path, path, 255)) > 0 && file_exists(path))
 				{
 					struct stat st;
 					disktpl = 1;
@@ -8115,16 +8115,16 @@ static char *send_ncam_image(struct templatevars * vars, FILE * f, struct uripar
 	}
 	// Return file not found
 	const char *not_found = "File not found.\n";
-	send_headers(f, 404, "Not Found", extraheader, "text/plain", 0, strlen(not_found), (char *)not_found, 0);
-	webif_write_raw((char *)not_found, f, strlen(not_found));
+	send_headers(f, 404, "Not Found", extraheader, "text/plain", 0, cs_strlen(not_found), (char *)not_found, 0);
+	webif_write_raw((char *)not_found, f, cs_strlen(not_found));
 	return "1";
 }
 
 static char *send_ncam_robots_txt(FILE * f)
 {
 	const char *content = "User-agent: *\nDisallow: /\n";
-	send_headers(f, 200, "OK", NULL, "text/plain", 0, strlen(content), (char *)content, 0);
-	webif_write_raw((char *)content, f, strlen(content));
+	send_headers(f, 200, "OK", NULL, "text/plain", 0, cs_strlen(content), (char *)content, 0);
+	webif_write_raw((char *)content, f, cs_strlen(content));
 	return "1";
 }
 
@@ -8139,7 +8139,7 @@ static bool ghttp_autoconf(struct templatevars * vars, struct uriparams * params
 	int8_t i = 0;
 	struct s_reader *rdr;
 	char *name = getParam(params, "gacname");
-	if(strlen(name) < 3)
+	if(cs_strlen(name) < 3)
 	{
 		tpl_addMsg(vars, "Invalid host name!");
 		return false;
@@ -8236,19 +8236,19 @@ static char *send_ncam_ghttp(struct templatevars * vars, struct uriparams * para
 		if(!apicall)
 		{
 			bool missing = false;
-			if(strlen(getParam(params, "gacuser")) == 0)
+			if(cs_strlen(getParam(params, "gacuser")) == 0)
 			{
 				tpl_addVar(vars, TPLADD, "USERREQ", "<FONT COLOR='red'>(Required)</FONT>");
 				missing = true;
 			}
 			else { tpl_addVar(vars, TPLADD, "GACUSER", getParam(params, "gacuser")); }
-			if(strlen(getParam(params, "gacpasswd")) == 0)
+			if(cs_strlen(getParam(params, "gacpasswd")) == 0)
 			{
 				tpl_addVar(vars, TPLADD, "PWDREQ", "<FONT COLOR='red'>(Required)</FONT>");
 				missing = true;
 			}
 			else { tpl_addVar(vars, TPLADD, "GACPASSWD", getParam(params, "gacpasswd")); }
-			if(strlen(getParam(params, "gacname")) == 0)
+			if(cs_strlen(getParam(params, "gacname")) == 0)
 			{
 				tpl_addVar(vars, TPLADD, "NAMEREQ", "<FONT COLOR='red'>(Required)</FONT>");
 				missing = true;
@@ -8276,7 +8276,7 @@ static char *send_ncam_ghttp(struct templatevars * vars, struct uriparams * para
 	}
 	else
 	{
-		if(strlen(getParam(params, "token")) > 0)   // parse autoconf token
+		if(cs_strlen(getParam(params, "token")) > 0)   // parse autoconf token
 		{
 			char *token = getParam(params, "token");
 			int32_t len = b64decode((uint8_t *)token);
@@ -8285,17 +8285,17 @@ static char *send_ncam_ghttp(struct templatevars * vars, struct uriparams * para
 				struct uriparams tokenprms;
 				tokenprms.paramcount = 0;
 				parseParams(&tokenprms, token);
-				if(strlen(getParam(&tokenprms, "u")) > 0)
+				if(cs_strlen(getParam(&tokenprms, "u")) > 0)
 				{
 					tpl_addVar(vars, TPLADD, "GACUSER", getParam(&tokenprms, "u"));
 					tpl_addVar(vars, TPLADD, "USERRDONLY", "readonly");
 				}
-				if(strlen(getParam(&tokenprms, "p")) > 0)
+				if(cs_strlen(getParam(&tokenprms, "p")) > 0)
 				{
 					tpl_addVar(vars, TPLADD, "GACPASSWD", getParam(&tokenprms, "p"));
 					tpl_addVar(vars, TPLADD, "PWDRDONLY", "readonly");
 				}
-				if(strlen(getParam(&tokenprms, "n")) > 0)
+				if(cs_strlen(getParam(&tokenprms, "n")) > 0)
 				{
 					tpl_addVar(vars, TPLADD, "GACNAME", getParam(&tokenprms, "n"));
 					tpl_addVar(vars, TPLADD, "NAMERDONLY", "readonly");
@@ -8389,7 +8389,7 @@ static int8_t check_request(char *result, int32_t readen)
 			if(ptr < result + readen)
 			{
 				uint32_t length = atoi(ptr);
-				if(strlen(headerEnd + 4) >= length) { return 1; }
+				if(cs_strlen(headerEnd + 4) >= length) { return 1; }
 			}
 		}
 	}
@@ -8597,7 +8597,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 			NULLFREE(filebuf);
 			return -1;
 		}
-		tmp = protocol + strlen(protocol) + 2;
+		tmp = protocol + cs_strlen(protocol) + 2;
 
 		pch = path;
 		/* advance pointer to beginning of query string */
@@ -8656,7 +8656,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 
 		for(str1 = strtok_r(tmp, "\n", &saveptr1); str1; str1 = strtok_r(NULL, "\n", &saveptr1))
 		{
-			len = strlen(str1);
+			len = cs_strlen(str1);
 			if(str1[len - 1] == '\r')
 			{
 				str1[len - 1] = '\0';
@@ -8686,7 +8686,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 			else if(len > 20 && strncasecmp(str1, "If-None-Match:", 14) == 0)
 			{
 				for(pch = str1 + 14; pch[0] != '"' && pch[0] != '\0'; ++pch) { ; }
-				if(strlen(pch) > 5) { etagheader = (uint32_t)strtoul(++pch, NULL, 10); }
+				if(cs_strlen(pch) > 5) { etagheader = (uint32_t)strtoul(++pch, NULL, 10); }
 			}
 			else if(len > 12 && strncasecmp(str1, "Connection: Keep-Alive", 22) == 0 && strcmp(method, "POST"))
 			{
@@ -8696,7 +8696,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 
 		if(cfg.http_user && cfg.http_pwd)
 		{
-			if(!authok || strlen(opaque) != MD5_DIGEST_LENGTH * 2) { calculate_opaque(addr, opaque); }
+			if(!authok || cs_strlen(opaque) != MD5_DIGEST_LENGTH * 2) { calculate_opaque(addr, opaque); }
 			if(authok != 2)
 			{
 				if(!authok)
@@ -8714,7 +8714,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 			if(authok != 1)
 			{
 				snprintf(authheadertmp, sizeof(authheadertmp), "WWW-Authenticate: Digest algorithm=\"MD5\", realm=\"%s\", qop=\"auth\", opaque=\"%s\", nonce=\"%s\"", AUTHREALM, opaque, expectednonce);
-				if(authok == 2) { cs_strncpy(authheadertmp + strlen(authheadertmp), ", stale=true", 13); }
+				if(authok == 2) { cs_strncpy(authheadertmp + cs_strlen(authheadertmp), ", stale=true", 13); }
 			}
 			else
 				{ snprintf(authheadertmp, sizeof(authheadertmp), "Authentication-Info: nextnonce=\"%s\"", expectednonce); }
@@ -8722,7 +8722,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 			if(authok != 1)
 			{
 				char *msg = "Access denied.\n";
-				send_headers(f, 401, "Unauthorized", extraheader, "text/html", 0, strlen(msg), msg, 0);
+				send_headers(f, 401, "Unauthorized", extraheader, "text/html", 0, cs_strlen(msg), msg, 0);
 				webif_write(msg, f);
 				NULLFREE(authheader);
 				NULLFREE(filebuf);
@@ -8810,7 +8810,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 #else
 			tpl_addVar(vars, TPLADD, "SRCJQUERY", cfg.http_extern_jquery);
 #endif
-			if(picon_exists("LOGO")||strlen(tpl_getTpl(vars, "IC_LOGO"))>3)
+			if(picon_exists("LOGO")||cs_strlen(tpl_getTpl(vars, "IC_LOGO"))>3)
 			{
 				tpl_addVar(vars, TPLADD, "LOGO_INS", tpl_getTpl(vars, "LOGOBITIMG"));
 			}
@@ -8969,18 +8969,18 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 			}
 			if(pgidx != 19 && pgidx != 20 && pgidx != 21 && pgidx != 27) { cs_writeunlock(__func__, &http_lock); }
 
-			if(result == NULL || !strcmp(result, "0") || strlen(result) == 0) { send_error500(f); }
+			if(result == NULL || !strcmp(result, "0") || cs_strlen(result) == 0) { send_error500(f); }
 			else if(strcmp(result, "1"))
 			{
 				//it doesn't make sense to check for modified etagheader here as standard template has timestamp in output and so site changes on every request
 				if(pgidx == 18)
-					{ send_headers(f, 200, "OK", extraheader, "text/xml", 0, strlen(result), NULL, 0); }
+					{ send_headers(f, 200, "OK", extraheader, "text/xml", 0, cs_strlen(result), NULL, 0); }
 				else if(pgidx == 21)
-					{ send_headers(f, 200, "OK", extraheader, "image/svg+xml", 0, strlen(result), NULL, 0); }
+					{ send_headers(f, 200, "OK", extraheader, "image/svg+xml", 0, cs_strlen(result), NULL, 0); }
 				else if(pgidx == 24)
-					{ send_headers(f, 200, "OK", extraheader, "text/javascript", 0, strlen(result), NULL, 0); }
+					{ send_headers(f, 200, "OK", extraheader, "text/javascript", 0, cs_strlen(result), NULL, 0); }
 				else
-					{ send_headers(f, 200, "OK", extraheader, "text/html", 0, strlen(result), NULL, 0); }
+					{ send_headers(f, 200, "OK", extraheader, "text/html", 0, cs_strlen(result), NULL, 0); }
 				webif_write(result, f);
 			}
 			tpl_clear(vars);
@@ -9069,7 +9069,7 @@ static void *serve_process(void *conn)
 					}
 					if(host)
 					{
-						char extra[strlen(host) + 20];
+						char extra[cs_strlen(host) + 20];
 						snprintf(extra, sizeof(extra), "Location: https://%s", host);
 						send_error(f, 301, "Moved Permanently", extra, "This web server is running in SSL mode.", 1);
 					}

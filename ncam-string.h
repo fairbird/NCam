@@ -3,6 +3,7 @@
 
 bool cs_malloc(void *result, size_t size) MUST_CHECK_RESULT;
 bool cs_realloc(void *result, size_t size) MUST_CHECK_RESULT;
+size_t cs_strlen(const char *str);
 char *cs_strdup(const char *str);
 
 void cs_strncpy(char *destination, const char *source, size_t num);

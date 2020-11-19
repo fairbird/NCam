@@ -8,7 +8,7 @@
 #include "ncam-conf-mk.h"
 #include "ncam-work.h"
 #include "ncam-string.h"
-static void info(char *c, char *i) { memcpy(c, i, strlen(i)); }
+static void info(char *c, char *i) { memcpy(c, i, cs_strlen(i)); }
 static uint8_t card_system(char *atr)
 {
 	if(atr[7] == 0x31 && atr[9] == 0x30 && atr[10] == 0x30) // Seca
@@ -35,7 +35,7 @@ static uint8_t card_system(char *atr)
 }
 static void fn(char *value, uint8_t *var, long size)
 {
-	int32_t len = strlen(value);
+	int32_t len = cs_strlen(value);
 	if(len == size * 2)
 	{
 		if(!key_atob_l(value, var, len))
@@ -81,7 +81,7 @@ void findatr(struct s_reader *reader)
 #endif
 #endif
 	//char testatr[80] = "3F 77 18 00 00 C2 EB 45 02 6C 90 00";
-	//memcpy(current.atr, testatr, strlen(testatr));
+	//memcpy(current.atr, testatr, cs_strlen(testatr));
 	switch (card_system(current.atr))
 	{
 	case 0x01:
@@ -533,8 +533,9 @@ void findatr(struct s_reader *reader)
 	case 0x09:
 #ifdef READER_VIDEOGUARD
 	{
+	        int i;
 		char buf[66];
-		for(int i = 10; i < 17; i++)
+		for(i = 10; i < 17; i++)
 		{
 			// Check for Sky 19.2 E Sat
 			snprintf(buf, 66, "3F FF %i 25 03 10 80 41 B0 07 69 FF 4A 50 70 00 00 50 31 01 00 %i", i, i);
@@ -615,7 +616,7 @@ void findatr(struct s_reader *reader)
 	break;
 	}
 #if defined(READER_SECA) || defined(READER_VIACCESS) || defined(READER_IRDETO) || defined(READER_CRYPTOWORKS) || defined(READER_NAGRA) || defined(READER_VIDEOGUARD) || defined(READER_NAGRA_MERLIN)
-	if(strlen(current.providername))
+	if(cs_strlen(current.providername))
 	{
 		int32_t len, s = 0, v = 0;
 		info(current.info, "recognized");
@@ -643,7 +644,7 @@ void findatr(struct s_reader *reader)
 			chk_ftab(strdup(disablecrccws_only_for), &reader->disablecrccws_only_for);
 		if(rsakey)
 		{
-			len = strlen(rsakey);
+			len = cs_strlen(rsakey);
 			if(len == 128 || len == 240)
 			{
 				if(!key_atob_l(rsakey, reader->rsa_mod, len))
@@ -654,7 +655,7 @@ void findatr(struct s_reader *reader)
 		}
 		if(deskey)
 		{
-			len = strlen(deskey);
+			len = cs_strlen(deskey);
 			if(((len % 16) == 0) && len && len <= 128 * 2)
 			{
 				if(!key_atob_l(deskey, reader->des_key, len))
@@ -663,7 +664,7 @@ void findatr(struct s_reader *reader)
 		}
 		if(boxkey)
 		{
-			len = strlen(boxkey);
+			len = cs_strlen(boxkey);
 			if(((len % 8) == 0) && len && len <= 64)
 			{
 				if(!key_atob_l(boxkey, reader->boxkey, len))
@@ -689,7 +690,7 @@ void findatr(struct s_reader *reader)
 		int32_t n = 0;
 		if(mod1)
 		{
-			len = strlen(mod1);
+			len = cs_strlen(mod1);
 			if(len == 224)
 			{
 				if(!key_atob_l(mod1, reader->mod1, len))
@@ -700,7 +701,7 @@ void findatr(struct s_reader *reader)
 		}
 		if(data50)
 		{
-			len = strlen(data50);
+			len = cs_strlen(data50);
 			if(len == 160)
 			{
 				if(!key_atob_l(data50, reader->data50, len))
@@ -711,7 +712,7 @@ void findatr(struct s_reader *reader)
 		}
 		if(mod50)
 		{
-			len = strlen(mod50);
+			len = cs_strlen(mod50);
 			if(len == 160)
 			{
 				if(!key_atob_l(mod50, reader->mod50, len))
@@ -722,7 +723,7 @@ void findatr(struct s_reader *reader)
 		}
 		if(key60)
 		{
-			len = strlen(key60);
+			len = cs_strlen(key60);
 			if(len == 192)
 			{
 				if(!key_atob_l(key60, reader->key60, len))
@@ -733,7 +734,7 @@ void findatr(struct s_reader *reader)
 		}
 		if(exp60)
 		{
-			len = strlen(exp60);
+			len = cs_strlen(exp60);
 			if(len == 192)
 			{
 				if(!key_atob_l(exp60, reader->exp60, len))
@@ -744,7 +745,7 @@ void findatr(struct s_reader *reader)
 		}
 		if(nuid)
 		{
-			len = strlen(nuid);
+			len = cs_strlen(nuid);
 			if(len == 8)
 			{
 				if(!key_atob_l(nuid, reader->nuid, len))
@@ -755,7 +756,7 @@ void findatr(struct s_reader *reader)
 		}
 		if(cwekey)
 		{
-			len = strlen(cwekey);
+			len = cs_strlen(cwekey);
 			if(len == 32)
 			{
 				if(!key_atob_l(cwekey, reader->cwekey, len))
@@ -769,21 +770,21 @@ void findatr(struct s_reader *reader)
 #endif
 		// Reader specific settings for Videoguard
 		if(boxid)
-			reader->boxid = strlen(boxid) ? a2i(boxid, 4) : 0;
+			reader->boxid = cs_strlen(boxid) ? a2i(boxid, 4) : 0;
 		if(ins7E11)
 			fn(ins7E11, reader->ins7E11, 0x01);
 		if(ins2e06)
 			fn(ins2e06, reader->ins2e06, 0x04);
 		if(ins7E)
 		{
-			if(strlen(ins7E) == 0x1A * 2)
+			if(cs_strlen(ins7E) == 0x1A * 2)
 				fn(ins7E, reader->ins7E, 0x1A);
 			else
 				v++;
 		}
 		if(k1_generic)
 		{
-			len = strlen(k1_generic);
+			len = cs_strlen(k1_generic);
 			if(len == 16 || len == 32)
 			{
 				if(!key_atob_l(k1_generic, reader->k1_generic, len))
@@ -794,7 +795,7 @@ void findatr(struct s_reader *reader)
 		}
 		if(k1_unique)
 		{
-			len = strlen(k1_unique);
+			len = cs_strlen(k1_unique);
 			if(len == 16 || len == 32)
 			{
 				if(!key_atob_l(k1_unique, reader->k1_unique, len))

@@ -91,7 +91,7 @@ static int32_t pcsc_init(struct s_reader *pcsc_reader)
 		ptr = mszReaders;
 		while(*ptr != '\0')
 		{
-			ptr += strlen(ptr) + 1;
+			ptr += cs_strlen(ptr) + 1;
 			nbReaders++;
 		}
 
@@ -127,7 +127,7 @@ static int32_t pcsc_init(struct s_reader *pcsc_reader)
 			if ((reader_nb == -1) && (device_second != NULL) && strstr(ptr,device_second)){
 				reader_nb = nbReaders;
 			}
-			ptr += strlen(ptr) + 1;
+			ptr += cs_strlen(ptr) + 1;
 			nbReaders++;
 		}
 
@@ -255,9 +255,9 @@ static int32_t pcsc_activate_card(struct s_reader *pcsc_reader, uint8_t *atr, ui
 #ifdef WITH_CARDLIST
 		memcpy(current.atr, cs_hexdump(1, (uint8_t *)pbAtr, dwAtrLen, tmp, sizeof(tmp)), dwAtrLen * 3 - 1);
 		findatr(pcsc_reader);
-		if(strlen(current.info))
+		if(cs_strlen(current.info))
 		{
-			rdr_log(pcsc_reader, "%s %s", strlen(current.providername) ? current.providername : "card system", current.info);
+			rdr_log(pcsc_reader, "%s %s", cs_strlen(current.providername) ? current.providername : "card system", current.info);
 		}
 #endif
 		return OK;
