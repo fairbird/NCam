@@ -8085,9 +8085,11 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 		{
 #if defined(WITH_STAPI) || defined(WITH_STAPI5)
 		case STAPI:
-#if defined(WITH_WI) && defined(WITH_EXTENDED_CW)
+#ifdef WITH_WI
 			{
+				int typ = 1; // CW type: Single 1, CSA 2, DES 3, AES 4
 				uint8_t cw[4][16] = {{0}};
+#ifdef WITH_EXTENDED_CW
 				if(er->cw_ex.mode != demux[i].ECMpids[j].useMultipleIndices)
 				{
 					uint32_t idx;
@@ -8115,6 +8117,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				{
 					int32_t key_pos_a = 0;
 					demux[i].ECMpids[j].useMultipleIndices = 1;
+					typ = er->cw_ex.algo + 2;
 
 					for(k = 0; k < demux[i].STREAMpidcount; k++)
 					{
@@ -8149,6 +8152,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 
 					if(er->cw_ex.algo == CW_ALGO_AES128)
 					{
+						typ = 4;
 						memcpy(cw, er->cw_ex.session_word, 32);
 					}
 					else
@@ -8156,7 +8160,10 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 						memcpy(cw, er->cw, 16);
 					}
 				}
-				stapi_write_cw(i, (uint8_t*) cw, demux[i].STREAMpids, demux[i].STREAMpidcount, demux[i].pmt_file, er->cw_ex.mode, er->cw_ex.algo);
+#else
+				memcpy(cw, er->cw, 16);
+#endif
+				stapi_write_cw(i, (uint8_t*) cw, demux[i].STREAMpids, demux[i].STREAMpidcount, demux[i].pmt_file, typ);
 			}
 #else
 			stapi_write_cw(i, er->cw, demux[i].STREAMpids, demux[i].STREAMpidcount, demux[i].pmt_file);

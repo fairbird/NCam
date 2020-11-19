@@ -712,12 +712,6 @@ static void *stapi_read_thread(void *sparam)
 #endif
 				}
 			}
-#if defined(WITH_WI) && (CC_TBD == 1)
-			if(i == MAX_DEMUX)
-			{
-				WiDemux_FilterStop(MatchedFilterList[k]);
-			}
-#endif
 		}
 #ifdef WITH_WI
 _read_end :
@@ -847,11 +841,11 @@ int32_t stapi_set_pid(int32_t demux_id, int32_t UNUSED(num), uint32_t idx, uint1
 	return 1;
 }
 
-#if defined(WITH_WI) && defined(WITH_EXTENDED_CW)
-int32_t stapi_write_cw(int32_t demux_id, uint8_t *cw, uint16_t *STREAMpids, int32_t STREAMpidcount, char *pmtfile, int cw_ex_mode, int cw_ex_algo)
-#else
-int32_t stapi_write_cw(int32_t demux_id, uint8_t *cw, uint16_t *STREAMpids, int32_t STREAMpidcount, char *pmtfile)
+int32_t stapi_write_cw(int32_t demux_id, uint8_t *cw, uint16_t *STREAMpids, int32_t STREAMpidcount, char *pmtfile
+#ifdef WITH_WI
+				, int typ
 #endif
+)
 {
 	if(!pmtfile) { return 0; }
 #ifdef WITH_WI
@@ -880,32 +874,7 @@ int32_t stapi_write_cw(int32_t demux_id, uint8_t *cw, uint16_t *STREAMpids, int3
 		}
 
 		if(demux[demux_id].DescramblerHandle[n] == 0) { continue; }
-#ifdef WITH_EXTENDED_CW
-		if (cw_ex_mode == CW_MODE_MULTIPLE_CW)
-		{
-			if (cw_ex_algo == CW_ALGO_CSA)
-			{
-				WiDemux_DescramblerKeyExt((dmxid << 8) | (channel << 0), STREAMpids, STREAMpidcount, cw, 2);
-			}
-			else
-			{
-				WiDemux_DescramblerKeyExt((dmxid << 8) | (channel << 0), STREAMpids, STREAMpidcount, cw, 3);
-			}
-		}
-		else
-		{
-			if(cw_ex_algo == CW_ALGO_AES128)
-			{
-				WiDemux_DescramblerKeyExt((dmxid << 8) | (channel << 0), STREAMpids, STREAMpidcount, cw, 4);
-			}
-			else
-			{
-				WiDemux_DescramblerKeyExt((dmxid << 8) | (channel << 0), STREAMpids, STREAMpidcount, cw, 1);
-			}
-		}
-#else
-		WiDemux_DescramblerKeyExt((dmxid << 8) | (channel << 0), STREAMpids, STREAMpidcount, cw, 1);
-#endif
+		WiDemux_DescramblerKeyExt((dmxid << 8) | (channel << 0), STREAMpids, STREAMpidcount, cw, typ);
 	}
 #else
 	int32_t ErrorCode, l, n, k;
