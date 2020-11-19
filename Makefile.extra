@@ -338,7 +338,7 @@ cross-aarch64-tuxbox-linux-libusb:
 	$(MAKE) --no-print-directory \
 		CROSS=$(CROSS) \
 		CONF_DIR=/var/tuxbox/config \
-		EXTRA_FLAGS="-static-libgcc -I. -s" \
+		EXTRA_FLAGS="-static-libgcc" \
 		LIBUSB_LIB=$(LIBUSB_LIB) \
 		$(MAKEFLAGS)
 
@@ -346,7 +346,7 @@ cross-aarch64-tuxbox-linux:
 	$(MAKE) --no-print-directory \
 		CROSS=$(CROSS) \
 		CONF_DIR=/var/tuxbox/config \
-		EXTRA_FLAGS="-static-libgcc -I. -s" \
+		EEXTRA_FLAGS="-static-libgcc" \
 		$(MAKEFLAGS)
 
 cross-arm-raspbian-linux-libusb:

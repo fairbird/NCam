@@ -120,6 +120,7 @@ DEFAULT_SU980_LIB = -lentropic -lrt
 DEFAULT_AZBOX_LIB = -Lextapi/openxcas -lOpenXCASAPI
 DEFAULT_LIBCRYPTO_LIB = -lcrypto
 DEFAULT_SSL_LIB = -lssl
+DEFAULT_LIBCURL_LIB = -lcurl
 ifeq ($(uname_S),Linux)
 	DEFAULT_LIBUSB_LIB = -lusb-1.0 -lrt
 else
@@ -196,6 +197,7 @@ $(eval $(call prepare_use_flags,AZBOX,azbox))
 $(eval $(call prepare_use_flags,MCA,mca))
 $(eval $(call prepare_use_flags,SSL,ssl))
 $(eval $(call prepare_use_flags,LIBCRYPTO,))
+$(eval $(call prepare_use_flags,LIBCURL,libcurl))
 $(eval $(call prepare_use_flags,LIBUSB,libusb))
 $(eval $(call prepare_use_flags,PCSC,pcsc))
 $(eval $(call prepare_use_flags,UTF8))
@@ -740,6 +742,13 @@ NCAm build system documentation\n\
                          SSL_LIB='$(DEFAULT_SSL_LIB)'\n\
                      Using USE_SSL=1 adds to '-ssl' to PLUS_TARGET.\n\
 \n\
+   USE_LIBCURL=1    - Request linking with libcurl. USE_LIBCURL is automatically\n\
+                     The variables that control USE_LIBCURL=1 build are:\n\
+                         LIBCURL_FLAGS='$(DEFAULT_LIBCURL_FLAGS)'\n\
+                         LIBCURL_CFLAGS='$(DEFAULT_LIBCURL_FLAGS)'\n\
+                         LIBCURL_LDFLAGS='$(DEFAULT_LIBCURL_FLAGS)'\n\
+                         LIBCURL_LIB='$(DEFAULT_LIBCURL_LIB)'\n\
+\n\
    USE_UTF8=1       - Request UTF-8 enabled webif by default.\n\
 \n\
  Automatically intialized variables:\n\
@@ -862,6 +871,8 @@ NCAm build system documentation\n\
      make USE_LIBCRYPTO=1 LIBCRYPTO_LIB=\"/usr/lib/libcrypto.a\"\n\n\
    Build NCAm with static libssl and libcrypto:\n\
      make USE_SSL=1 SSL_LIB=\"/usr/lib/libssl.a\" LIBCRYPTO_LIB=\"/usr/lib/libcrypto.a\"\n\n\
+   Build NCam with static libcurl:\n\
+     make USE_LIBCURL=1 LIBCURL_LIB=\"/usr/lib/libcurl.a\"\n\n\
    Build with verbose messages and size optimizations:\n\
      make V=1 CC_OPTS=-Os\n\n\
    Build and set ncam file name:\n\

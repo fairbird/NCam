@@ -535,6 +535,49 @@ else (HAVE_PCSC AND USE_PCSC)
     set (STATIC_LIBPCSC False)
 endif (HAVE_PCSC AND USE_PCSC)
 
+check_include_file ("curl/curl.h" HAVE_LIBCURL)
+if (HAVE_LIBCURL)
+	if (EXISTS ${LIBCURLDIR}/libcurl.a)
+		if (STATIC_LIBCURL EQUAL 1)
+			message(STATUS "  libcurl found (${LIBCURLDIR}/libcurl.a). Adding curl support ")
+			add_definitions ("-DWITH_LIBCURL=1")
+			add_definitions ("-I${LIBCURLDIR}/include/")
+			set (LIBCURL "USE_LIBCURL=1")
+			add_library(imp_libcurl STATIC IMPORTED)
+			set_property(TARGET imp_libcurl PROPERTY IMPORTED_LOCATION ${LIBCURLDIR}/libcurl.a)
+			set (STATIC_LIBCURL True)
+			set (libcurl_link "imp_libcurl")
+			add_definitions("-lcurl")
+#			add_definitions("-DCURL_STATICLIB=1")
+#			add_definitions("-lz")
+#			add_definitions("-lcrypto")
+#			add_definitions("-lssl")
+#			add_definitions("-lrt")
+		elseif (NOT STATIC_LIBCURL OR STATIC_LIBCURL EQUAL 0)
+			find_library (LIBCURL_LIBRARY NAMES curl)
+			message(STATUS " libcurl found (${LIBCURL_LIBRARY}). Adding curl support ")
+			add_definitions ("-DWITH_LIBCURL=1")
+			add_definitions ("-I${LIBCURLDIR}/include/")
+			set (LIBCURL "USE_LIBCURL=1")
+			add_library(imp_libcurl SHARED IMPORTED)
+			set_property(TARGET imp_libcurl PROPERTY IMPORTED_LOCATION ${LIBCURL_LIBRARY} )
+			set(STATIC_LIBCURL False)
+			set(libcurl_link curl)
+		endif (STATIC_LIBCURL EQUAL 1)
+	else (EXISTS ${LIBCURLDIR}/libcurl.a)
+			find_library (LIBCURL_LIBRARY NAMES curl)
+			message(STATUS " libcurl found (${LIBCURL_LIBRARY}). Adding curl support ")
+			add_definitions ("-DWITH_LIBCURL=1")
+			add_definitions ("-I${LIBCURLDIR}/include/")
+			set (LIBCURL "USE_LIBCURL=1")
+			add_library(imp_libcurl SHARED IMPORTED)
+			set_property(TARGET imp_libcurl PROPERTY IMPORTED_LOCATION ${LIBCURL_LIBRARY} )
+			set(STATIC_LIBCURL False)
+			set(libcurl_link curl)
+	endif (EXISTS ${LIBCURLDIR}/libcurl.a)
+elseif (HAVE_LIBCURL)
+	message(STATUS "  no curl found. ")
+endif (HAVE_LIBCURL)
 
 # Manage config.h based on command line parameters
 # Manipulate config file based on given parameters and read unset parameters
@@ -575,7 +618,7 @@ GENERATE_NCAM_CONFIG("${CMAKE_CURRENT_SOURCE_DIR}/config.h")
 # Build config.mak and related files
 # FIXME: Create USE_FLAGS and pass them to config.sh using --use-flags
 execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --objdir ${CMAKE_CURRENT_BINARY_DIR} --use-flags  "${USE_STAPI} ${USE_STAPI5} /
-${USE_COOLAPI} ${USE_SU980} ${USE_WETEK} ${USE_AZBOX} ${USE_GXAPI} ${USE_MCA} ${USE_SSL} ${USE_LIBCRYPTO} ${USE_LIBUSB} ${USE_PCSC}" --make-config.mak)
+${USE_COOLAPI} ${USE_SU980} ${USE_WETEK} ${USE_AZBOX} ${USE_GXAPI} ${USE_MCA} ${USE_SSL} ${USE_LIBCRYPTO} ${USE_LIBUSB} ${USE_PCSC} ${USE_LIBCURL}" --make-config.mak)
 # Generate webif/pages.c
 execute_process (COMMAND make --no-print-directory --quiet -C ${CMAKE_CURRENT_SOURCE_DIR}/webif)
 
@@ -776,7 +819,7 @@ elseif (NCAmOperatingSystem MATCHES "WETEK")
     target_link_libraries (${exe_name} rt entropic)
 endif (NCAmOperatingSystem MATCHES "Linux")
 
-target_link_libraries (${exe_name} ${libusb_link} ${rt_link} ${setupapi_link} ${ole32_link} ${shell32_link} ${pthread_link} ${dl_link} ${xcas_link} ${gx_link} ${libpcsc_link} ${ssl_link} ${crypto_link})
+target_link_libraries (${exe_name} ${libusb_link} ${rt_link} ${setupapi_link} ${ole32_link} ${shell32_link} ${pthread_link} ${dl_link} ${xcas_link} ${gx_link} ${libpcsc_link} ${ssl_link} ${crypto_link} ${libcurl_link})
 
 #----------------------- put svnversion in the build ------------------------------
 # at every target rebuild, we re-build the ncam.c compilation...

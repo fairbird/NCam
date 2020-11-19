@@ -12,6 +12,9 @@
 #include "ncam-lock.h"
 #include "ncam-string.h"
 #include "ncam-time.h"
+#ifdef WITH_LIBCURL
+#include <curl/curl.h>
+#endif
 
 extern uint16_t len4caid[256];
 
@@ -1465,198 +1468,342 @@ struct ecmtw get_twin(ECM_REQUEST *er)
 #endif
 
 #if defined(MODULE_CCCAM) || defined(MODULE_NEWCAMD) || defined(MODULE_CAMD35) || defined(MODULE_RADEGAST)
+static int add_reader_from_line(char s[512], int type)
+{
+	if(!s || !type) { return 0; }
+
+	int32_t ret = 0, paracount = 0, found = 0;
+	char *proto = 0;
+	unsigned int ncd_key[14];
+	memset(ncd_key, 0, sizeof(ncd_key));
+#ifdef MODULE_CCCAM
+	char emus[4] = "\x0";
+#endif
+#if defined(MODULE_CAMD35) || defined(MODULE_RADEGAST)
+	int32_t u_caid = 0, u_prid = 0;
+#endif
+#if defined(MODULE_NEWCAMD) || defined(MODULE_CAMD35) || defined(MODULE_RADEGAST)
+	int32_t reshare = -1;
+#endif
+#ifdef MODULE_NEWCAMD
+	int32_t stealth = 4;
+#endif
+	int32_t port;
+	char host[128], u_name[64], u_pass[64];
+
+	struct s_reader *rdr;
+
+	switch(type)
+	{
+	case 1:
+#ifdef MODULE_CCCAM
+		proto = "cccam";
+		ret = sscanf(s, "%s %d %s %s %s", host, &port, u_name, u_pass, emus);
+		paracount = 4;
+#endif
+		break;
+	case 2:
+#ifdef MODULE_NEWCAMD
+		proto = "newcamd";
+		ret = sscanf(s, "%s%d%s%s%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%d%d", host, &port, u_name, u_pass,
+					 &ncd_key[0], &ncd_key[1], &ncd_key[2], &ncd_key[3], &ncd_key[4],
+					 &ncd_key[5], &ncd_key[6], &ncd_key[7], &ncd_key[8], &ncd_key[9],
+					 &ncd_key[10], &ncd_key[11], &ncd_key[12], &ncd_key[13], &reshare, &stealth);
+		paracount = 4;
+#endif
+		break;
+	case 3:
+#ifdef MODULE_CAMD35
+		proto = "camd35";
+		ret = sscanf(s, "%s%d%s%s%x%x%d", host, &port, u_name, u_pass, &u_caid, &u_prid, &reshare);
+		paracount = 4;
+#endif
+		break;
+	case 4:
+#ifdef MODULE_RADEGAST
+		proto = "radegast";
+		ret = sscanf(s, "%s%d%x%x%d", host, &port, &u_caid, &u_prid, &reshare);
+		paracount = 2;
+#endif
+		break;
+	}
+
+	if(!proto || !type || (port <= 0) || (port > 65535) || (ret < paracount)) { return 0; }
+	LL_ITER itr = ll_iter_create(configured_readers);
+	struct s_reader *prdr = NULL;
+	while((prdr = ll_iter_next(&itr)))
+	{
+		if(strcasecmp(prdr->device, host) == 0 && prdr->r_port == port &&
+			strcmp(prdr->r_usr, u_name) == 0 && strcmp(prdr->r_pwd, u_pass) == 0 &&
+			host[0] && port && u_name[0] && u_pass[0])
+		{
+			found = 1;
+			break;
+		}
+	}
+	if(!cfg.cccam_cfg_repetitions_forced && found) { return 0; }
+	if(!cs_malloc(&rdr, sizeof(struct s_reader))) { return 0; }
+	memset(rdr, 0, sizeof(struct s_reader));
+	reader_set_defaults(rdr);
+	chk_reader("protocol", proto, rdr);
+	cs_strncpy(rdr->device, host, sizeof(rdr->device));
+	rdr->r_port = port;
+	cs_strncpy(rdr->r_usr, u_name, sizeof(rdr->r_usr));
+	cs_strncpy(rdr->r_pwd, u_pass, sizeof(rdr->r_pwd));
+	snprintf(s, 256, "%s_%d_%s", host, port, u_name);
+	cs_strncpy(rdr->label, s, sizeof(rdr->label));
+	if(rdr->grp < 1) { rdr->grp = 0x8000000000000000ULL; }
+	rdr->audisabled = 1;
+	rdr->from_cccam_cfg = 1;
+	if(cfg.cccam_cfg_save) { rdr->cccam_cfg_save = 0; }
+	else { rdr->cccam_cfg_save = 1; }
+	switch(type)
+	{
+	case 1:
+#ifdef MODULE_CCCAM
+		if(strcmp(emus, "yes") == 0) { rdr->cc_want_emu = 1; }
+		memcpy(rdr->cc_version, "2.3.2", 5);
+		rdr->cc_keepalive = 1;
+		ret = type;
+#endif
+		break;
+	case 2:
+#ifdef MODULE_NEWCAMD
+#ifdef MODULE_CCCAM
+		rdr->cc_reshare = reshare;
+#endif
+		rdr->ncd_stealth = stealth;
+		if(ret >= 18)
+		{
+			int i;
+			char sncd_key[(sizeof(ncd_key) / sizeof(unsigned int)) * 2 + 1];
+			memset(sncd_key, 0, sizeof(sncd_key));
+			for(i = 0; i < (int)(sizeof(ncd_key) / sizeof(unsigned int)); i++)
+				{ snprintf(sncd_key + 2 * i, sizeof(sncd_key) - 2 * i, "%02x", ncd_key[i]); }
+			chk_reader("key", sncd_key, rdr);
+		}
+		char connectoninit[2] = "1";
+		chk_reader("connectoninit", connectoninit, rdr);
+		ret = type;
+#endif
+		break;
+	case 3:
+#ifdef MODULE_CAMD35
+#ifdef MODULE_CCCAM
+		rdr->cc_reshare = reshare;
+#endif
+		if(u_caid)
+		{
+			snprintf(s, 256, "%x", u_caid);
+			chk_caidtab(s, &rdr->ctab);
+		}
+		if(u_prid)
+		{
+			snprintf(s, 256, "%x:%x", u_caid, u_prid);
+			chk_ftab(s, &rdr->ftab);
+		}
+		ret = type;
+#endif
+		break;
+	case 4:
+#ifdef MODULE_RADEGAST
+#ifdef MODULE_CCCAM
+		rdr->cc_reshare = reshare;
+#endif
+		if(u_caid)
+		{
+			snprintf(s, 256, "%x", u_caid);
+			chk_caidtab(s, &rdr->ctab);
+		}
+		if(u_prid)
+		{
+			snprintf(s, 256, "%x:%x", u_caid, u_prid);
+			chk_ftab(s, &rdr->ftab);
+		}
+		ret = type;
+#endif
+		break;
+	}
+	ll_append(configured_readers, rdr);
+	cs_debug_mask(D_READER, "Add reader device=%s,%d (typ:0x%X, protocol=%s)", rdr->device, rdr->r_port, rdr->typ, proto);
+return ret;
+}
+
+int32_t c = 0, n = 0;
+#if defined(WITH_LIBCURL) && (defined(MODULE_CCCAM) || defined(MODULE_NEWCAMD))
+struct MemoryStruct
+{
+	char *memory;
+	size_t size;
+};
+
+static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
+{
+	size_t realsize = size * nmemb;
+	struct MemoryStruct *mem = (struct MemoryStruct *)userp;
+	mem->memory = realloc(mem->memory, mem->size + realsize + 1);
+	if(mem->memory == NULL)
+	{
+		/* out of memory! */
+		cs_log("not enough memory (realloc returned NULL)");
+		return 0;
+	}
+	memcpy(&(mem->memory[mem->size]), contents, realsize);
+	mem->size += realsize;
+	mem->memory[mem->size] = 0;
+	return realsize;
+}
+
+static int url(char s[512])
+{
+	CURL *curl_handle;
+	CURLcode res;
+	struct MemoryStruct chunk;
+	struct curl_slist *headers = NULL;
+	int ret, i;
+	char line[512], errbuf[CURL_ERROR_SIZE];
+
+	chunk.memory = malloc(1); // will be grown as needed by the realloc above
+	chunk.size = 0; // no data at this point
+	curl_global_init(CURL_GLOBAL_ALL);
+	curl_handle = curl_easy_init(); // init the curl session
+	curl_easy_setopt(curl_handle, CURLOPT_URL, s); // specify URL to get
+	curl_easy_setopt(curl_handle, CURLOPT_ERRORBUFFER, errbuf); // provide a buffer to store errors in
+	errbuf[0] = 0; // set the error buffer as empty before performing a request
+	curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback); // send all data to this function
+	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&chunk); // we pass our 'chunk' struct to the callback function
+	headers = curl_slist_append(headers, "Accept: text/html"); 
+	curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, headers);
+	if(strncmp(s, "https:", 6) == 0)
+	{
+		curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 0); // Set the default value: strict certificate check please "enabled=1L"
+	}
+	curl_easy_setopt(curl_handle, CURLOPT_FOLLOWLOCATION, 1L); // example.com is redirected, so we tell libcurl to follow redirection
+	curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:72.0) Gecko/20100101 Firefox/72.0");
+	res = curl_easy_perform(curl_handle); // get it!
+
+	if(res != CURLE_OK) // check for errors
+	{
+		size_t len = strlen(errbuf);
+		cs_log("libcurl: (url) %s", s);
+		if(len)
+		{
+			cs_log("libcurl: (%d) %s%s", res, errbuf, ((errbuf[len - 1] != '\n') ? "\n" : ""));
+		}
+		else
+		{
+			cs_log("libcurl: (%d) %s", res , curl_easy_strerror(res));
+		}
+		ret = 0;
+	}
+	else
+	/*
+	* Now, our chunk.memory points to a memory block that is chunk.size
+	* bytes big and contains the remote file.
+	*
+	* Do something nice with it!
+	*/
+	{
+		for(i = 0; i < (long)chunk.size; i++)
+		{
+			if((chunk.memory[i] == 'C' || chunk.memory[i] == 'c') && (chunk.memory[i + 1] == ':' && chunk.memory[i + 2] == ' '))
+			{
+				ret = 1;
+			}
+			else if(chunk.memory[i] == 'C' && chunk.memory[i + 1] == ' ' && chunk.memory[i + 2] == ':' && chunk.memory[i + 3] == ' ')
+			{
+				ret = 1;
+				i++;
+			}
+			else if((chunk.memory[i] == 'N') && (chunk.memory[i + 1] == ':' && chunk.memory[i + 2] == ' '))
+			{
+				ret = 2;
+			}
+			else
+			{
+				ret = 0;
+			}
+
+			if(ret)
+			{
+				uint32_t u;
+				memcpy(line, chunk.memory + i + 2, 512);
+				for(u = 0; u < strlen(line); u++)
+				{
+					if(line[u] == '<' || line[u] == '"' || line[u] == '\0') { line[u]='\0'; break; }
+				}
+				switch(add_reader_from_line(line, ret))
+				{
+					case 1: c++; break;
+					case 2: n++; break;
+				}
+			}
+		}
+	}
+	curl_easy_cleanup(curl_handle); // cleanup curl stuff
+	if(chunk.memory) { NULLFREE(chunk.memory); }
+	curl_global_cleanup(); // we're done with libcurl, so clean it up
+	return ret;
+}
+#endif
+
 void read_cccamcfg(char *file)
 {
 	FILE *fp;
 	if(cfg.cccam_cfg_path && strncmp(file, "CCcam.cfg", 9) == 0)
 	{
-		uint32_t pathLength = cs_strlen(cfg.cccam_cfg_path);
+		uint32_t pathLength = strlen(cfg.cccam_cfg_path);
 		if (cfg.cccam_cfg_path[pathLength - 1] == '/' || cfg.cccam_cfg_path[pathLength - 1] == '\\')
 			{ cfg.cccam_cfg_path[pathLength - 1] = '\0'; }
-		pathLength = cs_strlen(cfg.cccam_cfg_path) + 1 + cs_strlen(file) + 1;
+		pathLength = strlen(cfg.cccam_cfg_path) + 1 + strlen(file) + 1;
 		file = (char *)malloc(pathLength);
 		snprintf(file, pathLength, "%s/CCcam.cfg", cfg.cccam_cfg_path);
 		fp = fopen(file, "r");
 		if(!fp) { cs_log("CCcam.cfg file not found in: %s", cfg.cccam_cfg_path); }
-	}
-	else { fp = open_config_file(file); }
+	} else { fp = open_config_file(file); }
 
 	if(!fp) { return; }
-
-	int32_t port, c = 0, n = 0, l = 0, r = 0;
-	char token[MAXLINESIZE], line[MAXLINESIZE], typ, host[128], u_name[64], u_pass[64];
-
-	struct s_reader *rdr;
+	int type;
+	int32_t l = 0, r = 0;
+	char token[512], line[512];
 
 	while(fgets(token, sizeof(token), fp))
 	{
 		char *ptr;
 		if((ptr = strchr(token, '#'))) { *ptr = '\0'; }
-		strncpy(line, trim(token), MAXLINESIZE - 1);
+		strncpy(line, trim(token), 512 - 1);
 		if(!line[0]) { continue; }
+
 		if((line[0] == 'C' || line[0] == 'N' || line[0] == 'L' || line[0] == 'R') && line[1] == ':')
 		{
-			int32_t ret = 0, paracount = 0, found = 0;
-			char *proto = 0;
-			unsigned int ncd_key[14];
-			memset(ncd_key, 0, sizeof(ncd_key));
-#ifdef MODULE_CCCAM
-			char emus[4] = "\x0";
-#endif
-#if defined(MODULE_CAMD35) || defined(MODULE_RADEGAST)
-			int32_t u_caid = 0, u_prid = 0;
-#endif
-#if defined(MODULE_NEWCAMD) || defined(MODULE_CAMD35) || defined(MODULE_RADEGAST)
-			int32_t reshare = -1;
-#endif
-#ifdef MODULE_NEWCAMD
-			int32_t stealth = 4;
-#endif
 			switch(line[0])
 			{
-			case 'C':
-#ifdef MODULE_CCCAM
-				proto = "cccam";
-				ret = sscanf(line, "%c:%s%d%s%s%s", &typ, host, &port, u_name, u_pass, emus);
-				paracount = 5;
-#endif
-				break;
-			case 'N':
-#ifdef MODULE_NEWCAMD
-				proto = "newcamd";
-				ret = sscanf(line, "%c:%s%d%s%s%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%d%d", &typ, host, &port, u_name, u_pass,
-							 &ncd_key[0], &ncd_key[1], &ncd_key[2], &ncd_key[3], &ncd_key[4],
-							 &ncd_key[5], &ncd_key[6], &ncd_key[7], &ncd_key[8], &ncd_key[9],
-							 &ncd_key[10], &ncd_key[11], &ncd_key[12], &ncd_key[13], &reshare, &stealth);
-				paracount = 5;
-#endif
-				break;
-			case 'L':
-#ifdef MODULE_CAMD35
-				proto = "camd35";
-				ret = sscanf(line, "%c:%s%d%s%s%x%x%d", &typ, host, &port, u_name, u_pass, &u_caid, &u_prid, &reshare);
-				paracount = 5;
-#endif
-				break;
-			case 'R':
-#ifdef MODULE_RADEGAST
-				proto = "radegast";
-				ret = sscanf(line, "%c:%s%d%x%x%d", &typ, host, &port, &u_caid, &u_prid, &reshare);
-				paracount = 3;
-#endif
-				break;
+				case 'C': type=1; break;
+				case 'N': type=2; break;
+				case 'L': type=3; break;
+				case 'R': type=4; break;
+				default: type=0;
 			}
 
-			if(!proto || ret < paracount) { continue; }
-
-			LL_ITER itr = ll_iter_create(configured_readers);
-			struct s_reader *prdr = NULL;
-			while((prdr = ll_iter_next(&itr)))
+			if (type)
 			{
-				if(strcasecmp(prdr->device, host) == 0 && prdr->r_port == port &&
-					strcmp(prdr->r_usr, u_name) == 0 && strcmp(prdr->r_pwd, u_pass) == 0 &&
-					host[0] && port && u_name[0] && u_pass[0])
+				switch(add_reader_from_line(line + 2, type))
 				{
-					found = 1;
-					break;
+					case 1: c++; break;
+					case 2: n++; break;
+					case 3: l++; break;
+					case 4: r++; break;
 				}
-			}
-
-			if(!cfg.cccam_cfg_repetitions_forced && found) { continue; }
-			if(!cs_malloc(&rdr, sizeof(struct s_reader))) { continue; }
-
-			memset(rdr, 0, sizeof(struct s_reader));
-			reader_set_defaults(rdr);
-
-			chk_reader("protocol", proto, rdr);
-			cs_strncpy(rdr->device, host, sizeof(rdr->device));
-			rdr->r_port = port;
-			cs_strncpy(rdr->r_usr, u_name, sizeof(rdr->r_usr));
-			cs_strncpy(rdr->r_pwd, u_pass, sizeof(rdr->r_pwd));
-			if(line[0] == 'R')
-				{ snprintf(token, sizeof(token), "%s_%d", host, port); }
-			else
-				{ snprintf(token, sizeof(token), "%s_%d_%s", host, port, u_name); }
-			cs_strncpy(rdr->label, token, sizeof(rdr->label));
-			if(rdr->grp < 1) { rdr->grp = 0x8000000000000000ULL; }
-			rdr->audisabled = 1;
-			rdr->from_cccam_cfg = 1;
-
-			if(cfg.cccam_cfg_save)
-				{ rdr->cccam_cfg_save = 0; }
-			else
-				{ rdr->cccam_cfg_save = 1; }
-
-			switch(line[0])
-			{
-			case 'C':
-#ifdef MODULE_CCCAM
-				if(strcmp(emus, "yes") == 0) { rdr->cc_want_emu = 1; }
-				memcpy(rdr->cc_version, "2.3.2", 5);
-				rdr->cc_keepalive = 1;
-#endif
-				c++;
-				break;
-			case 'N':
-#ifdef MODULE_NEWCAMD
-#ifdef MODULE_CCCAM
-				rdr->cc_reshare = reshare;	
-#endif
-				rdr->ncd_stealth = stealth;
-				if(ret >= 19)
-				{
-					int i;
-					char sncd_key[(sizeof(ncd_key) / sizeof(unsigned int)) * 2 + 1];
-					memset(sncd_key, 0, sizeof(sncd_key));
-					for(i = 0; i < (int)(sizeof(ncd_key) / sizeof(unsigned int)); i++)
-						{ snprintf(sncd_key + 2 * i, sizeof(sncd_key) - 2 * i, "%02x", ncd_key[i]); }
-					chk_reader("key", sncd_key, rdr);
-				}
-				char connectoninit[2] = "1";
-				chk_reader("connectoninit", connectoninit, rdr);
-#endif
-				n++;
-				break;
-			case 'L':
-#ifdef MODULE_CAMD35
-#ifdef MODULE_CCCAM
-				rdr->cc_reshare = reshare;	
-#endif
-				if(u_caid)
-				{
-					snprintf(token, sizeof(token), "%x", u_caid);
-					chk_caidtab(token, &rdr->ctab);
-				}
-				if(u_prid)
-				{
-					snprintf(token, sizeof(token), "%x:%x", u_caid, u_prid);
-					chk_ftab(token, &rdr->ftab);
-				}
-#endif
-				l++;
-				break;
-			case 'R':
-#ifdef MODULE_RADEGAST
-#ifdef MODULE_CCCAM
-				rdr->cc_reshare = reshare;	
-#endif
-				if(u_caid)
-				{
-					snprintf(token, sizeof(token), "%x", u_caid);
-					chk_caidtab(token, &rdr->ctab);
-				}
-				if(u_prid)
-				{
-					snprintf(token, sizeof(token), "%x:%x", u_caid, u_prid);
-					chk_ftab(token, &rdr->ftab);
-				}
-#endif
 				r++;
 				break;
 			}
-			ll_append(configured_readers, rdr);
-			cs_debug_mask(D_READER, "Add reader device=%s,%d (typ:0x%X, protocol=%s) from %s", rdr->device, rdr->r_port, rdr->typ, proto, file);
 		}
+#if defined(WITH_LIBCURL) && (defined(MODULE_CCCAM) || defined(MODULE_NEWCAMD))
+		else if(line[0] == 'h' && line[1] == 't' && line[2] == 't' && line[3] == 'p')
+		{
+			url(line);
+		}
+#endif
 	}
 	cs_log("%s read lines: C:%d N:%d L:%d R:%d", file, c, n, l, r);
 	fclose(fp);
