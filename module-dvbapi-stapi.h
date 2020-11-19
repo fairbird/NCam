@@ -10,7 +10,6 @@ int32_t stapi_write_cw(int32_t demux_id, uint8_t *cw, uint16_t *, int32_t, char 
 				, int typ
 #endif
 );
-#endif
 int32_t stapi_activate_section_filter(int32_t fd, uint8_t *filter, uint8_t *mask);
 
 #ifdef WITH_STAPI5
