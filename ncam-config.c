@@ -1570,8 +1570,8 @@ static int add_reader_from_line(char s[512], int type)
 	case 2:
 #ifdef MODULE_NEWCAMD
 #ifdef MODULE_CCCAM
-		rdr->cc_reshare = reshare;	
- #endif
+		rdr->cc_reshare = reshare;
+#endif
 		rdr->ncd_stealth = stealth;
 		if(ret >= 18)
 		{
@@ -1590,7 +1590,7 @@ static int add_reader_from_line(char s[512], int type)
 	case 3:
 #ifdef MODULE_CAMD35
 #ifdef MODULE_CCCAM
-		rdr->cc_reshare = reshare;	
+		rdr->cc_reshare = reshare;
 #endif
 		if(u_caid)
 		{
@@ -1608,7 +1608,7 @@ static int add_reader_from_line(char s[512], int type)
 	case 4:
 #ifdef MODULE_RADEGAST
 #ifdef MODULE_CCCAM
-		rdr->cc_reshare = reshare;	
+		rdr->cc_reshare = reshare;
 #endif
 		if(u_caid)
 		{
@@ -1719,24 +1719,24 @@ static int url(char s[512])
 			{
 				ret = 2;
 			}
- 			else
+			else
 			{
 				ret = 0;
 			}
- 
+
 			if(ret)
- 			{
+			{
 				uint32_t u;
 				memcpy(line, chunk.memory + i + 2, 512);
 				for(u = 0; u < strlen(line); u++)
- 				{
+				{
 					if(line[u] == '<' || line[u] == '"' || line[u] == '\0') { line[u]='\0'; break; }
- 				}
+				}
 				switch(add_reader_from_line(line, ret))
- 				{
+				{
 					case 1: c++; break;
 					case 2: n++; break;
- 				}
+				}
 			}
 		}
 	}
@@ -1745,7 +1745,7 @@ static int url(char s[512])
 	curl_global_cleanup(); // we're done with libcurl, so clean it up
 	return ret;
 }
- #endif
+#endif
 
 void read_cccamcfg(char *file)
 {
@@ -1788,7 +1788,7 @@ void read_cccamcfg(char *file)
 			if (type)
 			{
 				switch(add_reader_from_line(line + 2, type))
- 				{
+				{
 					case 1: c++; break;
 					case 2: n++; break;
 					case 3: l++; break;
@@ -1802,9 +1802,9 @@ void read_cccamcfg(char *file)
 			url(line);
 		}
 #endif
- 	}
- 	cs_log("%s read lines: C:%d N:%d L:%d R:%d", file, c, n, l, r);
- 	fclose(fp);
+	}
+	cs_log("%s read lines: C:%d N:%d L:%d R:%d", file, c, n, l, r);
+	fclose(fp);
 	return;
 }
 #endif
