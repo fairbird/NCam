@@ -66,6 +66,8 @@ EMM_GLOBAL: 4
 EMM_UNKNOWN: 8
 SUM EMM for Value
 */
+extern struct atrlist current;
+
 void findatr(struct s_reader *reader)
 {
 	if(!reader->cardlist)
@@ -144,7 +146,7 @@ void findatr(struct s_reader *reader)
 			//ecmwhitelist = "";
 			deskey = "";
 			boxkey = "";
-			aeskeys = "";
+			aeskeys = ""; // warning: do not use public aeskeys, as the service provider may block the card via public aeskeys
 			reader->audisabled = 1;
 			reader->cachemm = 1;
 			reader->rewritemm = 3;
@@ -161,7 +163,7 @@ void findatr(struct s_reader *reader)
 			//ecmwhitelist = "";
 			deskey = "";
 			boxkey = "";
-			aeskeys = "";
+			aeskeys = ""; // warning: do not use public aeskeys, as the service provider may block the card via public aeskeys
 			reader->audisabled = 1;
 			reader->cachemm = 1;
 			reader->rewritemm = 3;

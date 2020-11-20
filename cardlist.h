@@ -1,8 +1,8 @@
-#ifndef _CSCTAPI_CARDLIST_H_
-#define _CSCTAPI_CARDLIST_H_
+#ifndef MODULE_CARDLIST_H_
+#define MODULE_CARDLIST_H_
 
 #ifdef WITH_CARDLIST
-struct atrlist { char providername[32]; char atr[80]; char info[92]; } current;
+struct atrlist { char providername[32]; char atr[80]; char info[92]; };
 void findatr(struct s_reader *reader);
 #endif // WITH_CARDLIST
 
