@@ -1684,7 +1684,7 @@ static int url(char s[512])
 
 	if(res != CURLE_OK) // check for errors
 	{
-		size_t len = strlen(errbuf);
+		size_t len = cs_strlen(errbuf);
 		cs_log("libcurl: (url) %s", s);
 		if(len)
 		{
@@ -1728,7 +1728,7 @@ static int url(char s[512])
 			{
 				uint32_t u;
 				memcpy(line, chunk.memory + i + 2, 512);
-				for(u = 0; u < strlen(line); u++)
+				for(u = 0; u < cs_strlen(line); u++)
 				{
 					if(line[u] == '<' || line[u] == '"' || line[u] == '\0') { line[u]='\0'; break; }
 				}
@@ -1752,10 +1752,10 @@ void read_cccamcfg(char *file)
 	FILE *fp;
 	if(cfg.cccam_cfg_path && strncmp(file, "CCcam.cfg", 9) == 0)
 	{
-		uint32_t pathLength = strlen(cfg.cccam_cfg_path);
+		uint32_t pathLength = cs_strlen(cfg.cccam_cfg_path);
 		if (cfg.cccam_cfg_path[pathLength - 1] == '/' || cfg.cccam_cfg_path[pathLength - 1] == '\\')
 			{ cfg.cccam_cfg_path[pathLength - 1] = '\0'; }
-		pathLength = strlen(cfg.cccam_cfg_path) + 1 + strlen(file) + 1;
+		pathLength = cs_strlen(cfg.cccam_cfg_path) + 1 + cs_strlen(file) + 1;
 		file = (char *)malloc(pathLength);
 		snprintf(file, pathLength, "%s/CCcam.cfg", cfg.cccam_cfg_path);
 		fp = fopen(file, "r");
