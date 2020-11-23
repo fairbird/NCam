@@ -22,13 +22,13 @@
 #define TWOFISH_MODE_ENCRYPT            0
 #define TWOFISH_MODE_DECRYPT            1
 
-struct twofish_ctx {  
-    uint32_t sBox[4*256];
-    uint32_t subKeys[40];
-    uint32_t sBoxKey[4];
-    uint8_t  key[TWOFISH_MAX_KEY_LENGHT];
-    uint8_t  key_length;
-}; 
+struct twofish_ctx {
+	uint32_t sBox[4*256];
+	uint32_t subKeys[40];
+	uint32_t sBoxKey[4];
+	uint8_t  key[TWOFISH_MAX_KEY_LENGHT];
+	uint8_t  key_length;
+};
 
 int twofish_setkey(struct twofish_ctx* ctx, uint8_t * key, int length);
 int twofish_encrypt(struct twofish_ctx* ctx, uint8_t *in, int len, uint8_t *out, int maxlen);

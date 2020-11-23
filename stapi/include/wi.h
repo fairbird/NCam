@@ -1,6 +1,10 @@
-﻿#if !defined( __WI_SUPPORT_H__ )
+#if !defined( __WI_SUPPORT_H__ )
 #define __WI_SUPPORT_H__
-
+///////////////////////////////////////
+//    SOCKET_ID -1, 0, 1, 2, ... ?
+//    /mnt/ramdisk/socket_%d.O2W
+// /mnt/ramdisk/oscam_socket.O2W = old
+///////////////////////////////////////
 #ifndef SOCKET_ID
 #define SOCKET_ID -1
 #endif

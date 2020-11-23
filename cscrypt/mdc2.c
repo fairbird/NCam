@@ -31,6 +31,7 @@
         PERM_OP(l,r,tt, 4,0x0f0f0f0fL); \
         }
 
+#if (OPENSSL_VERSION_NUMBER < 0x10101000L) //|| ((OPENSSL_VERSION_NUMBER > 0x10101000L) && !defined(WITH_SSL))
 //OPENSSL_GLOBAL const DES_LONG DES_SPtrans[8][64] =
 const DES_LONG DES_SPtrans[8][64] =
 {
@@ -187,7 +188,7 @@ const DES_LONG DES_SPtrans[8][64] =
 		0x20000000L, 0x20800080L, 0x00020000L, 0x00820080L,
 	}
 };
-
+#endif
 
 
 #  define LOAD_DATA_tmp(a,b,c,d,e,f) LOAD_DATA(a,b,c,d,e,f,g)
@@ -225,7 +226,7 @@ const DES_LONG DES_SPtrans[8][64] =
 #  define ROTATE(a,n)     (((a)>>(n))+((a)<<(32-(n))))
 
 
-
+#if (OPENSSL_VERSION_NUMBER < 0x10101000L) //|| ((OPENSSL_VERSION_NUMBER > 0x10101000L) && !defined(WITH_SSL))
 static const unsigned char odd_parity[256] =
 {
 	1, 1, 2, 2, 4, 4, 7, 7, 8, 8, 11, 11, 13, 13, 14, 14,
@@ -496,7 +497,6 @@ void DES_set_odd_parity(DES_cblock *key)
 		(*key)[i] = odd_parity[(*key)[i]];
 }
 
-
 void DES_encrypt1(DES_LONG *data, DES_key_schedule *ks, int enc)
 {
 	register DES_LONG l, r, t, u;
@@ -571,7 +571,7 @@ void DES_encrypt1(DES_LONG *data, DES_key_schedule *ks, int enc)
 	data[1] = r;
 	l = r = t = u = 0;
 }
-
+#endif
 
 
 static void mdc2_body(MDC2_CTX *c, const unsigned char *in, size_t len);
