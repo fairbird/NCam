@@ -897,6 +897,7 @@ int32_t cc_cmd_send(struct s_client *cl, uint8_t *buf, int32_t len, cc_msg_type_
 	uint8_t *netbuf;
 	if(!cs_malloc(&netbuf, len + 4))
 	{
+		cs_writeunlock(__func__, &cc->lockcmd);
 		return -1;
 	}
 
@@ -935,7 +936,6 @@ int32_t cc_cmd_send(struct s_client *cl, uint8_t *buf, int32_t len, cc_msg_type_
 		}
 		else
 		{
-			cs_writeunlock(__func__, &cc->cards_busy);
 			cs_disconnect_client(cl);
 		}
 		n = -1;
@@ -1871,6 +1871,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er)
 			uint8_t *ecmbuf;
 			if(!cs_malloc(&ecmbuf, cur_er->ecmlen + 13))
 			{
+				cs_readunlock(__func__, &cc->cards_busy);
 				break;
 			}
 
@@ -1975,6 +1976,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er)
 				cur_er->rc = E_WAITING; // mark as waiting
 			}
 		}
+
 		cs_readunlock(__func__, &cc->cards_busy);
 
 		// process next pending ecm!
@@ -2156,6 +2158,7 @@ int32_t cc_send_emm(EMM_PACKET *ep)
 	uint8_t *emmbuf;
 	if(!cs_malloc(&emmbuf, size))
 	{
+		cs_readunlock(__func__, &cc->cards_busy);
 		return 0;
 	}
 
@@ -2749,7 +2752,6 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 				cc->num_reshare1 = 0;
 				cc->num_reshare2 = 0;
 				cc->num_resharex = 0;
-				cs_writeunlock(__func__, &cc->cards_busy);
 
 				memcpy(cc->peer_node_id, data, 8);
 				memcpy(cc->peer_version, data + 8, 8);
@@ -2778,6 +2780,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 					}
 				}
 
+				cs_writeunlock(__func__, &cc->cards_busy);
 				cs_log_dbg(D_READER, "%s remote server %s running v%s (%s)", getprefix(), cs_hexdump(0,
 							cc->peer_node_id, 8, tmp_dbg, sizeof(tmp_dbg)), cc->remote_version, cc->remote_build);
 
@@ -2799,7 +2802,9 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 			}
 			else if(l >= 0x00 && l <= 0x0F)
 			{
+				cs_writelock(__func__, &cc->cards_busy);
 				cc->cmd05_offset = l;
+				cs_writeunlock(__func__, &cc->cards_busy);
 				//
 				// 16..43 bytes: RC4 encryption
 				//
@@ -2816,55 +2821,69 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 
 			else if((l >= 0x10 && l <= 0x1f) || (l >= 0x24 && l <= 0x2b))
 			{
+				cs_writelock(__func__, &cc->cards_busy);
 				cc_init_crypt(&cc->cmd05_cryptkey, data, l);
 				cc->cmd05_mode = MODE_RC4_CRYPT;
+				cs_writeunlock(__func__, &cc->cards_busy);
 				//
 				// 32 bytes: set AES128 key for CMD_05, Key=16 bytes offset keyoffset
 				//
 			}
 			else if(l == 0x20)
 			{
+				cs_writelock(__func__, &cc->cards_busy);
 				memcpy(cc->cmd05_aeskey, data + cc->cmd05_offset, 16);
 				cc->cmd05_mode = MODE_AES;
+				cs_writeunlock(__func__, &cc->cards_busy);
 				//
 				// 33 bytes: xor-algo mit payload-bytes, offset keyoffset
 				//
 			}
 			else if(l == 0x21)
 			{
+				cs_writelock(__func__, &cc->cards_busy);
 				cc_init_crypt(&cc->cmd05_cryptkey, data + cc->cmd05_offset, l);
 				cc->cmd05_mode = MODE_CC_CRYPT;
+				cs_writeunlock(__func__, &cc->cards_busy);
 				//
 				// 34 bytes: cmd_05 plain back
 				//
 			}
 			else if(l == 0x22)
 			{
+				cs_writelock(__func__, &cc->cards_busy);
 				cc->cmd05_mode = MODE_PLAIN;
+				cs_writeunlock(__func__, &cc->cards_busy);
 				//
 				// 35 bytes: Unknown!! 2 256 byte keys exchange
 				//
 			}
 			else if(l == 0x23)
 			{
+				cs_writelock(__func__, &cc->cards_busy);
 				cc->cmd05_mode = MODE_UNKNOWN;
 				cc_cycle_connection(cl);
+				cs_writeunlock(__func__, &cc->cards_busy);
 				//
 				// 44 bytes: set aes128 key, Key=16 bytes [Offset=len(password)]
 				//
 			}
 			else if(l == 0x2c)
 			{
+				cs_writelock(__func__, &cc->cards_busy);
 				memcpy(cc->cmd05_aeskey, data + cs_strlen(rdr->r_pwd), 16);
 				cc->cmd05_mode = MODE_AES;
+				cs_writeunlock(__func__, &cc->cards_busy);
 				//
 				// 45 bytes: set aes128 key, Key=16 bytes [Offset=len(username)]
 				//
 			}
 			else if(l == 0x2d)
 			{
+				cs_writelock(__func__, &cc->cards_busy);
 				memcpy(cc->cmd05_aeskey, data + cs_strlen(rdr->r_usr), 16);
 				cc->cmd05_mode = MODE_AES;
+				cs_writeunlock(__func__, &cc->cards_busy);
 				//
 				//Unknown!!
 				//

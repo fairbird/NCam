@@ -365,9 +365,9 @@ void chk_cltab(char *classasc, CLASSTAB *clstab)
 	for(ptr1 = strtok_r(classasc, ",", &saveptr1); ptr1; ptr1 = strtok_r(NULL, ",", &saveptr1))
 	{
 		ptr1 = trim(ptr1);
-		if(ptr1[0] == '!')
+		if(ptr1[0] == '!' && newclstab.bclass != NULL)
 			{ max_bn++; }
-		else
+		else if(newclstab.aclass != NULL)
 			{ max_an++; }
 	}
 

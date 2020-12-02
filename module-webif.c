@@ -7152,7 +7152,7 @@ static char *send_ncam_failban(struct templatevars * vars, struct uriparams * pa
 		if(strcmp(getParam(params, "intip"), "all") == 0)
 		{
 			// clear whole list
-			while((v_ban_entry = ll_iter_next(&itr)))
+			while(ll_iter_next(&itr))
 			{
 				ll_iter_remove_data(&itr);
 			}
@@ -7345,8 +7345,13 @@ static bool process_emm_file(struct templatevars * vars, struct s_reader * rdr, 
 					if(send_EMM(rdr, caid, csystem, emmhex, len))
 					{
 						++wemms;
-						/* Give time to process EMM, otherwise, too many jobs can be added*/
-						cs_sleepms(1000); //TODO: use ncam signal to catch reader answer
+						int32_t jcount = ll_count(rdr->client->joblist);
+						if (jcount > 200)
+						{
+							/* Give more time to process EMMs */
+							cs_sleepms(1000);
+						}
+						rdr_log_dbg(rdr, D_READER, "pending emm jobs: %i, processed emms: %i", jcount, wemms);
 					}
 				}
 				fsize = ftell(fp);

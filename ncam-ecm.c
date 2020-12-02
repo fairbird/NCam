@@ -1229,7 +1229,6 @@ void request_cw_from_readers(ECM_REQUEST *er, uint8_t stop_stage)
 			default:
 			{
 				// only fallbacks
-				if (ea->reader->typ == R_GBOX) break;
 				if((ea->status & REQUEST_SENT) ||
 						(ea->status & (READER_ACTIVE | READER_FALLBACK)) != (READER_ACTIVE | READER_FALLBACK))
 					{ continue; }
@@ -1320,7 +1319,7 @@ void chk_dcw(struct s_ecm_answer *ea)
 	ECM_REQUEST *ert = ea->er;
 	struct s_ecm_answer *ea_list;
 	struct s_reader *eardr = ea->reader;
-	if(!ert)
+	if(!ert || !eardr)
 		{ return; }
 
 	// ecm request already answered!

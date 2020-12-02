@@ -119,11 +119,7 @@ static void garbage_collector(void)
 
 			for(garbage = first, prev = NULL; garbage; prev = garbage, garbage = garbage->next,j++)
 			{
-				if(j==2)
-				{
-					j++;
-					cs_writeunlock(__func__, &garbage_lock[i]);
-				}
+				cs_writeunlock(__func__, &garbage_lock[i]);
 
 				if(garbage->time < deltime)     // all following elements are too new
 				{
