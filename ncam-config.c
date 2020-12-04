@@ -1769,8 +1769,8 @@ void read_cccamcfg(char *file)
 
 	while(fgets(token, sizeof(token), fp))
 	{
-		char *ptr;
-		if((ptr = strchr(token, '#'))) { *ptr = '\0'; }
+		if(cs_strlen(token) <= 1) { continue; }
+		if(token[0] == '#') { continue; }
 		strncpy(line, trim(token), 512 - 1);
 		if(!line[0]) { continue; }
 
