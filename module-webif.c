@@ -143,8 +143,9 @@ static bool use_srvid2 = false;
 #define MNU_GBX_INFOLOG     29
 #define MNU_CFG_CCCAMCFG    30
 #define MNU_CFG_FSOFTCAMKEY 31
- 
-#define MNU_CFG_TOTAL_ITEMS 32 // sum of items above. Use it for "All inactive" in function calls too.
+#define MNU_CFG_FS          32
+
+#define MNU_CFG_TOTAL_ITEMS 33 // sum of items above. Use it for "All inactive" in function calls too.
 
 static void set_status_info_var(struct templatevars *vars, char *varname, int no_data, char *fmt, double value)
 {
@@ -6940,6 +6941,7 @@ static char *send_ncam_files(struct templatevars * vars, struct uriparams * para
 #ifdef WITH_EMU
 		{ "SoftCam.Key",     MNU_CFG_FSOFTCAMKEY,FTYPE_CONFIG },  // id 31
 #endif
+		{ "ncam.fs" ,        MNU_CFG_FS,  FTYPE_CONFIG },         // id 32
 		{ NULL, 0, 0 },
 	};
 
@@ -7129,6 +7131,9 @@ static char *send_ncam_files(struct templatevars * vars, struct uriparams * para
 
 	if(!cfg.cccam_cfg_path)
 		{ tpl_addVar(vars, TPLADD, "VIEW_FILEMENUCCCAMCFG", tpl_getTpl(vars, "FILEMENUCCCAMCFG")); }
+
+	if(open_config_file("ncam.fs"))
+		{ tpl_addVar(vars, TPLADD, "VIEW_FILEMENUFS", tpl_getTpl(vars, "FILEMENUFS")); }
 
 	if(!apicall)
 		{ return tpl_getTpl(vars, "FILE"); }

@@ -127,6 +127,7 @@ FILEMENUFAKECWS               files/menu_fakecws.html                           
 FILEMENUTWIN                  files/menu_twin.html                                        MODULE_SERIAL
 FILEMENUCCCAMCFG              files/menu_cccamcfg.html                                    MODULE_CCCAM,MODULE_NEWCAMD,MODULE_CAMD35,MODULE_RADEGAST
 FILEMENUSOFTCAMKEY            files/menu_softcamkey.html                                  WITH_EMU
+FILEMENUFS                    files/menu_fs.html                                          MODULE_CCCAM,MODULE_NEWCAMD,MODULE_CAMD35,MODULE_RADEGAST
 
 AUTOCONF                      ghttp/autoconf.html                                         MODULE_GHTTP
 PREAUTOCONF                   ghttp/pre_autoconf.html                                     MODULE_GHTTP

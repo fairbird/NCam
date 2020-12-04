@@ -1518,6 +1518,10 @@ int32_t init_readerdb(void)
 	{
 		read_cccamcfg("CCcam.cfg");
 	}
+	if(open_config_file("ncam.fs"))
+	{
+		read_cccamcfg("ncam.fs");
+	}
 #endif
 	LL_ITER itr = ll_iter_create(configured_readers);
 	while((rdr = ll_iter_next(&itr)) && rdr->from_cccam_cfg) //free duplicate reader
