@@ -14,6 +14,9 @@
 #include "module-emulator-nagravision.h"
 #include "module-emulator-powervu.h"
 #include "module-emulator-viaccess.h"
+#ifdef WITH_LIBCURL
+#include "ncam-files.h"
+#endif
 
 // Shared functions
 
@@ -102,6 +105,72 @@ void date_to_str(char *dateStr, uint8_t len, int8_t offset, uint8_t format)
 */
 
 char *emu_keyfile_path = NULL;
+
+#ifdef WITH_LIBCURL
+static size_t write_data(void *ptr, size_t size, size_t nmemb, void *stream)
+{
+	size_t written = fwrite(ptr, size, nmemb, (FILE *)stream);
+	return written;
+}
+
+char *down_softcam(struct s_reader *rdr)
+{
+	char *tempkey;
+	int32_t ret = 0, i, len = cs_strlen(get_tmp_dir()) + cs_strlen(rdr->label) + 2;
+
+	for(i = 0; i < (int32_t)cs_strlen(rdr->device) - 3; i++)
+	{
+		if(rdr->device[i] == 0x2e && (rdr->device[i + 1] == 0x4b || rdr->device[i + 1] == 0x6b) &&
+			(rdr->device[i + 2] == 0x45 || rdr->device[i + 2] == 0x65) && (rdr->device[i + 3] == 0x59 || rdr->device[i + 3] == 0x79))
+		{
+			ret = 1;
+		}
+	}
+
+	if(!ret) { return NULL; }
+
+	if(cs_malloc(&tempkey, len))
+	{
+		snprintf(tempkey, len, "%s/%s",get_tmp_dir(),rdr->label);
+		mkdir(tempkey, S_IRWXU);
+
+		CURL *curl_handle;
+		curl_global_init(CURL_GLOBAL_ALL);
+		curl_handle = curl_easy_init(); // init the curl session
+		FILE *fp;
+		len += cs_strlen(EMU_KEY_FILENAME) + 1;
+		char tmp[len];
+		snprintf(tmp, len, "%s/%s", tempkey, EMU_KEY_FILENAME);
+
+  		fp = fopen(tmp, "w"); // open the file
+		if(fp)
+		{
+			curl_easy_setopt(curl_handle, CURLOPT_MAXFILESIZE, 524288L); // refuse to download if larger than 524288 bytes!
+			curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_data); // send all data to this function
+			curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, fp); // write the page body to this file handle
+			ret = curl(curl_handle, rdr->device);
+			fclose(fp); // close the header file
+		}
+		else
+		{
+			ret = 0;
+			cs_log("ERROR: Can't open priority file %s", tmp);
+		}
+		curl_easy_cleanup(curl_handle); // cleanup curl stuff
+		curl_global_cleanup();
+		tempkey[cs_strlen(tempkey)] = '\0';
+	}
+
+	if (!ret)
+	{
+		return NULL;
+	}
+	else
+	{
+		return tempkey;
+	}
+}
+#endif
 
 void emu_set_keyfile_path(const char *path)
 {

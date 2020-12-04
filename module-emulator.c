@@ -235,13 +235,26 @@ static int32_t emu_card_info(struct s_reader *rdr)
 	emu_read_keymemory(rdr);
 
 	// Read keys from SoftCam.Key file
-	emu_set_keyfile_path(cs_confdir);
-
-	if (!emu_read_keyfile(rdr, cs_confdir))
+#ifdef WITH_LIBCURL
+	if(rdr->device[0] == 0x68 && rdr->device[1] == 0x74 && rdr->device[2] == 0x74 && rdr->device[3] == 0x70)
 	{
-		if (emu_read_keyfile(rdr, "/var/keys/"))
+		char *tmpkey=down_softcam(rdr);
+		if(tmpkey && emu_read_keyfile(rdr, tmpkey))
 		{
-			emu_set_keyfile_path("/var/keys/");
+			emu_set_keyfile_path(tmpkey);
+		}
+		NULLFREE(tmpkey);
+	}
+	else
+#endif
+	{
+		emu_set_keyfile_path(cs_confdir);
+		if(!emu_read_keyfile(rdr, cs_confdir))
+		{
+			if(emu_read_keyfile(rdr, "/var/keys/"))
+			{
+				emu_set_keyfile_path("/var/keys/");
+			}
 		}
 	}
 #ifdef WITH_LIBCRYPTO

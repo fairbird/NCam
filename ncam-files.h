@@ -11,4 +11,9 @@ int32_t safe_overwrite_with_bak(char *destfile, char *temp_file, char *bakfile, 
 char *get_gbox_filename(char *dest, size_t destlen, const char *filename);
 #endif
 
+#ifdef WITH_LIBCURL
+#include <curl/curl.h>
+int curl(CURL *curl_handle, char *s);
+#endif
+
 #endif

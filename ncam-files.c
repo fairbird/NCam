@@ -191,3 +191,49 @@ char *get_gbox_filename(char *dest, size_t destlen, const char *filename)
 	return dest;
 }
 #endif
+
+#ifdef WITH_LIBCURL
+int curl(CURL *curl_handle, char *url)
+{
+	CURLcode res;
+	struct curl_slist *headers = NULL;
+	char errbuf[CURL_ERROR_SIZE];
+
+	curl_easy_setopt(curl_handle, CURLOPT_URL, url); // specify URL to get
+	curl_easy_setopt(curl_handle, CURLOPT_ERRORBUFFER, errbuf); // provide a buffer to store errors in
+	errbuf[0] = 0; // set the error buffer as empty before performing a request
+  	curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, 0L); // Switch on full protocol/debug output while testing
+  	curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 1L); // disable progress meter, set to 0L to enable it*/
+
+	headers = curl_slist_append(headers, "Accept: text/html"); 
+	curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, headers);
+	if(strncmp(url, "https:", 6) == 0)
+	{
+		curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 0); // Set the default value: strict certificate check please "enabled=1L"
+	}
+	curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, 3L); // complete within 3 seconds
+	curl_easy_setopt(curl_handle, CURLOPT_FOLLOWLOCATION, 1L); // example.com is redirected, so we tell libcurl to follow redirection
+	curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:72.0) Gecko/20100101 Firefox/72.0");
+
+	res = curl_easy_perform(curl_handle); // get it!
+
+	if(res != CURLE_OK) // check for errors
+	{
+		size_t len = strlen(errbuf);
+		cs_log("libcurl: (url) %s", url);
+		if(len)
+		{
+			cs_log("libcurl: (%d) %s%s", res, errbuf, ((errbuf[len - 1] != '\n') ? "\n" : ""));
+		}
+		else
+		{
+			cs_log("libcurl: (%d) %s", res , curl_easy_strerror(res));
+		}
+		return 0;
+	}
+	else
+	{
+		return 1;
+	}
+}
+#endif

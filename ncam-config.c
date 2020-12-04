@@ -12,9 +12,6 @@
 #include "ncam-lock.h"
 #include "ncam-string.h"
 #include "ncam-time.h"
-#ifdef WITH_LIBCURL
-#include <curl/curl.h>
-#endif
 
 extern uint16_t len4caid[256];
 
@@ -1629,7 +1626,7 @@ static int add_reader_from_line(char s[512], int type)
 return ret;
 }
 
-int32_t c = 0, n = 0;
+int32_t c, n;
 #if defined(WITH_LIBCURL) && (defined(MODULE_CCCAM) || defined(MODULE_NEWCAMD))
 struct MemoryStruct
 {
@@ -1654,49 +1651,21 @@ static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, voi
 	return realsize;
 }
 
-static int url(char s[512])
+static void down_line(char s[512])
 {
 	CURL *curl_handle;
-	CURLcode res;
 	struct MemoryStruct chunk;
-	struct curl_slist *headers = NULL;
 	int ret, i;
-	char line[512], errbuf[CURL_ERROR_SIZE];
+	char line[512];
 
 	chunk.memory = malloc(1); // will be grown as needed by the realloc above
 	chunk.size = 0; // no data at this point
 	curl_global_init(CURL_GLOBAL_ALL);
 	curl_handle = curl_easy_init(); // init the curl session
-	curl_easy_setopt(curl_handle, CURLOPT_URL, s); // specify URL to get
-	curl_easy_setopt(curl_handle, CURLOPT_ERRORBUFFER, errbuf); // provide a buffer to store errors in
-	errbuf[0] = 0; // set the error buffer as empty before performing a request
+
 	curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback); // send all data to this function
 	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&chunk); // we pass our 'chunk' struct to the callback function
-	headers = curl_slist_append(headers, "Accept: text/html"); 
-	curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, headers);
-	if(strncmp(s, "https:", 6) == 0)
-	{
-		curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 0); // Set the default value: strict certificate check please "enabled=1L"
-	}
-	curl_easy_setopt(curl_handle, CURLOPT_FOLLOWLOCATION, 1L); // example.com is redirected, so we tell libcurl to follow redirection
-	curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:72.0) Gecko/20100101 Firefox/72.0");
-	res = curl_easy_perform(curl_handle); // get it!
-
-	if(res != CURLE_OK) // check for errors
-	{
-		size_t len = cs_strlen(errbuf);
-		cs_log("libcurl: (url) %s", s);
-		if(len)
-		{
-			cs_log("libcurl: (%d) %s%s", res, errbuf, ((errbuf[len - 1] != '\n') ? "\n" : ""));
-		}
-		else
-		{
-			cs_log("libcurl: (%d) %s", res , curl_easy_strerror(res));
-		}
-		ret = 0;
-	}
-	else
+	if(curl(curl_handle, s))
 	/*
 	* Now, our chunk.memory points to a memory block that is chunk.size
 	* bytes big and contains the remote file.
@@ -1743,7 +1712,6 @@ static int url(char s[512])
 	curl_easy_cleanup(curl_handle); // cleanup curl stuff
 	if(chunk.memory) { NULLFREE(chunk.memory); }
 	curl_global_cleanup(); // we're done with libcurl, so clean it up
-	return ret;
 }
 #endif
 
@@ -1765,6 +1733,8 @@ void read_cccamcfg(char *file)
 	if(!fp) { return; }
 	int type;
 	int32_t l = 0, r = 0;
+	c = 0;
+	n = 0;
 	char token[512], line[512];
 
 	while(fgets(token, sizeof(token), fp))
@@ -1799,7 +1769,7 @@ void read_cccamcfg(char *file)
 #if defined(WITH_LIBCURL) && (defined(MODULE_CCCAM) || defined(MODULE_NEWCAMD))
 		else if(line[0] == 'h' && line[1] == 't' && line[2] == 't' && line[3] == 'p')
 		{
-			url(line);
+			down_line(line);
 		}
 #endif
 	}

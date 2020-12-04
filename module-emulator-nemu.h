@@ -65,6 +65,10 @@ extern uint8_t viasat_const[];
 extern char *emu_keyfile_path;
 extern pthread_mutex_t emu_key_data_mutex;
 
+#ifdef WITH_LIBCURL
+char *down_softcam(struct s_reader *rdr);
+#endif
+
 void emu_set_keyfile_path(const char *path);
 void emu_clear_keydata(void);
 uint8_t emu_read_keyfile(struct s_reader *rdr, const char *path);
