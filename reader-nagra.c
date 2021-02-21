@@ -8,6 +8,8 @@
 #include "reader-nagra-common.h"
 #include "ncam-work.h"
 
+int8_t ins7e11_state = 0;
+
 struct nagra_data
 {
 	IDEA_KEY_SCHEDULE ksSession;
@@ -378,13 +380,13 @@ static int32_t NegotiateSessionKey(struct s_reader *reader)
 		0x00 };//keynr
 
 	uint8_t cmd2a[] = {
-		0x00, 
-		0xA5, 0xFB, 0x02, 0x76,	//NUID 
-		0x00, 0x08,		//OTP-CSC 
+		0x00,
+		0xA5, 0xFB, 0x02, 0x76,	//NUID
+		0x00, 0x08,		//OTP-CSC
 		0x00, 0x00,		//OTA-CSC
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-		0x00, 
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00,
 		0x22, 0x11 }; //Provider ID
 
 	uint8_t tmp[64];
@@ -435,7 +437,7 @@ static int32_t NegotiateSessionKey(struct s_reader *reader)
 				rdr_log_dbg(reader, D_READER, "CMD$2A failed");
 				return ERROR;
 			}
-		} 
+		}
 		else
 		{
 			if(!do_cmd(reader, 0x2a, 0x02, 0xaa, 0x42, NULL, cta_res, &cta_lr))
@@ -655,7 +657,7 @@ static void addProvider(struct s_reader *reader, uint8_t *cta_res)
 static int32_t ParseDataType(struct s_reader *reader, uint8_t dt, uint8_t *cta_res, uint16_t cta_lr)
 {
 	struct nagra_data *csystem_data = reader->csystem_data;
-	char ds[20], de[16];
+	char ds[36], de[36];
 	uint16_t chid;
 
 	switch(dt)
@@ -765,7 +767,6 @@ static int32_t nagra2_card_init(struct s_reader *reader, ATR *newatr)
 	memset(reader->rom, 0, 15);
 	static const uint8_t ins80[] = { 0x80, 0xCA, 0x00, 0x00, 0x11 }; // switch to nagra layer
 	static const uint8_t handshake[] = { 0xEE, 0x51, 0xDC, 0xB8, 0x4A, 0x1C, 0x15, 0x05, 0xB5, 0xA6, 0x9B, 0x91, 0xBA, 0x33, 0x19, 0xC4, 0x10 }; // nagra handshake
-	int8_t ins7e11_state = 0;
 
 	int8_t is_pure_nagra = 0;
 	int8_t is_tiger = 0;
@@ -1383,9 +1384,10 @@ static int32_t nagra2_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, str
 				idea_cbc_encrypt(&cta_res[30], &_cwe0[0], 8, &csystem_data->ksSession, v, IDEA_DECRYPT);
 				memset(v, 0, sizeof(v));
 				idea_cbc_encrypt(&cta_res[4], &_cwe1[0], 8, &csystem_data->ksSession, v, IDEA_DECRYPT);
-			}	
-			rdr_log_dbg(reader, D_READER, "CW0 after IDEA decrypt: %s", cs_hexdump(1, _cwe0, 24, tmp_dbg, sizeof(tmp_dbg)));
-			rdr_log_dbg(reader, D_READER, "CW1 after IDEA decrypt: %s", cs_hexdump(1, _cwe1, 24, tmp_dbg, sizeof(tmp_dbg)));
+			}
+			rdr_log_dbg(reader, D_READER, "CW0 after IDEA decrypt: %s", cs_hexdump(1, _cwe0, 8, tmp_dbg, sizeof(tmp_dbg)));
+			rdr_log_dbg(reader, D_READER, "CW1 after IDEA decrypt: %s", cs_hexdump(1, _cwe1, 8, tmp_dbg, sizeof(tmp_dbg)));
+
 
 			if(CW_NEEDS_3DES())
 			{
@@ -1399,17 +1401,39 @@ static int32_t nagra2_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, str
 
 				des_ecb3_decrypt(_cwe0, reader->cwekey);
 				des_ecb3_decrypt(_cwe1, reader->cwekey);
-				rdr_log_dbg(reader, D_READER, "CW0 after 3DES decrypt: %s", cs_hexdump(1, _cwe0, 24, tmp_dbg, sizeof(tmp_dbg)));
-				rdr_log_dbg(reader, D_READER, "CW1 after 3DES decrypt: %s", cs_hexdump(1, _cwe1, 24, tmp_dbg, sizeof(tmp_dbg)));
-			}
+				rdr_log_dbg(reader, D_READER, "CW0 after 3DES decrypt: %s", cs_hexdump(1, _cwe0, 8, tmp_dbg, sizeof(tmp_dbg)));
+				rdr_log_dbg(reader, D_READER, "CW1 after 3DES decrypt: %s", cs_hexdump(1, _cwe1, 8, tmp_dbg, sizeof(tmp_dbg)));
 
-			if((((_cwe0[0] + _cwe0[1] + _cwe0[2]) & 0xFF) != _cwe0[3]) ||
-				(((_cwe0[4] + _cwe0[5] + _cwe0[6]) & 0xFF) != _cwe0[7]) ||
-				(((_cwe1[0] + _cwe1[1] + _cwe1[2]) & 0xFF) != _cwe1[3]) ||
-				(((_cwe1[4] + _cwe1[5] + _cwe1[6]) & 0xFF) != _cwe1[7]))
-			{
-				rdr_log_dbg(reader, D_READER, "CW Decrypt failed");
-				return ERROR;
+				int chkok = 1;
+				if(((_cwe0[0] + _cwe0[1] + _cwe0[2]) & 0xFF) != _cwe0[3])
+				{
+					chkok = 0;
+					rdr_log_dbg(reader, D_READER, "CW0 checksum error [0]");
+				}
+
+				if(((_cwe0[4] + _cwe0[5] + _cwe0[6]) & 0xFF) != _cwe0[7])
+				{
+					chkok = 0;
+					rdr_log_dbg(reader, D_READER, "CW0 checksum error [1]");
+				}
+
+				if(((_cwe1[0] + _cwe1[1] + _cwe1[2]) & 0xFF) != _cwe1[3])
+				{
+					chkok = 0;
+					rdr_log_dbg(reader, D_READER, "CW1 checksum error [0]");
+				}
+
+				if(((_cwe1[4] + _cwe1[5] + _cwe1[6]) & 0xFF) != _cwe1[7])
+				{
+					chkok = 0;
+					rdr_log_dbg(reader, D_READER, "CW1 checksum error [1]");
+				}
+
+				if(chkok == 0)
+				{
+					rdr_log_dbg(reader, D_READER, "CW Decrypt failed");
+					return ERROR;
+				}
 			}
 
 			memcpy(ea->cw, _cwe0, 0x08);
