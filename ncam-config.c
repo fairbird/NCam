@@ -1623,7 +1623,7 @@ static int add_reader_from_line(char s[512], int type)
 	}
 	ll_append(configured_readers, rdr);
 	cs_debug_mask(D_READER, "Add reader device=%s,%d (typ:0x%X, protocol=%s)", rdr->device, rdr->r_port, rdr->typ, proto);
-return ret;
+	return ret;
 }
 
 int32_t c, n;
@@ -1715,22 +1715,35 @@ static void down_line(char s[512])
 }
 #endif
 
-void read_cccamcfg(char *file)
+void read_cccamcfg(const char *file)
 {
 	FILE *fp;
+	char *path;
+	uint32_t pathLength;
 	if(cfg.cccam_cfg_path && strncmp(file, "CCcam.cfg", 9) == 0)
 	{
-		uint32_t pathLength = cs_strlen(cfg.cccam_cfg_path);
+		pathLength = cs_strlen(cfg.cccam_cfg_path);
 		if (cfg.cccam_cfg_path[pathLength - 1] == '/' || cfg.cccam_cfg_path[pathLength - 1] == '\\')
 			{ cfg.cccam_cfg_path[pathLength - 1] = '\0'; }
-		pathLength = cs_strlen(cfg.cccam_cfg_path) + 1 + cs_strlen(file) + 1;
-		file = (char *)malloc(pathLength);
-		snprintf(file, pathLength, "%s/CCcam.cfg", cfg.cccam_cfg_path);
-		fp = fopen(file, "r");
+		pathLength += cs_strlen(file) + 2;
+		if(cs_malloc(&path, pathLength))
+			{ snprintf(path, pathLength, "%s/CCcam.cfg", cfg.cccam_cfg_path); }
+		fp = fopen(path, "r");
 		if(!fp) { cs_log("CCcam.cfg file not found in: %s", cfg.cccam_cfg_path); }
-	} else { fp = open_config_file(file); }
+	}
+	else
+	{
+		pathLength = cs_strlen(file) + 1;
+		if(cs_malloc(&path, pathLength))
+			{ cs_strncpy(path, file, pathLength); }
+		fp = open_config_file(path);
+	}
 
-	if(!fp) { return; }
+	if(!fp)
+	{
+		NULLFREE(path);
+		return;
+	}
 	int type;
 	int32_t l = 0, r = 0;
 	c = 0;
@@ -1773,8 +1786,9 @@ void read_cccamcfg(char *file)
 		}
 #endif
 	}
-	cs_log("%s read lines: C:%d N:%d L:%d R:%d", file, c, n, l, r);
+	cs_log("%s read lines: C:%d N:%d L:%d R:%d", path, c, n, l, r);
 	fclose(fp);
+	NULLFREE(path);
 	return;
 }
 #endif

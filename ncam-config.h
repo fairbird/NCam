@@ -70,7 +70,7 @@ enum ftab_fn
 
 void ftab_fn(const char *token, char *value, void *setting, long ftab_type, FILE *f);
 #if defined(MODULE_CCCAM) || defined(MODULE_NEWCAMD) || defined(MODULE_CAMD35) || defined(MODULE_RADEGAST)
-void read_cccamcfg(char *file);
+void read_cccamcfg(const char *file);
 #endif
 
 #endif
