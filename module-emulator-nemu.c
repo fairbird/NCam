@@ -150,6 +150,7 @@ char *down_softcam(struct s_reader *rdr)
 			curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, fp); // write the page body to this file handle
 			ret = curl(curl_handle, rdr->device);
 			fclose(fp); // close the header file
+			cs_log("Download key file: %s (%s)", rdr->device, tmp);
 		}
 		else
 		{

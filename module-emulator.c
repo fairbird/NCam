@@ -223,6 +223,7 @@ static int32_t emu_do_emm(struct s_reader *rdr, EMM_PACKET *emm)
 
 static int32_t emu_card_info(struct s_reader *rdr)
 {
+	int key = 0;
 	SAFE_MUTEX_LOCK(&emu_key_data_mutex);
 
 	// Delete keys from Emu's memory
@@ -236,27 +237,34 @@ static int32_t emu_card_info(struct s_reader *rdr)
 
 	// Read keys from SoftCam.Key file
 #ifdef WITH_LIBCURL
-	if(rdr->device[0] == 0x68 && rdr->device[1] == 0x74 && rdr->device[2] == 0x74 && rdr->device[3] == 0x70)
+	if(rdr->device[0] == 0x68 && rdr->device[1] == 0x74 && rdr->device[2] == 0x74 && rdr->device[3] == 0x70) // SoftCam.Key reading file in URL and configuration folder
 	{
-		char *tmpkey=down_softcam(rdr);
-		if(tmpkey && emu_read_keyfile(rdr, tmpkey))
-		{
-			emu_set_keyfile_path(tmpkey);
-		}
+		char *tmpkey = down_softcam(rdr);
+		if(tmpkey && emu_read_keyfile(rdr, tmpkey)) { emu_set_keyfile_path(tmpkey); }
 		NULLFREE(tmpkey);
-	}
-	else
+		emu_set_keyfile_path(cs_confdir);
+		key = emu_read_keyfile(rdr, cs_confdir);
+	} else
 #endif
+	if(strncmp(rdr->device, "emulator", 8) == 0) // SoftCam.Key reading file in configuration folder
 	{
 		emu_set_keyfile_path(cs_confdir);
-		if(!emu_read_keyfile(rdr, cs_confdir))
+		key = emu_read_keyfile(rdr, cs_confdir);
+	}
+	else // SoftCam.Key reading file in the custom path
+	{
+		emu_set_keyfile_path(rdr->device);
+		key = emu_read_keyfile(rdr, rdr->device);
+	}
+
+	if(!key) // if the SoftCam.Key file is not found, in the /var/keys/ folder
+	{
+		if(emu_read_keyfile(rdr, "/var/keys/"))
 		{
-			if(emu_read_keyfile(rdr, "/var/keys/"))
-			{
-				emu_set_keyfile_path("/var/keys/");
-			}
+			emu_set_keyfile_path("/var/keys/");
 		}
 	}
+
 #ifdef WITH_LIBCRYPTO
 	// Read BISS2 mode CA RSA keys from PEM files
 	biss_read_pem(rdr, BISS2_MAX_RSA_KEYS);
