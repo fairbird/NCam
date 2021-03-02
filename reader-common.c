@@ -253,7 +253,9 @@ void cardreader_do_reset(struct s_reader *reader)
 		reader->card_status = CARD_INSERTED;
 		do_emm_from_file(reader);
 		ICC_Async_DisplayMsg(reader, "AOK");
-		gbx_local_card_stat(2, reader->caid); //local card up
+#ifdef MODULE_GBOX
+		gbx_local_card_stat(LOCALCARDUP, reader->caid); // local card up
+#endif
 	}
 
 	return;
@@ -299,7 +301,10 @@ int32_t cardreader_do_checkhealth(struct s_reader *reader)
 				cl->lastecm = 0;
 			}
 			led_status_card_ejected();
-			gbx_local_card_stat(1, reader->caid);
+#ifdef MODULE_GBOX
+			reader->card_status = NO_CARD;
+			gbx_local_card_stat(LOCALCARDEJECTED, reader->caid);
+#endif
 		}
 		reader->card_status = NO_CARD;
 	}

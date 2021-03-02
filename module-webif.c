@@ -1195,9 +1195,6 @@ static char *send_ncam_config_gbox(struct templatevars *vars, struct uriparams *
 	tpl_printf(vars, TPLAPPEND, "GBOXMYCPUAPI", "%02X", cfg.gbox_my_cpu_api);
 #ifdef MODULE_CCCAM
 	if(cfg.cc_gbx_reshare_en == 1)  { tpl_addVar(vars, TPLADD, "GBOXCCCRESHARE", "checked"); }
-	char *value = mk_t_caidtab(&cfg.ccc_gbx_check_caidtab);
-	tpl_addVar(vars, TPLADD, "CCC2GBOXCAID", value);
-	free_mk_t(value);
 	tpl_addVar(vars, TPLAPPEND, "CCCDEPENDINGCONFIG", tpl_getTpl(vars, "CCCAMRESHAREBIT"));
 #endif
 	if(cfg.log_hello == 1)  { tpl_addVar(vars, TPLADD, "GBOXLOGHELLO", "checked"); }
@@ -1900,9 +1897,17 @@ static char *send_ncam_reader(struct templatevars *vars, struct uriparams *param
 					cs_log("gbox -> you must restart ncam so that setting becomes effective");
 				}
 #endif
-                		cs_log("reader %s %s by WebIf", rdr->label, rdr->enable == 1 ? "enabled":"disabled");
+
+				cs_log("reader %s %s by WebIf", rdr->label, rdr->enable == 1 ? "enabled":"disabled");
 
 				if(write_server() != 0) { tpl_addMsg(vars, "Write Config failed!"); }
+
+#ifdef MODULE_GBOX
+				if(!is_network_reader(rdr) && !rdr->enable)
+					{
+						gbx_local_card_stat(LOCALCARDDISABLED, 0);
+					}
+#endif
 			}
 		}
 	}
@@ -3014,6 +3019,7 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 	tpl_printf(vars, TPLADD, "PEERGBOXID",  "%04X", gbox_convert_password_to_id((uint32_t)a2i(rdr->r_pwd, 4)));
 	tpl_addVar(vars, TPLADD, "PEERONLSTAT", (get_peer_onl_status(gbox_convert_password_to_id((uint32_t)a2i(rdr->r_pwd, 4)))) ? "checked" : "");
 	tpl_printf(vars, TPLADD, "FORCEREMM", "%d", rdr->gbox_force_remm);
+	tpl_printf(vars, TPLADD, "CMDHERE", rdr->send_offline_cmd ? "checked" : "");
 
 	if(rdr->blockemm & 0x80)
 		{
@@ -3095,8 +3101,14 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 	case R_GBOX:
 		tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGGBOXBIT"));
 #if defined (MODULE_CCCAM) && defined (MODULE_GBOX)
-		tpl_printf(vars, TPLADD, "GBOXCCCAMRESHARE", "%d", rdr->gbox_cccam_reshare);
-		tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "GBOXCCCAMRESHAREBIT"));
+		if(cfg.cc_gbx_reshare_en)
+		{
+			tpl_printf(vars, TPLADD, "GBOXCCCAMRESHARE", "%d", rdr->gbox_cccam_reshare);
+			value = mk_t_ftab(&rdr->ccc_gbx_reshare_ident);
+			tpl_addVar(vars, TPLADD, "CCCGBXRESHAREIDENT", value);
+			free_mk_t(value);
+			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "GBOXCCCAMRESHAREBIT"));
+		}
 #endif
 		tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERINFOGBOXREMM"));
 		break;
@@ -5884,7 +5896,7 @@ static char *send_ncam_status(struct templatevars * vars, struct uriparams * par
 							if(rdr->typ == R_GBOX)
 								{
 									struct gbox_peer *peer = cl->gbox;
-									char gbx_txt[44];
+									char gbx_txt[45];
 									memset(gbx_txt, 0, sizeof(gbx_txt));
 									if(!strcmp(txt, "OFFLINE"))
 									{

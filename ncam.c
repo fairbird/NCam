@@ -1926,6 +1926,8 @@ int32_t main(int32_t argc, char *argv[])
 
 	ac_init();
 
+	gbox_send_init_hello();
+
 	start_thread("card poll", (void *) &card_poll, NULL, NULL, 1, 1);
 
 	for(i = 0; i < CS_MAX_MOD; i++)
@@ -1947,7 +1949,7 @@ int32_t main(int32_t argc, char *argv[])
 	stop_stream_server();
 #endif
 #ifdef MODULE_GBOX
-	stop_sms_sender();
+	stop_gbx_ticker();
 #endif
 	webif_close();
 	azbox_close();
