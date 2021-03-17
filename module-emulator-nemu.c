@@ -776,7 +776,8 @@ uint8_t emu_read_keyfile(struct s_reader *rdr, const char *opath)
 	cs_strncpy(path, opath, pathLength + 1);
 
 	pathLength = cs_strlen(path);
-	if (pathLength >= fileNameLen && strcasecmp(path + pathLength - fileNameLen, EMU_KEY_FILENAME) == 0)
+	if ((pathLength >= fileNameLen && strcasecmp(path + pathLength - fileNameLen, EMU_KEY_FILENAME) == 0) &&
+		(rdr->device[0] != 0x68 && rdr->device[1] != 0x74 && rdr->device[2] != 0x74 && rdr->device[3] != 0x70))
 	{
 		// cut file name
 		path[pathLength - fileNameLen] = '\0';
