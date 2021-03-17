@@ -1575,7 +1575,7 @@ static void logCWtoFile(ECM_REQUEST *er, uint8_t *cw)
 	if(writeheader)
 	{
 		/* no global macro for cardserver name :( */
-		fprintf(pfCWL, "# Ncam cardserver v%s - https://forum.openvision.tech/index.php\n", CS_VERSION);
+		fprintf(pfCWL, "# NCam cardserver %s - https://www.tunisia-sat.com\n", CS_VERSION);
 		fprintf(pfCWL, "# control word log file for use with tsdec offline decrypter\n");
 		strftime(buf, sizeof(buf), "DATE %Y-%m-%d, TIME %H:%M:%S, TZ %Z\n", &timeinfo);
 		fprintf(pfCWL, "# %s", buf);

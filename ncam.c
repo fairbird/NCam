@@ -155,8 +155,8 @@ static void show_usage(void)
 	}
 	printf("\n");
 	printf("Copyright (C) 2012-2018 developed by Javilonas.\n");
-	printf("Updated and patched by Open Vision Developers.\n");
-	printf("Visit https://forum.openvision.tech/index.php for more details.\n\n");
+	printf("Updated, Patched and Recompiled By RAED.\n");
+	printf("Visit https://www.tunisia-sat.com/ for more details.\n\n");
 
 	printf(" ConfigDir  : %s\n", CS_CONFDIR);
 	printf("\n");
