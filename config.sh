@@ -722,17 +722,18 @@ do
 		break
 	;;
 	'-r'|'--ncam-revision')
-		revision=`(svnversion -n . 2>/dev/null || printf 0) | sed 's/.*://; s/[^0-9]*$//; s/^$/0/'`
-		if [ "$revision" = "" -o "$revision" = "0" ]; then
-			nrevision=$(grep CS_REVISION globals.h | cut -d\" -f2)
-			gitrevision=$(git log 2>/dev/null | sed -n 1p|cut -d' ' -f2 | cut -c1-5 )
-			if [ "$nrevision" = "" -o "$gitrevision" = "0" ]; then
-				[ -f .revision ] && revision=$(cat .revision)
-			fi
-			[ "$nrevision" = "0" ] || revision=$nrevision
-			[ "$gitrevision" = "0" ] || revision=${revision}_${gitrevision}
+		revision=$(git log 2>/dev/null | sed -n 1p | cut -d ' ' -f2 | cut -c1-7)
+		if [ -n "$revision" ]; then
+			revision="git${revision}"
+		else
+			revision=$(svn info 2>/dev/null | grep Revision | cut -d ' ' -f2)
+			[ -n "$revision" ] && revision="svn${revision}"
 		fi
-		echo $revision > .revision
+		if [ -n "$revision" ]; then
+			echo $revision > .revision
+		else
+			[ -f .revision ] && revision=$(cat .revision)
+		fi
 		echo $revision
 		break
 	;;

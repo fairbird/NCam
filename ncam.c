@@ -146,7 +146,7 @@ static void show_usage(void)
 	printf("%s",
 		   " \n"
 		   " \n");
-	printf("CardServer NCam v%s-%s, build: %s (%s) ", CS_VERSION, CS_REVISION, DATE_BUILD, CS_TARGET);
+	printf("CardServer NCam %s-%s, build: %s (%s) ", CS_VERSION, CS_REVISION, CS_DATE_BUILD, CS_TARGET);
 	struct utsname info;
 	if (uname(&info) == 0)
 	{
@@ -382,7 +382,7 @@ static void write_versionfile(bool use_stdout)
 
 	fprintf(fp, "Version:        ncam-%s\n", CS_VERSION);
 	fprintf(fp, "Revision:       %s\n", CS_REVISION);
-	fprintf(fp, "Build:          %s\n", DATE_BUILD);
+	fprintf(fp, "Build:          %s\n", CS_DATE_BUILD);
 	fprintf(fp, "Compiler:       %s\n", CS_TARGET);
 	fprintf(fp, "Box type:       %s (%s)\n", boxtype_get(), boxname_get());
 	fprintf(fp, "PID:            %d\n", getppid());
@@ -645,7 +645,7 @@ static void cs_dumpstack(int32_t sig)
 
 	fprintf(stderr, "crashed with signal %d on %swriting ncam.crash\n", sig, buf);
 
-	fprintf(fp, "%sCardServer NCam v%s-%s, build:%s (%s)\n", buf, CS_VERSION, CS_REVISION, DATE_BUILD, CS_TARGET);
+	fprintf(fp, "%sCardServer NCam %s-%s, build:%s (%s)\n", buf, CS_VERSION, CS_REVISION, CS_DATE_BUILD, CS_TARGET);
 	fprintf(fp, "FATAL: Signal %d: %s Fault. Logged StackTrace:\n\n", sig, (sig == SIGSEGV) ? "Segmentation" : ((sig == SIGBUS) ? "Bus" : "Unknown"));
 	fclose(fp);
 
@@ -981,7 +981,7 @@ static void init_check(void)
 			++i;
 			if(i > cs_waittime)
 			{
-				cs_log("Waiting was not successful. NCAm will be started but is UNSUPPORTED this way. Do not report any errors with this version.");
+				cs_log("Waiting was not successful. NCam will be started but is UNSUPPORTED this way. Do not report any errors with this version.");
 				break;
 			}
 		}

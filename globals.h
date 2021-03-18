@@ -375,11 +375,15 @@ typedef uint8_t uint8_t;
 /* ===========================
  *         constants
  * =========================== */
-#define CS_VERSION    "Unoffical-NCam"
-#define DATE_BUILD    "18-03-2021"
+#define CS_VERSION    "Unoffical"
+#ifndef CS_REVISION
 #define CS_REVISION   "r1"
-#ifndef CS_SVN_VERSION
-#define CS_SVN_VERSION "stable"
+#endif
+#ifndef CS_GIT_VERSION
+#define CS_GIT_VERSION ""
+#endif
+#ifndef CS_DATE_BUILD
+#define CS_DATE_BUILD  ""
 #endif
 #ifndef CS_TARGET
 #define CS_TARGET "unknown"

@@ -676,7 +676,7 @@ int32_t dvbapi_net_send(uint32_t request, int32_t socket_fd, uint32_t msgid, int
 			}
 
 			*info_len = snprintf((char *) &packet[size], sizeof(packet) - size, "NCam %s, build %s (%s); %s",
-						CS_VERSION, CS_SVN_VERSION, CS_TARGET, capabilities + 1);
+						CS_VERSION, CS_REVISION, CS_TARGET, capabilities + 1);
 
 			size += *info_len;
 			break;

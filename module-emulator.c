@@ -922,7 +922,7 @@ void add_emu_reader(void)
 	}
 #endif
 
-	cs_log("NCam version %d", EMU_VERSION);
+	cs_log("Emu version %d", EMU_VERSION);
 }
 
 #endif // WITH_EMU

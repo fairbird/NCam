@@ -22,15 +22,7 @@
 					<input name="stealth" value="0" type="hidden"><input name="stealth" value="1" type="checkbox" ##STEALTH##><label></label>
 				</TD>
 			</TR>
-			<TR><TD><A>Generator Node Id:</A></TD><TD>
-			<form>
-			<input type="button" value="Generate" onclick="randomstring()">&nbsp;
-			<input id="randomfield" type="text" class="medium" maxlength="16" value="">
-			</form>
-			</TD>
-			</TR>
-			<TR><TD><A>Node Id:</A></TD><TD><label>Important to respect all characters (0-9 and A-F) hexadecimal.</label>&nbsp;<br/>
-			<input name="nodeid" class="medium" type="text" maxlength="16" value="##NODEID##"></TD></TR>
+			<TR><TD><A>Node Id:</A></TD><TD><input id="randomfield" name="nodeid" class="longer" type="text" maxlength="16" value="##NODEID##">&nbsp;<input type="button" value="Generate" onclick="randomstring()"></TD></TR>
 			<TR><TD><A>Keep clients connected:</A></TD>
 				<TD>
 					<input name="keepconnected" value="0" type="hidden"><input name="keepconnected" value="1" type="checkbox" ##KEEPCONNECTED##><label></label>
@@ -49,6 +41,7 @@
 						<option value="2.2.1" ##VERSIONSELECTED7##>2.2.1</option>
 						<option value="2.3.0" ##VERSIONSELECTED8##>2.3.0</option>
 						<option value="2.3.1" ##VERSIONSELECTED9##>2.3.1</option>
+						<option value="2.3.2" ##VERSIONSELECTED10##>2.3.2</option>
 					</select>
 				</TD>
 			</TR>

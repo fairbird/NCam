@@ -840,8 +840,14 @@ add_custom_target (
 #   touch ${CMAKE_CURRENT_SOURCE_DIR}/ncam-log.c
 )
 
-execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --ncam-revision COMMAND tr -d '\n' OUTPUT_VARIABLE CS_SVN_VERSION)
-add_definitions ("-D'CS_SVN_VERSION=\"${CS_SVN_VERSION}\"'")
+execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --ncam-revision COMMAND tr -d '\n' OUTPUT_VARIABLE CS_REVISION)
+add_definitions ("-D'CS_REVISION=\"${CS_REVISION}\"'")
+
+execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --ncam-revision COMMAND cut -d "t" -f2 -s COMMAND tr -d '\n' OUTPUT_VARIABLE CS_GIT_VERSION)
+add_definitions ("-D'CS_GIT_VERSION=\"${CS_GIT_VERSION}\"'")
+
+execute_process (COMMAND date +'%d-%m-%Y' COMMAND tr -d '\n' OUTPUT_VARIABLE CS_DATE_BUILD)
+add_definitions ("-D'CS_DATE_BUILD=\"${CS_DATE_BUILD}\"'")
 
 execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpmachine COMMAND tr -d '\n' OUTPUT_VARIABLE CS_TARGET)
 add_definitions ("-D'CS_TARGET=\"${CS_TARGET}\"'")
@@ -1011,7 +1017,7 @@ include (CPack)
 message (STATUS "")
 message (STATUS "  operating system: ${NCAmOperatingSystem}")
 message (STATUS "  target system: ${CS_TARGET}")
-message (STATUS "  revision: ${CS_SVN_VERSION}")
+message (STATUS "  revision: ${CS_REVISION}")
 if (HAVE_LIBCRYPTO)
     if (STATIC_LIBCRYPTO)
          message (STATUS "  use static libcrypto.")

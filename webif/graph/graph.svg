@@ -7,7 +7,7 @@
 	preserveAspectRatio='XMaxYMid'
 	onload='init(evt)'
 	class='graph' >
- <title>##HTTPNCAMLABEL## (ECM Graph)</title>
+ <title>##HTTPNCAMLABEL## ##CS_VERSION## ##CS_REVISION## (ECM Graph)</title>
  <g id='graph' >
 	<rect id='g' class='graph_bg' x='0' y='0' width='800' height='400' />
 	<text id='graph_error' class='graph_error' x='400' y='125' visibility='hidden'>Error occured!</text>

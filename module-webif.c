@@ -8791,7 +8791,11 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 
 			tpl_addVar(vars, TPLADD, "CS_VERSION", CS_VERSION);
 			tpl_addVar(vars, TPLADD, "CS_REVISION", CS_REVISION);
-			tpl_addVar(vars, TPLADD, "DATE_BUILD", DATE_BUILD);
+			if(cs_strlen(CS_GIT_VERSION) >= 6)
+			{
+				tpl_printf(vars, TPLADD, "GIT_VERSION", "commit/%s", CS_GIT_VERSION);
+			}
+			tpl_addVar(vars, TPLADD, "CS_DATE_BUILD", CS_DATE_BUILD);
 			tpl_addVar(vars, TPLADD, "CS_TARGET", CS_TARGET);
 			tpl_addVar(vars, TPLADD, "HTTPBCOLOR", cfg.http_backround_color);
 			tpl_addVar(vars, TPLADD, "HTTPTCOLOR", cfg.http_text_color);
@@ -8832,7 +8836,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 			if(cfg.http_style)
 				{ tpl_addVar(vars, TPLADD, "VIEW_STYLE", tpl_getTpl(vars, "STYLE")); }
 #ifdef WEBIF_JQUERY
-			tpl_printf(vars, TPLADD, "SRCJQUERY", "jquery.js?v=%s", CS_SVN_VERSION);
+			tpl_printf(vars, TPLADD, "SRCJQUERY", "jquery.js?v=%s", CS_REVISION);
 #else
 			tpl_addVar(vars, TPLADD, "SRCJQUERY", cfg.http_extern_jquery);
 #endif

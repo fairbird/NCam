@@ -4,8 +4,8 @@ SHELL = /bin/sh
 .SUFFIXES: .o .c
 .PHONY: all tests help README.build README.config simple default debug config menuconfig allyesconfig allnoconfig defconfig clean distclean
 
-VER     := $(shell ./config.sh --ncam-version)
-SVN_REV := $(shell ./config.sh --ncam-revision)
+VER := $(shell ./config.sh --ncam-version)
+REV := $(shell ./config.sh --ncam-revision)
 
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 
@@ -55,7 +55,9 @@ ifeq ($(uname_S),FreeBSD)
 endif
 
 override STD_LIBS := -lm $(LIB_PTHREAD) $(LIB_DL) $(LIB_RT)
-override STD_DEFS := -D'CS_SVN_VERSION="$(SVN_REV)"'
+override STD_DEFS := -D'CS_REVISION="$(REV)"'
+override STD_DEFS += -D'CS_GIT_VERSION="$(shell ./config.sh --ncam-revision | cut -d "t" -f2 -s)"'
+override STD_DEFS += -D'CS_DATE_BUILD="$(shell date +"%d-%m-%Y")"'
 override STD_DEFS += -D'CS_CONFDIR="$(CONF_DIR)"'
 
 # Compiler warnings
@@ -239,9 +241,9 @@ OBJDIR := $(BUILD_DIR)/$(TARGET)
 # These variables will be used to select only needed files for compilation
 -include $(OBJDIR)/config.mak
 
-NCAM_BIN := $(BINDIR)/ncam-$(VER)$(SVN_REV)-$(subst cygwin,cygwin.exe,$(TARGET))
+NCAM_BIN := $(BINDIR)/ncam-$(VER)-$(REV)-$(subst cygwin,cygwin.exe,$(TARGET))
 TESTS_BIN := tests.bin
-LIST_SMARGO_BIN := $(BINDIR)/list_smargo-$(VER)$(SVN_REV)-$(subst cygwin,cygwin.exe,$(TARGET))
+LIST_SMARGO_BIN := $(BINDIR)/list_smargo-$(VER)-$(REV)-$(subst cygwin,cygwin.exe,$(TARGET))
 
 # Build list_smargo-.... only when WITH_LIBUSB build is requested.
 ifndef USE_LIBUSB
@@ -443,7 +445,7 @@ all:
 	@-mkdir -p $(OBJDIR)/cscrypt $(OBJDIR)/csctapi $(OBJDIR)/minilzo $(OBJDIR)/ffdecsa $(OBJDIR)/webif
 	@-printf "\
 +-------------------------------------------------------------------------------\n\
-| NCAM ver: $(VER) rev: $(SVN_REV) target: $(TARGET)\n\
+| NCam ver: $(VER) rev: $(REV) target: $(TARGET)\n\
 | Tools:\n\
 |  CROSS    = $(CROSS_DIR)$(CROSS)\n\
 |  CC       = $(CC)\n\
@@ -766,8 +768,8 @@ NCAm build system documentation\n\
 \n\
    NCAM_BIN=text  - This variable controls how the ncam binary will be named.\n\
                      Default NCAM_BIN value is:\n\
-                      'BINDIR/ncam-VERSVN_REV-TARGET'\n\
-                     Once the variables (BINDIR, VER, SVN_REV and TARGET) are\n\
+                      'BINDIR/ncam-VER-REV-TARGET'\n\
+                     Once the variables (BINDIR, VER, REV and TARGET) are\n\
                      replaced, the resulting filename can look like this:\n\
                       'Distribution/ncam-1.20-unstable_svn7404-i486-slackware-linux-static'\n\
                      For example you can run: 'make NCAM_BIN=my-ncam'\n\

@@ -36,12 +36,12 @@
 /* **************** 2. BASIC DIVISION PAGES */
 html,body,* html #wrapper {width:auto;height:100%}
 #wrapper {width:auto;position:relative;min-height:100%}
-#content {width:auto;margin-bottom:0;padding:0 8px 115px}
+#content {width:auto;margin-bottom:0;padding:0 8px 20px}
 #footer {position:absolute;bottom:0;width:100%}
 
 /* **************** 3. BASIC SETTINGS - BODY,P,H4,LI,B */
 body {
-	font-family:Tahoma;
+	font-family:Arial;
 	font-size:11px;
 	text-align:center;
 	background-color:#4066a7;
@@ -202,7 +202,7 @@ TD.menu_selected {color:black; background-color:#E6FEBF; font-family: Arial; fon
 #nav li {
 	display:inline-block;
 	position:relative;
-	margin:0 2px;
+	margin:2px auto 0;
 	padding:0 3px;
 	font-size:14px
 }
@@ -593,8 +593,8 @@ div.info {
 div.debugmenu, div.logmenu, div.logsizemenu {
 	font-size:12px;
 	line-height:16px;
-	margin-top:10px
-	margin:auto
+	margin-top:10px;
+	margin:14px auto 0
 }
 #regexdatainput {
 	margin-top:10px
@@ -722,8 +722,8 @@ td.subheadline input[type=button] {
 	font-weight:normal
 }
 /* only for save button lb/cccam control in config.html */
-.configcontrol input[type=submit] {
-	width:115px
+.configcontrol input[type=submit], input[type=button] {
+	width:110px
 }
 /* only for button in readers.html/userconfig.html/services.html for addnew */
 .users input[type=submit], .readers input[type=submit], #addnewservice input[type=submit] {
