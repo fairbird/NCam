@@ -17,6 +17,7 @@ LLIST *gbox_cards;
 CS_MUTEX_LOCK gbox_cards_lock;
 uint8_t checkcode[7];
 uint8_t last_checkcode[7];
+uint8_t sid_verified = 0;
 
 GBOX_CARDS_ITER *gbox_cards_iter_create(void)
 {
@@ -533,7 +534,6 @@ uint8_t gbox_get_cards_for_ecm(uint8_t *send_buf, int32_t len2, uint8_t max_card
 	struct gbox_good_srvid *srvid_good = NULL;
 	struct gbox_bad_srvid *srvid_bad = NULL;
 	uint8_t enough = 0;
-	uint8_t sid_verified = 0;
 	time_t time_since_lastcw;
 
 	// loop over good only
