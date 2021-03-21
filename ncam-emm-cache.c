@@ -30,8 +30,8 @@ bool emm_cache_configured(void)
 
 void emm_save_cache(void)
 {
-	if(boxtype_is("dbox2")) return; // dont save emmcache on these boxes, they lack resources and will crash!
-	
+	if(boxtype_is("dbox2")) return; // don't save emmcache on these boxes, they lack resources and will crash!
+
 	if(!emm_cache_configured()){
 		cs_log("saving emmcache disabled since no reader is using it!");
 		return;
@@ -39,7 +39,7 @@ void emm_save_cache(void)
 
 	char fname[256];
 	struct timeb ts, te;
-	
+
 	if(!cfg.emmlogdir)
 	{
 		get_tmp_dir_filename(fname, sizeof(fname), "ncam.emmcache");
@@ -60,12 +60,14 @@ void emm_save_cache(void)
 	int32_t count = 0, result = 0;
 	LL_ITER it = ll_iter_create(emm_cache);
 	struct s_emmcache *c;
+
 	while((c = ll_iter_next(&it)))
 	{
 		uint8_t tmp_emmd5[MD5_DIGEST_LENGTH * 2 + 1];
-		char_to_hex(c->emmd5, MD5_DIGEST_LENGTH, tmp_emmd5); 
+		char_to_hex(c->emmd5, MD5_DIGEST_LENGTH, tmp_emmd5);
 		uint8_t tmp_emm[c->len * 2 + 1];
 		char_to_hex(c->emm, c->len, tmp_emm);
+
 		result = fprintf(file, "%s,%ld,%ld,%02X,%04X,%s\n", tmp_emmd5, c->firstseen.time, c->lastseen.time, c->type, c->len, tmp_emm);
 		if(result < 0)
 		{
@@ -93,7 +95,7 @@ void emm_save_cache(void)
 void load_emmstat_from_file(void)
 {
 	if(boxtype_is("dbox2")) return; // dont load emmstat on these boxes, they lack resources and will crash!
-	
+
 	if(!emm_cache_configured()){
 		cs_log("loading emmstats disabled since no reader is using it!");
 		return;
@@ -103,7 +105,7 @@ void load_emmstat_from_file(void)
 	char fname[256];
 	char *line;
 	FILE *file;
-	
+
 	if(!cfg.emmlogdir)
 	{
 		get_tmp_dir_filename(fname, sizeof(fname), "ncam.emmstat");
@@ -112,6 +114,7 @@ void load_emmstat_from_file(void)
 	{
 		get_config_filename(fname, sizeof(fname), "ncam.emmstat");
 	}
+
 	file = fopen(fname, "r");
 	if(!file)
 	{
@@ -147,6 +150,7 @@ void load_emmstat_from_file(void)
 
 		for(i = 0, ptr = strtok_r(line, ",", &saveptr1); ptr && i < 7 ; ptr = strtok_r(NULL, ",", &saveptr1), i++)
 		{ split[i] = ptr; }
+
 		valid = (i == 6);
 		if(valid)
 		{
@@ -156,15 +160,16 @@ void load_emmstat_from_file(void)
 			s->lastwritten.time = atol(split[3]);
 			s->type = a2i(split[4], 2);
 			s->count = a2i(split[5], 4);
-			
+
 			LL_ITER itr = ll_iter_create(configured_readers);
-			
+
 			while((rdr = ll_iter_next(&itr)))
 			{
-				if(rdr->cachemm !=1) //skip: emmcache save is disabled
+				if(rdr->cachemm !=1) // skip: emmcache save is disabled
 				{
 					continue;
 				}
+
 				if(strcmp(rdr->label, buf) == 0)
 				{
 					break;
@@ -197,7 +202,7 @@ void load_emmstat_from_file(void)
 
 	fclose(file);
 	NULLFREE(line);
-	
+
 	cs_ftime(&te);
 	int64_t load_time = comp_timeb(&te, &ts);
 	cs_log("loaded %d emmstat records from %s in %"PRId64" ms", count, fname, load_time);
@@ -205,13 +210,14 @@ void load_emmstat_from_file(void)
 
 void save_emmstat_to_file(void)
 {
-	if(boxtype_is("dbox2")) return; // dont save emmstat on these boxes, they lack resources and will crash!
-	
-	if(!emm_cache_configured()){
+	if(boxtype_is("dbox2")) return; // don't save emmstat on these boxes, they lack resources and will crash!
+
+	if(!emm_cache_configured())
+	{
 		cs_log("saving emmstats disabled since no reader is using it!");
 		return;
 	}
-	
+
 	char fname[256];
 
 	if(!cfg.emmlogdir)
@@ -268,7 +274,7 @@ void save_emmstat_to_file(void)
 						cs_log("error writing stats -> stat file could not be removed either!");
 					}
 					return;
-				}	
+				}
 				count++;
 			}
 			cs_writeunlock(__func__, &rdr->emmstat_lock);
@@ -276,7 +282,7 @@ void save_emmstat_to_file(void)
 	}
 
 	fclose(file);
-	
+
 	cs_ftime(&te);
 	int64_t load_time = comp_timeb(&te, &ts);
 
@@ -285,13 +291,13 @@ void save_emmstat_to_file(void)
 
 void emm_load_cache(void)
 {
-	if(boxtype_is("dbox2")) return; // dont load emmcache on these boxes, they lack resources and will crash!
-	
+	if(boxtype_is("dbox2")) return; // don't load emmcache on these boxes, they lack resources and will crash!
+
 	if(!emm_cache_configured()){
 		cs_log("loading emmcache disabled since no reader is using it!");
 		return;
 	}
-	
+
 	char fname[256];
 	char line[1024];
 	FILE *file;
@@ -305,7 +311,7 @@ void emm_load_cache(void)
 	{
 		get_config_filename(fname, sizeof(fname), "ncam.emmcache");
 	}
-	
+
 	file = fopen(fname, "r");
 	if(!file)
 	{
@@ -377,7 +383,7 @@ struct s_emmcache *find_emm_cache(uint8_t *emmd5)
 
 	it = ll_iter_create(emm_cache);
 	while((c = ll_iter_next(&it)))
-	{ 
+	{
 		if(!memcmp(emmd5, c->emmd5, MD5_DIGEST_LENGTH))
 		{
 			cs_log_dump_dbg(D_EMM, c->emmd5, MD5_DIGEST_LENGTH, "found emmcache match");
@@ -392,7 +398,7 @@ int32_t clean_stale_emm_cache_and_stat(uint8_t *emmd5, int64_t gone)
 	struct timeb now;
 	cs_ftime(&now);
 	int32_t count = 0;
-	
+
 	struct s_emmcache *c;
 	LL_ITER it;
 
@@ -401,10 +407,9 @@ int32_t clean_stale_emm_cache_and_stat(uint8_t *emmd5, int64_t gone)
 
 	it = ll_iter_create(emm_cache);
 	while((c = ll_iter_next(&it)))
-	{ 
-		
+	{
 		if(comp_timeb(&now, &c->lastseen) > gone && memcmp(c->emmd5, emmd5, MD5_DIGEST_LENGTH)) // clean older than gone ms and dont clean if its the current emm!
-		{	
+		{
 			struct s_reader *rdr;
 			LL_ITER rdr_itr = ll_iter_create(configured_readers);
 			while((rdr = ll_iter_next(&rdr_itr)))
@@ -437,7 +442,7 @@ int32_t emm_edit_cache(uint8_t *emmd5, EMM_PACKET *ep, bool add)
 		{
 			if(add)
 			{
-				return 0; //already added
+				return 0; // already added
 			}
 			ll_iter_remove_data(&it);
 			count++;
@@ -463,6 +468,7 @@ int32_t emm_edit_cache(uint8_t *emmd5, EMM_PACKET *ep, bool add)
 
 	return count;
 }
+
 int32_t remove_emm_stat(struct s_reader *rdr, uint8_t *emmd5)
 {
 	int32_t count = 0;
@@ -489,7 +495,7 @@ int32_t remove_emm_stat(struct s_reader *rdr, uint8_t *emmd5)
 struct s_emmstat *get_emm_stat(struct s_reader *rdr, uint8_t *emmd5, uint8_t emmtype)
 {
 	if(!rdr->cachemm) return NULL;
-	
+
 	struct s_emmstat *c;
 	LL_ITER it;
 
@@ -498,14 +504,14 @@ struct s_emmstat *get_emm_stat(struct s_reader *rdr, uint8_t *emmd5, uint8_t emm
 
 	it = ll_iter_create(rdr->emmstat);
 	while((c = ll_iter_next(&it)))
-	{ 
+	{
 		if(!memcmp(emmd5, c->emmd5, MD5_DIGEST_LENGTH))
 		{
 			cs_log_dump_dbg(D_EMM, c->emmd5, MD5_DIGEST_LENGTH, "found emmstat match (reader:%s, count:%d)", rdr->label, c->count);
 			return c;
 		}
 	}
-	
+
 	if(cs_malloc(&c, sizeof(struct s_emmstat)))
 	{
 		memcpy(c->emmd5, emmd5, MD5_DIGEST_LENGTH);

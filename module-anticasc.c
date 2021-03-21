@@ -15,7 +15,7 @@
 #define cs_ac "ncam.ac"
 
 static FILE *ac_log;
-static uint8_t  ac_ecmd5[CS_ECMSTORESIZE];
+static uint8_t ac_ecmd5[CS_ECMSTORESIZE];
 
 bool anticasc_logging(char *txt)
 {

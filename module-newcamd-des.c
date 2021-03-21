@@ -2,13 +2,13 @@
 #include "module-newcamd-des.h"
 #include "ncam-string.h"
 
-#define DES_ECS2_DECRYPT    (DES_IP | DES_IP_1 | DES_RIGHT)
-#define DES_ECS2_CRYPT      (DES_IP | DES_IP_1)
+#define DES_ECS2_DECRYPT (DES_IP | DES_IP_1 | DES_RIGHT)
+#define DES_ECS2_CRYPT   (DES_IP | DES_IP_1)
 
-#define CRYPT           0
-#define HASH            1
-#define F_EURO_S2       0
-#define F_TRIPLE_DES    1
+#define CRYPT        0
+#define HASH         1
+#define F_EURO_S2    0
+#define F_TRIPLE_DES 1
 
 #define TestBit(addr, bit) ((addr) & (1 << bit))
 
@@ -41,8 +41,8 @@ static const uint8_t E[8][6] =
 
 static const uint8_t P[32] =
 {
-	16,  7, 20, 21, 29, 12, 28, 17,  1, 15, 23, 26,  5, 18, 31, 10,
-	2,  8, 24, 14, 32, 27,  3,  9, 19, 13, 30,  6, 22, 11,  4, 25
+	16, 7, 20, 21, 29, 12, 28, 17, 1, 15, 23, 26, 5, 18, 31, 10,
+	2, 8, 24, 14, 32, 27, 3, 9, 19, 13, 30, 6, 22, 11, 4, 25
 };
 
 static const uint8_t SBOXES[4][64] =
@@ -195,12 +195,12 @@ static void makeK(uint8_t *left, uint8_t *right, uint8_t *K)
 			if(bit < 29)
 			{
 				bit = 28 - bit;
-				p   = left;
+				p = left;
 			}
 			else
 			{
 				bit = 56 - bit;
-				p   = right;
+				p = right;
 			}
 			val <<= 1;
 			if(p[bit >> 3] & (1 << (bit & 7))) { val |= 1; }
@@ -212,9 +212,9 @@ static void makeK(uint8_t *left, uint8_t *right, uint8_t *K)
 
 static void rightRot(uint8_t key[])
 {
-	uint8_t *p     = key;
-	uint8_t  i     = 3;
-	uint8_t  carry = 0;
+	uint8_t *p = key;
+	uint8_t i = 3;
+	uint8_t carry = 0;
 
 	carry = 0;
 
@@ -270,7 +270,7 @@ static void desCore(uint8_t data[], uint8_t K[], uint8_t result[])
 			if(data[3 - (bit >> 3)] & (1 << (bit & 7))) { val |= 1; }
 		}
 		val ^= K[i];
-		val  = SBOXES[i & 3][val];
+		val = SBOXES[i & 3][val];
 		if(i > 3)
 		{
 			val >>= 4;
@@ -334,7 +334,7 @@ static void desRound(uint8_t left[], uint8_t right[], uint8_t data[], uint8_t mo
 
 	if(mode & DES_HASH)
 	{
-		i    = r[0];
+		i = r[0];
 		r[0] = r[1];
 		r[1] = i;
 	}
@@ -362,7 +362,7 @@ void nc_des(uint8_t key[], uint8_t mode, uint8_t data[])
 		*p = (key[i - 1] << 4) | (key[i] >> 4);
 		p++;
 	}
-	left[3] =  key[0] >> 4;
+	left[3] = key[0] >> 4;
 	right[0] = key[6];
 	right[1] = key[5];
 	right[2] = key[4];
@@ -493,7 +493,7 @@ static void EuroDes(uint8_t key1[], uint8_t key2[], uint8_t desMode, uint8_t ope
 {
 	uint8_t mode;
 
-	if(key1[7])   /* Viaccess */
+	if(key1[7]) /* Viaccess */
 	{
 		mode = (operatingMode == HASH) ? DES_ECM_HASH : DES_ECM_CRYPT;
 
@@ -506,7 +506,7 @@ static void EuroDes(uint8_t key1[], uint8_t key2[], uint8_t desMode, uint8_t ope
 	else if(TestBit(desMode, F_TRIPLE_DES))
 	{
 		/* Eurocrypt 3-DES */
-		mode = (operatingMode == HASH) ?  0 : DES_RIGHT;
+		mode = (operatingMode == HASH) ? 0 : DES_RIGHT;
 		nc_des(key1, (uint8_t)(DES_IP | mode), data);
 
 		mode ^= DES_RIGHT;

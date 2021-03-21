@@ -352,7 +352,7 @@ struct s_dvbapi_priority *dvbapi_priority;
 struct s_client *dvbapi_client;
 
 const char *boxdesc[] = { "none", "dreambox", "duckbox", "ufs910", "dbox2", "ipbox", "ipbox-pmt",
-				"dm7000", "qboxhd", "coolstream", "neumo", "pc", "pc-nodmx", "samygo" };
+							"dm7000", "qboxhd", "coolstream", "neumo", "pc", "pc-nodmx", "samygo" };
 
 // when updating devices[BOX_COUNT] make sure to update these index defines
 #define BOX_INDEX_QBOXHD 0
@@ -1174,7 +1174,6 @@ static int32_t dvbapi_get_descrambler_info(void)
 	// We got a valid response from device (count the ECD type only)
 	if(descr_info.num > 0 && (descr_info.type & 1))
 	{
-                //ca_descramblers_total = 64; # For vuduo4k
 		ca_descramblers_total = descr_info.num;
 		cs_log("Detected %s device, total available descramblers: %d", device_path, ca_descramblers_total);
 		return 1;
@@ -1560,6 +1559,7 @@ int32_t dvbapi_stop_filternum(int32_t demux_id, int32_t num, uint32_t msgid)
 				cs_sleepms(50);
 			}
 			try++;
+
 			cs_log_dbg(D_DVBAPI, "Demuxer %d stop filter %d try %d (fd: %d api: %d, caid: %04X, provid: %06X, %spid: %04X)",
 				demux_id,
 				num + 1,
@@ -2243,7 +2243,7 @@ static void dvbapi_parse_cat_ca_descriptor(int32_t demux_id, const uint8_t *buff
 		case 0x27:
 		case 0x4A:
 		{
-			if(!caid_is_bulcrypt(ca_system_id))
+			if(!caid_is_dre(ca_system_id))
 			{
 				dvbapi_add_emmpid(demux_id, ca_system_id, ca_pid, 0, 0, EMM_UNIQUE | EMM_SHARED | EMM_GLOBAL);
 				break;
@@ -2323,7 +2323,6 @@ static void dvbapi_parse_cat(int32_t demux_id, const uint8_t *buffer, uint16_t l
 		}
 	}
 }
-
 #ifdef __powerpc__
 static pthread_mutex_t lockindex;
 #else
@@ -2418,6 +2417,7 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, uint32_t idx, bool enable, bo
 			stapi_set_pid(demux_id, num, idx, streampid, demux[demux_id].pmt_file); // only used to disable pids!!!
 			break;
 #endif
+
 #if defined WITH_COOLAPI || defined WITH_COOLAPI2
 		case COOLAPI:
 			break;
@@ -2633,7 +2633,6 @@ void dvbapi_stop_descrambling(int32_t demux_id, uint32_t msgid)
 	char channame[CS_SERVICENAME_SIZE];
 
 	i = demux[demux_id].pidindex;
-
 	if(i < 0)
 	{
 		i = 0;
@@ -3122,7 +3121,7 @@ void dvbapi_read_priority(void)
 		if(ret < 1 || (type != 'p' && type != 'i' && type != 'm' && type != 'd' &&
 			type != 's' && type != 'l' && type != 'j' && type != 'a' && type != 'x'))
 		{
-			// fprintf(stderr, "Warning: line containing %s in %s not recognized, ignoring line\n", token, cs_prio);
+			//fprintf(stderr, "Warning: line containing %s in %s not recognized, ignoring line\n", token, cs_prio);
 			// fprintf would issue the warning to the command line, which is more consistent with other config warnings
 			// however it takes NCam a long time (>4 seconds) to reach this part of the program, so the warnings are
 			// reaching tty rather late which leads to confusion. So send the warnings to log file instead
@@ -4185,8 +4184,8 @@ void dvbapi_try_next_caid(int32_t demux_id, int8_t checked, uint32_t msgid)
 	{
 		for(n = 0; n < demux[demux_id].ECMpidcount; n++)
 		{
-			// cs_log_dbg(D_DVBAPI,"Demuxer %d PID %d checked = %d status = %d (searching for pid with status = %d)",
-			// demux_id, n, demux[demux_id].ECMpids[n].checked, demux[demux_id].ECMpids[n].status, j);
+			//cs_log_dbg(D_DVBAPI,"Demuxer %d PID %d checked = %d status = %d (searching for pid with status = %d)",
+			//	demux_id, n, demux[demux_id].ECMpids[n].checked, demux[demux_id].ECMpids[n].status, j);
 
 			if(demux[demux_id].ECMpids[n].checked == checked && demux[demux_id].ECMpids[n].status == j)
 			{
@@ -6360,8 +6359,7 @@ static void dvbapi_get_packet_size(uint8_t *mbuf, uint16_t mbuf_len, uint16_t *c
 	if(mbuf_len < 4)
 	{
 		cs_log("dvbapi_get_packet_size(): error - buffer length (%" PRIu16 ") too short", mbuf_len);
-		(*chunksize) = 1;
-		(*data_len) = 1;
+		set_chunksize_data_len_to_invalid(chunksize, data_len);
 		return;
 	}
 
@@ -6369,6 +6367,7 @@ static void dvbapi_get_packet_size(uint8_t *mbuf, uint16_t mbuf_len, uint16_t *c
 	char* command = "DVBAPI_UNKNOWN_COMMAND";
 	uint32_t tmp_data_len = 0;
 	uint32_t opcode = b2i(4, mbuf);
+
 
 	switch (opcode)
 	{
@@ -6589,7 +6588,7 @@ static void dvbapi_handlesockmsg(uint8_t *mbuf, uint16_t chunksize, uint16_t dat
 }
 
 static bool dvbapi_handlesockdata(int32_t connfd, uint8_t *mbuf, uint16_t mbuf_size, uint16_t unhandled_len,
-	                    uint8_t *add_to_poll, uint16_t *new_unhandled_len, uint16_t *client_proto_version)
+					uint8_t *add_to_poll, uint16_t *new_unhandled_len, uint16_t *client_proto_version)
 {
 	int32_t recv_result;
 	uint16_t chunksize = 1, data_len = 1;
@@ -6709,8 +6708,6 @@ static void *dvbapi_main_local(void *cli)
 		unhandled_buf[i] = NULL;
 		unhandled_buf_len[i] = 0;
 		unhandled_buf_used[i] = 0;
-		client_proto_version[i] = 0; // reset protocol, next client could old protocol.
-		last_client_proto_version = 0;
 		client_proto_version[i] = 0;
 	}
 
@@ -7189,7 +7186,7 @@ static void *dvbapi_main_local(void *cli)
 					int32_t demux_id = ids[i];
 					int32_t n = fdn[i];
 
-					if(cfg.dvbapi_ecminfo_file != 0 && cfg.dvbapi_boxtype != BOXTYPE_SAMYGO)
+					if(cfg.dvbapi_boxtype != BOXTYPE_SAMYGO)
 					{
 						// stop filter since its giving errors and wont return anything good
 						dvbapi_stop_filternum(demux_id, n, 0);
@@ -7286,9 +7283,11 @@ static void *dvbapi_main_local(void *cli)
 						if(!dvbapi_handlesockdata(connfd, mbuf, mbuf_size, unhandled_buf_used[i], &add_to_poll, &unhandled_buf_used[i], &client_proto_version[i]))
 						{
 							unhandled_buf_used[i] = 0;
-							//client disconnects, stop all assigned decoding
+							client_proto_version[i] = 0; // reset protocol, next client could old protocol.
+							last_client_proto_version = 0;
+							// client disconnects, stop all assigned decoding
 							cs_log_dbg(D_DVBAPI, "Socket %d reported connection close", connfd);
-							int active_conn = 0; //other active connections counter
+							int active_conn = 0; // other active connections counter
 							add_to_poll = 0;
 
 							for(j = 0; j < MAX_DEMUX; j++)
@@ -7401,7 +7400,7 @@ static void *dvbapi_main_local(void *cli)
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
 void dvbapi_write_cw(int32_t demux_id, int32_t pid, int32_t stream_id, uint8_t *cw, uint8_t cw_length, uint8_t *iv,
-	                    uint8_t iv_length, enum ca_descr_algo algo, enum ca_descr_cipher_mode cipher_mode, uint32_t msgid)
+					uint8_t iv_length, enum ca_descr_algo algo, enum ca_descr_cipher_mode cipher_mode, uint32_t msgid)
 {
 	int8_t n, cw_empty = 0;
 	uint8_t null_cw[cw_length];
@@ -7426,7 +7425,7 @@ void dvbapi_write_cw(int32_t demux_id, int32_t pid, int32_t stream_id, uint8_t *
 		// Skip check for BISS1 - cw could be indeed zero
 		// Skip check for BISS2 - we use the extended cw, so the "simple" cw is always zero
 		if((memcmp(cw + (n * cw_length), demux[demux_id].last_cw[stream_id][n], cw_length) != 0 || cw_empty)
-	            && (memcmp(cw + (n * cw_length), null_cw, cw_length) != 0 || caid_is_biss(demux[demux_id].ECMpids[pid].CAID)))
+			&& (memcmp(cw + (n * cw_length), null_cw, cw_length) != 0 || caid_is_biss(demux[demux_id].ECMpids[pid].CAID)))
 		{
 			// prepare ca device
 			uint32_t idx = dvbapi_ca_set_pid(demux_id, pid, stream_id, (algo == CA_ALGO_DES), msgid);
@@ -7792,6 +7791,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 			}
 		}
 #ifndef WITH_WI
+		// 0=matching ecm hash, 2=no filter, 3=table reset, 4=cache-ex response
 		// Check only against last_cw[0] (index 0) - No need to check the rest
 		// Skip check for BISS1 - cw could be indeed zero
 		// Skip check for BISS2 - we use the extended cw, so the "simple" cw is always zero
@@ -7804,7 +7804,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				comparecw0 = 1;
 			}
 			else if(memcmp(er->cw, demux[i].last_cw[0][1], 8) == 0 &&
-				memcmp(er->cw + 8, demux[i].last_cw[0][0], 8) == 0)
+					memcmp(er->cw + 8, demux[i].last_cw[0][0], 8) == 0)
 			{
 				comparecw1 = 1;
 			}
@@ -8284,7 +8284,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 #ifndef __CYGWIN__
 		else if(!cfg.dvbapi_listenport && cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX)
 #endif
-		if(cfg.dvbapi_boxtype != BOXTYPE_SAMYGO)
+		if(cfg.dvbapi_ecminfo_file != 0 && cfg.dvbapi_boxtype != BOXTYPE_SAMYGO)
 		{
 #ifdef WITH_EXTENDED_CW
 			// Only print CWs for index 0 in ecm.info file
@@ -8324,8 +8324,8 @@ static int8_t isValidCW(uint8_t *cw)
 
 void dvbapi_write_ecminfo_file(struct s_client *client, ECM_REQUEST *er, uint8_t *lastcw0, uint8_t *lastcw1, uint8_t cw_length)
 {
-#define ECMINFO_TYPE_NCAM     0
-#define ECMINFO_TYPE_NCAM_MS  1
+#define ECMINFO_TYPE_NCAM    0
+#define ECMINFO_TYPE_NCAM_MS 1
 #define ECMINFO_TYPE_WICARDD  2
 #define ECMINFO_TYPE_MGCAMD   3
 #define ECMINFO_TYPE_CCCAM    4
@@ -8696,7 +8696,7 @@ int32_t dvbapi_set_section_filter(int32_t demux_id, ECM_REQUEST *er, int32_t n)
 				break;
 
 			case 0x4A: // DRE-Crypt, Bulcrypt, Tongang and others?
-				if(caid_is_bulcrypt(er->caid))
+				if(caid_is_dre(er->caid))
 				{
 					offset = 6;
 				}
@@ -8916,7 +8916,6 @@ int32_t dvbapi_check_ecm_delayed_delivery(int32_t demux_id, ECM_REQUEST *er)
 			cs_hexdump(0, er->ecmd5, 16, ecmd5, sizeof(ecmd5));
 		}
 #endif
-
 		cs_log_dbg(D_DVBAPI, "Demuxer %d requested controlword for ecm %s on fd %d",
 			demux_id, ecmd5, demux[demux_id].demux_fd[filternum].fd);
 

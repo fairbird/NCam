@@ -9,7 +9,7 @@
 
 #include "module-dvbapi.h"
 #include "module-dvbapi-coolapi.h"
-#include "ncam-string.h" 
+#include "ncam-string.h"
 
 
 #define MAX_COOL_DMX 4
@@ -21,26 +21,26 @@
 #define DMX_MAX_FILTERS_PER_CHAN 16
 #define DMX_MAX_CHANNELS_PER_DMX 192
 //#define MAX_COOL_DMX_FILTERS 128
- 
+
 struct s_cool_chanhandle;
 
 typedef struct s_cool_filter
 {
-	int32_t     fd;
+	int32_t      fd;
 	struct s_cool_chanhandle *chanhandle;
-	void       *filter;
-	int32_t     filter_num;
-	uint8_t       filter16[16];
-	uint8_t       mask16[16];
+	void        *filter;
+	int32_t      filter_num;
+	uint8_t      filter16[16];
+	uint8_t      mask16[16];
 } S_COOL_FILTER;
 
 typedef struct s_cool_chanhandle
 {
 	int32_t     pid;
-	void       *buffer1; // filter Cbuf 1
-	void       *buffer2; // filter Cbuf 2
-	void       *channel;
- 	int32_t     demux_index;
+	void        *buffer1; // filter Cbuf 1
+	void        *buffer2; // filter Cbuf 2
+	void        *channel;
+	int32_t     demux_index;
 	struct s_cool_dmxhandle *dmx_handle;
 	uint32_t    allocated_filters;
 } S_COOL_CHANHANDLE;
@@ -365,7 +365,7 @@ static void coolapi_read_data(dmx_t *dmx, dmx_callback_data_t *data)
 	memset(buffer, 0, sizeof(buffer));
 	ret = coolapi_read(dmx, data, buffer);
 	SAFE_MUTEX_UNLOCK(&dmx->mutex);
-	
+
 	if(ret > -1) {
 		uint16_t filters = data->num;
 		uint16_t flt;
@@ -470,7 +470,7 @@ int32_t coolapi_set_filter(int32_t fd, int32_t num, int32_t pid, uint8_t *flt, u
 
 		channel_open_arg_t chanarg;
 		memset(&chanarg, 0, sizeof(channel_open_arg_t));
-		
+
 		chanarg.type = 4;
 		result = cnxt_dmx_channel_open(dmx_handles[COOLDEMUX_DMX_DEV(fd)].handle, &handle_item->channel, &chanarg, dmx_callback, dmx);
 		coolapi_check_error("cnxt_dmx_channel_open", result);
@@ -645,7 +645,7 @@ int32_t coolapi_remove_filter(int32_t fd, int32_t num)
 		result = cnxt_dmx_channel_ctrl(channel, 0, 0);
 		coolapi_check_error("cnxt_dmx_channel_ctrl", result);
 		cs_log_dbg(D_DVBAPI, "closing channel %x", (int32_t) channel);
-		
+
 		result = cnxt_dmx_set_channel_pid(channel, 0x1FFF);
 		coolapi_check_error("cnxt_dmx_set_channel_pid", result);
 
@@ -657,7 +657,7 @@ int32_t coolapi_remove_filter(int32_t fd, int32_t num)
 
 		result = cnxt_cbuf_detach(handle_item->buffer2, 2, channel);
 		coolapi_check_error("cnxt_cbuf_detach", result);
-		
+
 		result = cnxt_dmx_channel_detach(channel, 0xB, 0, handle_item->buffer1);
 		coolapi_check_error("cnxt_dmx_channel_detach", result);
 

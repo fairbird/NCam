@@ -103,11 +103,12 @@ static void refresh_entitlements(struct s_reader *rdr)
 {
 	uint32_t i;
 	uint16_t caid;
-	KeyData *tmpKeyData;
 #ifdef WITH_LIBCRYPTO
 	LL_ITER itr;
 	biss2_rsa_key_t *item;
 #endif
+	KeyData *tmpKeyData;
+
 	cs_clear_entitlement(rdr);
 
 	for (i = 0; i < StreamKeys.keyCount; i++)
@@ -173,7 +174,6 @@ static void refresh_entitlements(struct s_reader *rdr)
 		emu_add_entitlement(rdr, 0x2610, Biss2Keys.EmuKeys[i].provider, Biss2Keys.EmuKeys[i].key,
 							Biss2Keys.EmuKeys[i].keyName, Biss2Keys.EmuKeys[i].keyLength, 0);
 	}
-
 #ifdef WITH_LIBCRYPTO
 	// RSA keys (EMM keys) for BISS2 mode CA
 	itr = ll_iter_create(rdr->ll_biss2_rsa_keys);
@@ -228,7 +228,6 @@ static int32_t emu_card_info(struct s_reader *rdr)
 
 	// Delete keys from Emu's memory
 	emu_clear_keydata();
-
 	// Delete BISS2 mode CA RSA keys
 	ll_destroy_data(&rdr->ll_biss2_rsa_keys);
 
@@ -710,7 +709,7 @@ static int32_t emu_get_emm_filter(struct s_reader *UNUSED(rdr), struct s_csystem
 }
 
 static int32_t emu_get_emm_filter_adv(struct s_reader *rdr, struct s_csystem_emm_filter **emm_filters, unsigned int *filter_count,
-								uint16_t caid, uint32_t provid, uint16_t srvid, uint16_t tsid, uint16_t onid, uint32_t ens)
+										uint16_t caid, uint32_t provid, uint16_t srvid, uint16_t tsid, uint16_t onid, uint32_t ens)
 {
 	if (caid_is_viaccess(caid))     return emu_get_via3_emm_filter(rdr, emm_filters, filter_count, caid, provid);
 	if (caid_is_irdeto(caid))       return emu_get_ird2_emm_filter(rdr, emm_filters, filter_count, caid, provid);

@@ -293,9 +293,8 @@ static void mca_demux_convert(DEMUXTYPE *demux_orig, DEMUXMATRIX *demux_matrix)
 	demux_matrix->curindex = (int32_t)demux_orig->curindex;
 	demux_matrix->max_status = (int32_t)demux_orig->max_status;
 	demux_matrix->program_number = (uint16_t)demux_orig->program_number;
-	memcpy(&demux_matrix->lastcw, &demux_orig->lastcw, 2 * 8 * sizeof(uint8_t));
 	memcpy(&demux_matrix->lastcw[0], &demux_orig->last_cw[0][0], 8 * sizeof(uint8_t));
- 	memcpy(&demux_matrix->lastcw[1], &demux_orig->last_cw[0][1], 8 * sizeof(uint8_t));
+	memcpy(&demux_matrix->lastcw[1], &demux_orig->last_cw[0][1], 8 * sizeof(uint8_t));
 	demux_matrix->emm_filter = (int32_t)demux_orig->emm_filter;
 	memcpy(&demux_matrix->hexserial, &demux_orig->hexserial, 8 * sizeof(uint8_t));
 	demux_matrix->rdr = (struct s_reader *)demux_orig->rdr;
@@ -360,7 +359,7 @@ static void mca_ex_callback(int32_t stream_id, uint32_t UNUSED(seq), int32_t idx
 
 	if(l < 0 || l > MAX_ECM_SIZE)
 		{ return; }
-	
+
 	ECM_REQUEST *er;
 	if(!(er = get_ecmtask()))
 		{ return; }
@@ -379,8 +378,6 @@ static void mca_ex_callback(int32_t stream_id, uint32_t UNUSED(seq), int32_t idx
 		{ cs_log("unable to stop ex filter"); }
 	else
 		{ cs_log_dbg(D_DVBAPI, "ex filter stopped"); }
-
-
 
 	uint8_t mask[12];
 	uint8_t comp[12];
@@ -458,7 +455,6 @@ static void *mca_main_thread(void *cli)
 					{ cs_log_dump_dbg(D_DVBAPI, msg.buf + 2, new_len, "capmt (duplicates removed):"); }
 				int demux_id = dvbapi_parse_capmt(msg.buf + 2, new_len, -1, NULL, 0, 0);
 
-
 				uint8_t mask[12];
 				uint8_t comp[12];
 				memset(&mask, 0x00, sizeof(mask));
@@ -535,7 +531,7 @@ void mca_send_dcw(struct s_client *client, ECM_REQUEST *er)
 	uint32_t delay = 0;
 
 	cs_log_dbg(D_DVBAPI, "send_dcw");
-		
+
 	if(delayentry)
 	{
 		if(delayentry->delay < 1000)
@@ -549,7 +545,7 @@ void mca_send_dcw(struct s_client *client, ECM_REQUEST *er)
 		delay = cfg.dvbapi_delayer;
 		cs_log_dbg(D_DVBAPI, "generic delay: write cw %d ms after ecmrequest", delay);
 	}
-		
+
 	delayer(er, delay);
 
 	if(cfg.dvbapi_ecminfo_file != 0)

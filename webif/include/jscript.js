@@ -527,7 +527,6 @@ function updateUserpage(data) {
 
 		switch (item.user.classname) {
 		case 'online':
-		case 'forcereopenuseronline':
 			$(uid).attr('class', item.user.classname);
 
 			if (!is_nopoll('usercol1')) {
@@ -668,7 +667,6 @@ function updateUserpage(data) {
 			break;
 
 		case 'connected':
-		case 'forcereopenuserconnected':
 			$(uid).attr('class', item.user.classname);
 
 			if (!is_nopoll('usercol1')) {
@@ -754,7 +752,7 @@ function updateUserpage(data) {
 
 		default:
 			//check the last status
-			if ('online,connected,forcereopenuseronline,forcereopenuserconnected'.indexOf($(uid).attr('class')) > (-1)) {
+			if ('online,connected'.indexOf($(uid).attr('class')) > (-1)) {
 				// last status was online so cleanup offline
 				$(uid).attr('class', item.user.classname);
 				if (!is_nopoll('usercol1')) {
@@ -829,6 +827,10 @@ function updateReaderpage(data) {
 		if (!is_nopoll('readercol4')) {
 			$(uid + " td.readercol4").text(item.stats.ecmsok + item.stats.ecmsokrel)
 				.data('sort-value', item.stats.ecmsok);
+		}
+		if (!is_nopoll('readercol20')) {
+			$(uid + " td.readercol20").text(item.stats.ecmsoklg + item.stats.ecmsoklgrel)
+				.data('sort-value', item.stats.ecmsoklg);
 		}
 		if (!is_nopoll('readercol5')) {
 			$(uid + " td.readercol5").text(item.stats.ecmsnok + item.stats.ecmsnokrel)
@@ -1736,7 +1738,7 @@ $(document).ready(function () {
 	// help wiki links
 	/*if (typeof ncamconf != "undefined") {
 		var language = $('meta[http-equiv="language"]').attr("content");
-		var wikihref = "http://www.lonasdigital.com/wiki/NCAm/" + language + "/Config/ncam." + ncamconf + "#";
+		var wikihref = "http://www.lonasdigital.com/wiki/NCam/" + language + "/Config/ncam." + ncamconf + "#";
 		$("form table a").click(function () {
 			if (!$(this).attr("href") && !$(this).attr("name")) {
 				if ($(this).data('p')) {

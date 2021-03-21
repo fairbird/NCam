@@ -13,29 +13,29 @@
 
 struct s_cwc_md5
 {
-	uint8_t           md5[CS_ECMSTORESIZE];
-	uint32_t          csp_hash;
-	uint8_t           cw[16];
+	uint8_t                 md5[CS_ECMSTORESIZE];
+	uint32_t                csp_hash;
+	uint8_t                 cw[16];
 };
 
 struct s_cw_cycle_check
 {
-	uint8_t         cw[16];
-	time_t          time;
-	time_t          locktime; // lock in learning
-	uint16_t        caid;
-	uint16_t        sid;
-	uint16_t        chid;
-	uint32_t        provid;
-	int16_t         ecmlen;
-	int8_t          stage;
-	int32_t         cycletime;
-	int32_t         dyncycletime;
-	int8_t          nextcyclecw;
-	struct s_cwc_md5    ecm_md5[15]; // max 15 old ecm md5 /csp-hashs
-	int8_t          cwc_hist_entry;
-	uint8_t         old;
-	int8_t          stage4_repeat;
+	uint8_t                 cw[16];
+	time_t                  time;
+	time_t                  locktime; // lock in learning
+	uint16_t                caid;
+	uint16_t                sid;
+	uint16_t                chid;
+	uint32_t                provid;
+	int16_t                 ecmlen;
+	int8_t                  stage;
+	int32_t                 cycletime;
+	int32_t                 dyncycletime;
+	int8_t                  nextcyclecw;
+	struct s_cwc_md5        ecm_md5[15]; // max 15 old ecm md5 /csp-hashs
+	int8_t                  cwc_hist_entry;
+	uint8_t                 old;
+	int8_t                  stage4_repeat;
 	struct s_cw_cycle_check *prev;
 	struct s_cw_cycle_check *next;
 };
@@ -46,7 +46,7 @@ static struct s_cw_cycle_check *cw_cc_list;
 static int32_t cw_cc_list_size;
 static time_t last_cwcyclecleaning;
 
- /*
+/*
  * Check for CW CYCLE
  */
 
@@ -128,15 +128,15 @@ static uint8_t checkvalidCW(ECM_REQUEST *er)
 	{ er->rc = E_NOTFOUND; }
 
 	if(er->rc == E_NOTFOUND)
-	{ return 0; } //wrong  leave the check
+	{ return 0; } // wrong leave the check
 
 	if(checkCWpart(er->cw, 0) && checkCWpart(er->cw, 1))
-	{ return 1; } //cw1 and cw2 is filled -> we can check for cwc
+	{ return 1; } // cw1 and cw2 is filled -> we can check for cwc
 
 	if((!checkCWpart(er->cw, 0) || !checkCWpart(er->cw, 1)) && caid_is_videoguard(er->caid))
 	{
 		cs_log("CAID: %04X uses obviously half cycle cw's : NO need to check it with CWC! Remove CAID: %04X from CWC Config!", er->caid, er->caid);
-		ret = 0;  // cw1 or cw2 is null 
+		ret = 0; // cw1 or cw2 is null
 	}
 
 	return ret;
@@ -145,7 +145,7 @@ static uint8_t checkvalidCW(ECM_REQUEST *er)
 void cleanupcwcycle(void)
 {
 	time_t now = time(NULL);
-	if(last_cwcyclecleaning + 120 > now)  //only clean once every 2min
+	if(last_cwcyclecleaning + 120 > now) // only clean once every 2min
 		{ return; }
 
 	last_cwcyclecleaning = now;
@@ -154,11 +154,11 @@ void cleanupcwcycle(void)
 
 	bool bcleanup = false;
 
-	//write lock
+	// write lock
 	cs_writelock(__func__, &cwcycle_lock);
 	for(currentnode = cw_cc_list, prv = NULL; currentnode; prv = currentnode, currentnode = currentnode->next, count++)   // First Remove old Entrys
 	{
-		if((now - currentnode->time) <= kct)    // delete Entry which old to hold list small
+		if((now - currentnode->time) <= kct) // delete Entry which old to hold list small
 		{
 			continue;
 		}
@@ -172,7 +172,7 @@ void cleanupcwcycle(void)
 			cw_cc_list = NULL;
 		}
 		bcleanup = true;
-		break; //we need only once, all follow to old
+		break; // we need only once, all follow to old
 	}
 	cs_writeunlock(__func__, &cwcycle_lock);
 	while(currentnode != NULL)
@@ -192,9 +192,9 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uin
 
 	int8_t i, ret = 6; // ret = 6 no checked
 	int8_t cycleok = -1;
-	time_t now = er->tps.time;//time(NULL);
+	time_t now = er->tps.time; //time(NULL);
 	uint8_t need_new_entry = 1, upd_entry = 1;
-	char cwstr[17 * 3]; //cw to check
+	char cwstr[17 * 3]; // cw to check
 
 	char cwc_ecmf[ECM_FMT_LEN];
 	char cwc_cw[17 * 3];
@@ -516,7 +516,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uin
 							cwc->stage = 1;
 						}
 					}
-					else if(cwc->stage == 4)	// we got a early learned cycletime.. use this cycletime and check only which cw cycle 
+					else if(cwc->stage == 4)	// we got a early learned cycletime.. use this cycletime and check only which cw cycle
 					{
 						n = memcmp(cwc->cw, cw, 8);
 						m = memcmp(cwc->cw + 8, cw + 8, 8);
@@ -538,11 +538,11 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uin
 						else
 						{
 							cs_log_dbg(D_CWC, "cyclecheck [Stay on Stage %d] for Entry %s Cycletime: %i no cycle detect!", cwc->stage, cwc_ecmf, cwc->cycletime);
-							if (cwc->stage4_repeat > 12) 
-							{ 
+							if (cwc->stage4_repeat > 12)
+							{
 								cwc->stage = 1;
-								cs_log_dbg(D_CWC, "cyclecheck [Back to Stage 1] too much cyclefailure, maybe cycletime not correct %s Cycletime: %i Lockdiff: %ld nextCycleCW = CW%i", cwc_ecmf, cwc->cycletime, now - cwc->locktime, cwc->nextcyclecw);							
-							} 
+								cs_log_dbg(D_CWC, "cyclecheck [Back to Stage 1] too much cyclefailure, maybe cycletime not correct %s Cycletime: %i Lockdiff: %ld nextCycleCW = CW%i", cwc_ecmf, cwc->cycletime, now - cwc->locktime, cwc->nextcyclecw);
+							}
 						}
 						cwc->stage4_repeat++;
 						ret = ret == 3 ? 3 : 7; // IGN for first stage4 otherwise LEARN
@@ -621,7 +621,6 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uin
 				new->cycletime = (cfg.cwcycle_usecwcfromce && cycletime_fr > 0 && next_cw_cycle_fr < 2) ? cycletime_fr : 99;
 				new->nextcyclecw = (cfg.cwcycle_usecwcfromce && cycletime_fr > 0 && next_cw_cycle_fr < 2) ? next_cw_cycle_fr : 2; //2=we dont know which next cw Cycle;  0= next cw Cycle CW0; 1= next cw Cycle CW1;
 				ret = (cycletime_fr > 0 && next_cw_cycle_fr < 2) ? 8 : 6;
-
 //
 				new->prev = new->next = NULL;
 				new->old = 0;
@@ -778,8 +777,21 @@ uint8_t checkcwcycle(struct s_client *client, ECM_REQUEST *er, struct s_reader *
 		snprintf(er->cwc_msg_log, sizeof(er->cwc_msg_log), "cwc NOK");
 		if(cfg.onbadcycle > 0)    // ignore ECM Request
 		{
-			cs_log("cyclecheck [Bad CW Cycle] for: %s %s from: %s -> drop cw (ECM Answer)", user, er_ecmf, c_reader); //D_CWC| D_TRACE
-			return 0;
+#ifdef CS_CACHEEX_AIO
+			if(!er->localgenerated)
+			{
+#endif
+				cs_log("cyclecheck [Bad CW Cycle] for: %s %s from: %s -> drop cw (ECM Answer)", user, er_ecmf, c_reader); //D_CWC| D_TRACE
+				return 0;
+#ifdef CS_CACHEEX_AIO
+			}
+			else
+			{
+				cs_log("cyclecheck [Bad CW Cycle] for: %s %s from: %s -> lg-flagged CW -> do nothing", user, er_ecmf, c_reader); //D_CWC| D_TRACE
+				break;
+			}
+#endif
+
 		}
 		else      // only logging
 		{
@@ -788,10 +800,22 @@ uint8_t checkcwcycle(struct s_client *client, ECM_REQUEST *er, struct s_reader *
 		}
 
 	case 2: // ER to OLD
-		count_nok(client);
-		snprintf(er->cwc_msg_log, sizeof(er->cwc_msg_log), "cwc NOK(old)");
-		cs_log("cyclecheck [Bad CW Cycle] for: %s %s from: %s -> ECM Answer is too OLD -> drop cw (ECM Answer)", user, er_ecmf, c_reader);//D_CWC| D_TRACE
-		return 0;
+#ifdef CS_CACHEEX_AIO
+		if(!er->localgenerated)
+		{
+#endif
+			count_nok(client);
+			snprintf(er->cwc_msg_log, sizeof(er->cwc_msg_log), "cwc NOK(old)");
+			cs_log("cyclecheck [Bad CW Cycle] for: %s %s from: %s -> ECM Answer is too OLD -> drop cw (ECM Answer)", user, er_ecmf, c_reader);//D_CWC| D_TRACE
+			return 0;
+#ifdef CS_CACHEEX_AIO
+		}
+		else
+		{
+			cs_log("cyclecheck [Bad CW Cycle] for: %s %s from: %s -> ECM Answer is too OLD -> lg-flagged CW -> do nothing", user, er_ecmf, c_reader); //D_CWC| D_TRACE
+			break;
+		}
+#endif
 
 	case 3: // CycleCheck ignored (stage 3 to stage 4)
 		count_ign(client);
@@ -822,8 +846,20 @@ uint8_t checkcwcycle(struct s_client *client, ECM_REQUEST *er, struct s_reader *
 		snprintf(er->cwc_msg_log, sizeof(er->cwc_msg_log), "cwc NOK");
 		if(cfg.onbadcycle > 0)    // ignore ECM Request
 		{
-			cs_log("cyclecheck [Bad CW Cycle already Counted] for: %s %s from: %s -> drop cw (ECM Answer)", user, er_ecmf, c_reader); 
-			return 0;
+#ifdef CS_CACHEEX_AIO
+			if(!er->localgenerated)
+			{
+#endif
+				cs_log("cyclecheck [Bad CW Cycle already Counted] for: %s %s from: %s -> drop cw (ECM Answer)", user, er_ecmf, c_reader);
+				return 0;
+#ifdef CS_CACHEEX_AIO
+			}
+			else
+			{
+				cs_log("cyclecheck [Bad CW Cycle already Counted] for: %s %s from: %s -> lg-flagged CW -> do nothing", user, er_ecmf, c_reader); //D_CWC| D_TRACE
+				break;
+			}
+#endif
 		}
 		else      // only logging
 		{

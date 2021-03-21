@@ -18,7 +18,6 @@ int8_t biss_emm(struct s_reader *rdr, const uint8_t *emm, uint32_t *keysAdded);
 uint16_t biss_read_pem(struct s_reader *rdr, uint8_t max_keys);
 #endif
 int8_t biss_ecm(struct s_reader *rdr, const uint8_t *ecm, uint16_t caid, uint16_t ecm_pid, uint8_t *dw, EXTENDED_CW *cw_ex);
-
 #endif // WITH_EMU
 
 #endif // MODULE_EMULATOR_BISS_H

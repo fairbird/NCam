@@ -239,7 +239,7 @@ static int32_t conax_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, stru
 	uint8_t exp[] = { 0x01, 0x00, 0x01 };
 	uint8_t buf[256];
 
-	if((n = check_sct_len(er->ecm, 3)) < 0)
+	if((n = check_sct_len(er->ecm, 3, sizeof(er->ecm))) < 0)
 		{ return ERROR; }
 
 	buf[0] = 0x14;

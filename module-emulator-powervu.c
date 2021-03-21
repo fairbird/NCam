@@ -2032,7 +2032,14 @@ int8_t powervu_ecm(uint8_t *ecm, uint8_t *dw, EXTENDED_CW *cw_ex, uint16_t srvid
 						{
 							if (!get_ecm_key(ecmKey, channelId, 0xFFFF0000, keyIndex, keyRef2++))
 							{
-								cs_log("Key not found or invalid: P ****%04X %02X", ecmSrvid, keyIndex);
+								if (channel_hash)
+								{
+									cs_log("Key not found or invalid: P ****%04X %02X (channel hash: %08X)", ecmSrvid, keyIndex, channel_hash);
+								}
+								else
+								{
+									cs_log("Key not found or invalid: P ****%04X %02X", ecmSrvid, keyIndex);
+								}
 
 								if (group_id) // Print only if there is a matching "GROUP" entry
 								{

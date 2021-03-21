@@ -26,7 +26,7 @@
 //CMD06 - EMM (incomming EMM in server mode)
 //CMD19 - EMM (incomming EMM in server mode) only seen with caid 0x1830
 //CMD08 - Stop sending requests to the server for current srvid, prvid, caid
-//CMD44 - MPCS/Ncam internal error notification
+//CMD44 - MPCS/NCam internal error notification
 //CMD55 - connect_on_init/keepalive
 
 //CMD0x3c - CACHEEX Cache-push filter request
@@ -284,6 +284,13 @@ static int32_t camd35_recv(struct s_client *client, uint8_t *buf, int32_t l)
 				switch(camd35_auth_client(client, buf))
 				{
 					case 0:
+#ifdef CS_CACHEEX_AIO
+						if(!client->c35_extmode)
+						{
+							camd35_send_extmode(client, false);
+							client->c35_extmode = 1;
+						}
+#endif
 						break; // ok
 
 					case 1:
@@ -316,7 +323,12 @@ static int32_t camd35_recv(struct s_client *client, uint8_t *buf, int32_t l)
 				{
 					buflen = (((buf[21] & 0x0F) << 8) | buf[22]) + 3;
 				}
-				else if(buf[0] == 0x3D || buf[0] == 0x3E || buf[0] == 0x3F) // cacheex-push
+				else if(
+#ifdef CS_CACHEEX_AIO
+					buf[0] == 0x40 || buf[0] == 0x41 || buf[0] == 0x42 ||
+#endif
+					buf[0] == 0x3D || buf[0] == 0x3E || buf[0] == 0x3F
+				) // cacheex-push
 				{
 					buflen = buf[1] | (buf[2] << 8);
 				}
@@ -503,7 +515,7 @@ static void camd35_request_emm(ECM_REQUEST *er)
 
 	// Bulcrypt has two caids and aureader->caid can't be used.
 	// Use ECM_REQUEST caid for AU.
-	if(!au_caid && caid_is_bulcrypt(er->caid))
+	if(!au_caid && (caid_is_bulcrypt(er->caid) || caid_is_streamguard(er->caid) || caid_is_tongfang(er->caid) || caid_is_dvn(er->caid)))
 	{
 		au_caid = er->caid;
 	}
@@ -640,7 +652,18 @@ static void camd35_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				memmove(buf + 20 + 16, buf + 20 + buf[1], 0x34);
 			}
 
-			buf[0]++; // ecm response (CMD01 or CMD04)
+#ifdef CS_CACHEEX_AIO
+			if(er->localgenerated && client->c35_extmode > 1)
+			{
+				buf[0] += 0x51; // ecm response with lg-flag
+			}
+			else
+			{
+#endif
+				buf[0]++; // ecm response (CMD01 or CMD04)
+#ifdef CS_CACHEEX_AIO
+			}
+#endif
 			buf[1] = 16;
 			camd35_cacheex_init_dcw(client, er);
 			memcpy(buf + 20, er->cw, buf[1]);
@@ -861,10 +884,25 @@ static int32_t camd35_client_init(struct s_client *cl)
 		camd35_send_keepalive(cl);
 	}
 
-	if(cacheex_get_rdr_mode(cl->reader) == 2)
+	if(cacheex_get_rdr_mode(cl->reader) == 2
+#ifdef CS_CACHEEX_AIO
+		 || cacheex_get_rdr_mode(cl->reader) == 1
+#endif
+	)
 	{
 		camd35_cacheex_send_push_filter(cl, 2);
+#ifdef CS_CACHEEX_AIO
+		camd35_cacheex_feature_request(cl);
+#endif
 	}
+
+#ifdef CS_CACHEEX_AIO
+	if(!cl->c35_extmode)
+	{
+		camd35_send_extmode(cl, false);
+		cl->c35_extmode = 1;
+	}
+#endif
 
 	return 0;
 }
@@ -948,7 +986,13 @@ static void *camd35_server(struct s_client *client, uint8_t *mbuf, int32_t n)
 		case 55:
 			camd35_send_keepalive_answer(client); // keepalive msg
 			break;
-
+#ifdef CS_CACHEEX_AIO
+		case 0x43:
+			break;
+		case 0x50:
+			client->c35_extmode = 2;
+			break;
+#endif
 		default:
 			if(!camd35_cacheex_server(client, mbuf))
 			{
@@ -1131,9 +1175,23 @@ static int32_t camd35_recv_chk(struct s_client *client, uint8_t *dcw, int32_t *r
 		return -1;
 	}
 
+#ifdef CS_CACHEEX_AIO
+	if(buf[0] == 0x50)
+	{
+		client->c35_extmode = 2;
+
+		if(buf[12] != 1) // answer
+			camd35_send_extmode(client, true);
+		return -1;
+	}
+#endif
 	// CMD44: old reject command introduced in mpcs
 	// keeping this for backward compatibility
-	if((buf[0] != 1) && (buf[0] != 0x44) && (buf[0] != 0x08))
+	if((buf[0] != 1) && (buf[0] != 0x44) && (buf[0] != 0x08)
+#ifdef CS_CACHEEX_AIO
+			 && (buf[0] != 0x51)
+#endif
+	)
 	{
 		return -1;
 	}
@@ -1147,11 +1205,44 @@ static int32_t camd35_recv_chk(struct s_client *client, uint8_t *dcw, int32_t *r
 	{
 		*rc = 2; // INVALID sent by CMD08
 	}
+#ifdef CS_CACHEEX_AIO
+	if(buf[0] == 0x51 || buf[0] == 0x54)	// lg-flag
+	{
+		*rc = 0x86;
+		client->c35_extmode = 2;
+	}
+#endif
 
 	memcpy(dcw, buf + 20, 16);
 
 	return idx;
 }
+
+#ifdef CS_CACHEEX_AIO
+void camd35_send_extmode(struct s_client *cl, bool answer)
+{
+	uint8_t rbuf[32]; // minimal size
+	memset(rbuf, 0, sizeof(rbuf));
+
+	rbuf[0] = 0x50;
+	rbuf[1] = 1;
+	rbuf[2] = 0;
+	if(answer)
+		rbuf[12] = 1;
+
+	if(cl->reader)
+	{
+		if(camd35_tcp_connect(cl))
+		{
+			camd35_send(cl, rbuf, 1); // send adds +20
+		}
+	}
+	else if(check_client(cl) && cl->account)
+	{
+		camd35_send(cl, rbuf, 1); // send adds +20
+	}
+}
+#endif
 
 /*
  * module definitions

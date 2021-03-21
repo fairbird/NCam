@@ -1,6 +1,4 @@
     ##JSONDELIMITER##{
-    "rowtype":"##ROWTYPE##",
-    "id":"##ROWID##",
     "dirimg":"##DIRECTIONIMG##",
     "type":"##TYPE##",
     "name":"##NAME##",
@@ -8,9 +6,11 @@
     "node":"##NODE##",
     "level":"##LEVEL##",
     "push":"##PUSH##",
+    "pushlg":"##PUSHLG##",
     "got":"##GOT##",
-    "cwinfo":"##CWCINFO##",
+    "gotlg":"##GOTLG##",
     "hit":"##HIT##",
-    "err":"##ERR##",
-    "errcw":"##ERRCW##"
+    "cwinfo":"##CWCINFO##",
+    "errcw":"##ERRCW##",
+    "err":"##ERR##"
     }

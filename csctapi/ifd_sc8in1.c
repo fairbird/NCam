@@ -528,8 +528,8 @@ if (display) {
 static int32_t mcrHelloNCam(struct s_reader *reader)
 {
 	// Display "NCam" on MCR display
-	char helloNCam[5] = {'O', 'S', 'C', 'a', 'm'};
-	return MCR_DisplayText(reader, &helloNCam[0], 5, 100, 1);
+	char helloNCam[4] = {'N', 'C', 'a', 'm'};
+	return MCR_DisplayText(reader, &helloNCam[0], 4, 100, 1);
 }
 
 static int32_t mcr_generateStatisticsForDisplay(struct s_reader *reader)

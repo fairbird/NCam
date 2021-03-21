@@ -1388,7 +1388,6 @@ static int32_t nagra2_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, str
 			rdr_log_dbg(reader, D_READER, "CW0 after IDEA decrypt: %s", cs_hexdump(1, _cwe0, 8, tmp_dbg, sizeof(tmp_dbg)));
 			rdr_log_dbg(reader, D_READER, "CW1 after IDEA decrypt: %s", cs_hexdump(1, _cwe1, 8, tmp_dbg, sizeof(tmp_dbg)));
 
-
 			if(CW_NEEDS_3DES())
 			{
 				rdr_log_dbg(reader, D_READER, "3DES encryption of CWs detected. Using CWPK index:%02X", (csystem_data->ird_info & 7));

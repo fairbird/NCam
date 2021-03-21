@@ -24,10 +24,12 @@ char *get_tmp_dir(void)
 	{
 		d = getenv("TMP");
 	}
+
 	if(!d || !d[0])
 	{
 		d = getenv("TEMP");
 	}
+
 	if(!d || !d[0])
 	{
 		getcwd(cs_tmpdir, sizeof(cs_tmpdir) - 1);
@@ -63,11 +65,13 @@ char *get_tmp_dir_filename(char *dest, size_t destlen, const char *filename)
 
 /* Drop-in replacement for readdir_r as some plattforms strip the function from their libc.
    Furthermore, there are some security issues, see http://womble.decadent.org.uk/readdir_r-advisory.html */
+
 int32_t cs_readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result)
 {
 	/* According to POSIX the buffer readdir uses is not shared between directory streams.
 	   However readdir is not guaranteed to be thread-safe and some implementations may use global state.
 	   Thus we use a lock as we have many plattforms... */
+
 	int32_t rc;
 	cs_writelock(__func__, &readdir_lock);
 	errno = 0;
@@ -88,17 +92,21 @@ bool file_exists(const char *filename)
 	return access(filename, R_OK) == 0;
 }
 
-/* Copies a file from srcfile to destfile. If an error occured before writing, -1 is returned, else -2. On success, 0 is returned.*/
+/* Copies a file from srcfile to destfile. If an error occured before writing,
+   -1 is returned, else -2. On success, 0 is returned.*/
+
 int32_t file_copy(char *srcfile, char *destfile)
 {
 	FILE *src, *dest;
 	int32_t ch;
+
 	src = fopen(srcfile, "r");
 	if(!src)
 	{
 		cs_log("Error opening file %s for reading (errno=%d %s)!", srcfile, errno, strerror(errno));
 		return -1;
 	}
+
 	dest = fopen(destfile, "w");
 	if(!dest)
 	{
@@ -106,6 +114,7 @@ int32_t file_copy(char *srcfile, char *destfile)
 		fclose(src);
 		return -1;
 	}
+
 	while(1)
 	{
 		ch = fgetc(src);
@@ -130,7 +139,9 @@ int32_t file_copy(char *srcfile, char *destfile)
 	return (0);
 }
 
-/* Overwrites destfile with temp_file. If forceBakOverWrite = 0, the bakfile will not be overwritten if it exists, else it will be.*/
+/* Overwrites destfile with temp_file. If forceBakOverWrite = 0,
+   the bakfile will not be overwritten if it exists, else it will be.*/
+
 int32_t safe_overwrite_with_bak(char *destfile, char *temp_file, char *bakfile, int32_t forceBakOverWrite)
 {
 	int32_t rc;
@@ -149,6 +160,7 @@ int32_t safe_overwrite_with_bak(char *destfile, char *temp_file, char *bakfile, 
 			}
 		}
 	}
+
 	rc = file_copy(temp_file, destfile);
 	if(rc < 0)
 	{
@@ -163,6 +175,7 @@ int32_t safe_overwrite_with_bak(char *destfile, char *temp_file, char *bakfile, 
 		}
 		return 1;
 	}
+
 	if(unlink(temp_file) < 0)
 	{
 		cs_log("Error removing temp config file %s (errno=%d %s)!", temp_file, errno, strerror(errno));
@@ -175,6 +188,7 @@ char *get_gbox_filename(char *dest, size_t destlen, const char *filename)
 {
 	char *tmp_dir = get_tmp_dir();
 	const char *slash = "/";
+
 	if(cfg.gbox_tmp_dir != NULL)
 	{
 		if(cfg.gbox_tmp_dir[cs_strlen(cfg.gbox_tmp_dir) - 1] == '/')
@@ -195,6 +209,8 @@ char *get_gbox_filename(char *dest, size_t destlen, const char *filename)
 #ifdef WITH_LIBCURL
 int curl(CURL *curl_handle, char *url)
 {
+	if(url[0] != 0x68 || url[1] != 0x74 || url[2] != 0x74 || url[3] != 0x70) { return 0; }
+
 	CURLcode res;
 	struct curl_slist *headers = NULL;
 	char errbuf[CURL_ERROR_SIZE];
@@ -211,7 +227,7 @@ int curl(CURL *curl_handle, char *url)
 	{
 		curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 0); // Set the default value: strict certificate check please "enabled=1L"
 	}
-	curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, 3L); // complete within 3 seconds
+	curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, 5L); // complete within 5 seconds
 	curl_easy_setopt(curl_handle, CURLOPT_FOLLOWLOCATION, 1L); // example.com is redirected, so we tell libcurl to follow redirection
 	curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:72.0) Gecko/20100101 Firefox/72.0");
 
@@ -219,7 +235,7 @@ int curl(CURL *curl_handle, char *url)
 
 	if(res != CURLE_OK) // check for errors
 	{
-		size_t len = strlen(errbuf);
+		size_t len = cs_strlen(errbuf);
 		cs_log("libcurl: (url) %s", url);
 		if(len)
 		{

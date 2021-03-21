@@ -330,7 +330,7 @@ tommy_inline tommy_bool_t tommy_list_empty(tommy_list* list)
  */
 tommy_inline tommy_size_t tommy_list_count(tommy_list* list)
 {
- 	tommy_size_t count = 0;
+	tommy_size_t count = 0;
 	tommy_node* i = tommy_list_head(list);
 
 	while (i) {

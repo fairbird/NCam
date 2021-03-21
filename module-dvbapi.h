@@ -134,21 +134,21 @@
 										// not allowed to start descrambling or MMI dialogue before reception of a new
 										// CA PMT object with "ca_pmt_cmd_id" set to "ok_descrambling or "ok_mmi".
 
-#define CA_PMT_CMD_NOT_SELECTED    0x04 // It indicates to the CA application that the host no longer requires that CA
+#define CA_PMT_CMD_NOT_SELECTED     0x04 // It indicates to the CA application that the host no longer requires that CA
 										// application to attempt to descramble the service. The CA application shall
 										// close any MMI dialogue it has opened.
 //----------------
 // ca descriptors
 //----------------
 
-#define CA			     		   		0x09
-#define ENIGMA_NAMESPACE				0x81
-#define DEMUX_CA_MASK_ADAPTER			0x82 // deprecated - applications should use descriptors ADAPTER_DEVICE, DEMUX_DEVICE and CA_DEVICE instead
-#define ADAPTER_DEVICE					0x83
-#define PMT_PID							0x84
-#define SERVICE_TYPE_MASK				0x85 // not used by NCam
-#define DEMUX_DEVICE					0x86
-#define CA_DEVICE						0x87
+#define CA                              0x09
+#define ENIGMA_NAMESPACE                0x81
+#define DEMUX_CA_MASK_ADAPTER           0x82 // deprecated - applications should use descriptors ADAPTER_DEVICE, DEMUX_DEVICE and CA_DEVICE instead
+#define ADAPTER_DEVICE                  0x83
+#define PMT_PID                         0x84
+#define SERVICE_TYPE_MASK               0x85 // not used by OSCam
+#define DEMUX_DEVICE                    0x86
+#define CA_DEVICE                       0x87
 
 //-----------------------------------------------------------------------------
 // api used for internal device communication
@@ -333,7 +333,7 @@ typedef struct filter_s
 	uint8_t          prevecmd5[CS_ECMSTORESIZE];         // previous requested ecm md5
 	int32_t          prevresult;
 #if defined(WITH_STAPI) || defined(WITH_STAPI5)
-	int32_t          NumSlots;
+        int32_t          NumSlots;
 	uint32_t         SlotHandle[10];
 	uint32_t         BufferHandle[10];
 #endif

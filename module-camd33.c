@@ -9,7 +9,7 @@
 #include "ncam-net.h"
 #include "ncam-string.h"
 
-#define REQ_SIZE    4
+#define REQ_SIZE 4
 
 static int32_t camd33_send(uint8_t *buf, int32_t ml)
 {
@@ -23,6 +23,7 @@ static int32_t camd33_send(uint8_t *buf, int32_t ml)
 	l = boundary(4, ml);
 	memset(buf + ml, 0, l - ml);
 	cs_log_dump_dbg(D_CLIENT, buf, l, "send %d bytes to client", l);
+
 	if(cur_client()->crypted)
 	{
 		aes_encrypt_idx(cur_client()->aes_keys, buf, l);
@@ -48,8 +49,8 @@ static int32_t camd33_recv(struct s_client *client, uint8_t *buf, int32_t l)
 			aes_encrypt_idx(cur_client()->aes_keys, buf, n);
 		}
 	}
-
 	cs_log_dump_dbg(D_CLIENT, buf, n, "received %d bytes from client", n);
+
 	return (n);
 }
 
@@ -58,7 +59,7 @@ static void camd33_request_emm(void)
 	uint8_t mbuf[20];
 	struct s_reader *aureader = NULL, *rdr = NULL;
 
-	//TODO: just take the first reader in list
+	// TODO: just take the first reader in list
 	LL_ITER itr = ll_iter_create(cur_client()->aureader_list);
 	while((rdr = ll_iter_next(&itr)))
 	{
@@ -97,7 +98,6 @@ static void camd33_auth_client(uint8_t *camdbug)
 	struct s_client *cl = cur_client();
 
 	cl->crypted = cfg.c33_crypted;
-
 	if(cl->crypted)
 	{
 		cl->crypted = !check_ip(cfg.c33_plain, cl->ip);
@@ -141,7 +141,6 @@ static void camd33_auth_client(uint8_t *camdbug)
 	{
 		camd33_request_emm();
 	}
-
 	else
 	{
 		if(rc < 0)
@@ -155,10 +154,12 @@ static void camd33_auth_client(uint8_t *camdbug)
 static void camd33_send_dcw(struct s_client *UNUSED(client), ECM_REQUEST *er)
 {
 	uint8_t mbuf[128];
+
 	mbuf[0] = 2;
-	memcpy(mbuf + 1, &er->msgid, 4);  // get pin
+	memcpy(mbuf + 1, &er->msgid, 4); // get pin
 	memcpy(mbuf + 5, er->cw, 16);
 	camd33_send(mbuf, 21);
+
 	if(!cfg.c33_passive)
 	{
 		camd33_request_emm();
@@ -168,7 +169,7 @@ static void camd33_send_dcw(struct s_client *UNUSED(client), ECM_REQUEST *er)
 static void camd33_process_ecm(uint8_t *buf, int32_t l)
 {
 	ECM_REQUEST *er;
-	
+
 	if(l < 7)
 	{
 		return;

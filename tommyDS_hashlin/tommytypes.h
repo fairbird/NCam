@@ -24,7 +24,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
 /** \file
  * Generic types.
  */
@@ -55,6 +54,13 @@ typedef int tommy_ssize_t; /**< Generic ssize_t type. */
 typedef uint32_t tommy_uint32_t; /**< Generic uint32_t type. */
 typedef uint64_t tommy_uint64_t; /**< Generic uint64_t type. */
 typedef uintptr_t tommy_uintptr_t; /**< Generic uintptr_t type. */
+#ifndef SIZE_MAX /* For eabi-gcc 4.7 */
+#ifdef __LP64__
+#define SIZE_MAX UINT64_MAX
+#else
+#define SIZE_MAX UINT32_MAX
+#endif
+#endif /* For eabi-gcc 4.7 end */
 #if SIZE_MAX == UINT64_MAX
 #define TOMMY_SIZE_BIT 64
 typedef uint64_t tommy_size_t; /**< Generic size_t type. */
@@ -168,13 +174,13 @@ typedef tommy_uint32_t tommy_uint_t;
 /* key/hash */
 
 /**
-* Type used in indexed data structures to store the key of a object.
-*/
+ * Type used in indexed data structures to store the key of a object.
+ */
 typedef tommy_size_t tommy_key_t;
 
 /**
-* Type used in hashtables to store the hash of a object.
-*/
+ * Type used in hashtables to store the hash of a object.
+ */
 typedef tommy_size_t tommy_hash_t;
 
 /******************************************************************************/
@@ -214,7 +220,7 @@ typedef struct tommy_node_struct {
 
 	/**
 	 * Index of the node.
- 	 * With tries this field is used to store the key.
+	 * With tries this field is used to store the key.
 	 * With hashtables this field is used to store the hash value.
 	 * With lists this field is not used.
 	 */
@@ -352,18 +358,17 @@ tommy_inline tommy_uint_t tommy_ilog2_u32(tommy_uint32_t value)
 	unsigned long count;
 	_BitScanReverse(&count, value);
 	return count;
-/* #elif defined(__GNUC__)
- *
-	
- * GCC implements __builtin_clz(x) as "__builtin_clz(x) = bsr(x) ^ 31"
- *
- * Where "x ^ 31 = 31 - x", but gcc does not optimize "31 - __builtin_clz(x)" to bsr(x),
- * but generates 31 - (bsr(x) xor 31).
- *
- * So we write "__builtin_clz(x) ^ 31" instead of "31 - __builtin_clz(x)",
- * to allow the double xor to be optimized out.
- *
- * return __builtin_clz(value) ^ 31; */
+	/* #elif defined(__GNUC__)
+	 *
+	 * GCC implements __builtin_clz(x) as "__builtin_clz(x) = bsr(x) ^ 31"
+	 *
+	 * Where "x ^ 31 = 31 - x", but gcc does not optimize "31 - __builtin_clz(x)" to bsr(x),
+	 * but generates 31 - (bsr(x) xor 31).
+	 *
+	 * So we write "__builtin_clz(x) ^ 31" instead of "31 - __builtin_clz(x)",
+	 * to allow the double xor to be optimized out.
+	 *
+	 * return __builtin_clz(value) ^ 31; */
 #else
 	/* Find the log base 2 of an N-bit integer in O(lg(N)) operations with multiply and lookup */
 	/* from http://graphics.stanford.edu/~seander/bithacks.html */
@@ -384,23 +389,23 @@ tommy_inline tommy_uint_t tommy_ilog2_u32(tommy_uint32_t value)
 
 #if TOMMY_SIZE_BIT == 64
 /**
-* Bit scan reverse or integer log2 for 64 bits.
-*/
+ * Bit scan reverse or integer log2 for 64 bits.
+ */
 tommy_inline tommy_uint_t tommy_ilog2_u64(tommy_uint64_t value)
 {
 #if defined(_MSC_VER)
-	    unsigned long count;
-	    _BitScanReverse64(&count, value);
-	    return count;
+	unsigned long count;
+	_BitScanReverse64(&count, value);
+	return count;
 #elif defined(__GNUC__)
-	    return __builtin_clzll(value) ^ 63;
+	return __builtin_clzll(value) ^ 63;
 #else
-	    uint32_t l = value & 0xFFFFFFFFU;
-	    uint32_t h = value >> 32;
-	    if (h)
-	        return tommy_ilog2_u32(h) + 32;
-	    else
-	        return tommy_ilog2_u32(l);
+	uint32_t l = value & 0xFFFFFFFFU;
+	uint32_t h = value >> 32;
+	if (h)
+		return tommy_ilog2_u32(h) + 32;
+	else
+		return tommy_ilog2_u32(l);
 #endif
 }
 #endif
@@ -435,23 +440,23 @@ tommy_inline tommy_uint_t tommy_ctz_u32(tommy_uint32_t value)
 
 #if TOMMY_SIZE_BIT == 64
 /**
-* Bit scan forward or trailing zero count for 64 bits.
-*/
+ * Bit scan forward or trailing zero count for 64 bits.
+ */
 tommy_inline tommy_uint_t tommy_ctz_u64(tommy_uint64_t value)
 {
 #if defined(_MSC_VER)
-	    unsigned long count;
-	    _BitScanForward64(&count, value);
-	    return count;
+	unsigned long count;
+	_BitScanForward64(&count, value);
+	return count;
 #elif defined(__GNUC__)
-	    return __builtin_ctzll(value);
+	return __builtin_ctzll(value);
 #else
-	    uint32_t l = value & 0xFFFFFFFFU;
-	    uint32_t h = value >> 32;
-	    if (l)
-	        return tommy_ctz_u32(l);
-	    else
-	        return tommy_ctz_u32(h) + 32;
+	uint32_t l = value & 0xFFFFFFFFU;
+	uint32_t h = value >> 32;
+	if (l)
+		return tommy_ctz_u32(l);
+	else
+		return tommy_ctz_u32(h) + 32;
 #endif
 }
 #endif
@@ -478,8 +483,8 @@ tommy_inline tommy_uint32_t tommy_roundup_pow2_u32(tommy_uint32_t value)
 }
 
 /**
-* Rounds up to the next power of 2 for 64 bits.
-*/
+ * Rounds up to the next power of 2 for 64 bits.
+ */
 tommy_inline tommy_uint64_t tommy_roundup_pow2_u64(tommy_uint64_t value)
 {
 	--value;
@@ -492,15 +497,15 @@ tommy_inline tommy_uint64_t tommy_roundup_pow2_u64(tommy_uint64_t value)
 	++value;
 
 	return value;
- 	}
+}
 
 /**
-* Check if the specified word has a byte at 0.
-* \return 0 or 1.
-*/
+ * Check if the specified word has a byte at 0.
+ * \return 0 or 1.
+ */
 tommy_inline int tommy_haszero_u32(tommy_uint32_t value)
 {
- 	return ((value - 0x01010101) & ~value & 0x80808080) != 0;
+	return ((value - 0x01010101) & ~value & 0x80808080) != 0;
 }
 
 /*
@@ -517,3 +522,4 @@ tommy_inline int tommy_haszero_u32(tommy_uint32_t value)
 #endif
 
 #endif
+

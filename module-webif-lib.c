@@ -297,9 +297,7 @@ int32_t check_auth(char *authstring, char *method, char *path, IN_ADDR_T addr, c
 		}
 	}
 		if(!authok)
-		{
-			cs_log("unauthorized access from %s - invalid credentials", cs_inet_ntoa(addr));
-		}
+		{	cs_log("unauthorized access from %s - invalid credentials", cs_inet_ntoa(addr)); }
 	return authok;
 }
 
@@ -822,7 +820,7 @@ struct CRYPTO_dynlock_value *SSL_dyn_create_function(const char *file, int32_t l
 	return l;
 }
 
-	void SSL_dyn_lock_function(int32_t mode, struct CRYPTO_dynlock_value *l, const char *file, int32_t line)
+void SSL_dyn_lock_function(int32_t mode, struct CRYPTO_dynlock_value *l, const char *file, int32_t line)
 {
 	if(mode & CRYPTO_LOCK)
 	{
@@ -923,7 +921,7 @@ SSL_CTX *SSL_Webif_Init(void)
 out_err:
 	ERR_print_errors_fp(stderr);
 #if OPENSSL_VERSION_NUMBER < 0x1010005fL
-	// fix build "OpenSSL 1.1.0e  16 Feb 2017"
+    // fix build "OpenSSL 1.1.0e  16 Feb 2017"
 	ERR_remove_state(0);
 #endif
 	SSL_CTX_free(ctx);

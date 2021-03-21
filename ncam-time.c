@@ -28,6 +28,7 @@ time_t cs_timegm(struct tm *tm)
 {
 	time_t result = 0;
 	int32_t i;
+
 	if(tm->tm_mon > 12 || tm->tm_mon < 0 || tm->tm_mday > 31 || tm->tm_min > 60 || tm->tm_sec > 60 || tm->tm_hour > 24)
 	{
 		return 0;
@@ -37,6 +38,7 @@ time_t cs_timegm(struct tm *tm)
 	{
 		result += is_leap(i + 1900) ? 366 : 365;
 	}
+
 	for(i = 0; i < tm->tm_mon; ++i)
 	{
 		if(i == 0 || i == 2 || i == 4 || i == 6 || i == 7 || i == 9 || i == 11) { result += 31; }
@@ -44,6 +46,7 @@ time_t cs_timegm(struct tm *tm)
 		else if(is_leap(tm->tm_year + 1900)) { result += 29; }
 		else { result += 28; }
 	}
+
 	result += tm->tm_mday - 1;
 	result *= 24;
 	result += tm->tm_hour;
@@ -82,6 +85,7 @@ struct tm *cs_gmtime_r(const time_t *timep, struct tm *r)
 	r->tm_hour = work / 60;
 	work = * timep / 86400;
 	r->tm_wday = (4 + work) % 7;
+
 	for(i = 1970; ; ++i)
 	{
 		time_t k = is_leap(i) ? 366 : 365;
@@ -94,9 +98,11 @@ struct tm *cs_gmtime_r(const time_t *timep, struct tm *r)
 			break;
 		}
 	}
+
 	r->tm_year = i - 1900;
 	r->tm_yday = work;
 	r->tm_mday = 1;
+
 	if(is_leap(i) && work > 58)
 	{
 		if(work == 59)
@@ -107,7 +113,7 @@ struct tm *cs_gmtime_r(const time_t *timep, struct tm *r)
 	}
 
 	for(i = 11; i && daysPerMonth[i] > work; --i) { ; }
-	r->tm_mon   = i;
+	r->tm_mon = i;
 	r->tm_mday += work - daysPerMonth[i];
 	return r;
 }
@@ -126,9 +132,9 @@ void cs_ftime(struct timeb *tp)
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
 #if defined(CLOCKFIX)
-	if (tv.tv_sec > lasttime.tv_sec || (tv.tv_sec == lasttime.tv_sec && tv.tv_usec >= lasttime.tv_usec))
-	{			// check for time issues!
-		lasttime = tv;  // register this valid time
+	if (tv.tv_sec > lasttime.tv_sec || (tv.tv_sec == lasttime.tv_sec && tv.tv_usec >= lasttime.tv_usec)) // check for time issues!
+	{
+		lasttime = tv; // register this valid time
 	}
 	else
 	{
@@ -137,7 +143,7 @@ void cs_ftime(struct timeb *tp)
 		//fprintf(stderr, "*** WARNING: BAD TIME AFFECTING WHOLE NCAM ECM HANDLING, SYSTEMTIME SET TO LAST KNOWN VALID TIME **** \n");
 	}
 #endif
-	tp->time    = tv.tv_sec;
+	tp->time = tv.tv_sec;
 	tp->millitm = tv.tv_usec / 1000;
 }
 
@@ -146,9 +152,9 @@ void cs_ftimeus(struct timeb *tp)
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
 #if defined(CLOCKFIX)
-	if (tv.tv_sec > lasttime.tv_sec || (tv.tv_sec == lasttime.tv_sec && tv.tv_usec >= lasttime.tv_usec))
-	{			// check for time issues!
-		lasttime = tv;  // register this valid time
+	if (tv.tv_sec > lasttime.tv_sec || (tv.tv_sec == lasttime.tv_sec && tv.tv_usec >= lasttime.tv_usec)) // check for time issues!
+	{
+		lasttime = tv; // register this valid time
 	}
 	else
 	{
@@ -157,13 +163,13 @@ void cs_ftimeus(struct timeb *tp)
 		//fprintf(stderr, "*** WARNING: BAD TIME AFFECTING WHOLE NCAM ECM HANDLING, SYSTEMTIME SET TO LAST KNOWN VALID TIME **** \n");
 	}
 #endif
-	tp->time    = tv.tv_sec;
+	tp->time = tv.tv_sec;
 	tp->millitm = tv.tv_usec;
 }
 
 void cs_sleepms(uint32_t msec)
 {
-	//does not interfere with signals like sleep and usleep do
+	// does not interfere with signals like sleep and usleep do
 	struct timespec req_ts;
 	req_ts.tv_sec = msec / 1000;
 	req_ts.tv_nsec = (msec % 1000) * 1000000L;
@@ -191,7 +197,7 @@ void cs_sleepms(uint32_t msec)
 
 void cs_sleepus(uint32_t usec)
 {
-	//does not interfere with signals like sleep and usleep do
+	// does not interfere with signals like sleep and usleep do
 	struct timespec req_ts;
 	req_ts.tv_sec = usec / 1000000;
 	req_ts.tv_nsec = (usec % 1000000) * 1000L;
@@ -270,7 +276,7 @@ int64_t add_ms_to_timeb_diff(struct timeb *tb, int32_t ms)
 #endif
 
 #if defined(__GLIBC__)
-# define __GLIBCVER (__GLIBC__ * 100 + __GLIBC_MINOR__)
+#define __GLIBCVER (__GLIBC__ * 100 + __GLIBC_MINOR__)
 #else
 #define __GLIBCVER 9999
 #endif
@@ -386,9 +392,9 @@ void cs_gettime(struct timespec *ts)
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
 #if defined(CLOCKFIX)
-	if (tv.tv_sec > lasttime.tv_sec || (tv.tv_sec == lasttime.tv_sec && tv.tv_usec >= lasttime.tv_usec))
-	{			// check for time issues!
-		lasttime = tv;  // register this valid time
+	if (tv.tv_sec > lasttime.tv_sec || (tv.tv_sec == lasttime.tv_sec && tv.tv_usec >= lasttime.tv_usec)) // check for time issues!
+	{
+		lasttime = tv; // register this valid time
 	}
 	else
 	{
@@ -404,7 +410,7 @@ void cs_gettime(struct timespec *ts)
 #if 0
 #if !defined(CLOCKFIX) || (!defined(CLOCK_MONOTONIC) && !defined(__MACH__))
 	struct timeval tv;
-        gettimeofday(&tv, NULL);
+	gettimeofday(&tv, NULL);
 	ts->tv_sec = tv.tv_sec;
 	ts->tv_nsec = tv.tv_usec * 1000;
 	clock_type = CLOCK_TYPE_REALTIME;

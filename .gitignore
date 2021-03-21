@@ -15,7 +15,6 @@ Distribution/.*
 
 # build directories
 /build/
-/build_dir/
 
 # Currently enabled config items
 webif/is_defined.txt

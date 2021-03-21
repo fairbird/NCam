@@ -97,6 +97,7 @@ static void azbox_openxcas_ex_callback(int32_t stream_id, uint32_t seq, int32_t 
 		{ cs_log_dbg(D_DVBAPI, "ex filter stopped"); }
 
 
+
 	uint8_t mask[12];
 	uint8_t comp[12];
 	memset(&mask, 0x00, sizeof(mask));
@@ -185,12 +186,15 @@ static void *azbox_main_thread(void *cli)
 				memset(&mask, 0x00, sizeof(mask));
 				memset(&comp, 0x00, sizeof(comp));
 
-				mask[0] = 0xfe;
-				comp[0] = 0x80;
-
-				if(caid_is_dvn(openxcas_caid)){
+				if(caid_is_dvn(openxcas_caid))
+				{
 					mask[0] = 0xff;
 					comp[0] = 0x50;
+				}
+				else
+				{
+					mask[0] = 0xfe;
+					comp[0] = 0x80;
 				}
 
 				if((ret = openxcas_add_filter(msg.stream_id, OPENXCAS_FILTER_ECM, 0, 0xffff, openxcas_ecm_pid, mask, comp, (void *)azbox_openxcas_ecm_callback)) < 0)
@@ -293,12 +297,15 @@ void azbox_send_dcw(struct s_client *client, ECM_REQUEST *er)
 			memset(&mask, 0x00, sizeof(mask));
 			memset(&comp, 0x00, sizeof(comp));
 
-			mask[0] = 0xfe;
-			comp[0] = 0x80;
-
-			if(caid_is_dvn(openxcas_caid)){
+			if(caid_is_dvn(openxcas_caid))
+			{
 				mask[0] = 0xff;
 				comp[0] = 0x50;
+			}
+			else
+			{
+				mask[0] = 0xfe;
+				comp[0] = 0x80;
 			}
 
 			if(openxcas_add_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM, 0, 0xffff, openxcas_ecm_pid, mask, comp, (void *)azbox_openxcas_ecm_callback) < 0)

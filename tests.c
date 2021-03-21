@@ -1,5 +1,5 @@
 /*
- * NCAm self tests
+ * NCam self tests
  * This file contains tests for different config parsers and generators
  * Build this file using `make tests`
  */

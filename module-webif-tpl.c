@@ -11,8 +11,6 @@
 #include "minilzo/minilzo.h"
 #endif
 
-extern uint8_t cs_http_use_utf8;
-
 /* struct template templates[] that comes from webif/pages.c is recreated as
 	struct tpl tpls[] because we need to add additional fields such as tpl_name_hash
 	and possibly preprocess templates[] struct before using it. */
@@ -418,6 +416,7 @@ char *tpl_getUnparsedTpl(const char *name, int8_t removeHeader, const char *subd
 											check_conf(TOUCH, ptr2);
 											check_conf(CS_ANTICASC, ptr2);
 											check_conf(CS_CACHEEX, ptr2);
+											check_conf(CS_CACHEEX_AIO, ptr2);
 											check_conf(HAVE_DVBAPI, ptr2);
 											check_conf(WITH_NEUTRINO, ptr2);
 											check_conf(READ_SDT_CHARSETS, ptr2);
@@ -451,9 +450,10 @@ char *tpl_getUnparsedTpl(const char *name, int8_t removeHeader, const char *subd
 											check_conf(READER_NAGRA_MERLIN, ptr2);
 											check_conf(READER_SECA, ptr2);
 											check_conf(READER_TONGFANG, ptr2);
+											check_conf(READER_STREAMGUARD, ptr2);
+											check_conf(READER_JET, ptr2);
 											check_conf(READER_VIACCESS, ptr2);
 											check_conf(READER_VIDEOGUARD, ptr2);
-											check_conf(WITH_GXAPI, ptr2);
 											check_conf(WITH_CARDREADER, ptr2);
 											check_conf(WITH_DEBUG, ptr2);
 											check_conf(WITH_LB, ptr2);
@@ -461,6 +461,7 @@ char *tpl_getUnparsedTpl(const char *name, int8_t removeHeader, const char *subd
 											check_conf(WITH_SSL, ptr2);
 											check_conf(WITH_STAPI, ptr2);
 											check_conf(WITH_STAPI5, ptr2);
+											check_conf(WITH_GXAPI, ptr2);
 											check_conf(WITH_CARDLIST, ptr2);
 											check_conf(WITH_EMU, ptr2);
 											check_conf(WITH_SOFTCAM, ptr2);
@@ -795,7 +796,7 @@ char *xml_encode(struct templatevars *vars, const char *chartoencode)
 			pos += 1;
 			break;
 		default:
-			if(tmp < 32 || (cs_http_use_utf8 != 1 && tmp > 127))
+			if(tmp < 32 || (cfg.http_utf8 != 1 && tmp > 127))
 			{
 				snprintf(buffer, 7, "&#%d;", tmp);
 				memcpy(encoded + pos, buffer, cs_strlen(buffer));

@@ -377,7 +377,6 @@ int32_t key_atob_l(char *asc, uint8_t *bin, int32_t l)
 	{
 		return -1;
 	}
-
 	for(i = rc = 0; i < l; i += 2)
 	{
 		if(!gethexval_within_range(asc[i]) || !gethexval_within_range(asc[i + 1]))
@@ -808,7 +807,7 @@ void char_to_hex(const uint8_t *p_array, uint32_t p_array_len, uint8_t *result)
 	}
 }
 
-static inline uint8_t to_uint8_t(char ch)
+static inline uint8_t to_uchar(char ch)
 {
 	return ch;
 }
@@ -818,13 +817,13 @@ void base64_encode(const char *in, size_t inlen, char *out, size_t outlen)
 	static const char b64str[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 	while(inlen && outlen)
 	{
-		*out++ = b64str[(to_uint8_t(in[0]) >> 2) & 0x3f];
+		*out++ = b64str[(to_uchar(in[0]) >> 2) & 0x3f];
 		if(!--outlen) { break; }
-		*out++ = b64str[((to_uint8_t(in[0]) << 4) + (--inlen ? to_uint8_t(in[1]) >> 4 : 0)) & 0x3f];
+		*out++ = b64str[((to_uchar(in[0]) << 4) + (--inlen ? to_uchar(in[1]) >> 4 : 0)) & 0x3f];
 		if(!--outlen) { break; }
-		*out++ = (inlen ? b64str[((to_uint8_t(in[1]) << 2) + (--inlen ? to_uint8_t(in[2]) >> 6 : 0)) & 0x3f] : '=');
+		*out++ = (inlen ? b64str[((to_uchar(in[1]) << 2) + (--inlen ? to_uchar(in[2]) >> 6 : 0)) & 0x3f] : '=');
 		if(!--outlen) { break; }
-		*out++ = inlen ? b64str[to_uint8_t(in[2]) & 0x3f] : '=';
+		*out++ = inlen ? b64str[to_uchar(in[2]) & 0x3f] : '=';
 		if(!--outlen) { break; }
 		if(inlen) { inlen--; }
 		if(inlen) { in += 3; }
