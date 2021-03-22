@@ -1,2 +1,2 @@
 language: cpp
-script: ./config.sh -E all && make
+script: ./config.sh -E all && make USE_LIBCURL=1
