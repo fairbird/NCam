@@ -32,14 +32,7 @@
 				</TD>
 			</TR>
 			<TR><TD><A>Bind wait:</A></TD><TD><input name="bindwait" class="withunit short" type="text" maxlength="5" value="##BINDWAIT##"> s</TD></TR>
-			<TR><TD><A>Resolver:</A></TD>
-				<TD>
-					<select name="resolvegethostbyname">
-						<option value="0" ##RESOLVER0##>0 - getadressinfo()</option>
-						<option value="1" ##RESOLVER1##>1 - gethostbyname()</option>
-					</select>
-				</TD>
-			</TR>
+##VIEW_GETHOSTBYNAME##
 ##TPLLOCALCARDS##
 			<TR><TD><A>Prefer local cards:</A></TD><TD><select name="preferlocalcards"><option value="0">0 - local cards like proxied</option><option value="1" ##PREFERCACHEEX##>1 - prefer cache-ex then local cards</option><option value="2" ##PREFERLOCALCARDS##>2 - prefer local cards above cache-ex</option></select></TD></TR>
 ##TPLUNLOCKPARENTAL##
@@ -108,10 +101,7 @@
 			<TR><TD><A>Failban time:</A></TD><TD><input name="failbantime" class="withunit short" type="text" maxlength="6" value="##FAILBANTIME##"> min blocking IP based</TD></TR>
 			<TR><TD><A>Failban count:</A></TD><TD><input name="failbancount" class="withunit short" type="text" maxlength="2" value="##FAILBANCOUNT##"> chances with wrong credentials</TD></TR>
 			<TR><TH COLSPAN="2">Timeouts / Times</TH></TR>
-			<TR><TD><A>Client timeout:</A></TD><TD><input name="clienttimeout" class="withunit short" type="text" maxlength="5" value="##CLIENTTIMEOUT##"> ms to give up and return timeout &nbsp;&nbsp;
-				<input name="maxecmtime" type="hidden" value="0"><input name="maxecmtime" type="checkbox" value="1" ##MAXECMTIME##><label>&nbsp;treat this as a max ecm time&nbsp;&nbsp;&nbsp;</label>
-				<input name="maxecmtimenotfound" type="hidden" value="0"><input name="maxecmtimenotfound" type="checkbox" value="1" ##MAXECMTIME_NOTFOUND##><label>&nbsp;mark not found instead of mark fail</label>
-			</TD></TR>
+			<TR><TD><A>Client timeout:</A></TD><TD><input name="clienttimeout" class="withunit short" type="text" maxlength="5" value="##CLIENTTIMEOUT##"> ms to give up and return timeout</TD></TR>
 			<TR><TD><A>Fallback timeout:</A></TD><TD><input name="fallbacktimeout" class="withunit short" type="text" maxlength="5" value="##FALLBACKTIMEOUT##"> ms to switch to fallback reader</TD></TR>
 			<TR><TD><A>Fallback timeout per caid:</A></TD><TD><input name="fallbacktimeout_percaid" type="text" maxlength="320" value="##FALLBACKTIMEOUT_PERCAID##"></TD></TR>
 			<TR><TD><A>Client max idle:</A></TD><TD><input name="clientmaxidle" class="withunit short" type="text" maxlength="5" value="##CLIENTMAXIDLE##"> s to disconnect idle clients</TD></TR>
@@ -121,7 +111,7 @@
 			<TR><TD><A>ECM Doublecheck:</A></TD><TD><input name="double_check" value="0" type="hidden"><input name="double_check" value="1" type="checkbox" ##DCHECKCSELECTED##><label></label></TD></TR>
 			<TR><TD><A>Doublecheck caids:</A></TD><TD><input name="double_check_caid" type="text" maxlength="160" value="##DOUBLECHECKCAID##"></TD></TR>
 ##TPLSUPPRESSCMD08##
-##TPLGETBLOCKEMMAUPROVID##
 ##TPLENABLELEDBIT##
+##TPLGETBLOCKEMMAUPROVID##
 ##TPLCONFIGCCCAMCFG##
 ##TPLCONFIGCCCAMCFGCCCAM##

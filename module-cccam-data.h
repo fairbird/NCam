@@ -10,10 +10,8 @@
 
 #define CAID_KEY 0x20
 
-#define CC_MAXMSGSIZE 0x400 //by Project::Keynation: Buffer size is limited on "O" CCCam to 1024 bytes
+#define CC_MAXMSGSIZE 0x400 // by Project::Keynation: Buffer size is limited on "O" CCCam to 1024 bytes
 #define CC_MAX_PROV 32
-#define CC_MAX_ECMS 32  // before reconnect
-
 #define SWAPC(X, Y) do { char p; p = *X; *X = *Y; *Y = p; } while(0)
 
 #if (defined(WIN32) || defined(__CYGWIN__)) && !defined(MSG_WAITALL)
@@ -60,6 +58,12 @@ typedef enum
 	MSG_SLEEPSEND = 0x80, // Sleepsend support
 	MSG_CACHE_PUSH = 0x81, // CacheEx Cache-Push In/Out
 	MSG_CACHE_FILTER = 0x82, // CacheEx Cache-Filter Request
+#ifdef CS_CACHEEX_AIO
+	MSG_CACHE_FEATURE_EXCHANGE = 0x83, // CacheEx feature-exchange
+	MSG_CACHE_FEATURE_EXCHANGE_REPLY = 0x84, // CacheEx feature-exchange-reply
+	MSG_CACHE_FEATURE_TRIGGER = 0x85, // CacheEx feature-trigger
+	MSG_CW_ECM_LGF = 0x86, // ncam lg-flagged CW
+#endif
 	MSG_CW_NOK1 = 0xfe, // Node no more available
 	MSG_CW_NOK2 = 0xff, // No decoding
 	MSG_NO_HEADER = 0xffff
@@ -246,6 +250,10 @@ struct cc_data
 	int32_t num_resharex;
 
 	char *nok_message;
+
+#ifdef CS_CACHEEX_AIO
+	uint8_t extended_lg_flagged_cws;
+#endif
 };
 
 #endif

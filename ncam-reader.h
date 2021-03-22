@@ -14,8 +14,8 @@ void cs_clear_entitlement(struct s_reader *rdr);
 
 int32_t hostResolve(struct s_reader *reader);
 int32_t network_tcp_connection_open(struct s_reader *);
-void    network_tcp_connection_close(struct s_reader *, char *);
-void    block_connect(struct s_reader *rdr);
+void network_tcp_connection_close(struct s_reader *, char *);
+void block_connect(struct s_reader *rdr);
 int32_t is_connect_blocked(struct s_reader *rdr);
 
 void reader_do_idle(struct s_reader *reader);

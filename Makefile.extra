@@ -14,6 +14,7 @@ linux-pcsc: i386-pc-linux-pcsc
 dm500: cross-powerpc-tuxbox-linux
 sh4: cross-sh4-linux
 sh4-stapi: cross-sh4-linux-stapi
+sh4-stapi5: cross-sh4-linux-stapi5
 i386-pc-linux-libusb: libusb
 i386-pc-linux-pcsc: pcsc
 i386-pc-linux-pcsc-libusb: pcsc-libusb
@@ -76,6 +77,16 @@ cross-sh4-linux-stapi:
 		CROSS=sh4-linux- \
 		CONF_DIR=/var/tuxbox/config \
 		USE_STAPI=1 \
+		$(MAKEFLAGS)
+
+cross-sh4-linux-stapi5:
+	$(MAKE) --no-print-directory \
+		CROSS=$(CROSS) \
+		CONF_DIR=/var/tuxbox/config \
+		USE_STAPI5=1 \
+		USE_LIBCRYPTO=1 \
+		USE_UTF8=1 \
+                STAPI5_LIB=stapi/liboscam_stapi5_OPENBOX.a \
 		$(MAKEFLAGS)
 
 cross-i386-pc-cygwin:
@@ -346,7 +357,7 @@ cross-aarch64-tuxbox-linux:
 	$(MAKE) --no-print-directory \
 		CROSS=$(CROSS) \
 		CONF_DIR=/var/tuxbox/config \
-		EEXTRA_FLAGS="-static-libgcc" \
+		EXTRA_FLAGS="-static-libgcc" \
 		$(MAKEFLAGS)
 
 cross-arm-raspbian-linux-libusb:
@@ -415,6 +426,17 @@ cross-x86_64-tuxbox-linux:
 		CROSS=$(CROSS) \
 		CONF_DIR=/var/tuxbox/config \
 		EXTRA_FLAGS="-m64 -I. -s" \
+		$(MAKEFLAGS)
+
+cross-x86_64-tuxbox-linux-ssl:
+	$(MAKE) --no-print-directory \
+		CROSS=$(CROSS) \
+		USE_SSL=1 \
+		SSL_LIB=/usr/lib/x86_64-linux-gnu/libssl.a \
+		LIBCRYPTO_LIB=/usr/lib/x86_64-linux-gnu/libcrypto.a \
+		CONF_DIR=/var/tuxbox/config \
+		EXTRA_FLAGS="-m64 -I. -s" \
+		EXTRA_TARGET=-static \
 		$(MAKEFLAGS)
 
 cross-x86-tuxbox-linux-libusb-pcsc:
@@ -679,3 +701,4 @@ uclinux:
 		LIB_DL= STRIP=true \
 		CROSS=m68k-uclinux- \
 		$(MAKEFLAGS)
+

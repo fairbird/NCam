@@ -82,7 +82,7 @@ void date_to_str(char *dateStr, uint8_t len, int8_t offset, uint8_t format)
 /*
  * Key DB
  *
- * The Emu reader gets keys from the Ncam binary and the "SoftCam.Key" file.
+ * The Emu reader gets keys from the NCam binary and the "SoftCam.Key" file.
  *
  * The keys are stored in structures of type "KeyDataContainer", one per CAS. Each
  * container points to a dynamically allocated array of type "KeyData", which holds
@@ -739,7 +739,8 @@ void emu_clear_keydata(void)
 	total += StreamKeys.keyCount;
 
 	if (total != 0)
-	{		cs_log("Freeing keys in memory: W:%d V:%d N:%d I:%d F:%d G:%d P:%d T:%d A:%d",
+	{
+		cs_log("Freeing keys in memory: W:%d V:%d N:%d I:%d F:%d G:%d P:%d T:%d A:%d",
 				CwKeys.keyCount, ViKeys.keyCount, NagraKeys.keyCount, IrdetoKeys.keyCount,
 				BissSWs.keyCount, Biss2Keys.keyCount, PowervuKeys.keyCount, TandbergKeys.keyCount,
 				StreamKeys.keyCount);

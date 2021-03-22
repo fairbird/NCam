@@ -15,14 +15,16 @@
 #define READ_SDT_CHARSETS 1
 //#define CLOCKFIX 1
 #define IRDETO_GUESSING 1
-//#define CS_ANTICASC 1
+#define CS_ANTICASC 1
 #define WITH_DEBUG 1
 #define WITH_LB 1
-//#define CS_CACHEEX 1
-//#define CW_CYCLE_CHECK 1
+#define CS_CACHEEX 1
+#define CS_CACHEEX_AIO 1
+#define CW_CYCLE_CHECK 1
 //#define LCDSUPPORT 1
 //#define LEDSUPPORT 1
 //#define IPV6SUPPORT 1
+#define MODULE_MONITOR 1
 //#define WITH_CARDLIST 1
 
 //#define MODULE_CAMD33 1
@@ -44,7 +46,7 @@
 #ifdef WITH_CARDREADER
 
 #define READER_NAGRA 1
-//#define READER_NAGRA_MERLIN 1
+#define READER_NAGRA_MERLIN 1
 #define READER_IRDETO 1
 #define READER_CONAX 1
 #define READER_CRYPTOWORKS 1

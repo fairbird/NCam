@@ -94,6 +94,7 @@ tommy_uint64_t tommy_hash_u64(tommy_uint64_t init_val, const void* void_key, tom
  * \return The hash value of 32 bits.
  */
 tommy_uint32_t tommy_strhash_u32(tommy_uint32_t init_val, const void* void_key);
+
 /**
  * Integer reversible hash function for 32 bits.
  * Implementation of the Robert Jenkins "4-byte Integer Hashing",

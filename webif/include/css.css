@@ -178,7 +178,7 @@ form table a {
 }
 #mainmenu li {
 	display:inline;
-	margin:0 2px;
+	margin:2px auto 0;
 	padding:4px 3px 3px;
 	font-size:18px;
 	font-weight:700
@@ -202,7 +202,7 @@ TD.menu_selected {color:black; background-color:#E6FEBF; font-family: Arial; fon
 #nav li {
 	display:inline-block;
 	position:relative;
-	margin:2px auto 0;
+	margin:0 2px;
 	padding:0 3px;
 	font-size:14px
 }
@@ -349,7 +349,7 @@ table.subservicetable {
 
 /* **************** 8. TABLE TR */
 /* for entitlement of readers */
-tr.e_valid td, tr.e_expired td, tr.e_forcereopenuseronline td, tr.e_forcereopenuserconnected td, tr.e_header td {
+tr.e_valid td, tr.e_expired td, tr.e_header td {
 	font-family:"Courier New", monospace
 }
 /* hiding formatline for width of firstrow in config, readers and users / width in info */
@@ -362,15 +362,11 @@ tr.infocolswidth, tr.infocolswidth td, tr.infocolswidth th {
 /* rowcolors for cacheex rows in cachex depend on status */
 tr.e_valid td {background-color:#E6FEBF}
 tr.e_expired td {background-color:#FFF3E7}
-tr.e_forcereopenuseronline td {background-color:#C7D6FF}
-tr.e_forcereopenuserconnected td {background-color:#D2EDFF}
 /* rowcolors for users rows in unserconfig.html depend on status */
 tr.online td.usercol6 {background-color:#DDD}
 tr.online td {background-color:#BFA}
 tr.offline td {}
 tr.expired td {background-color:#FBA}
-tr.forcereopenuseronline td {background-color:#C7D6FF}
-tr.forcereopenuserconnected td {background-color:#D2EDFF}
 tr.connected td {background-color:#FFA}
 /* color of button for readers and user row in readers.html and userconfig.html*/
 tr.disabled td {}
@@ -543,7 +539,7 @@ div.filterform {
 div.warning {
 	margin:42px 0 14px
 }
-/* logobit.html - Logo for Ncam */
+/* logobit.html - Logo for NCam */
 div.logo {
 	position:absolute;
 	top:6px;
@@ -808,7 +804,7 @@ img.usericon, img.readericon {
 div.logo img {
 	max-height:44px
 }
-div.logo svg.NCAm_logo {
+div.logo svg.NCam_logo {
 	fill:#111111
 } */
 
@@ -844,9 +840,6 @@ span.e_expired {background-color:#FFF3E7}
 .span, span {
 	text-align:center
 }
-
-span.e_forcereopenuseronline {background-color:#C7D6FF}
-span.e_forcereopenuserconnected {background-color:#D2EDFF}
 
 /* **************** 15. GRAPH */
 svg.graph {background-color:#F0F0F0;font-family:Arial;font-size:9px}
@@ -895,8 +888,6 @@ path.graph_curve {stroke-opacity:0.8;stroke-width:0.7px;fill:none}
 .users tr.online .td-sorting {background-color: #A6EA95}
 .users tr.online td.usercol6.td-sorting {background-color:#C8C8C8}
 .users tr.expired .td-sorting {background-color: #EAA69F}
-.users tr.forcereopenuseronline .td-sorting {background-color: #C7D6FF}
-.users tr.forcereopenuserconnected .td-sorting {background-color: #D2EDFF}
 
 /* **************** 17. POLLING */
 /*  for UL in logpoll.html */
@@ -1142,49 +1133,3 @@ only screen and (min-device-width : 320px) and (max-device-width : 568px) and (o
 	}
 }
 
-/* ============= GEOAPI Data */
-.GeoResults {
-	position: relative;
-	color: #F00;
-	cursor: pointer;
-	float: right;
-	border-left: 1px solid #000;
-	padding-left: 5px
-}
-.GeoResultsSPAN,
-.GeoResultsTABLE {
-	display: none;
-	left: 20px;
-	z-index: 1030;
-	border-spacing: 0px;
-	width: 200px
-}
-.GeoResultsTABLE td {
-	border-bottom: 1px dotted gray;
-	padding: 2px;
-}
-.GeoResultsTABLE tr:last-child td {
-	border: initial;
-}
-.GeoResultsTABLE tr td:first-child {
-	width: 55px;
-}
-.GeoResultsTABLE tr td:last-child {
-	width: 125px;
-}
-a:hover .GeoResultsTABLE{
-	display: block;
-	position: absolute;
-	top: 1em;
-	right: 2em;
-	padding: 4px;
-	text-align: left;
-	background-color: #FFC;
-	border: 1px solid #000;
-	color: #000
-}
-
-@viewport{
-	zoom: 1.0;
-	width: device-width;
-}

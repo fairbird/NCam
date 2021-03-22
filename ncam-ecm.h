@@ -33,17 +33,24 @@ void request_cw_from_readers(ECM_REQUEST *er, uint8_t stop_stage);
 void checkCW(ECM_REQUEST *er);
 uint8_t checkCWpart(uint8_t *cw, int8_t part);
 
+#ifdef CS_CACHEEX_AIO
+void init_ecm_cache(void);
+void free_ecm_cache(void);
+
+void ecm_cache_cleanup(bool force);
+#endif
+
 #define debug_ecm(mask, args...) \
-    do { \
-        if (config_enabled(WITH_DEBUG) && ((mask) & cs_dblevel)) { \
-            char buf[ECM_FMT_LEN]; \
-            format_ecm(er, buf, ECM_FMT_LEN); \
-            cs_log_dbg(mask, ##args); \
-        } \
-    } while(0)
+	do { \
+		if (config_enabled(WITH_DEBUG) && ((mask) & cs_dblevel)) { \
+			char buf[ECM_FMT_LEN]; \
+			format_ecm(er, buf, ECM_FMT_LEN); \
+			cs_log_dbg(mask, ##args); \
+		} \
+	} while(0)
 
 int32_t ecmfmt(char *result, size_t size, uint16_t caid, uint16_t onid, uint32_t prid, uint16_t chid, uint16_t pid,
-		 uint16_t srvid, uint16_t l, char *ecmd5hex, char *csphash, char *cw, uint16_t origin_peer, uint8_t distance, char *payload, char *tier);
+			uint16_t srvid, uint16_t l, char *ecmd5hex, char *csphash, char *cw, uint16_t origin_peer, uint8_t distance, char *payload, char *tier);
 
 int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size);
 

@@ -1,12 +1,12 @@
-This directory holds all pages that are used in NCAm WebIf along with
-program that builds pages.{c,h} files used by the NCAm build system.
+This directory holds all pages that are used in NCam WebIf along with
+program that builds pages.{c,h} files used by the NCam build system.
 
 The build system is intelligent enough to rebuild pages.{c,h} files when
 any file mentioned in pages_index.txt is changed or pages_index.txt itself
 is changed.
 
 If you want change WebIf pages just edit files in the directory that
-interests you then build NCAm as you normally do.
+interests you then build NCam as you normally do.
 
 Any file must be described in pages_index.txt
 

@@ -1,5 +1,5 @@
-This directory holds files that are external to NCAm.
+This directory holds files that are external to NCam.
 
 These files are API definitions or libs that are better to be shipped
-with NCAM than to depend on founding them on the system that NCAm is
+with NCam than to depend on founding them on the system that NCam is
 being compiled on.

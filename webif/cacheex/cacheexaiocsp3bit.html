@@ -1,0 +1,11 @@
+			<TR><TD><A>Drop diff CWs:</A></TD><TD><input name="cacheex_dropdiffs" value="0" type="hidden"><input name="cacheex_dropdiffs" value="1" type="checkbox" ##CACHEEXDROPDIFFS##></TD></TR>
+			<TR><TD><A>No CW push after (from local/proxy-reader):</A></TD><TD><input name="cacheex_nopushafter" type="text" maxlength="320" value="##CACHEEXNOPUSHAFTER##"> ms<br />Format: caid:time[,n]</TD></TR>
+			<TR><TD><A>Allow client to overwrite 'Forward lg-only settings':</A></TD><TD><input name="cacheex_lg_only_remote_settings" value="0" type="hidden"><input name="cacheex_lg_only_remote_settings" value="1" type="checkbox" ##LGONLYREMOTESETTINGSCHECKED##>(if disabled, only more restrictive settings are added)</TD></TR>
+			<TR><TD><A>Forward localgenerated flagged CWs only:</A></TD><TD><input name="cacheex_localgenerated_only" value="0" type="hidden"><input name="cacheex_localgenerated_only" value="1" type="checkbox" ##LOCALGENERATEDONLYCHECKED##></TD></TR>
+			<TR><TD><A>Forward localgenerated flagged CWs only(caid:provid[,N];):</A></TD><TD><textarea name="cacheex_lg_only_tab" rows="3" class="bt">##LGONLYTAB##</textarea></TD></TR>
+			<TR><TD><A>Drop incoming not localgenerated flagged CWs:</A></TD><TD><input name="cacheex_localgenerated_only_in" value="0" type="hidden"><input name="cacheex_localgenerated_only_in" value="1" type="checkbox" ##LOCALGENERATEDONLYINCHECKED##></TD></TR>
+			<TR><TD><A>Drop incoming not localgenerated flagged CWs(caid:provid[,N];):</A></TD><TD><textarea name="cacheex_lg_only_in_tab" rows="3" class="bt">##LGONLYINTAB##</textarea></TD></TR>
+			<TR><TD><A>Drop incoming settings only for CX-AIO peers:</A></TD><TD><input name="cacheex_lg_only_in_aio_only" value="0" type="hidden"><input name="cacheex_lg_only_in_aio_only" value="1" type="checkbox" ##LGONLYINAIOONLYCHECKED##></TD></TR>
+			<TR><TD><A>Cache-EX ECM filter:</A></TD><TD><input name="cacheex_ecm_filter" type="text" maxlength="1385" value="##CACHEEXECMFILTER##"></TD></TR>
+			<TR><TD><A>Cache-EX ECM filter(aio only):</A></TD><TD><input name="cacheex_ecm_filter_aio" type="text" maxlength="1385" value="##CACHEEXECMFILTERAIO##"></TD></TR>
+			<TR><TD><A>Push localgenerated flagged CWs always to these groups:</A></TD><TD><input name="cacheex_push_lg_groups" class="longer" type="text" maxlength="155" value="##CACHEEXPUSHLGGRPS##"> Valid values 1-64</TD></TR>

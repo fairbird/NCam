@@ -255,20 +255,6 @@ value (clienttimeout in seconds &lt; 100, else milli-seconds) for client process
 
 <P>
 
-<B>maxecmtime</B> = <B>0</B>|<B>1</B>
-<DL COMPACT><DT><DD>
-1 = use client timeout as a max ecm time, default:0
-</DL>
-
-<P>
-
-<B>maxecmtimenotfound</B> = <B>0</B>|<B>1</B>
-<DL COMPACT><DT><DD>
-1 = mark not_found imediately ecm with higher ecm time than maxecmtime, default:0
-</DL>
-
-<P>
-
 <B>clientmaxidle</B> = <B>seconds</B>
 <DL COMPACT><DT><DD>
 value for client process being idle before disconnect, 0 = idle disconnect disabled, default:120
@@ -480,20 +466,6 @@ maximum ECM count before resetting load balancing values, default:500
 <B>lb_reopen_seconds</B> = <B>seconds</B>
 <DL COMPACT><DT><DD>
 time between retrying failed load balanced readers/CAIDs/providers/services, default:900
-</DL>
-
-<P>
-
-<B>lb_reopen_seconds_never</B> = <B>0</B>|<B>fB1</B>
-<DL COMPACT><DT><DD>
-1 = never retry failed load balanced readers/CAIDs/providers/services, default:0
-</DL>
-
-<P>
-
-<B>lb_reopen_seconds_never_group</B> = <B>1</B>|<B>1,2</B>|<B>2,3,4</B>|<B>4,5</B> ...etc
-<DL COMPACT><DT><DD>
-never retry failed load balanced readers/CAIDs/providers/services for specific reader group, default:none
 </DL>
 
 <P>

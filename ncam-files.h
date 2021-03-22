@@ -13,7 +13,7 @@ char *get_gbox_filename(char *dest, size_t destlen, const char *filename);
 
 #ifdef WITH_LIBCURL
 #include <curl/curl.h>
-int curl(CURL *curl_handle, char *s);
+int curl(CURL *curl_handle, char *url);
 #endif
 
 #endif

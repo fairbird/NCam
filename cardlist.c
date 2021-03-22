@@ -535,7 +535,7 @@ void findatr(struct s_reader *reader)
 	case 0x09:
 #ifdef READER_VIDEOGUARD
 	{
-	        int i;
+		int i;
 		char buf[66];
 		for(i = 10; i < 17; i++)
 		{

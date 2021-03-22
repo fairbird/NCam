@@ -15,15 +15,15 @@
 
 extern uint16_t len4caid[256];
 
-#define cs_srid             "ncam.srvid"
-#define cs_ratelimit        "ncam.ratelimit"
-#define cs_trid             "ncam.tiers"
-#define cs_l4ca             "ncam.guess"
-#define cs_sidt             "ncam.services"
-#define cs_whitelist        "ncam.whitelist"
-#define cs_provid           "ncam.provid"
-#define cs_fakecws          "ncam.fakecws"
-#define cs_twin             "ncam.twin"
+#define cs_srid      "ncam.srvid"
+#define cs_ratelimit "ncam.ratelimit"
+#define cs_trid      "ncam.tiers"
+#define cs_l4ca      "ncam.guess"
+#define cs_sidt      "ncam.services"
+#define cs_whitelist "ncam.whitelist"
+#define cs_provid    "ncam.provid"
+#define cs_fakecws   "ncam.fakecws"
+#define cs_twin      "ncam.twin"
 
 uint32_t cfg_sidtab_generation = 1;
 
@@ -54,6 +54,14 @@ int32_t write_services(void)
 			ptr++;
 		}
 		fprintf(f, "[%s]\n", sidtab->label);
+#ifdef CS_CACHEEX_AIO
+		fprintf_conf(f, "disablecrccws_only_for_exception", "%u", sidtab->disablecrccws_only_for_exception); // it should not have \n at the end
+		fputc((int)'\n', f);
+		fprintf_conf(f, "no_wait_time", "%u", sidtab->no_wait_time); // it should not have \n at the end
+		fputc((int)'\n', f);
+		fprintf_conf(f, "lg_only_exception", "%u", sidtab->lg_only_exception); // it should not have \n at the end
+		fputc((int)'\n', f);
+#endif
 		fprintf_conf(f, "caid", "%s", ""); // it should not have \n at the end
 		for(i = 0; i < sidtab->num_caid; i++)
 		{
@@ -97,9 +105,34 @@ static void chk_entry4sidtab(char *value, struct s_sidtab *sidtab, int32_t what)
 	uint16_t *slist = (uint16_t *) 0;
 	uint32_t *llist = (uint32_t *) 0;
 	uint32_t caid;
+#ifdef CS_CACHEEX_AIO
+	uint8_t disablecrccws_only_for_exception = 0;
+	uint8_t no_wait_time = 0;
+	uint8_t lg_only_exception = 0;
+#endif
 	char buf[cs_strlen(value) + 1];
 	cs_strncpy(buf, value, sizeof(buf));
+
+#ifdef CS_CACHEEX_AIO
+	if(what == 5) // lg_only_exception
+	{
+		sidtab->lg_only_exception = a2i(buf, sizeof(lg_only_exception));
+		return;
+	}
+	else if(what == 4) // no_wait_time
+	{
+		sidtab->no_wait_time = a2i(buf, sizeof(no_wait_time));
+		return;
+	}
+	else if(what == 3) // disablecrccws_only_for_exception
+	{
+		sidtab->disablecrccws_only_for_exception = a2i(buf, sizeof(disablecrccws_only_for_exception));
+		return;
+	}
+#endif
+
 	b = (what == 1) ? sizeof(uint32_t) : sizeof(uint16_t);
+
 	for(i = 0, ptr = strtok_r(value, ",", &saveptr1); ptr; ptr = strtok_r(NULL, ",", &saveptr1))
 	{
 		caid = a2i(ptr, b);
@@ -166,6 +199,23 @@ void chk_sidtab(char *token, char *value, struct s_sidtab *sidtab)
 		chk_entry4sidtab(value, sidtab, 2);
 		return;
 	}
+#ifdef CS_CACHEEX_AIO
+	if(!strcmp(token, "disablecrccws_only_for_exception"))
+	{
+		chk_entry4sidtab(value, sidtab, 3);
+		return;
+	}
+	if(!strcmp(token, "no_wait_time"))
+	{
+		chk_entry4sidtab(value, sidtab, 4);
+		return;
+	}
+	if(!strcmp(token, "lg_only_exception"))
+	{
+		chk_entry4sidtab(value, sidtab, 5);
+		return;
+	}
+#endif
 	if(token[0] != '#')
 		{ fprintf(stderr, "Warning: keyword '%s' in sidtab section not recognized\n", token); }
 }
@@ -193,6 +243,11 @@ static void show_sidtab(struct s_sidtab *sidtab)
 		char buf[1024];
 		char *saveptr = buf;
 		cs_log("label=%s", sidtab->label);
+#ifdef CS_CACHEEX_AIO
+		cs_log("disablecrccws_only_for_exception=%u", sidtab->disablecrccws_only_for_exception);
+		cs_log("no_wait_time=%u", sidtab->no_wait_time);
+		cs_log("lg_only_exception=%u", sidtab->lg_only_exception);
+#endif
 		snprintf(buf, sizeof(buf), "caid(%d)=", sidtab->num_caid);
 		for(i = 0; i < sidtab->num_caid; i++)
 			{ snprintf(buf + cs_strlen(buf), 1024 - (buf - saveptr), "%04X ", sidtab->caid[i]); }
@@ -293,14 +348,14 @@ int32_t init_provid(void)
 	nr = 0;
 	while(fgets(token, MAXLINESIZE, fp))
 	{
-		int32_t i, l;
+		int32_t i;
 		struct s_provid *new_provid = NULL;
 		char *tmp, *ptr1;
 
 		tmp = trim(token);
 
 		if(tmp[0] == '#') { continue; }
-		if((l = cs_strlen(tmp)) < 11) { continue; }
+		if(cs_strlen(tmp) < 11) { continue; }
 		if(!(payload = strchr(token, '|'))) { continue; }
 
 		*payload++ = '\0';
@@ -392,9 +447,9 @@ int32_t init_provid(void)
 
 	cs_writelock(__func__, &config_lock);
 
-	//this allows reloading of provids, so cleanup of old data is needed:
-	last_provid = cfg.provid; //old data
-	cfg.provid = new_cfg_provid; //assign after loading, so everything is in memory
+	// this allows reloading of provids, so cleanup of old data is needed:
+	last_provid = cfg.provid; // old data
+	cfg.provid = new_cfg_provid; // assign after loading, so everything is in memory
 
 	cs_writeunlock(__func__, &config_lock);
 
@@ -407,7 +462,7 @@ int32_t init_provid(void)
 	if(last_provid)
 	{
 		ptr = last_provid;
-		while(ptr)    //cleanup old data:
+		while(ptr) // cleanup old data:
 		{
 			add_garbage(ptr->provid);
 			nptr = ptr->next;
@@ -462,14 +517,14 @@ int32_t init_srvid(void)
 
 	while(fgets(token, MAXLINESIZE, fp))
 	{
-		int32_t l, len = 0, len2, srvidtmp;
+		int32_t len = 0, len2, srvidtmp;
 		uint32_t k;
 		uint32_t pos;
 		char *srvidasc, *prov;
 		tmp = trim(token);
 
 		if(tmp[0] == '#') { continue; }
-		if((l = cs_strlen(tmp)) < 6) { continue; }
+		if(cs_strlen(tmp) < 6) { continue; }
 		if(!(srvidasc = strchr(token, ':'))) { continue; }
 		if(!(payload = strchr(token, '|'))) { continue; }
 		*payload++ = '\0';
@@ -498,19 +553,19 @@ int32_t init_srvid(void)
 		}
 
 		// allow empty strings as "||"
-		if(payload[0] == '|' && (cs_strlen(payload)+2 < max_payload_length))
+		if(payload[0] == '|' && (cs_strlen(payload) + 2 < max_payload_length))
 		{
 			memmove(payload+1, payload, cs_strlen(payload)+1);
 			payload[0] = ' ';
 		}
 
-		for(k=1; ((k < max_payload_length) && (payload[k] != '\0')); k++)
+		for(k = 1; ((k < max_payload_length) && (payload[k] != '\0')); k++)
 		{
-			if(payload[k-1] == '|' && payload[k] == '|')
+			if(payload[k - 1] == '|' && payload[k] == '|')
 			{
-				if(cs_strlen(payload+k)+2 < max_payload_length-k)
+				if(cs_strlen(payload + k) + 2 < max_payload_length-k)
 				{
-					memmove(payload+k+1, payload+k, cs_strlen(payload+k)+1);
+					memmove(payload + k + 1, payload + k, cs_strlen(payload + k) + 1);
 					payload[k] = ' ';
 				}
 				else
@@ -633,15 +688,15 @@ int32_t init_srvid(void)
 					if(!cs_malloc(&srvid->caid[i].provid, sizeof(uint32_t) * srvid->caid[i].nprovid))
 					{
 						for(j = 0; j < i; j++)
-							{ NULLFREE(srvid->caid[j].provid); } 
+							{ NULLFREE(srvid->caid[j].provid); }
 						NULLFREE(srvid->caid);
 						NULLFREE(tmpptr);
 						NULLFREE(srvid);
 						return 0;
 					}
 
-					ptr2 = prov+1;
-					for(j = 0;  j < srvid->caid[i].nprovid; j++)
+					ptr2 = prov + 1;
+					for(j = 0; j < srvid->caid[i].nprovid; j++)
 					{
 						srvid->caid[i].provid[j] = dyn_word_atob(ptr2) & 0xFFFFFF;
 						ptr2 = ptr2 + cs_strlen(ptr2) + 1;
@@ -649,7 +704,7 @@ int32_t init_srvid(void)
 				}
 				else
 				{
-					ptr2 = prov+2;
+					ptr2 = prov + 2;
 				}
 
 				prov[0] = '\0';
@@ -658,7 +713,7 @@ int32_t init_srvid(void)
 			srvid->caid[i].caid = dyn_word_atob(ptr1) & 0xFFFF;
 			if(prov)
 				{ ptr1 = ptr2; }
-			else 
+			else
 				{ ptr1 = ptr1 + cs_strlen(ptr1) + 1; }
 		}
 
@@ -691,7 +746,7 @@ int32_t init_srvid(void)
 	}
 
 	cs_writelock(__func__, &config_lock);
-	//this allows reloading of srvids, so cleanup of old data is needed:
+	// this allows reloading of srvids, so cleanup of old data is needed:
 	memcpy(last_srvid, cfg.srvid, sizeof(last_srvid));  //old data
 	memcpy(cfg.srvid, new_cfg_srvid, sizeof(last_srvid));   //assign after loading, so everything is in memory
 
@@ -706,7 +761,7 @@ int32_t init_srvid(void)
 	for(i = 0; i < 16; i++)
 	{
 		ptr = last_srvid[i];
-		while(ptr)    //cleanup old data:
+		while(ptr) // cleanup old data:
 		{
 			for(j = 0; j < ptr->ncaid; j++)
 				{ add_garbage(ptr->caid[j].provid); }
@@ -725,7 +780,7 @@ int32_t init_fakecws(void)
 {
 	int32_t nr = 0, i, j, idx;
 	uint32_t alloccount[0x100], count[0x100], tmp, max_compares = 0, average_compares = 0;
-	char *token, cw_string[64]; 
+	char *token, cw_string[64];
 	uint8_t cw[16], wrong_checksum, c, have_fakecw = 0;
 	FILE *fp;
 
@@ -733,7 +788,7 @@ int32_t init_fakecws(void)
 	memset(count, 0, sizeof(alloccount));
 
 	cs_writelock(__func__, &config_lock);
-	for(i=0; i<0x100; i++)
+	for(i = 0; i < 0x100; i++)
 	{
 		cfg.fakecws[i].count = 0;
 		NULLFREE(cfg.fakecws[i].data);
@@ -756,7 +811,7 @@ int32_t init_fakecws(void)
 				if(cs_atob(cw, cw_string, 16) == 16)
 				{
 					wrong_checksum = 0;
-					
+
 					for(i = 0; i < 16; i += 4)
 					{
 						c = ((cw[i] + cw[i + 1] + cw[i + 2]) & 0xff);
@@ -772,7 +827,7 @@ int32_t init_fakecws(void)
 					}
 					else
 					{
-						idx = ((cw[0]&0xF)<<4) | (cw[8]&0xF);
+						idx = ((cw[0] & 0xF) << 4) | (cw[8] & 0xF);
 						alloccount[idx]++;
 						have_fakecw = 1;
 					}
@@ -796,7 +851,7 @@ int32_t init_fakecws(void)
 		return 0;
 	}
 
-	for(i=0; i<0x100; i++)
+	for(i = 0; i < 0x100; i++)
 	{
 		if(alloccount[i] && !cs_malloc(&cfg.fakecws[i].data, sizeof(struct s_cw)*alloccount[i]))
 		{
@@ -815,7 +870,7 @@ int32_t init_fakecws(void)
 				if(cs_atob(cw, cw_string, 16) == 16)
 				{
 					wrong_checksum = 0;
-					
+
 					for(i = 0; i < 16; i += 4)
 					{
 						c = ((cw[i] + cw[i + 1] + cw[i + 2]) & 0xff);
@@ -827,7 +882,7 @@ int32_t init_fakecws(void)
 
 					if(!wrong_checksum)
 					{
-						idx = ((cw[0]&0xF)<<4) | (cw[8]&0xF);
+						idx = ((cw[0] & 0xF) << 4) | (cw[8] & 0xF);
 
 						if(count[idx] < alloccount[idx])
 						{
@@ -847,31 +902,38 @@ int32_t init_fakecws(void)
 	if(nr > 0)
 		{ cs_log("%d fakecws's loaded", nr); }
 
+
 	cs_writelock(__func__, &config_lock);
-	for(i=0; i<0x100; i++)
+	for(i = 0; i < 0x100; i++)
 	{
 		cfg.fakecws[i].count = count[i];
 	}
 	cs_writeunlock(__func__, &config_lock);
 
-	for(i=0; i<0x100; i++)
+
+	for(i = 0; i < 0x100; i++)
 	{
 		if(count[i] > max_compares)
 			{ max_compares = count[i]; }
 	}
 
-	for(i=0; i<(0x100-1); i++) {
-		for(j=i+1; j<0x100; j++) {
-			if(count[j] < count[i]) {
+	for(i = 0; i < (0x100 - 1); i++)
+	{
+		for(j = i + 1; j < 0x100; j++)
+		{
+			if(count[j] < count[i])
+			{
 				tmp = count[i];
 				count[i] = count[j];
 				count[j] = tmp;
 			}
 		}
 	}
-	average_compares = ((count[0x100/2] + count[0x100/2 - 1]) / 2);
+	average_compares = ((count[0x100 / 2] + count[0x100 / 2 - 1]) / 2);
+
 
 	cs_log("max %d fakecw compares required, on average: %d compares", max_compares, average_compares);
+
 	return 0;
 }
 
@@ -919,8 +981,8 @@ static struct s_rlimit *ratelimit_read_int(void)
 		}
 
 		count++;
-		if (ratelimittime < 60) ratelimittime *=1000;
-		if (srvidholdtime < 60) srvidholdtime *=1000;
+		if (ratelimittime < 60) ratelimittime *= 1000;
+		if (srvidholdtime < 60) srvidholdtime *= 1000;
 		entry->rl.caid = caid;
 		entry->rl.provid = provid;
 		entry->rl.srvid = srvid;
@@ -930,7 +992,7 @@ static struct s_rlimit *ratelimit_read_int(void)
 		entry->rl.srvidholdtime = srvidholdtime;
 
 		cs_log_dbg(D_TRACE, "ratelimit: %04X@%06X:%04X:%04X:%d:%d:%d", entry->rl.caid, entry->rl.provid, entry->rl.srvid, entry->rl.chid,
-					  entry->rl.ratelimitecm, entry->rl.ratelimittime, entry->rl.srvidholdtime);
+					entry->rl.ratelimitecm, entry->rl.ratelimittime, entry->rl.srvidholdtime);
 
 		if(!new_rlimit)
 		{
@@ -1005,13 +1067,12 @@ int32_t init_tierid(void)
 	while(fgets(token, MAXLINESIZE, fp))
 	{
 
-		int32_t l;
 		void *ptr;
 		char *tmp, *tieridasc;
 		tmp = trim(token);
 
 		if(tmp[0] == '#') { continue; }
-		if((l = cs_strlen(tmp)) < 6) { continue; }
+		if(cs_strlen(tmp) < 6) { continue; }
 		if(!(payload = strchr(token, '|'))) { continue; }
 		if(!(tieridasc = strchr(token, ':'))) { continue; }
 		*payload++ = '\0';
@@ -1043,7 +1104,7 @@ int32_t init_tierid(void)
 		{
 			tierid->caid[i] = dyn_word_atob(ptr1);
 			tierid->ncaid = i + 1;
-			// cs_log("ld caid: %04X tierid: %04X name: %s",tierid->caid[i],tierid->tierid,tierid->name);
+			//cs_log("ld caid: %04X tierid: %04X name: %s",tierid->caid[i],tierid->tierid,tierid->name);
 		}
 		nr++;
 	}
@@ -1052,7 +1113,7 @@ int32_t init_tierid(void)
 	if(nr > 0)
 		{ cs_log("%d tier-id's loaded", nr); }
 	cs_writelock(__func__, &config_lock);
-	//reload function:
+	// reload function:
 	tierid = cfg.tierid;
 	cfg.tierid = new_cfg_tierid;
 	struct s_tierid *ptr;
@@ -1085,7 +1146,7 @@ int32_t chk_global_whitelist(ECM_REQUEST *er, uint32_t *line)
 
 	struct s_global_whitelist *entry;
 
-	//check mapping:
+	// check mapping:
 	if(cfg.global_whitelist_use_m)
 	{
 		entry = cfg.global_whitelist;
@@ -1105,7 +1166,7 @@ int32_t chk_global_whitelist(ECM_REQUEST *er, uint32_t *line)
 		}
 	}
 
-	if(cfg.global_whitelist_use_l)    //Check caid/prov/srvid etc matching, except ecm-len:
+	if(cfg.global_whitelist_use_l) // Check caid/prov/srvid etc matching, except ecm-len:
 	{
 		entry = cfg.global_whitelist;
 		int8_t caidprov_matches = 0;
@@ -1119,10 +1180,10 @@ int32_t chk_global_whitelist(ECM_REQUEST *er, uint32_t *line)
 					return 1;
 				}
 				if((!entry->caid || entry->caid == er->caid)
-						&& (!entry->provid || entry->provid == er->prid)
-						&& (!entry->srvid || entry->srvid == er->srvid)
-						&& (!entry->chid || entry->chid == er->chid)
-						&& (!entry->pid || entry->pid == er->pid))
+					&& (!entry->provid || entry->provid == er->prid)
+					&& (!entry->srvid || entry->srvid == er->srvid)
+					&& (!entry->chid || entry->chid == er->chid)
+					&& (!entry->pid || entry->pid == er->pid))
 				{
 					caidprov_matches = 1;
 					*line = entry->line;
@@ -1130,7 +1191,7 @@ int32_t chk_global_whitelist(ECM_REQUEST *er, uint32_t *line)
 			}
 			entry = entry->next;
 		}
-		if(caidprov_matches)  //...but not ecm-len!
+		if(caidprov_matches) // ...but not ecm-len!
 			{ return 0; }
 	}
 
@@ -1254,11 +1315,11 @@ static struct s_global_whitelist *global_whitelist_read_int(void)
 					{ cfg.global_whitelist_use_l = 1; }
 
 				if(type == 'm')
-					cs_log_dbg(D_TRACE,
-								  "whitelist: %c: %04X@%06X:%04X:%04X:%04X:%02X map to %04X@%06X", entry->type, entry->caid, entry->provid, entry->srvid, entry->pid, entry->chid, entry->ecmlen, entry->mapcaid, entry->mapprovid);
+					cs_log_dbg(D_TRACE, "whitelist: %c: %04X@%06X:%04X:%04X:%04X:%02X map to %04X@%06X",
+								entry->type, entry->caid, entry->provid, entry->srvid, entry->pid, entry->chid, entry->ecmlen, entry->mapcaid, entry->mapprovid);
 				else
-					cs_log_dbg(D_TRACE,
-								  "whitelist: %c: %04X@%06X:%04X:%04X:%04X:%02X", entry->type, entry->caid, entry->provid, entry->srvid, entry->pid, entry->chid, entry->ecmlen);
+					cs_log_dbg(D_TRACE, "whitelist: %c: %04X@%06X:%04X:%04X:%04X:%02X",
+								entry->type, entry->caid, entry->provid, entry->srvid, entry->pid, entry->chid, entry->ecmlen);
 
 				if(!new_whitelist)
 				{
@@ -1287,7 +1348,6 @@ static struct s_global_whitelist *global_whitelist_read_int(void)
 
 void global_whitelist_read(void)
 {
-
 	struct s_global_whitelist *entry, *old_list;
 
 	old_list = cfg.global_whitelist;
@@ -1374,17 +1434,18 @@ static struct s_twin *twin_read_int(void)
 		}
 
 		uint32_t caid = 0, provid = 0, srvid = 0, deg = 0, freq = 0;
-//		char hdeg[4], hfreq[4], hsrvid[4];
+		//char hdeg[4], hfreq[4], hsrvid[4];
 		memset(str1, 0, sizeof(str1));
 
 		ret = sscanf(token, "%4x:%6x:%d:%d:%d", &caid, &provid, &deg, &freq, &srvid);
 		if(ret < 1) { continue; }
-// 		snprintf(hdeg, 4, "%x", deg);
-// 		sscanf(hdeg, "%4x", &deg);
-// 		snprintf(hfreq, 4, "%x", freq);
-// 		sscanf(hfreq, "%4x", &freq);
-// 		snprintf(hsrvid, 4, "%x", srvid);
-// 		sscanf(hsrvid, "%4x", &srvid);
+
+		//snprintf(hdeg, 4, "%x", deg);
+		//sscanf(hdeg, "%4x", &deg);
+		//snprintf(hfreq, 4, "%x", freq);
+		//sscanf(hfreq, "%4x", &freq);
+		//snprintf(hsrvid, 4, "%x", srvid);
+		//sscanf(hsrvid, "%4x", &srvid);
 		cs_strncpy(str1 + cs_strlen(str1), ",", 2);
 
 		if(!cs_malloc(&entry, sizeof(struct s_twin)))
@@ -1400,8 +1461,8 @@ static struct s_twin *twin_read_int(void)
 		entry->tw.deg = deg;
 		entry->tw.freq = freq;
 
-		cs_debug_mask(D_TRACE, "channel: %04X:%06X:%d:%d:%d", entry->tw.caid, entry->tw.provid, entry->tw.deg,
-					  entry->tw.freq, entry->tw.srvid);
+		cs_debug_mask(D_TRACE, "channel: %04X:%06X:%d:%d:%d", entry->tw.caid,
+						entry->tw.provid, entry->tw.deg, entry->tw.freq, entry->tw.srvid);
 
 		if(!new_twin)
 		{
@@ -1651,21 +1712,21 @@ static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, voi
 	return realsize;
 }
 
-static void down_line(char s[512])
+static void down_line(char url[512])
 {
 	CURL *curl_handle;
 	struct MemoryStruct chunk;
-	int ret, i;
-	char line[512];
+	int m, i;
+	char line[512] = {0};
 
 	chunk.memory = malloc(1); // will be grown as needed by the realloc above
 	chunk.size = 0; // no data at this point
 	curl_global_init(CURL_GLOBAL_ALL);
 	curl_handle = curl_easy_init(); // init the curl session
-
 	curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback); // send all data to this function
 	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&chunk); // we pass our 'chunk' struct to the callback function
-	if(curl(curl_handle, s))
+
+	if(curl(curl_handle, url))
 	/*
 	* Now, our chunk.memory points to a memory block that is chunk.size
 	* bytes big and contains the remote file.
@@ -1677,23 +1738,23 @@ static void down_line(char s[512])
 		{
 			if((chunk.memory[i] == 'C' || chunk.memory[i] == 'c') && (chunk.memory[i + 1] == ':' && chunk.memory[i + 2] == ' '))
 			{
-				ret = 1;
+				m = 1;
 			}
 			else if(chunk.memory[i] == 'C' && chunk.memory[i + 1] == ' ' && chunk.memory[i + 2] == ':' && chunk.memory[i + 3] == ' ')
 			{
-				ret = 1;
+				m = 1;
 				i++;
 			}
 			else if((chunk.memory[i] == 'N') && (chunk.memory[i + 1] == ':' && chunk.memory[i + 2] == ' '))
 			{
-				ret = 2;
+				m = 2;
 			}
 			else
 			{
-				ret = 0;
+				m = 0;
 			}
 
-			if(ret)
+			if(m)
 			{
 				uint32_t u;
 				memcpy(line, chunk.memory + i + 2, 512);
@@ -1701,7 +1762,7 @@ static void down_line(char s[512])
 				{
 					if(line[u] == '<' || line[u] == '"' || line[u] == '\0') { line[u]='\0'; break; }
 				}
-				switch(add_reader_from_line(line, ret))
+				switch(add_reader_from_line(line, m))
 				{
 					case 1: c++; break;
 					case 2: n++; break;
@@ -1754,7 +1815,7 @@ void read_cccamcfg(const char *file)
 	{
 		if(cs_strlen(token) <= 1) { continue; }
 		if(token[0] == '#') { continue; }
-		strncpy(line, trim(token), 512 - 1);
+		cs_strncpy(line, trim(token), sizeof(token));
 		if(!line[0]) { continue; }
 
 		if((line[0] == 'C' || line[0] == 'N' || line[0] == 'L' || line[0] == 'R') && line[1] == ':')
@@ -1776,9 +1837,9 @@ void read_cccamcfg(const char *file)
 					case 2: n++; break;
 					case 3: l++; break;
 					case 4: r++; break;
- 				}
- 			}
- 		}
+				}
+			}
+		}
 #if defined(WITH_LIBCURL) && (defined(MODULE_CCCAM) || defined(MODULE_NEWCAMD))
 		else if(line[0] == 'h' && line[1] == 't' && line[2] == 't' && line[3] == 'p')
 		{

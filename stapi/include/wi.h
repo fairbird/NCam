@@ -1,4 +1,4 @@
-#if !defined( __WI_SUPPORT_H__ )
+﻿#if !defined( __WI_SUPPORT_H__ )
 #define __WI_SUPPORT_H__
 ///////////////////////////////////////
 //    SOCKET_ID -1, 0, 1, 2, ... ?

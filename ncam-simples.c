@@ -475,7 +475,7 @@ const char *get_cardsystem_desc_by_caid(uint16_t caid)
 	if(caid_is_cryptoworks(caid)) { return "cryptoworks"; }
 	if(caid_is_betacrypt(caid)) { return "betacrypt"; }
 	if(caid_is_nagra(caid)) { return "nagra"; }
-	if(caid >= 0x4B00 && caid <= 0x4BFF) { return "tongfang"; }
+	if(caid_is_tongfang(caid)) { return "tongfang"; }
 	if(caid >= 0x5501 && caid <= 0x551A) { return "griffin"; }
 	if(caid_is_dre(caid)) { return "drecrypt"; }
 	if(caid_is_bulcrypt(caid)) { return "bulcrypt"; }

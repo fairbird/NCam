@@ -14,6 +14,8 @@
 	"stats":{
 		"ecmsok":"##ECMSOK##",
 		"ecmsokrel":"##ECMSOKREL##",
+		"ecmsoklg":"##ECMSOKLG##",
+		"ecmsoklgrel":"##ECMSOKLGREL##",
 		"ecmsnok":"##ECMSNOK##",
 		"ecmsnokrel":"##ECMSNOKREL##",
 		"ecmstout":"##ECMSTOUT##",

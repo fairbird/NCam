@@ -8,7 +8,7 @@
 			<TR><TD><A>Serverip:</A></TD><TD><input name="serverip" class="medium" type="text" maxlength="15" value="##SERVERIP##"></TD></TR>
 			<TR><TD><A>Http user:</A></TD><TD><input name="httpuser" class="longer" type="text" maxlength="64" value="##HTTPUSER##"></TD></TR>
 			<TR><TD><A>Http pwd:</A></TD><TD><input name="httppwd" class="longer" type="text" maxlength="64" value="##HTTPPASSWORD##"></TD></TR>
-			<TR><TD><A>NCAm Label:</A></TD><TD><input name="httpncamlabel" type="text" maxlength="64" value="##HTTPNCAMLABEL##"></TD></TR>
+			<TR><TD><A>NCam Label:</A></TD><TD><input name="httpncamlabel" type="text" maxlength="64" value="##HTTPNCAMLABEL##"></TD></TR>
 			<TR><TD><A>Refresh:</A></TD>
 				<TD CLASS="invisible">
 					<TABLE>
@@ -101,18 +101,18 @@
 				<TD CLASS="invisible">
 					<TABLE>
 						<TR>
-							<TD><A data-p="http_status_log"</A><label>Log:</label></TD><TD><input name="http_status_log" type="hidden" value="0"><input name="http_status_log" type="checkbox" value="1" ##SHOWLOGCHECKED##></TD>
-							<TD><A data-p="httpshowreaderinfo"</A><label>Readers info:</label></TD><TD><input name="httpshowreaderinfo" type="hidden" value="0"><input name="httpshowreaderinfo" type="checkbox" value="1" ##SHOWREADERINFOCHECKED##></TD>
-							<TD><A data-p="httpshowecminfo"</A><label>ECM info:</label></TD><TD><input name="httpshowecminfo" type="hidden" value="0"><input name="httpshowecminfo" type="checkbox" value="1" ##SHOWECMINFOCHECKED##></TD>
-							<TD><A data-p="httpshowuserinfo"</A><label>Users info:</label></TD><TD><input name="httpshowuserinfo" type="hidden" value="0"><input name="httpshowuserinfo" type="checkbox" value="1" ##SHOWUSERINFOCHECKED##></TD>
+							<TD><A data-p="http_status_log"><label>Log:</label></A></TD><TD><input name="http_status_log" type="hidden" value="0"><input name="http_status_log" type="checkbox" value="1" ##SHOWLOGCHECKED##></TD>
+							<TD><A data-p="httpshowreaderinfo"><label>Readers info:</label></A></TD><TD><input name="httpshowreaderinfo" type="hidden" value="0"><input name="httpshowreaderinfo" type="checkbox" value="1" ##SHOWREADERINFOCHECKED##></TD>
+							<TD><A data-p="httpshowecminfo"><label>ECM info:</label></A></TD><TD><input name="httpshowecminfo" type="hidden" value="0"><input name="httpshowecminfo" type="checkbox" value="1" ##SHOWECMINFOCHECKED##></TD>
+							<TD><A data-p="httpshowuserinfo"><label>Users info:</label></A></TD><TD><input name="httpshowuserinfo" type="hidden" value="0"><input name="httpshowuserinfo" type="checkbox" value="1" ##SHOWUSERINFOCHECKED##></TD>
 ##TPLSHOWCACHEEXINFO##
-							<TD><A data-p="httpshowmeminfo"</A><label>Memory info:</label></TD><TD><input name="httpshowmeminfo" type="hidden" value="0"><input name="httpshowmeminfo" type="checkbox" value="1" ##SHOWMEMINFOCHECKED##></TD>
-							<TD><A data-p="httpshowloadinfo"</A><label>Load info:</label></TD><TD><input name="httpshowloadinfo" type="hidden" value="0"><input name="httpshowloadinfo" type="checkbox" value="1" ##SHOWLOADINFOCHECKED##></TD>
+							<TD><A data-p="httpshowmeminfo"><label>Memory info:</label></A></TD><TD><input name="httpshowmeminfo" type="hidden" value="0"><input name="httpshowmeminfo" type="checkbox" value="1" ##SHOWMEMINFOCHECKED##></TD>
+							<TD><A data-p="httpshowloadinfo"><label>Load info:</label></A></TD><TD><input name="httpshowloadinfo" type="hidden" value="0"><input name="httpshowloadinfo" type="checkbox" value="1" ##SHOWLOADINFOCHECKED##></TD>
 						</TR>
 					</TABLE>
 				</TD>
 			</TR>
-			<TR><TD>UTF8 Charset:</TD><TD><SELECT NAME="httputf8"><OPTION VALUE="0">NO</OPTION><OPTION VALUE="1" ##HTTPUTF8##>YES</OPTION></SELECT></TD></TR>
+			<TR><TD><A>UTF8 Charset:</A></TD><TD><input name="httputf8" value="0" type="hidden"><input name="httputf8" type="checkbox" value="1" ##HTTPUTF8##></TD></TR>
 			<TR><TH COLSPAN="2">Template settings</TH></TR>
 			<TR><TD><A>Http tpl:</A></TD><TD><input name="httptpl" type="text" maxlength="127" value="##HTTPTPL##"></TD></TR>
 ##TPLHTTPSSL##

@@ -595,7 +595,7 @@ void gbox_send_hello(struct s_client *proxy, uint8_t hello_stat)
 					if(proxy->reader->gbox_cccam_reshare < 0)
 						{ continue; }
 					else
-					{ 
+					{
 						if(chk_ident_filter(gbox_get_caid(card->caprovid), gbox_get_provid(card->caprovid), &proxy->reader->ccc_gbx_reshare_ident))
 						{
 							if(proxy->reader->gbox_cccam_reshare > proxy->reader->gbox_reshare)
@@ -1297,7 +1297,7 @@ static int8_t gbox_incoming_ecm(struct s_client *cli, uint8_t *data, int32_t n)
 		er->caid = b2i(2, ecm + er->ecmlen + 5);
 	}
 
-	memcpy(er->ecm, data + 18, er->ecmlen); 
+	memcpy(er->ecm, data + 18, er->ecmlen);
 
 	er->gbox_ecm_src_peer = b2i(2, ecm + er->ecmlen); //boxid which ORIGINALLY broadcasted the ECM
 	ere->gbox_version = ecm[er->ecmlen + 2];
@@ -2001,7 +2001,7 @@ static void gbox_send_dcw(struct s_client *cl, ECM_REQUEST *er)
 	struct gbox_ecm_request_ext *ere = er->src_data;
 
 	if(er->rc == E_NOTFOUND && cli->reader->gbox_force_remm && ere->gbox_rev >> 4)
-	{ 
+	{
 		gbox_send_remm_req(cli, er);
 		return;
 	}
@@ -2059,11 +2059,11 @@ static void gbox_send_dcw(struct s_client *cl, ECM_REQUEST *er)
 
 	// This copies the routing info from ECM to cw answer.
 	memcpy(&buf[44], &ere->gbox_routing_info, er->gbox_ecm_dist - 1);
-	buf[44 + er->gbox_ecm_dist - 1] = er->gbox_ecm_dist - 1;	//act. dist 
+	buf[44 + er->gbox_ecm_dist - 1] = er->gbox_ecm_dist - 1;	//act. dist
 /*
   uint8_t i;
 		for(i = 0; i < er->gbox_ecm_dist; i++)
-		{ 
+		{
 			buf[44 +i] = i;
 		}
 */
@@ -2187,7 +2187,7 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er)
 		// distance ECM
 		uint8_t i;
 		for(i = 0; i < er->gbox_ecm_dist + 1; i++)
-			{ 
+			{
 				send_buf[buflen] = i;
 				buflen++;
 			}
@@ -2222,7 +2222,7 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er)
 		{
 			cs_log_dbg(D_READER, "Pending Card ID: %04X Slot: %02X time: %d", pending->id.peer, pending->id.slot, pending->pending_time);
 			er->gbox_cw_src_peer = pending->id.peer;
-			cs_log_dbg(D_READER,"<- ECM (<-%d) - caid: %04X prov: %06X sid: %04X to cw-src-peer: %04X - ecm_src_peer: %04X", 
+			cs_log_dbg(D_READER,"<- ECM (<-%d) - caid: %04X prov: %06X sid: %04X to cw-src-peer: %04X - ecm_src_peer: %04X",
 				gbox_get_crd_dist_lev(er->gbox_cw_src_peer) & 0xf, er->caid, er->prid, er->srvid, er->gbox_cw_src_peer, er->gbox_ecm_src_peer);
 		}
 		ll_li_destroy(li);

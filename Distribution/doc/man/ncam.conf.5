@@ -190,16 +190,6 @@ seconds beetween restarts, 0 = disable reader restart, default:5
 value (clienttimeout in seconds < 100, else milli-seconds) for client process to wait for key, default:5
 .RE
 .PP
-\fBmaxecmtime\fP = \fB0\fP|\fB1\fP
-.RS 3n
-1 = use client timeout as a max ecm time, default:0
-.RE
-.PP
-\fBmaxecmtimenotfound\fP = \fB0\fP|\fB1\fP
-.RS 3n
-1 = mark not_found imediately ecm with higher ecm time than maxecmtime, default:0
-.RE
-.PP
 \fBclientmaxidle\fP = \fBseconds\fP
 .RS 3n
 value for client process being idle before disconnect, 0 = idle disconnect disabled, default:120
@@ -366,16 +356,6 @@ maximum ECM count before resetting load balancing values, default:500
 \fBlb_reopen_seconds\fP = \fBseconds\fP
 .RS 3n
 time between retrying failed load balanced readers/CAIDs/providers/services, default:900
-.RE
-.PP
-\fBlb_reopen_seconds_never\fP = \fB0\fP|\fB1\fP
-.RS 3n
-1 = never retry failed load balanced readers/CAIDs/providers/services, default:0
-.RE
-.PP
-\fBlb_reopen_seconds_never_group\fP = \fB1\fP|\fB1,2\fP|\fB2,3,4\fP|\fB4,5...\fP
-.RS 3n
-never retry failed load balanced readers/CAIDs/providers/services for specific reader group, default:none
 .RE
 .PP
 \fBlb_reopen_invalid\fP = \fB0\fP|\fBfB1\fP

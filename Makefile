@@ -34,7 +34,6 @@ endif
 ifdef USE_SSL
 	override USE_LIBCRYPTO=1
 endif
-
 ifeq "$(shell ./config.sh --enabled READER_NAGRA_MERLIN)" "Y"
 	override USE_LIBCRYPTO=1
 endif
@@ -113,7 +112,7 @@ DEFAULT_STAPI_FLAGS = -I./stapi/include
 else
 DEFAULT_STAPI_LIB = -L./stapi -loscam_stapi
 endif
-DEFAULT_STAPI5_LIB = -L./stapi -loscam_stapi5
+DEFAULT_STAPI5_LIB = -L./stapi -loscam_stapi5_OPENBOX
 DEFAULT_GXAPI_LIB = -L./extapi/goceed -loscam_gxapi
 DEFAULT_GXAPI_FLAGS = -I ./extapi/goceed
 DEFAULT_COOLAPI_LIB = -lnxp -lrt
@@ -556,7 +555,7 @@ README.config:
 
 help:
 	@-printf "\
-NCAm build system documentation\n\
+NCam build system documentation\n\
 ================================\n\
 \n\
  Build variables:\n\
@@ -578,7 +577,7 @@ NCAm build system documentation\n\
                     'make sh4 CROSS_DIR=/opt/STM/STLinux-2.3/devkit/sh4/bin/'\n\
                     'make dm500 CROSS_DIR=/opt/cross/dm500/cdk/bin/'\n\
 \n\
-   CONF_DIR=/dir  - Set NCAm config directory. For example to change config\n\
+   CONF_DIR=/dir  - Set NCam config directory. For example to change config\n\
                     directory to /etc run: 'make CONF_DIR=/etc'\n\
                     The default config directory is: '$(CONF_DIR)'\n\
 \n\
@@ -625,7 +624,7 @@ NCAm build system documentation\n\
 \n\
  Use flags:\n\
    Use flags are used to request additional libraries or features to be used\n\
-   by NCAm. Currently defined USE_xxx flags are:\n\
+   by NCam. Currently defined USE_xxx flags are:\n\
 \n\
    USE_LIBUSB=1    - Request linking with libusb. The variables that control\n\
                      USE_LIBUSB=1 build are:\n\
@@ -708,7 +707,7 @@ NCAm build system documentation\n\
                          AZBOX_LIB='$(DEFAULT_AZBOX_LIB)'\n\
                      Using USE_AZBOX=1 adds to '-azbox' to PLUS_TARGET.\n\
                      extapi/openxcas/libOpenXCASAPI.a library that is shipped\n\
-                     with NCAm is compiled for MIPSEL.\n\
+                     with NCam is compiled for MIPSEL.\n\
 \n\
    USE_GXAPI=1    - Request support for GXAPI (GX)\n\
                     box. The variables that control the build are:\n\
@@ -718,6 +717,7 @@ NCAm build system documentation\n\
                          GXAPI_LIB='$(DEFAULT_GXAPI_LIB)'\n\
                      Using USE_GXAPI=1 adds to '-gxapi' to PLUS_TARGET.\n\
                      extapi/goceed/liboscam_gxapi.a library that is shipped\n\
+                     with NCam is compiled for gxapi.\n\
 \n\
    USE_MCA=1      - Request support for Matrix Cam Air (MCA).\n\
                     The variables that control the build are:\n\
@@ -726,7 +726,7 @@ NCAm build system documentation\n\
                          MCA_LDFLAGS='$(DEFAULT_MCA_FLAGS)'\n\
                      Using USE_MCA=1 adds to '-mca' to PLUS_TARGET.\n\
 \n\
-   USE_LIBCRYPTO=1 - Request linking with libcrypto instead of using NCAm\n\
+   USE_LIBCRYPTO=1 - Request linking with libcrypto instead of using NCam\n\
                      internal crypto functions. USE_LIBCRYPTO is automatically\n\
                      enabled if the build is configured with SSL support. The\n\
                      variables that control USE_LIBCRYPTO=1 build are:\n\
@@ -774,9 +774,9 @@ NCAm build system documentation\n\
                       'Distribution/ncam-1.20-unstable_svn7404-i486-slackware-linux-static'\n\
                      For example you can run: 'make NCAM_BIN=my-ncam'\n\
 \n\
- Binaries compiled and run during the NCAm build:\n\
+ Binaries compiled and run during the NCam build:\n\
 \n\
-   NCAm builds webif/pages_gen binary that is run by the build system to\n\
+   NCam builds webif/pages_gen binary that is run by the build system to\n\
    generate file that holds web pages. To build this binary two variables\n\
    are used:\n\
 \n\
@@ -800,7 +800,7 @@ NCAm build system documentation\n\
                     located in '$(BINDIR)' directory.\n\
 \n\
  Build system files:\n\
-   config.sh      - NCAm configuration. Run 'config.sh --help' to see\n\
+   config.sh      - NCam configuration. Run 'config.sh --help' to see\n\
                     available parameters or 'make config' to start GUI\n\
                     configuratior.\n\
    Makefile       - Main build system file.\n\
@@ -812,66 +812,66 @@ NCAm build system documentation\n\
 \n\
  Here are some of the interesting predefined targets in Makefile.extra.\n\
  To use them run 'make target ...' where ... can be any extra flag. For\n\
- example if you want to compile NCAm for Dreambox (DM500) but do not\n\
+ example if you want to compile NCam for Dreambox (DM500) but do not\n\
  have the compilers in the path, you can run:\n\
     make dm500 CROSS_DIR=/opt/cross/dm500/cdk/bin/\n\
 \n\
  Predefined targets in Makefile.extra:\n\
 \n\
-    make libusb        - Builds NCAm with libusb support\n\
-    make pcsc          - Builds NCAm with PCSC support\n\
-    make pcsc-libusb   - Builds NCAm with PCSC and libusb support\n\
-    make dm500         - Builds NCAm for Dreambox (DM500)\n\
-    make sh4           - Builds NCAm for SH4 boxes\n\
-    make azbox         - Builds NCAm for AZBox STBs\n\
-    make gx            - Builds NCAm for GX boxes\n\
-    make mca           - Builds NCAm for Matrix Cam Air (MCA)\n\
-    make coolstream    - Builds NCAm for Coolstream HD1\n\
-    make coolstream2   - Builds NCAm for Coolstream HD2\n\
-    make dockstar      - Builds NCAm for Dockstar\n\
-    make qboxhd        - Builds NCAm for QBoxHD STBs\n\
-    make opensolaris   - Builds NCAm for OpenSolaris\n\
-    make uclinux       - Builds NCAm for m68k uClinux\n\
+    make libusb        - Builds NCam with libusb support\n\
+    make pcsc          - Builds NCam with PCSC support\n\
+    make pcsc-libusb   - Builds NCam with PCSC and libusb support\n\
+    make dm500         - Builds NCam for Dreambox (DM500)\n\
+    make sh4           - Builds NCam for SH4 boxes\n\
+    make azbox         - Builds NCam for AZBox STBs\n\
+    make gx            - Builds NCam for GX boxes\n\
+    make mca           - Builds NCam for Matrix Cam Air (MCA)\n\
+    make coolstream    - Builds NCam for Coolstream HD1\n\
+    make coolstream2   - Builds NCam for Coolstream HD2\n\
+    make dockstar      - Builds NCam for Dockstar\n\
+    make qboxhd        - Builds NCam for QBoxHD STBs\n\
+    make opensolaris   - Builds NCam for OpenSolaris\n\
+    make uclinux       - Builds NCam for m68k uClinux\n\
 \n\
  Predefined targets for static builds:\n\
-    make static        - Builds NCAm statically\n\
-    make static-libusb - Builds NCAm with libusb linked statically\n\
-    make static-libcrypto - Builds NCAm with libcrypto linked statically\n\
-    make static-ssl    - Builds NCAm with SSL support linked statically\n\
+    make static        - Builds NCam statically\n\
+    make static-libusb - Builds NCam with libusb linked statically\n\
+    make static-libcrypto - Builds NCam with libcrypto linked statically\n\
+    make static-ssl    - Builds NCam with SSL support linked statically\n\
 \n\
  Developer targets:\n\
     make tests         - Builds '$(TESTS_BIN)' binary\n\
 \n\
  Examples:\n\
-   Build NCAm for SH4 (the compilers are in the path):\n\
+   Build NCam for SH4 (the compilers are in the path):\n\
      make CROSS=sh4-linux-\n\n\
-   Build NCAm for SH4 (the compilers are in not in the path):\n\
+   Build NCam for SH4 (the compilers are in not in the path):\n\
      make sh4 CROSS_DIR=/opt/STM/STLinux-2.3/devkit/sh4/bin/\n\
      make CROSS_DIR=/opt/STM/STLinux-2.3/devkit/sh4/bin/ CROSS=sh4-linux-\n\
      make CROSS=/opt/STM/STLinux-2.3/devkit/sh4/bin/sh4-linux-\n\n\
-   Build NCAm for SH4 with STAPI:\n\
+   Build NCam for SH4 with STAPI:\n\
      make CROSS=sh4-linux- USE_STAPI=1\n\n\
-   Build NCAm for SH4 with STAPI and changed configuration directory:\n\
+   Build NCam for SH4 with STAPI and changed configuration directory:\n\
      make CROSS=sh4-linux- USE_STAPI=1 CONF_DIR=/var/tuxbox/config\n\n\
-   Build NCAm for ARM with COOLAPI (coolstream aka NeutrinoHD):\n\
+   Build NCam for ARM with COOLAPI (coolstream aka NeutrinoHD):\n\
      make CROSS=arm-cx2450x-linux-gnueabi- USE_COOLAPI=1\n\n\
-   Build NCAm for ARM with COOLAPI2 (coolstream aka NeutrinoHD):\n\
+   Build NCam for ARM with COOLAPI2 (coolstream aka NeutrinoHD):\n\
      make CROSS=arm-pnx8400-linux-uclibcgnueabi- USE_COOLAPI2=1\n\n\
-   Build NCAm for MIPSEL with AZBOX support:\n\
+   Build NCam for MIPSEL with AZBOX support:\n\
      make CROSS=mipsel-linux-uclibc- USE_AZBOX=1\n\n\
-   Build NCAm for GX with GXAPI support:\n\
+   Build NCam for GX with GXAPI support:\n\
      make CROSS=csky-linux- USE_GXAPI=1\n\n\
-   Build NCAm for ARM with MCA support:\n\
+   Build NCam for ARM with MCA support:\n\
      make CROSS=arm-none-linux-gnueabi- USE_MCA=1\n\n\
-   Build NCAm for Android with STAPI and changed configuration directory:\n\
+   Build NCam for Android with STAPI and changed configuration directory:\n\
      make CROSS=arm-linux-androideabi- USE_WI=1 CONF_DIR=/data/plugin/ncam\n\n\
-   Build NCAm with libusb and PCSC:\n\
+   Build NCam with libusb and PCSC:\n\
      make USE_LIBUSB=1 USE_PCSC=1\n\n\
-   Build NCAm with static libusb:\n\
+   Build NCam with static libusb:\n\
      make USE_LIBUSB=1 LIBUSB_LIB=\"/usr/lib/libusb-1.0.a\"\n\n\
-   Build NCAm with static libcrypto:\n\
+   Build NCam with static libcrypto:\n\
      make USE_LIBCRYPTO=1 LIBCRYPTO_LIB=\"/usr/lib/libcrypto.a\"\n\n\
-   Build NCAm with static libssl and libcrypto:\n\
+   Build NCam with static libssl and libcrypto:\n\
      make USE_SSL=1 SSL_LIB=\"/usr/lib/libssl.a\" LIBCRYPTO_LIB=\"/usr/lib/libcrypto.a\"\n\n\
    Build NCam with static libcurl:\n\
      make USE_LIBCURL=1 LIBCURL_LIB=\"/usr/lib/libcurl.a\"\n\n\

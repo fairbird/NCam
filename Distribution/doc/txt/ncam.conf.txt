@@ -136,14 +136,6 @@ DESCRIPTIONS
        clienttimeout = milli-seconds|seconds
 	  value (clienttimeout in seconds < 100, else milli-seconds) for client process to wait for key, default:5
 
-       maxecmtime = 0|1
-      0 = disabled
-      1 = use client timeout as a max ecm time
-
-       maxecmtimenotfound = 0|1
-      0 = disabled
-      1 = mark not_found imediately ecm with higher ecm time than maxecmtime
-
        clientmaxidle = seconds
 	  value for client process being idle before disconnect, 0 = idle disconnect disabled, default:120
 
@@ -264,12 +256,6 @@ DESCRIPTIONS
 
        lb_reopen_seconds = seconds
 	  time between retrying failed load balanced readers/CAIDs/providers/services, default:900
-
-       lb_reopen_seconds_never = 0|1
-	  never retry failed load balanced readers/CAIDs/providers/services, default:0
-
-       lb_reopen_seconds_never_group = 1|1,2|2,3,4|4,5...etc
-	  never retry failed load balanced readers/CAIDs/providers/services for specific reader group, default:none
 
        lb_reopen_invalid = 0|fB1
 	  0 = E_INVALID will be blocked until statistics has been cleaned, default:1
@@ -834,7 +820,7 @@ DESCRIPTIONS
 	   5 = do not use signal handler for monitoring /tmp,
 	       disable camd.socket
 
-	   ecminfo_file = 0|1
+       ecminfo_file = 0|1
 	  ecm.info types:
 
 	   0 = Disable ecm.info file

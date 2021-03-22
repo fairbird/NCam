@@ -48,16 +48,16 @@ int32_t constcw_analyse_file(uint16_t c_caid, uint32_t c_prid, uint16_t c_sid, u
 		int ret = sscanf(token, "%4x:%6x:%4x:%4x:%4x::%2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x", &caid, &provid, &sid, &pmtpid, &ecmpid,
 			   &cw[0], &cw[1], &cw[2], &cw[3], &cw[4], &cw[5], &cw[6], &cw[7],
 			   &cw[8], &cw[9], &cw[10], &cw[11], &cw[12], &cw[13], &cw[14], &cw[15]);
-		
-		if(ret != 21){   
+
+		if(ret != 21){
 			ret = sscanf(token, "%4x:%6x:%4x:%4x:%4x:%4x:%2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x", &caid, &provid, &sid, &pmtpid, &ecmpid, &vpid,
 				   &cw[0], &cw[1], &cw[2], &cw[3], &cw[4], &cw[5], &cw[6], &cw[7],
 				   &cw[8], &cw[9], &cw[10], &cw[11], &cw[12], &cw[13], &cw[14], &cw[15]);
 			if(ret != 22) continue;
-		}		
+		}
 
 		//cs_log("Line found: %s", token);
-		if(c_caid == caid && c_sid == sid && (!provid || provid == c_prid) && (!pmtpid || !c_pmtpid || pmtpid == c_pmtpid) && (!vpid || !c_vpid || vpid == c_vpid) 
+		if(c_caid == caid && c_sid == sid && (!provid || provid == c_prid) && (!pmtpid || !c_pmtpid || pmtpid == c_pmtpid) && (!vpid || !c_vpid || vpid == c_vpid)
 				&& (!ecmpid || !c_ecmpid || ecmpid == c_ecmpid))
 		{
 			fclose(fp);
@@ -105,7 +105,7 @@ int32_t constcw_client_init(struct s_client *client)
 	memset((char *) &client->udp_sa, 0, sizeof(client->udp_sa));
 	SIN_GET_FAMILY(client->udp_sa) = AF_INET;
 
-	// Ncam has no reader.au in s_reader like ki's mpcs ;)
+	// NCam has no reader.au in s_reader like ki's mpcs ;)
 	// reader[ridx].au = 0;
 	// cs_log("local reader: %s (file: %s) constant cw au=0", reader[ridx].label, reader[ridx].device);
 	cs_log("Local reader: %s (file: %s)", client->reader->label, client->reader->device);

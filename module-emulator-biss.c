@@ -5,9 +5,9 @@
 #ifdef WITH_EMU
 
 #include "module-emulator-nemu.h"
-#include "ncam-string.h"
 #include "module-emulator-biss.h"
 #include "ncam-aes.h"
+#include "ncam-string.h"
 #ifdef WITH_LIBCRYPTO
 #include <openssl/evp.h>
 #include <openssl/pem.h>
@@ -320,6 +320,7 @@ static int8_t get_sw(uint32_t provider, uint8_t *sw, uint8_t sw_length, int8_t d
 	// printMsg: 2 => Always print message, regardless if key is found or not
 
 	char keyExpDate[9] = "00000000";
+
 	if (emu_find_key('F', provider, 0, keyExpDate, sw, sw_length, 0, 0, 0, NULL)) // Key found
 	{
 		if (dateCoded) // Date-coded keys are enabled, evaluate expiration date
@@ -354,7 +355,7 @@ static int8_t get_sw(uint32_t provider, uint8_t *sw, uint8_t sw_length, int8_t d
 
 static int8_t biss_mode1_ecm(struct s_reader *rdr, const uint8_t *ecm, uint16_t caid, uint16_t ecm_pid, uint8_t *dw, EXTENDED_CW *cw_ex)
 {
-	// Ncam's fake ecm consists of [sid] [pmtpid] [pid1] [pid2] ... [pidx] [tsid] [onid] [ens]
+	// NCam's fake ecm consists of [sid] [pmtpid] [pid1] [pid2] ... [pidx] [tsid] [onid] [ens]
 	// On enigma boxes tsid, onid and namespace should be non zero, while on non-enigma
 	// boxes they are usually all zero. The top 4 bits of the namespace are flagged with 0xA.
 

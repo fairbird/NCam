@@ -25,7 +25,7 @@
 extern CS_MUTEX_LOCK fakeuser_lock;
 
 static char *processUsername;
-static struct s_client *first_client_hashed[CS_CLIENT_HASHBUCKETS];  // Alternative hashed client list
+static struct s_client *first_client_hashed[CS_CLIENT_HASHBUCKETS]; // Alternative hashed client list
 
 /* Gets the unique thread number from the client. Used in monitor and newcamd. */
 int32_t get_threadnum(struct s_client *client)
@@ -133,8 +133,8 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, IN_
 	 * Uniq = 4: set user only to fake if source ip is
 	 *           different, but only the last login will survive
 	 */
-	struct s_client *cl;
 
+	struct s_client *cl;
 	struct s_auth *account;
 	uint32_t con_count = 1;
 	cs_writelock(__func__, &fakeuser_lock);
@@ -143,7 +143,7 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, IN_
 	{
 		account = cl->account;
 		if(cl != client && cl->typ == 'c' && !cl->dup && account && streq(account->usr, usr)
-				&& uniq < 5 && ((uniq % 2) || !IP_EQUAL(cl->ip, ip)))
+			&& uniq < 5 && ((uniq % 2) || !IP_EQUAL(cl->ip, ip)))
 		{
 			char buf[20];
 
@@ -153,13 +153,13 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, IN_
 				continue;
 			}
 
-			if(uniq  == 3 || uniq == 4)
+			if(uniq == 3 || uniq == 4)
 			{
 				cl->dup = 1;
 				cl->aureader_list = NULL;
 				cs_strncpy(buf, cs_inet_ntoa(cl->ip), sizeof(buf));
 				cs_log("client(%8lX) duplicate user '%s' from %s (prev %s) set to fake (uniq=%d)",
-					   (unsigned long)cl->thread, usr, cs_inet_ntoa(ip), buf, uniq);
+						(unsigned long)cl->thread, usr, cs_inet_ntoa(ip), buf, uniq);
 
 				if(cl->failban & BAN_DUPLICATE)
 				{
@@ -180,15 +180,16 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, IN_
 				client->aureader_list = NULL;
 				cs_strncpy(buf, cs_inet_ntoa(ip), sizeof(buf));
 				cs_log("client(%8lX) duplicate user '%s' from %s (current %s) set to fake (uniq=%d)",
-					   (unsigned long)pthread_self(), usr, cs_inet_ntoa(cl->ip), buf, uniq);
+						(unsigned long)pthread_self(), usr, cs_inet_ntoa(cl->ip), buf, uniq);
 
 				if(client->failban & BAN_DUPLICATE)
 				{
 					cs_add_violation_by_ip(ip, get_module(client)->ptab.ports[client->port_idx].s_port, usr);
 				}
+
 				if(cfg.dropdups)
 				{
-					cs_writeunlock(__func__, &fakeuser_lock);     // we need to unlock here as cs_disconnect_client kills the current thread!
+					cs_writeunlock(__func__, &fakeuser_lock); // we need to unlock here as cs_disconnect_client kills the current thread!
 					cs_sleepms(120); // sleep a bit to prevent against saturation from fast reconnecting clients
 					cs_disconnect_client(client);
 					cs_writelock(__func__, &fakeuser_lock);
@@ -273,6 +274,7 @@ struct s_client *create_client(IN_ADDR_T ip)
 	{
 		cs_log("max connections reached (out of memory) -> reject client %s",
 				IP_ISSET(ip) ? cs_inet_ntoa(ip) : "with null address");
+
 		return NULL;
 	}
 
@@ -306,7 +308,7 @@ struct s_client *create_client(IN_ADDR_T ip)
 	return cl;
 }
 
-/* Creates the master client of NCAm and inits some global variables/mutexes. */
+/* Creates the master client of NCam and inits some global variables/mutexes. */
 void init_first_client(void)
 {
 	// get username NCam is running under
@@ -338,7 +340,7 @@ void init_first_client(void)
 	int32_t bucket = (uintptr_t)first_client / 16 % CS_CLIENT_HASHBUCKETS;
 	first_client_hashed[bucket] = first_client;
 
-	first_client->next = NULL; //terminate clients list with NULL
+	first_client->next = NULL; // terminate clients list with NULL
 	first_client->login = time(NULL);
 	first_client->typ = 's';
 	first_client->thread = pthread_self();
@@ -379,12 +381,12 @@ int32_t cs_auth_client(struct s_client *client, struct s_auth *account, const ch
 	{
 		cs_add_violation(client, account->usr);
 		cs_log("%s %s-client %s%s (%s%sdisabled account)",
-			   client->crypted ? t_crypt : t_plain,
-			   module->desc,
-			   IP_ISSET(client->ip) ? cs_inet_ntoa(client->ip) : "",
-			   IP_ISSET(client->ip) ? t_reject : t_reject + 1,
-			   e_txt ? e_txt : "",
-			   e_txt ? " " : "");
+				client->crypted ? t_crypt : t_plain,
+				module->desc,
+				IP_ISSET(client->ip) ? cs_inet_ntoa(client->ip) : "",
+				IP_ISSET(client->ip) ? t_reject : t_reject + 1,
+				e_txt ? e_txt : "",
+				e_txt ? " " : "");
 		return 1;
 	}
 
@@ -394,12 +396,12 @@ int32_t cs_auth_client(struct s_client *client, struct s_auth *account, const ch
 	{
 		cs_add_violation(client, account->usr);
 		cs_log("%s %s-client %s%s (%s%sprotocol not allowed)",
-			   client->crypted ? t_crypt : t_plain,
-			   module->desc,
-			   IP_ISSET(client->ip) ? cs_inet_ntoa(client->ip) : "",
-			   IP_ISSET(client->ip) ? t_reject : t_reject + 1,
-			   e_txt ? e_txt : "",
-			   e_txt ? " " : "");
+				client->crypted ? t_crypt : t_plain,
+				module->desc,
+				IP_ISSET(client->ip) ? cs_inet_ntoa(client->ip) : "",
+				IP_ISSET(client->ip) ? t_reject : t_reject + 1,
+				e_txt ? e_txt : "",
+				e_txt ? " " : "");
 		return 1;
 	}
 
@@ -526,6 +528,7 @@ int32_t cs_auth_client(struct s_client *client, struct s_auth *account, const ch
 					}
 				}
 			}
+
 			cs_log("%s %s-client %s%s (%s, %s)",
 					client->crypted ? t_crypt : t_plain,
 					e_txt ? e_txt : module->desc,
@@ -547,6 +550,7 @@ void cs_disconnect_client(struct s_client *client)
 	{
 		snprintf(buf, sizeof(buf), " from %s", cs_inet_ntoa(client->ip));
 	}
+
 	cs_log("%s disconnected%s", username(client), buf);
 
 	if(client == cur_client())
@@ -571,6 +575,9 @@ void kill_all_clients(void)
 				cs_log("killing client %s", cl->account->usr);
 			}
 			kill_thread(cl);
+#ifdef CS_CACHEEX_AIO
+			ll_destroy_data(&cl->ll_cacheex_stats);
+#endif
 		}
 	}
 	NULLFREE(processUsername);
@@ -599,37 +606,43 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 			if(account && !account->disabled && cl->pcrc == crc32(0L, MD5((uint8_t *)ESTR(account->pwd), cs_strlen(ESTR(account->pwd)), md5tmp), MD5_DIGEST_LENGTH))
 			{
 				cl->account = account;
+#ifdef CS_CACHEEX_AIO
+				cl->cacheex_aio_checked = 0;
+#endif
 				if(cl->typ == 'c')
 				{
 					cl->grp = account->grp;
-					cl->aureader_list   = account->aureader_list;
+					cl->aureader_list = account->aureader_list;
 					cl->autoau = account->autoau;
 					cl->expirationdate = account->expirationdate;
-					cl->allowedtimeframe_set=account->allowedtimeframe_set;
-					for(i=0;i<SIZE_SHORTDAY;i++)
+					cl->allowedtimeframe_set = account->allowedtimeframe_set;
+
+					for(i = 0; i < SIZE_SHORTDAY; i++)
 					{
-						for(j=0;j<24;j++)
+						for(j = 0; j < 24; j++)
 						{
-							cl->allowedtimeframe[i][j][0]=account->allowedtimeframe[i][j][0];
-							cl->allowedtimeframe[i][j][1]=account->allowedtimeframe[i][j][1];
+							cl->allowedtimeframe[i][j][0] = account->allowedtimeframe[i][j][0];
+							cl->allowedtimeframe[i][j][1] = account->allowedtimeframe[i][j][1];
 						}
 					}
+
 					cl->ncd_keepalive = account->ncd_keepalive;
 					cl->c35_suppresscmd08 = account->c35_suppresscmd08;
 					cl->tosleep = (60 * account->tosleep);
 					cl->c35_sleepsend = account->c35_sleepsend;
 					cl->monlvl = account->monlvl;
-					cl->disabled    = account->disabled;
-					cl->cltab   = account->cltab;  // Class
+					cl->disabled = account->disabled;
+					cl->cltab = account->cltab; // Class
+
 					// newcamd module doesn't like ident reloading
 					if(!cl->ncd_server)
 					{
-						ftab_clone(&account->ftab, &cl->ftab);   // IDENT filter
-						ftab_clone(&account->fchid, &cl->fchid);  // CHID filter
+						ftab_clone(&account->ftab, &cl->ftab); // IDENT filter
+						ftab_clone(&account->fchid, &cl->fchid); // CHID filter
 					}
 
-					cl->sidtabs.ok = account->sidtabs.ok;   // services
-					cl->sidtabs.no = account->sidtabs.no;   // services
+					cl->sidtabs.ok = account->sidtabs.ok; // services
+					cl->sidtabs.no = account->sidtabs.no; // services
 					cl->failban = account->failban;
 
 					caidtab_clone(&account->ctab, &cl->ctab);

@@ -351,13 +351,13 @@ static int32_t cryptoworks_do_ecm(struct s_reader *reader, const ECM_REQUEST *er
 	uint8_t insC0[] = { 0xA4, 0xC0, 0x00, 0x00, 0x1C };
 	uint8_t nanoD4[10];
 	struct cryptoworks_data *csystem_data = reader->csystem_data;
-	int32_t secLen = check_sct_len(er->ecm, -5 + (csystem_data->ucpk_valid ? sizeof(nanoD4) : 0));
+	int32_t secLen = check_sct_len(er->ecm, -5 + (csystem_data->ucpk_valid ? sizeof(nanoD4) : 0), sizeof(er->ecm));
 
 	if(secLen > 5)
 	{
 		int32_t i;
 		const uint8_t *ecm = er->ecm;
-		uint8_t buff[MAX_LEN];
+		uint8_t buff[MAX_ECM_SIZE];
 
 		if(csystem_data->ucpk_valid)
 		{

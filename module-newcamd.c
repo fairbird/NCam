@@ -1801,13 +1801,13 @@ static int32_t newcamd_send_emm(EMM_PACKET *ep)
 #ifdef WITH_WI
 	if(!newcamd_connect())
 	{
-		return -1;
+		return (-1);
 	}
 
 	uint8_t *buf;
 	if(!cs_malloc(&buf, ep->emmlen))
 	{
-		return -1;
+		return (-1);
 	}
 
 	memcpy(buf, ep->emm, ep->emmlen);

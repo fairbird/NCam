@@ -253,14 +253,6 @@ DESCRIPTIONS
 	   2 = all procs, but viewing only
 	   3 = all procs, reload of ncam.user possible
 	   4 = complete access
-	   
-       lb_force_reopen_user = 0|1
-           0 = disabled
-           1 = specific user force reopening immidiatly all failing readers if no matching was found
-
-       lb_force_reopen_user_lb_min = 0|1
-           0 = disabled
-           1 = specific user force reopening immidiatly all failing readers if no matching was found only if lb count reached lb_min_ecmcount
 
        cccmaxhops = hops
 	  maximum hops limit for CCcam clients, default:10

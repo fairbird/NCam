@@ -1382,9 +1382,9 @@ static int32_t SR_Init(struct s_reader *reader)
 		ret = smartreader_set_latency_timer(reader, 16);
 		rdr_log_dbg(reader, D_DEVICE, "SR: Setting smartreader latency timer to %d ms", ret);
 	} else {
-		rdr_log_dbg(reader, D_DEVICE, "SR: Setting smartreader latency timer to 1 ms");
 		//Set the FTDI latency timer to 1 ms .
 		ret = smartreader_set_latency_timer(reader, 1);
+		rdr_log_dbg(reader, D_DEVICE, "SR: Setting smartreader latency timer to %d ms", ret);
 	}
 		//Set databits to 8o2
 	ret = smartreader_set_line_property(reader, BITS_8, STOP_BIT_2, ODD);
