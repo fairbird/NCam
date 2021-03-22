@@ -146,7 +146,7 @@
 #define DEMUX_CA_MASK_ADAPTER           0x82 // deprecated - applications should use descriptors ADAPTER_DEVICE, DEMUX_DEVICE and CA_DEVICE instead
 #define ADAPTER_DEVICE                  0x83
 #define PMT_PID                         0x84
-#define SERVICE_TYPE_MASK               0x85 // not used by OSCam
+#define SERVICE_TYPE_MASK               0x85 // not used by NCam
 #define DEMUX_DEVICE                    0x86
 #define CA_DEVICE                       0x87
 
