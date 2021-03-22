@@ -67,10 +67,6 @@ CC_OPTS = -O2 -ggdb -pipe -ffunction-sections -fdata-sections
 
 CC = $(CROSS_DIR)$(CROSS)gcc
 STRIP = $(CROSS_DIR)$(CROSS)strip
-ifeq "$(shell $(CC) -dumpmachine | cut -d'-' -f1 2>/dev/null)" "aarch64" ## This to fix (undefined reference to `_binary_SoftCam_Key_end')
-LD = $(CROSS_DIR)$(CROSS)ld
-OBJCOPY = $(CROSS_DIR)$(CROSS)objcopy
-endif
 
 LDFLAGS = -Wl,--gc-sections
 
@@ -336,13 +332,7 @@ ifneq ($(UNAME),Darwin)
 ifndef ANDROID_NDK
 ifndef ANDROID_STANDALONE_TOOLCHAIN
 TOUCH_SK := $(shell touch SoftCam.Key)
-ifeq "$(shell $(CC) -dumpmachine | cut -d'-' -f1 2>/dev/null)" "aarch64" ## This to fix (undefined reference to `_binary_SoftCam_Key_end')
-$(shell $(LD) -r -o "SoftCam.Key.o" -z noexecstack --format=binary "SoftCam.Key")
-$(shell $(OBJCOPY) --rename-section .data=.rodata,alloc,load,readonly,data,contents "SoftCam.Key.o")
-EXTRA_LIBS += SoftCam.Key.o
-else
 override LDFLAGS += -Wl,--format=binary -Wl,SoftCam.Key -Wl,--format=default
-endif
 endif
 endif
 endif
