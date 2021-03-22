@@ -665,34 +665,10 @@ add_library (${csreaders} STATIC ${csreaders_srcs} ${csreaders_hdrs})
 set (csncam "csncam")
 add_library (${csncam} STATIC ${csncam_srcs} ${csncam_hdrs})
 
-#--------------------------------------------------------------------------------
-
-if (NOT NCamOperatingSystem MATCHES "Mac OS X")
-if (NOT DEFINED ENV{ANDROID_NDK})
-if (NOT DEFINED ENV{ANDROID_STANDALONE_TOOLCHAIN})
-	if (WITH_SOFTCAM)
-		if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/SoftCam.Key)
-				execute_process (COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/SoftCam.Key ${CMAKE_CURRENT_BINARY_DIR}/SoftCam.Key)
-		else (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/SoftCam.Key)
-				execute_process (COMMAND touch ${CMAKE_CURRENT_BINARY_DIR}/SoftCam.Key)
-		endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/SoftCam.Key)
-		execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpmachine COMMAND cut -d "-" -f1 COMMAND 2>/dev/null COMMAND tr -d '\n' OUTPUT_VARIABLE ARCH)
-		if (ARCH MATCHES "aarch64")
-			execute_process (COMMAND ${CMAKE_LINKER} -r -o SoftCam.Key.o -z noexecstack --format=binary SoftCam.Key WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-			execute_process (COMMAND ${CMAKE_OBJCOPY} --rename-section .data=.rodata,alloc,load,readonly,data,contents ${CMAKE_CURRENT_BINARY_DIR}/SoftCam.Key.o)
-			set (softcamkey_data "${CMAKE_CURRENT_BINARY_DIR}/SoftCam.Key.o")
-		else (ARCH MATCHES "aarch64")
-			set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--format=binary -Wl,SoftCam.Key -Wl,--format=default")
-		endif (ARCH MATCHES "aarch64")
-	endif (WITH_SOFTCAM)
-endif (NOT DEFINED ENV{ANDROID_STANDALONE_TOOLCHAIN})
-endif (NOT DEFINED ENV{ANDROID_NDK})
-endif (NOT NCamOperatingSystem MATCHES "Mac OS X")
-
 #----------------------- the executable ------------------------------
 
 set (exe_name "ncam")
-add_executable (${exe_name} ${exe_srcs} ${exe_hdrs} ${softcamkey_data})
+add_executable (${exe_name} ${exe_srcs} ${exe_hdrs})
 target_link_libraries (${exe_name} ${csncam} ${csmodules} ${csreaders} csctapi cscrypt minilzo ffdecsa)
 if(HAVE_LIBRT AND HAVE_LIBUSB)
    if (LIBUSBDIR)
@@ -958,6 +934,23 @@ if( HAVE_LIBRT OR HAVE_LIBRT_STATIC)
         add_subdirectory (utils)
     endif (HAVE_LIBUSB)
 endif( HAVE_LIBRT OR HAVE_LIBRT_STATIC)
+
+#--------------------------------------------------------------------------------
+
+if (NOT NCAmOperatingSystem MATCHES "Mac OS X")
+if (NOT DEFINED ENV{ANDROID_NDK})
+if (NOT DEFINED ENV{ANDROID_STANDALONE_TOOLCHAIN})
+	if (WITH_SOFTCAM)
+		if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/SoftCam.Key)
+				execute_process (COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/SoftCam.Key ${CMAKE_CURRENT_BINARY_DIR}/SoftCam.Key)
+		else (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/SoftCam.Key)
+				execute_process (COMMAND touch ${CMAKE_CURRENT_BINARY_DIR}/SoftCam.Key)
+		endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/SoftCam.Key)
+		set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--format=binary -Wl,SoftCam.Key -Wl,--format=default")
+	endif (WITH_SOFTCAM)
+endif (NOT DEFINED ENV{ANDROID_STANDALONE_TOOLCHAIN})
+endif (NOT DEFINED ENV{ANDROID_NDK})
+endif (NOT NCAmOperatingSystem MATCHES "Mac OS X")
 
 #----------------------- installation -----------------------------
 
