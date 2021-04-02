@@ -1682,6 +1682,7 @@ static int add_reader_from_line(char s[512], int type)
 #endif
 		break;
 	}
+	chk_reader("services", "!emulator", rdr); // ncam.services
 	ll_append(configured_readers, rdr);
 	cs_debug_mask(D_READER, "Add reader device=%s,%d (typ:0x%X, protocol=%s)", rdr->device, rdr->r_port, rdr->typ, proto);
 	return ret;
