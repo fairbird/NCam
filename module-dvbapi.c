@@ -261,7 +261,7 @@ static int dvbapi_ioctl(int fd, uint32_t request, ...)
 			case DMX_STOP:
 			{
 				ret = send(fd, &request, sizeof(request), 0);
-				ret = 1;
+				if(!(ret == 1)){ ret = 1; }
 				break;
 			}
 
@@ -2580,7 +2580,6 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, uint32_t idx, bool enable, bo
 										{
 											cs_log("ERROR: Could not close demuxer fd (errno=%d %s)", errno, strerror(errno));
 										}
-										currentfd = ca_fd[i] = 0;
 									}
 								}
 							}
@@ -3460,7 +3459,6 @@ void dvbapi_resort_ecmpids(int32_t demux_id)
 			}
 		}
 	}
-	p_order = demux[demux_id].ECMpidcount + 1;
 
 	for(n = 0; n < demux[demux_id].ECMpidcount; n++)
 	{
@@ -7231,7 +7229,6 @@ static void *dvbapi_main_local(void *cli)
 			{
 				if(type[i] == 1)
 				{
-					connfd = -1; // initially no socket to read from
 					uint8_t add_to_poll = 0; // we may need to additionally poll this socket when no PMT data comes in
 
 					if(pfd2[i].fd == listenfd)
@@ -7308,7 +7305,6 @@ static void *dvbapi_main_local(void *cli)
 								}
 							}
 							close(connfd);
-							connfd = -1;
 
 							// last connection closed
 							if(!active_conn && (cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX))
