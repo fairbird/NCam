@@ -209,7 +209,7 @@ int32_t ICC_Async_Activate(struct s_reader *reader, ATR *atr, uint16_t deprecate
 	{
 		reader->crdr_flush = crdr_ops->flush; // Flush flag may be changed for each reader
 		call(crdr_ops->activate(reader, atr));
-		if(crdr_ops->skip_extra_atr_parsing)
+		if(reader->typ == R_EMU)
 		{
 			return OK;
 		}
@@ -433,7 +433,7 @@ int32_t ICC_Async_GetTimings(struct s_reader *reader, uint32_t wait_etu)
 int32_t ICC_Async_Transmit(struct s_reader *reader, uint32_t size, uint32_t expectedlen, unsigned char *data, uint32_t delay, uint32_t timeout)
 {
 	const struct s_cardreader *crdr_ops = reader->crdr;
-	if (!crdr_ops) return ERROR;
+	if(!crdr_ops || !crdr_ops->transmit) return ERROR;
 
 	if(expectedlen)
 	{
@@ -462,7 +462,7 @@ int32_t ICC_Async_Transmit(struct s_reader *reader, uint32_t size, uint32_t expe
 int32_t ICC_Async_Receive(struct s_reader *reader, uint32_t size, unsigned char *data, uint32_t delay, uint32_t timeout)
 {
 	const struct s_cardreader *crdr_ops = reader->crdr;
-	if (!crdr_ops) return ERROR;
+	if(!crdr_ops || !crdr_ops->receive) return ERROR;
 
 	rdr_log_dbg(reader, D_IFD, "Receive size %d bytes, delay %d us, timeout=%d us", size, delay, timeout);
 	call(crdr_ops->receive(reader, data, size, delay, timeout));

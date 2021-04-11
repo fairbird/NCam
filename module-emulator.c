@@ -822,7 +822,6 @@ const struct s_cardreader cardreader_emu =
 {
 	.desc                   = "emu",
 	.typ                    = R_EMU,
-	.skip_extra_atr_parsing = 1,
 	.reader_init            = emu_reader_init,
 	.get_status             = emu_get_status,
 	.activate               = emu_activate,
