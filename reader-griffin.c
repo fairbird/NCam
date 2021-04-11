@@ -181,8 +181,7 @@ static uint32_t griffin_init_cmd(struct s_reader *rdr, uint8_t *cmd_buf, uint8_t
 
 	if(DEBUG)
 	{
-		char tmp[1024];
-		rdr_log(rdr, "SEND[-] -> %s", cs_hexdump(1, cmd_buf, len, tmp, sizeof(tmp)));
+		rdr_log_dump(rdr, cmd_buf, len, "SEND[-] ->");
 	}
 	return len;
 }
@@ -197,8 +196,7 @@ static int32_t griffin_exec_cmd(struct s_reader *rdr, uint8_t cmd_op, const uint
 
 	if(DEBUG)
 	{
-		char tmp[1024];
-		rdr_log(rdr, "RECV[1] <- %s (ret=%d resp_len=%d)", cs_hexdump(1, response, *response_length, tmp, sizeof(tmp)), ret, *response_length);
+		rdr_log_dump(rdr, response, *response_length, "RECV[1] <- (ret=%d resp_len=%d)", ret, *response_length);
 	}
 
 	if(ret || *response_length < 2) { return ERROR; } // Response is two short
@@ -214,8 +212,7 @@ static int32_t griffin_exec_cmd(struct s_reader *rdr, uint8_t cmd_op, const uint
 
 	if(DEBUG)
 	{
-		char tmp[1024];
-		rdr_log(rdr, "RECV[2] <- %s (ret=%d resp_len=%d)", cs_hexdump(1, response, *response_length, tmp, sizeof(tmp)), ret, *response_length);
+		rdr_log_dump(rdr, response, *response_length, "RECV[2] <- (ret=%d resp_len=%d)", ret, *response_length);
 	}
 
 	if(ret || *response_length < 2)            { return ERROR; } // Response is two short

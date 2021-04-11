@@ -139,7 +139,7 @@ static int32_t ecm_ratelimit_findspace(struct s_reader *reader, ECM_REQUEST *er,
 #ifdef WITH_DEBUG
 							if(cs_dblevel & D_CLIENT)
 							{							
-								char ecmd5[17 * 3];
+								char ecmd5[(16 * 2) + 1];
 								cs_hexdump(0, reader->rlecmh[h].ecmd5, 16, ecmd5, sizeof(ecmd5));
 								cs_log_dbg(D_CLIENT, "ratelimiter ecm %s in this slot for next %d ms!", ecmd5,
 											(int)(reader->rlecmh[h].ratelimittime - gone));

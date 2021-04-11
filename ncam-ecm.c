@@ -817,18 +817,11 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 	if(cs_dblevel & D_CLIENTECM)
 	{
 		char buf[ECM_FMT_LEN];
-		char ecmd5[17 * 3];
-		char cwstr[17 * 3];
 		format_ecm(er, buf, ECM_FMT_LEN);
-		cs_hexdump(0, er->ecmd5, 16, ecmd5, sizeof(ecmd5));
-		cs_hexdump(0, er->cw, 16, cwstr, sizeof(cwstr));
 #ifdef CS_CACHEEX
-		char csphash[5 * 3];
-		cs_hexdump(0, (void *)&er->csp_hash, 4, csphash, sizeof(csphash));
-		cs_log_dbg(D_CLIENTECM, "Client %s csphash %s cw %s rc %d %s", username(client), csphash, cwstr, er->rc, buf);
-#else
-		cs_log_dbg(D_CLIENTECM, "Client %s cw %s rc %d %s", username(client), cwstr, er->rc, buf);
+		cs_log_dump_dbg(D_CLIENTECM, (void *)&er->csp_hash, 4, "Client %s csphash", username(client));
 #endif
+		cs_log_dump_dbg(D_CLIENTECM, er->cw, 16, "Client %s rc %d %s cw", username(client), er->rc, buf);
 	}
 #endif
 
@@ -1387,14 +1380,9 @@ void request_cw_from_readers(ECM_REQUEST *er, uint8_t stop_stage)
 			}
 
 			struct s_reader *rdr = ea->reader;
-#ifdef WITH_DEBUG
-			if (cs_dblevel & (D_TRACE | D_CSP))
-			{
-				char ecmd5[17 * 3];
-				cs_hexdump(0, er->ecmd5, 16, ecmd5, sizeof(ecmd5));
-				cs_log_dbg(D_TRACE | D_CSP, "request_cw stage=%d to reader %s ecm hash=%s", er->stage, rdr ? rdr->label : "", ecmd5);
-			}
-#endif
+
+			cs_log_dump_dbg(D_TRACE | D_CSP, er->ecmd5, 16, "request_cw stage=%d to reader %s ecm hash=", er->stage, rdr ? rdr->label : "");
+
 			ea->status |= REQUEST_SENT;
 			cs_ftime(&ea->time_request_sent);
 
@@ -1495,27 +1483,23 @@ void chk_dcw(struct s_ecm_answer *ea)
 #ifdef CS_CACHEEX
 		if(ea && ert->rc < E_NOTFOUND && ea->rc < E_NOTFOUND && memcmp(ea->cw, ert->cw, sizeof(ert->cw)) != 0)
 		{
-			char cw1[16 * 3 + 2], cw2[16 * 3 + 2];
-#ifdef WITH_DEBUG
-			if(cs_dblevel & D_TRACE)
-			{
-				cs_hexdump(0, ea->cw, 16, cw1, sizeof(cw1));
-				cs_hexdump(0, ert->cw, 16, cw2, sizeof(cw2));
-			}
-#endif
 			char ip1[20] = "", ip2[20] = "";
 			if(ea->reader && check_client(ea->reader->client)) { cs_strncpy(ip1, cs_inet_ntoa(ea->reader->client->ip), sizeof(ip1)); }
 			if(ert->cacheex_src) { cs_strncpy(ip2, cs_inet_ntoa(ert->cacheex_src->ip), sizeof(ip2)); }
 			else if(ert->selected_reader && check_client(ert->selected_reader->client)) { cs_strncpy(ip2, cs_inet_ntoa(ert->selected_reader->client->ip), sizeof(ip2)); }
 
 			ECM_REQUEST *er = ert;
-			debug_ecm(D_TRACE, "WARNING2: Different CWs %s from %s(%s)<>%s(%s): %s<>%s", buf,
-						username(ea->reader ? ea->reader->client : ert->client), ip1,
-						er->cacheex_src ? username(er->cacheex_src) : (ert->selected_reader ? ert->selected_reader->label : "unknown/csp"), ip2,
-						cw1, cw2);
+
+			if(cs_dblevel & D_TRACE)
+			{
+				char tmp_dbg1[(16 * 2) + 1], tmp_dbg2[(16 * 2) + 1];
+				debug_ecm(D_TRACE, "WARNING2: Different CWs %s from %s(%s)<>%s(%s): %s<>%s", buf,
+					username(ea->reader ? ea->reader->client : ert->client), ip1,
+					er->cacheex_src ? username(er->cacheex_src) : (ert->selected_reader ? ert->selected_reader->label : "unknown/csp"), ip2,
+					cs_hexdump(0, ea->cw, 16, tmp_dbg1, sizeof(tmp_dbg1)), cs_hexdump(0, ert->cw, 16, tmp_dbg2, sizeof(tmp_dbg2)));
+			}
 		}
 #endif
-
 		return;
 	}
 
@@ -1927,13 +1911,13 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 			}
 			if(hit > 1)
 			{
-				char ecmd5s[17 * 3];
-				cs_hexdump(0, er->ecmd5, 16, ecmd5s, sizeof(ecmd5s));
+				char tmp[(16 * 2) + 1];
+				cs_hexdump(0, er->ecmd5, 16, tmp, sizeof(tmp));
 				if(reader->dropbadcws)
 				{
 					rc = E_NOTFOUND;
 					rcEx = E2_WRONG_CHKSUM;
-					cs_log("Probably got bad CW from reader: %s, caid %04X, srvid %04X (%s) - dropping CW, lg: %i", reader->label, er->caid, er->srvid, ecmd5s
+					cs_log("Probably got bad CW from reader: %s, caid %04X, srvid %04X (%s) - dropping CW, lg: %i", reader->label, er->caid, er->srvid, tmp
 #ifdef CS_CACHEEX_AIO
 						, er->localgenerated);
 #else
@@ -1942,7 +1926,7 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 				}
 				else
 				{
-					cs_log("Probably got bad CW from reader: %s, caid %04X, srvid %04X (%s), lg: %i", reader->label, er->caid, er->srvid, ecmd5s
+					cs_log("Probably got bad CW from reader: %s, caid %04X, srvid %04X (%s), lg: %i", reader->label, er->caid, er->srvid, tmp
 #ifdef CS_CACHEEX_AIO
 						, er->localgenerated);
 #else
@@ -1951,7 +1935,6 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 				}
 			}
 		}
-
 	}
 
 #ifdef CW_CYCLE_CHECK
@@ -2049,14 +2032,8 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 		}
 
 		// reader checks
-#ifdef WITH_DEBUG
-	if(cs_dblevel & D_TRACE)
-	{
-		char ecmd5[17 * 3];
-		cs_hexdump(0, er->ecmd5, 16, ecmd5, sizeof(ecmd5));
-		rdr_log_dbg(reader, D_TRACE, "ecm answer for ecm hash %s rc=%d", ecmd5, ea->rc);
-	}
-#endif
+		rdr_log_dump_dbg(reader, D_TRACE, er->ecmd5, 16, "ecm answer for rc=%d ecm hash", ea->rc);
+
 		// Update reader stats:
 		if(ea->rc == E_FOUND)
 		{

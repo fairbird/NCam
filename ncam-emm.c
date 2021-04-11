@@ -638,7 +638,7 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 						memcpy(emm_pack_global, aureader->last_g_emm, sizeof(EMM_PACKET));
 						add_job(aureader->client, ACTION_READER_EMM, emm_pack_global, sizeof(EMM_PACKET));
 						saveemm(aureader, aureader->last_g_emm, "written stored global");
-						cs_log_dump_dbg(D_EMM,emm_pack_global->emm, emm_pack_global->emmlen, "Last stored global EMM to be written before shared EMM:");
+						cs_log_dump_dbg(D_EMM, emm_pack_global->emm, emm_pack_global->emmlen, "Last stored global EMM to be written before shared EMM:");
 					}
 				}
 #endif

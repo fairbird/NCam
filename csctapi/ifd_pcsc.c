@@ -6,6 +6,7 @@
 #include "../ncam-string.h"
 #ifdef WITH_CARDLIST
 #include "../cardlist.h"
+struct atrlist current;
 #endif
 
 #if defined(__CYGWIN__)
@@ -168,7 +169,6 @@ static int32_t pcsc_do_api(struct s_reader *pcsc_reader, const uint8_t *buf, uin
 		return ERROR;
 	}
 
-	char tmp[l * 3];
 	dwRecvLength = CTA_RES_LEN;
 
 	struct pcsc_data *crdr_data = pcsc_reader->crdr_data;
@@ -185,14 +185,14 @@ static int32_t pcsc_do_api(struct s_reader *pcsc_reader, const uint8_t *buf, uin
 			{ dwSendLength = l; }
 		else
 			{ dwSendLength = l - 1; }
-		rdr_log_dbg(pcsc_reader, D_DEVICE, "sending %lu bytes to PCSC : %s", (unsigned long)dwSendLength, cs_hexdump(1, buf, l, tmp, sizeof(tmp)));
+		rdr_log_dump_dbg(pcsc_reader, D_DEVICE, buf, l, "sending %lu bytes to PCSC :", (unsigned long)dwSendLength);
 		rv = SCardTransmit(crdr_data->hCard, SCARD_PCI_T0, (LPCBYTE) buf, dwSendLength, NULL, (LPBYTE) cta_res, (LPDWORD) &dwRecvLength);
 		*cta_lr = dwRecvLength;
 	}
 	else  if(crdr_data->dwActiveProtocol == SCARD_PROTOCOL_T1)
 	{
 		dwSendLength = l;
-		rdr_log_dbg(pcsc_reader, D_DEVICE, "sending %lu bytes to PCSC : %s", (unsigned long)dwSendLength, cs_hexdump(1, buf, l, tmp, sizeof(tmp)));
+		rdr_log_dump_dbg(pcsc_reader, D_DEVICE, buf, l, "sending %lu bytes to PCSC :", (unsigned long)dwSendLength);
 		rv = SCardTransmit(crdr_data->hCard, SCARD_PCI_T1, (LPCBYTE) buf, dwSendLength, NULL, (LPBYTE) cta_res, (LPDWORD) &dwRecvLength);
 		*cta_lr = dwRecvLength;
 	}
@@ -202,7 +202,7 @@ static int32_t pcsc_do_api(struct s_reader *pcsc_reader, const uint8_t *buf, uin
 		return ERROR;
 	}
 
-	rdr_log_dbg(pcsc_reader, D_DEVICE, "received %d bytes from PCSC with rv=%lx : %s", *cta_lr, (unsigned long)rv, cs_hexdump(1, cta_res, *cta_lr, tmp, sizeof(tmp)));
+	rdr_log_dump_dbg(pcsc_reader, D_DEVICE, cta_res, *cta_lr, "received %d bytes from PCSC with rv=%lx :", *cta_lr, (unsigned long)rv);
 
 	rdr_log_dbg(pcsc_reader, D_DEVICE, "PCSC doapi (%lx ) (T=%d), %d", (unsigned long)rv, (crdr_data->dwActiveProtocol == SCARD_PROTOCOL_T0 ? 0 :  1), *cta_lr);
 
@@ -248,12 +248,11 @@ static int32_t pcsc_activate_card(struct s_reader *pcsc_reader, uint8_t *atr, ui
 		rdr_log_dbg(pcsc_reader, D_DEVICE, "PCSC Protocol (T=%d)", (crdr_data->dwActiveProtocol == SCARD_PROTOCOL_T0 ? 0 :  1));
 		memcpy(atr, pbAtr, dwAtrLen);
 		*atr_size = dwAtrLen;
-
 		rdr_log(pcsc_reader, "ATR: %s", cs_hexdump(1, (uint8_t *)pbAtr, dwAtrLen, tmp, sizeof(tmp)));
 		memcpy(pcsc_reader->card_atr, pbAtr, dwAtrLen);
 		pcsc_reader->card_atr_length = dwAtrLen;
 #ifdef WITH_CARDLIST
-		memcpy(current.atr, cs_hexdump(1, (uint8_t *)pbAtr, dwAtrLen, tmp, sizeof(tmp)), dwAtrLen * 3 - 1);
+		memcpy(current.atr, tmp, (dwAtrLen * 3) - 1);
 		findatr(pcsc_reader);
 		if(cs_strlen(current.info))
 		{

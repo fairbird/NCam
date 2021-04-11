@@ -91,17 +91,8 @@ static uint8_t countCWpart(ECM_REQUEST *er, struct s_cw_cycle_check *cwc)
 	uint8_t eo = cwc->nextcyclecw ? 0 : 8;
 	int8_t i, ret = 0;
 
-#ifdef WITH_DEBUG
-	if(cs_dblevel & D_CWC)
-	{
-		char cwc_cw[9 * 3];
-		char er_cw[9 * 3];
-		cs_hexdump(0, cwc->cw + eo, 8, cwc_cw, sizeof(cwc_cw));
-		cs_hexdump(0, er->cw + eo, 8, er_cw, sizeof(er_cw));
-		cs_log_dbg(D_CWC, "cyclecheck [countCWpart] er-cw %s", er_cw);
-		cs_log_dbg(D_CWC, "cyclecheck [countCWpart] cw-cw %s", cwc_cw);
-	}
-#endif
+	cs_log_dump_dbg(D_CWC, er->cw + eo, 8, "cyclecheck [countCWpart] er-cw");
+	cs_log_dump_dbg(D_CWC, cwc->cw + eo, 8, "cyclecheck [countCWpart] cw-cw");
 
 	for(i = 0; i < 8; i++)
 	{
@@ -194,13 +185,13 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uin
 	int8_t cycleok = -1;
 	time_t now = er->tps.time; //time(NULL);
 	uint8_t need_new_entry = 1, upd_entry = 1;
-	char cwstr[17 * 3]; // cw to check
+	char cwstr[(16 * 2) + 1]; // cw to check
 
 	char cwc_ecmf[ECM_FMT_LEN];
-	char cwc_cw[17 * 3];
+	char cwc_cw[(16 * 2) + 1];
 #ifdef WITH_DEBUG
-	char cwc_md5[17 * 3];
-	char cwc_csp[5 * 3];
+	char cwc_md5[(16 * 2) + 1];
+	char cwc_csp[(4 * 2) + 1];
 #endif
 	int8_t n = 1, m = 1, k;
 	int32_t mcl = cfg.maxcyclelist;

@@ -7532,16 +7532,6 @@ void dvbapi_write_cw(int32_t demux_id, int32_t pid, int32_t stream_id, uint8_t *
 			int32_t i, j, write_cw = 0;
 			uint32_t usedidx, lastidx;
 
-			char lastcw[2 * cw_length + 1];
-			char newcw[2 * cw_length + 1];
-#ifdef WITH_DEBUG
-			if(cs_dblevel & D_DVBAPI)
-			{
-				cs_hexdump(0, demux[demux_id].last_cw[stream_id][n], cw_length, lastcw, sizeof(lastcw));
-				cs_hexdump(0, cw + (n * cw_length), cw_length, newcw, sizeof(newcw));
-			}
-#endif
-
 			for(i = 0; i < CA_MAX; i++)
 			{
 				if(!(demux[demux_id].ca_mask & (1 << i)))
@@ -7593,10 +7583,14 @@ void dvbapi_write_cw(int32_t demux_id, int32_t pid, int32_t stream_id, uint8_t *
 					memcpy(demux[demux_id].last_cw[stream_id][n], cw + (n * cw_length), cw_length);
 					memcpy(ca_descr.cw, cw + (n * 8), 8); // ca_descr is only used for 8 byte CWs
 
-					cs_log_dbg(D_DVBAPI, "Demuxer %d writing %s part (%s) of controlword, replacing expired (%s)",
-						demux_id, (n == 1 ? "even" : "odd"), newcw, lastcw);
-
-					cs_log_dbg(D_DVBAPI, "Demuxer %d write cw%d index: %d (ca%d)", demux_id, n, ca_descr.index, i);
+					if(cs_dblevel & D_DVBAPI)
+					{
+						char tmp_dbg1[(cw_length * 2) + 1], tmp_dbg2[(cw_length * 2) + 1];
+						cs_log_dbg(D_DVBAPI, "Demuxer %d writing %s part (%s) of controlword, replacing expired (%s)", demux_id, (n == 1 ? "even" : "odd"),
+							cs_hexdump(0, demux[demux_id].last_cw[stream_id][n], cw_length, tmp_dbg1, sizeof(tmp_dbg1)),
+							cs_hexdump(0, cw + (n * cw_length), cw_length, tmp_dbg2, sizeof(tmp_dbg2)));
+						cs_log_dbg(D_DVBAPI, "Demuxer %d write cw%d index: %d (ca%d)", demux_id, n, ca_descr.index, i);
+					}
 
 					if(cfg.dvbapi_extended_cw_api == 1) // Set descrambler algorithm and mode
 					{
@@ -7760,35 +7754,35 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 #ifndef WITH_WI
 		uint32_t comparecw0 = 0, comparecw1 = 0;
 #endif
-		char ecmd5[17 * 3];
-#ifdef WITH_DEBUG
-		if(cs_dblevel & D_DVBAPI)
+		switch(status)
 		{
-			cs_hexdump(0, er->ecmd5, 16, ecmd5, sizeof(ecmd5));
-		}
-#endif
-
-		if(status == 1 && er->rc) // wrong ecmhash
-		{
-			cs_log_dbg(D_DVBAPI, "Demuxer %d not interested in response ecmhash %s (requested different one)", i, ecmd5);
+		case 1:
+			if(er->rc) // wrong ecmhash
+			{
+				cs_log_dump_dbg(D_DVBAPI, er->ecmd5, 16, "Demuxer %d not interested in response ecmhash (requested different one)", i);
+				continue;
+			}
+			else
+			{
+				break;
+			}
+		case 2: // no filter
+			cs_log_dump_dbg(D_DVBAPI, er->ecmd5, 16, "Demuxer %d not interested in response ecmhash (filter already killed)", i);
 			continue;
-		}
-
-		if(status == 2) // no filter
-		{
-			cs_log_dbg(D_DVBAPI, "Demuxer %d not interested in response ecmhash %s (filter already killed)", i, ecmd5);
-			continue;
-		}
-
-		if(status == 5) // empty cw
-		{
-			cs_log_dbg(D_DVBAPI, "Demuxer %d not interested in response ecmhash %s (delivered cw is empty!)", i, ecmd5);
+		case 3: // table reset
+			cs_log_dump_dbg(D_DVBAPI, er->ecmd5, 16, "Demuxer %d luckyshot new controlword ecm response hash (ecm table reset)", i);
+			break;
+		case 4: // no check on cache-ex responses!
+			cs_log_dbg(D_DVBAPI, "Demuxer %d new controlword from cache-ex reader (no ecmhash check possible)", i);
+			break;
+		case 5: // empty cw
+			cs_log_dump_dbg(D_DVBAPI, er->ecmd5, 16, "Demuxer %d not interested in response ecmhash (delivered cw is empty!)", i);
 			nocw_write = 1;
-
 			if(er->rc < E_NOTFOUND)
 			{
 				er->rc = E_NOTFOUND;
 			}
+			break;
 		}
 #ifndef WITH_WI
 		// 0=matching ecm hash, 2=no filter, 3=table reset, 4=cache-ex response
@@ -7811,21 +7805,11 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 
 			if(comparecw0 == 1 || comparecw1 == 1)
 			{
-				cs_log_dbg(D_DVBAPI, "Demuxer %d duplicate controlword ecm response hash %s (duplicate controlword!)", i, ecmd5);
+				cs_log_dump_dbg(D_DVBAPI, er->ecmd5, 16, "Demuxer %d duplicate controlword ecm response hash (duplicate controlword!)", i);
 				nocw_write = 1;
 			}
 		}
 #endif
-		if(status == 3) // table reset
-		{
-			cs_log_dbg(D_DVBAPI, "Demuxer %d luckyshot new controlword ecm response hash %s (ecm table reset)", i, ecmd5);
-		}
-
-		if(status == 4) // no check on cache-ex responses!
-		{
-			cs_log_dbg(D_DVBAPI, "Demuxer %d new controlword from cache-ex reader (no ecmhash check possible)", i);
-		}
-
 		handled = 1; // mark this ecm response as handled
 		if(er->rc < E_NOTFOUND && cfg.dvbapi_requestmode == 0 && (demux[i].pidindex == -1) && er->caid != 0)
 		{
@@ -8066,20 +8050,20 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 #ifdef WITH_EMU
 		if(!chk_ctab_ex(er->caid, &cfg.emu_stream_relay_ctab) || !cfg.emu_stream_relay_enabled)
 		
-		if(er->selected_reader->typ == R_EMU)
+		if((cs_dblevel & D_DVBAPI) && (er->selected_reader->typ == R_EMU))
 		{
 			cs_log_dbg(D_DVBAPI, "------------");
 			cs_log_dbg(D_DVBAPI, "- KEY INFO -");
 			cs_log_dbg(D_DVBAPI, "MODE      : %s", (er->cw_ex.mode == CW_MODE_MULTIPLE_CW ? "Multiple CW" : "Single CW"));
 			cs_log_dbg(D_DVBAPI, "ALGO      : %s", (er->cw_ex.algo == CW_ALGO_CSA ? "CSA" : (er->cw_ex.algo == CW_ALGO_DES ? "DES56" : (er->cw_ex.algo == CW_ALGO_AES128 ? "AES128" : "Unknown"))));
 			cs_log_dbg(D_DVBAPI, "ALGO MODE : %s", (er->cw_ex.algo_mode == CW_ALGO_MODE_CBC ? "CBC" : "ECB"));
-			cs_log_dump_dbg(D_DVBAPI, er->cw, 16, "VIDEO CW" );
-			cs_log_dump_dbg(D_DVBAPI, er->cw_ex.audio[0], 16, "AUDIO CW 1");
-			cs_log_dump_dbg(D_DVBAPI, er->cw_ex.audio[1], 16, "AUDIO CW 2");
-			cs_log_dump_dbg(D_DVBAPI, er->cw_ex.audio[2], 16, "AUDIO CW 3");
-			cs_log_dump_dbg(D_DVBAPI, er->cw_ex.audio[3], 16, "AUDIO CW 4");
-			cs_log_dump_dbg(D_DVBAPI, er->cw_ex.data, 16, "DATA" );
-			cs_log_dump_dbg(D_DVBAPI, er->cw_ex.session_word, 32, "Session Word");
+			cs_log_dump_dbg(D_DVBAPI, er->cw_ex.data, 16, "DATA      :" );
+			cs_log_dump_dbg(D_DVBAPI, er->cw, 16, "VIDEO CW  :" );
+			cs_log_dump_dbg(D_DVBAPI, er->cw_ex.audio[0], 16, "AUDIO CW 1:");
+			cs_log_dump_dbg(D_DVBAPI, er->cw_ex.audio[1], 16, "AUDIO CW 2:");
+			cs_log_dump_dbg(D_DVBAPI, er->cw_ex.audio[2], 16, "AUDIO CW 3:");
+			cs_log_dump_dbg(D_DVBAPI, er->cw_ex.audio[3], 16, "AUDIO CW 4:");
+			cs_log_dump_dbg(D_DVBAPI, er->cw_ex.session_word, 32, "Session Word:");
 			cs_log_dbg(D_DVBAPI, "------------");
 		}
 #endif
@@ -8335,7 +8319,7 @@ void dvbapi_write_ecminfo_file(struct s_client *client, ECM_REQUEST *er, uint8_t
 	FILE *ecmtxt = fopen(ECMINFO_FILE, "w");
 	if(ecmtxt != NULL && er->rc < E_NOTFOUND)
 	{
-		char tmp[49]; // holds 16 byte cw - (2 hex digits + 1 space) * 16 byte + string termination)
+		char tmp[(cw_length * 3) + 1]; // holds 16 byte cw - (2 hex digits + 1 space) * 16 byte + string termination)
 		const char *reader_name = NULL, *from_name = NULL, *proto_name = NULL, *from_device= NULL ;
 		int8_t hops = 0;
 		int32_t from_port = 0;
@@ -8909,15 +8893,8 @@ int32_t dvbapi_check_ecm_delayed_delivery(int32_t demux_id, ECM_REQUEST *er)
 	if(memcmp(demux[demux_id].demux_fd[filternum].lastecmd5, nullcw, CS_ECMSTORESIZE))
 	{
 		demux[demux_id].demux_fd[filternum].lastresult = er->rc; // save last result
-		char ecmd5[17 * 3];
-#ifdef WITH_DEBUG
-		if(cs_dblevel & D_DVBAPI)
-		{
-			cs_hexdump(0, er->ecmd5, 16, ecmd5, sizeof(ecmd5));
-		}
-#endif
-		cs_log_dbg(D_DVBAPI, "Demuxer %d requested controlword for ecm %s on fd %d",
-			demux_id, ecmd5, demux[demux_id].demux_fd[filternum].fd);
+
+		cs_log_dump_dbg(D_DVBAPI, er->ecmd5, 16, "Demuxer %d requested controlword on fd %d for ecm", demux_id, demux[demux_id].demux_fd[filternum].fd);
 
 		uint8_t md5tmp[MD5_DIGEST_LENGTH];
 		MD5(er->ecm, er->ecmlen, md5tmp);

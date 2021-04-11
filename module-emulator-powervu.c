@@ -1881,9 +1881,6 @@ int8_t powervu_ecm(uint8_t *ecm, uint8_t *dw, EXTENDED_CW *cw_ex, uint16_t srvid
 	uint8_t ecmKey[7], tmpEcmKey[7], seedBase[4], baseCw[7], seed[8][8], cw[8][8], convolvedCw[8][8];
 	uint8_t ecmPart1[14], ecmPart2[27], unmaskedEcm[ecmLen], seedEcmCw[16];
 
-	//char tmpBuffer1[512];
-	char tmpBuffer2[17];
-
 	emu_stream_cw_item *cw_item;
 	int8_t update_global_key = 0;
 	int8_t update_global_keys[EMU_STREAM_SERVER_MAX_CONNECTIONS];
@@ -1897,7 +1894,7 @@ int8_t powervu_ecm(uint8_t *ecm, uint8_t *dw, EXTENDED_CW *cw_ex, uint16_t srvid
 
 	needsUnmasking = (ecm[3] & 0xF0) == 0x50;
 
-	//cs_log_dbg(D_ATR, "ecm1: %s", cs_hexdump(0, ecm, ecmLen, tmpBuffer1, sizeof(tmpBuffer1)));
+	//cs_log_dump_dbg(D_ATR, ecm, ecmLen, "ecm1:");
 
 	if (needsUnmasking)
 	{
@@ -1905,7 +1902,7 @@ int8_t powervu_ecm(uint8_t *ecm, uint8_t *dw, EXTENDED_CW *cw_ex, uint16_t srvid
 	}
 
 	//cs_log_dbg(D_ATR, "needsUnmasking=%d", needsUnmasking);
-	//cs_log_dbg(D_ATR, "ecm2: %s", cs_hexdump(0, ecm, ecmLen, tmpBuffer1, sizeof(tmpBuffer1)));
+	//cs_log_dump_dbg(D_ATR, ecm, ecmLen, "ecm2:");
 
 	memcpy(unmaskedEcm, ecm, ecmLen);
 
@@ -2122,11 +2119,9 @@ int8_t powervu_ecm(uint8_t *ecm, uint8_t *dw, EXTENDED_CW *cw_ex, uint16_t srvid
 								cw[j][k + 3] = ((cw[j][k] + cw[j][k + 1] + cw[j][k + 2]) & 0xFF);
 							}
 						}
-
-						cs_log_dbg(D_ATR, "calculated cw %d: %s", j,
-										cs_hexdump(0, cw[j], 8, tmpBuffer2, sizeof(tmpBuffer2)));
+						cs_log_dump_dbg(D_ATR, cw[j], 8, "calculated cw %d:", j);
 					}
-
+					//char tmpBuffer1[512];
 					//cs_log_dbg(D_ATR, "csaUsed=%d, cw: %s cdata=%x, cw_ex=%x",
 					//			csaUsed, cs_hexdump(3, cw[0], 8, tmpBuffer1, sizeof(tmpBuffer1)),
 					//			(unsigned int)cdata, (unsigned int)cw_ex);
@@ -2243,9 +2238,7 @@ int8_t powervu_ecm(uint8_t *ecm, uint8_t *dw, EXTENDED_CW *cw_ex, uint16_t srvid
 							cw[PVU_CW_VID][k + 3] = ((cw[PVU_CW_VID][k] + cw[PVU_CW_VID][k + 1] + cw[PVU_CW_VID][k + 2]) & 0xFF);
 						}
 					}
-
-					cs_log_dbg(D_ATR, "calculated video only cw: %s",
-									cs_hexdump(0, cw[PVU_CW_VID], 8, tmpBuffer2, sizeof(tmpBuffer2)));
+					cs_log_dump_dbg(D_ATR, cw[PVU_CW_VID], 8, "calculated video only cw:");
 				}
 
 				memset(dw, 0, 16);

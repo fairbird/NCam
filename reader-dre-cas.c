@@ -105,7 +105,6 @@ static int32_t drecas_send_cmd(struct s_reader *reader, uint8_t *cmd, int32_t cm
 
 	uint8_t command[260];
 	uint8_t checksum;
-	char tmp[256];
 
 	startcmd[1] = cmdlen + 2; // command + length + len + checksum bytes
 	startcmd[2] = dest;
@@ -116,7 +115,7 @@ static int32_t drecas_send_cmd(struct s_reader *reader, uint8_t *cmd, int32_t cm
 	checksum = xor(command+2, cmdlen-2);
 	command[cmdlen++] = checksum;
 
-	rdr_log_dbg(reader, D_READER, "write to module: %s", cs_hexdump(0, command, cmdlen, tmp, sizeof(tmp)));
+	rdr_log_dump_dbg(reader, D_READER, command, cmdlen, "write to module:");
 
 	ICC_Async_Transmit(reader, (uint32_t) cmdlen, 0, command, 0, 200);
 	ICC_Async_Receive(reader, 2, cta_res, 50, 3000000);
@@ -124,14 +123,13 @@ static int32_t drecas_send_cmd(struct s_reader *reader, uint8_t *cmd, int32_t cm
 	ICC_Async_Receive(reader, cta_res[1], cta_res+2, 50, 3000000);
 	*p_cta_lr = cta_res[1] + 2;
 
-	rdr_log_dbg(reader, D_READER, "answer from module: %s", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+	rdr_log_dump_dbg(reader, D_READER, cta_res, *p_cta_lr, "answer from module:");
 
 	checksum = xor(cta_res + 2, *p_cta_lr - 3);
 
 	if(cta_res[*p_cta_lr - 1] != checksum)
 	{
-		rdr_log(reader, "checksum does not match, expected %02x received %02x:%s", checksum,
-				cta_res[*p_cta_lr - 1], cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+		rdr_log_dump(reader, cta_res, *p_cta_lr, "checksum does not match, expected %02x received %02x:", checksum, cta_res[*p_cta_lr - 1]);
 		return ERROR; // error
 	}
 
@@ -146,7 +144,6 @@ static int32_t drecas_MSP_command(struct s_reader *reader, const uint8_t *cmd, i
 	uint8_t startcmd[] = { 0x80, 0xFF, 0x10, 0x01, 0x05 }; // any command starts with this,
 	uint8_t command[256];
 	uint8_t checksum;
-	char tmp[256];
 
 	startcmd[4] = cmdlen + 3; // command + length + len + checksum bytes
 	memcpy(command, startcmd, 5);
@@ -168,55 +165,55 @@ static int32_t drecas_MSP_command(struct s_reader *reader, const uint8_t *cmd, i
 		switch(cta_res[7])
 		{
 			case 0xe1:
-				rdr_log(reader, "checksum error: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+				rdr_log_dump(reader, cta_res, *p_cta_lr, "checksum error:");
 				break;
 
 			case 0xe2:
-				rdr_log(reader, "wrong cmd len: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+				rdr_log_dump(reader, cta_res, *p_cta_lr, "wrong cmd len:");
 				break;
 
 			case 0xe3:
-				rdr_log(reader, "illegal command: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+				rdr_log_dump(reader, cta_res, *p_cta_lr, "illegal command:");
 				break;
 
 			case 0xe4:
-				rdr_log(reader, "wrong adress type: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+				rdr_log_dump(reader, cta_res, *p_cta_lr, "wrong adress type:");
 				break;
 
 			case 0xe5:
-				rdr_log(reader, "wrong CMD param: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+				rdr_log_dump(reader, cta_res, *p_cta_lr, "wrong CMD param:");
 				break;
 
 			case 0xe6:
-				rdr_log(reader, "wrong UA: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+				rdr_log_dump(reader, cta_res, *p_cta_lr, "wrong UA:");
 				break;
 
 			case 0xe7:
-				rdr_log(reader, "wrong group: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+				rdr_log_dump(reader, cta_res, *p_cta_lr, "wrong group:");
 				break;
 
 			case 0xe8:
-				rdr_log(reader, "wrong key num: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+				rdr_log_dump(reader, cta_res, *p_cta_lr, "wrong key num:");
 				break;
 
 			case 0xeb:
-				rdr_log(reader, "No key or subscribe : %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+				rdr_log_dump(reader, cta_res, *p_cta_lr, "No key or subscribe:");
 				break;
 
 			case 0xec:
-				rdr_log(reader, "wrong signature: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+				rdr_log_dump(reader, cta_res, *p_cta_lr, "wrong signature:");
 				break;
 
 			case 0xed:
-				rdr_log(reader, "wrong provider: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+				rdr_log_dump(reader, cta_res, *p_cta_lr, "wrong provider:");
 				break;
 
 			case 0xef:
-				rdr_log(reader, "wrong GEO code: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+				rdr_log_dump(reader, cta_res, *p_cta_lr, "wrong GEO code:");
 				break;
 
 			default:
-				rdr_log_dbg(reader, D_READER, "unknown error: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+				rdr_log_dump(reader, cta_res, *p_cta_lr, "unknown error:");
 				break;
 		}
 		return ERROR; // error
@@ -228,8 +225,7 @@ static int32_t drecas_MSP_command(struct s_reader *reader, const uint8_t *cmd, i
 
 	if(cta_res[length_excl_leader - 2] != checksum)
 	{
-		rdr_log(reader, "checksum does not match, expected %02x received %02x:%s", checksum,
-				cta_res[length_excl_leader - 2], cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+		rdr_log_dump(reader, cta_res, *p_cta_lr, "checksum does not match, expected %02x received %02x:",checksum, cta_res[length_excl_leader - 2]);
 		return ERROR; // error
 	}
 
@@ -253,7 +249,6 @@ static int32_t drecas_STM_command(struct s_reader *reader, const uint8_t *cmd, i
 
 	uint8_t command[256];
 	uint8_t checksum;
-	char tmp[256];
 
 	command[0] = 0xC2;
 	command[1] = STM_CMD_BYTE; // type
@@ -274,55 +269,55 @@ static int32_t drecas_STM_command(struct s_reader *reader, const uint8_t *cmd, i
 		switch(cta_res[7])
 		{
 			case 0xe1:
-				rdr_log(reader, "checksum error: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+				rdr_log_dump(reader, cta_res, *p_cta_lr, "checksum error:");
 				break;
 
 			case 0xe2:
-				rdr_log(reader, "wrong cmd len: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+				rdr_log_dump(reader, cta_res, *p_cta_lr, "wrong cmd len:");
 				break;
 
 			case 0xe3:
-				rdr_log(reader, "illegal command: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+				rdr_log_dump(reader, cta_res, *p_cta_lr, "illegal command:");
 				break;
 
 			case 0xe4:
-				rdr_log(reader, "wrong adress type: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+				rdr_log_dump(reader, cta_res, *p_cta_lr, "wrong adress type:");
 				break;
 
 			case 0xe5:
-				rdr_log(reader, "wrong CMD param: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+				rdr_log_dump(reader, cta_res, *p_cta_lr, "wrong CMD param:");
 				break;
 
 			case 0xe6:
-				rdr_log(reader, "wrong UA: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+				rdr_log_dump(reader, cta_res, *p_cta_lr, "wrong UA:");
 				break;
 
 			case 0xe7:
-				rdr_log(reader, "wrong group: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+				rdr_log_dump(reader, cta_res, *p_cta_lr, "wrong group:");
 				break;
 
 			case 0xe8:
-				rdr_log(reader, "wrong key num: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+				rdr_log_dump(reader, cta_res, *p_cta_lr, "wrong key num:");
 				break;
 
 			case 0xeb:
-				rdr_log(reader, "No key or subscribe : %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+				rdr_log_dump(reader, cta_res, *p_cta_lr, "No key or subscribe:");
 				break;
 
 			case 0xec:
-				rdr_log(reader, "wrong signature: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+				rdr_log_dump(reader, cta_res, *p_cta_lr, "wrong signature:");
 				break;
 
 			case 0xed:
-				rdr_log(reader, "wrong provider: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+				rdr_log_dump(reader, cta_res, *p_cta_lr, "wrong provider:");
 				break;
 
 			case 0xef:
-				rdr_log(reader, "wrong GEO code: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+				rdr_log_dump(reader, cta_res, *p_cta_lr, "wrong GEO code:");
 				break;
 
 			default:
-				rdr_log_dbg(reader, D_READER, "unknown error: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+				rdr_log_dump(reader, cta_res, *p_cta_lr, "unknown error:");
 				break;
 		}
 		return ERROR; // error
@@ -334,8 +329,7 @@ static int32_t drecas_STM_command(struct s_reader *reader, const uint8_t *cmd, i
 
 	if(cta_res[length_excl_leader - 2] != checksum)
 	{
-		rdr_log(reader, "checksum does not match, expected %02x received %02x:%s", checksum,
-				cta_res[length_excl_leader - 2], cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+		rdr_log_dump_dbg(reader, D_READER, cta_res, *p_cta_lr, "checksum does not match, expected %02x received %02x:", checksum, cta_res[length_excl_leader - 2]);
 		return ERROR; // error
 	}
 
@@ -366,9 +360,8 @@ static int32_t drecas_set_provider_info(struct s_reader *reader)
 	if((drecas_MSP_cmd(subscr))) // ask subscription packages, returns error on 0x11 card
 	{
 		uint8_t pbm[32];
-		char tmp_dbg[65];
 		memcpy(pbm, cta_res + 7, 32);
-		rdr_log_dbg(reader, D_READER, "pbm: %s", cs_hexdump(0, pbm, 32, tmp_dbg, sizeof(tmp_dbg)));
+		rdr_log_dump_dbg(reader, D_READER, pbm, 32, "pbm:");
 
 		for(i = 0; i < 32; i++)
 		{
@@ -615,7 +608,6 @@ static int32_t drecas_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, str
 	def_resp;
 	uint16_t overcryptId;
 	uint8_t tmp[16];
-	char tmp_dbg[256];
 	struct dre_data *csystem_data = reader->csystem_data;
 
 	if(reader->caid == 0x4ae1)
@@ -630,10 +622,10 @@ static int32_t drecas_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, str
 								   0x14 }; // provider
 
 			memcpy(ecmcmd51 + 1, er->ecm + 5, 0x21);
-			rdr_log_dbg(reader, D_READER, "unused ECM info front:%s", cs_hexdump(0, er->ecm, 5, tmp_dbg, sizeof(tmp_dbg)));
-			rdr_log_dbg(reader, D_READER, "unused ECM info back:%s", cs_hexdump(0, er->ecm + 37, 4, tmp_dbg, sizeof(tmp_dbg)));
+			rdr_log_dump_dbg(reader, D_READER, er->ecm, 5, "unused ECM info front:");
+			rdr_log_dump_dbg(reader, D_READER, er->ecm + 37, 4, "unused ECM info back:");
 
-			rdr_log_dbg(reader, D_READER, "ECM: %s",cs_hexdump(0, er->ecm, er->ecm[2] + 3, tmp_dbg, sizeof(tmp_dbg)));
+			rdr_log_dump_dbg(reader, D_READER, er->ecm, er->ecm[2] + 3, "ECM:");
 
 			ecmcmd51[33] = csystem_data->provider; // no part of sig
 
@@ -667,13 +659,13 @@ static int32_t drecas_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, str
 
 						if(!(drecas_STM_cmd(stm_keys_t.stmcmd34[er->ecm[5] + (er->ecm[6] == 0x3B ? 0 : 32)])))
 						{
-							rdr_log_dbg(reader, D_READER, "Error STM set key: %s",cs_hexdump(0, cta_res, cta_lr, tmp_dbg, sizeof(tmp_dbg)));
+							rdr_log_dump_dbg(reader, D_READER, cta_res, cta_lr, "Error STM set key:");
 							return ERROR;
 						}
 
 						if((cta_res[cta_lr - 4] != 0x02) || (cta_res[cta_lr - 3] != 0xA2))
 						{
-							rdr_log_dbg(reader, D_READER, "Error STM set key: %s",cs_hexdump(0, cta_res, cta_lr, tmp_dbg, sizeof(tmp_dbg)));
+							rdr_log_dump_dbg(reader, D_READER, cta_res, cta_lr, "Error STM set key:");
 							return ERROR;
 						}
 					}

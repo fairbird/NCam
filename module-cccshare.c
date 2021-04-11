@@ -1202,7 +1202,6 @@ void update_card_list(void)
 
 				add_card_to_serverlist(get_cardlist(card->caid, server_cards), card, 1);
 			}
-			flt = 1;
 		}
 	}
 	else

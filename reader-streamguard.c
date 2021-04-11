@@ -373,7 +373,6 @@ static int32_t streamguard_do_ecm(struct s_reader *reader, const ECM_REQUEST *er
 	int32_t read_size = 0;
 	int32_t data_len = 0;
 	uint16_t status = 0;
-	char *tmp;
 
 	int32_t cas_version = reader->cas_version & 0x00FFFFL;
 	if((ecm_len = check_sct_len(er->ecm, 3, sizeof(er->ecm))) < 0)
@@ -381,12 +380,7 @@ static int32_t streamguard_do_ecm(struct s_reader *reader, const ECM_REQUEST *er
 		return ERROR;
 	}
 
-	if(cs_malloc(&tmp, ecm_len * 3 + 1))
-	{
-		cs_debug_mask(D_IFD, "ECM: %s", cs_hexdump(1, er->ecm, ecm_len, tmp, ecm_len * 3 + 1));
-		//rdr_log_dump(reader, er->ecm, ecm_len,"ECM:");
-		free(tmp);
-	}
+	cs_ddump_mask(D_IFD, er->ecm, ecm_len, "ECM:");
 
 	write_len = er->ecm[2] + 3;
 	ecm_cmd[4] = write_len;

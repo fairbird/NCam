@@ -494,17 +494,13 @@ static int32_t jet_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, struct
 	uint8_t ecm[512] = {0};
 	int i, offset, len;
 	int ecm_len;
-	char *tmp;
 	static uint32_t count_for_resync_vendorkey = 0;
 	uint32_t cas_version = reader->cas_version & 0x00FFFFL;
 
 	def_resp;
 
-	if(cs_malloc(&tmp, er->ecmlen * 3 + 1))
-	{
-		rdr_log_dbg(reader, D_IFD, "ECM: %s", cs_hexdump(1, er->ecm, er->ecmlen, tmp, er->ecmlen * 3 + 1));
-		NULLFREE(tmp);
-	}
+	rdr_log_dump_dbg(reader, D_IFD, er->ecm, er->ecmlen, "ECM:");
+
 	if((ecm_len = check_sct_len(er->ecm, 3, sizeof(er->ecm))) < 0)
 	{
 		rdr_log(reader, "error: check_sct_len failed, smartcard section too long %d > %zd", SCT_LEN(er->ecm), sizeof(er->ecm) - 3);

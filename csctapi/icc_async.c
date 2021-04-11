@@ -223,14 +223,13 @@ int32_t ICC_Async_Activate(struct s_reader *reader, ATR *atr, uint16_t deprecate
 	memcpy(reader->card_atr, atrarr, atr_size);
 	reader->card_atr_length = atr_size;
 #ifdef WITH_CARDLIST
-	memcpy(current.atr, cs_hexdump(1, atrarr, atr_size, tmp, sizeof(tmp)), atr_size * 3 - 1);
+	memcpy(current.atr, tmp, (atr_size * 3) - 1);
 	findatr(reader);
 	if(cs_strlen(current.info))
 	{
 		rdr_log(reader, "%s %s", cs_strlen(current.providername) ? current.providername : "card system", current.info);
 	}
 #endif
-
 	// Get ICC reader->convention
 	if(ATR_GetConvention(atr, &(reader->convention)) != ATR_OK)
 	{
@@ -581,7 +580,6 @@ static int32_t Parse_ATR(struct s_reader *reader, ATR *atr, uint16_t deprecated)
 	uint32_t D = ATR_DEFAULT_D;
 	uint32_t N = ATR_DEFAULT_N;
 	int32_t ret;
-	char tmp[256];
 
 	int32_t numprot = atr->pn;
 	//if there is a trailing TD, this number is one too high
@@ -645,7 +643,7 @@ static int32_t Parse_ATR(struct s_reader *reader, ATR *atr, uint16_t deprecated)
 		{
 			numprottype ++;
 		}
-	rdr_log_dbg(reader, D_ATR, "%i protocol types detected. Historical bytes: %s", numprottype, cs_hexdump(1, atr->hb, atr->hbn, tmp, sizeof(tmp)));
+	rdr_log_dump_dbg(reader, D_ATR, atr->hb, atr->hbn, "%i protocol types detected. Historical bytes:", numprottype);
 
 	ATR_GetParameter(atr, ATR_PARAMETER_N, &(N));
 	ATR_GetProtocolType(atr, 1, &(reader->protocol_type)); // get protocol from TD1
@@ -774,12 +772,11 @@ static int32_t PPS_Exchange(struct s_reader *reader, unsigned char *params, uint
 
 	unsigned char confirm[PPS_MAX_LENGTH];
 	uint32_t len_request, len_confirm;
-	char tmp[128];
 	int32_t ret;
 
 	len_request = PPS_GetLength(params);
 	params[len_request - 1] = PPS_GetPCK(params, len_request - 1);
-	rdr_log_dbg(reader, D_IFD, "PTS: Sending request: %s", cs_hexdump(1, params, len_request, tmp, sizeof(tmp)));
+	rdr_log_dump_dbg(reader, D_IFD, params, len_request, "PTS: Sending request:");
 
 	if(crdr_ops->set_protocol)
 	{
@@ -795,7 +792,7 @@ static int32_t PPS_Exchange(struct s_reader *reader, unsigned char *params, uint
 	len_confirm = PPS_GetLength(confirm);
 	call(ICC_Async_Receive(reader, len_confirm - 2, confirm + 2, 0, 1000000));
 
-	rdr_log_dbg(reader, D_IFD, "PTS: Receiving confirm: %s", cs_hexdump(1, confirm, len_confirm, tmp, sizeof(tmp)));
+	rdr_log_dump_dbg(reader, D_IFD, confirm, len_confirm, "PTS: Receiving confirm:");
 	if((len_request != len_confirm) || (memcmp(params, confirm, len_request)))
 	{
 		ret = ERROR;

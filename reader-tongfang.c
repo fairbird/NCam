@@ -325,7 +325,6 @@ static int32_t tongfang_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 	uint8_t *ecm_cmd = ecm_buf;
 	int32_t ecm_len = 0;
 	uint8_t data[256] = {0};
-	char *tmp;
 	int32_t i = 0;
 	size_t write_len = 0;
 	size_t read_size = 0;
@@ -334,11 +333,8 @@ static int32_t tongfang_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 	uint32_t cas_version = reader->cas_version & 0x00FFFFL;
 
 	def_resp;
-	if(cs_malloc(&tmp, er->ecmlen * 3 + 1))
-	{
-		rdr_log_dbg(reader, D_IFD, "ECM: %s", cs_hexdump(1, er->ecm, er->ecmlen, tmp, er->ecmlen * 3 + 1));
-		NULLFREE(tmp);
-	}
+
+	rdr_log_dump_dbg(reader, D_IFD, er->ecm, er->ecmlen, "ECM:");
 
 	if((ecm_len = check_sct_len(er->ecm, 3, sizeof(er->ecm))) < 0)
 	{
@@ -384,9 +380,7 @@ static int32_t tongfang_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 		}
 		else
 		{
-			char ecm_cmd_string[150];
-			rdr_log(reader, "error: card send parsing ecm command failed!(%s)",
-					cs_hexdump(1, ecm_cmd, write_len, ecm_cmd_string, sizeof(ecm_cmd_string)));
+			rdr_log_dump(reader, ecm_cmd, write_len, "error: card send parsing ecm command failed! :");
 			if(ecm_cmd != ecm_buf)
 			{
 				NULLFREE(ecm_cmd);
@@ -409,9 +403,7 @@ static int32_t tongfang_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 	data_len = tongfang_read_data(reader, read_size, data, &status);
 	if(data_len < 23)
 	{
-		char ecm_string[256 * 3 + 1];
-		rdr_log(reader, "error: card return cw data failed,return data len=%zd(ECM:%s).", data_len,
-				cs_hexdump(1, er->ecm, er->ecmlen, ecm_string, sizeof(ecm_string)));
+		rdr_log_dump(reader, er->ecm, er->ecmlen, "error: card return cw data failed,return data len=%zd ECM:", data_len);
 		return ERROR;
 	}
 
