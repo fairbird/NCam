@@ -8,8 +8,6 @@
 #include "reader-nagra-common.h"
 #include "ncam-work.h"
 
-int8_t ins7e11_state = 0;
-
 struct nagra_data
 {
 	IDEA_KEY_SCHEDULE ksSession;
@@ -766,6 +764,7 @@ static int32_t nagra2_card_init(struct s_reader *reader, ATR *newatr)
 	memset(reader->rom, 0, 15);
 	static const uint8_t ins80[] = { 0x80, 0xCA, 0x00, 0x00, 0x11 }; // switch to nagra layer
 	static const uint8_t handshake[] = { 0xEE, 0x51, 0xDC, 0xB8, 0x4A, 0x1C, 0x15, 0x05, 0xB5, 0xA6, 0x9B, 0x91, 0xBA, 0x33, 0x19, 0xC4, 0x10 }; // nagra handshake
+	int8_t ins7e11_state = 0;
 
 	int8_t is_pure_nagra = 0;
 	int8_t is_tiger = 0;
@@ -864,7 +863,6 @@ static int32_t nagra2_card_init(struct s_reader *reader, ATR *newatr)
 
 				if ((reader->typ == R_SMART || reader->typ == R_INTERNAL || is_smargo_reader(reader)) && ins7e11_state == 1)
 				{
-					ins7e11_state = 0;
 					reader->ins7e11_fast_reset = 0;
 				}
 			}

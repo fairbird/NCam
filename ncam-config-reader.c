@@ -1272,7 +1272,7 @@ static const struct config_list reader_opts[] =
 #ifdef READER_TONGFANG
 	DEF_OPT_FUNC("tongfang3_calibsn"              , 0,                                    tongfang3_calibsn_fn),
 #endif
-#ifdef  READER_JET
+#ifdef READER_JET
 	DEF_OPT_FUNC("jet_authorize_id"               , 0,                                    jet_authorize_id_fn),
 	DEF_OPT_INT8("jet_resync_vendorkey"           , OFS(jet_resync_vendorkey),            0),
 	DEF_OPT_INT8("jet_fix_ecm"                    , OFS(jet_fix_ecm),                     0),

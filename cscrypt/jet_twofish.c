@@ -462,8 +462,8 @@ int twofish_setkey(struct twofish_ctx *ctx, uint8_t *key, int length)
 	//
 	uint32_t k0 = sBoxKey[0];
 	uint32_t k1 = sBoxKey[1];
-	uint32_t k2 = sBoxKey[2];
-	uint32_t k3 = sBoxKey[3];
+	//uint32_t k2 = sBoxKey[2];
+	//uint32_t k3 = sBoxKey[3];
 	uint32_t b0, b1, b2, b3;
 	uint32_t *sBox = ctx->sBox;
 	for(i = 0; i < 256; i++)
@@ -477,7 +477,7 @@ int twofish_setkey(struct twofish_ctx *ctx, uint8_t *key, int length)
 			sBox[0x200 + 2 * i] = MDS[2][(P[P_21][b2] & 0xFF) ^ b2(k0)];
 			sBox[0x200 + 2 * i + 1] = MDS[3][(P[P_31][b3] & 0xFF) ^ b3(k0)];
 			break;
-		case 0: // same as 4
+		/*case 0: // same as 4
 			b0 = (P[P_04][b0] & 0xFF) ^ b0(k3);
 			b1 = (P[P_14][b1] & 0xFF) ^ b1(k3);
 			b2 = (P[P_24][b2] & 0xFF) ^ b2(k3);
@@ -488,7 +488,7 @@ int twofish_setkey(struct twofish_ctx *ctx, uint8_t *key, int length)
 			b1 = (P[P_13][b1] & 0xFF) ^ b1(k2);
 			b2 = (P[P_23][b2] & 0xFF) ^ b2(k2);
 			b3 = (P[P_33][b3] & 0xFF) ^ b3(k2);
-			break;
+			break;*/
 		case 2: // 128-bit keys
 			sBox[2 * i] = MDS[0][(P[P_01][(P[P_02][b0] & 0xFF) ^ b0(k1)] & 0xFF) ^ b0(k0)];
 			sBox[2 * i + 1] = MDS[1][(P[P_11][(P[P_12][b1] & 0xFF) ^ b1(k1)] & 0xFF) ^ b1(k0)];

@@ -105,7 +105,7 @@ err:
 /* Must 'OPENSSL_free' the returned data */
 char *BN_bn2dec(const BIGNUM *a)
 {
-	int i = 0, num;
+	int i, num;
 	char *buf = NULL;
 	char *p;
 	BIGNUM *t = NULL;
@@ -131,7 +131,6 @@ char *BN_bn2dec(const BIGNUM *a)
 	}
 	else
 	{
-		i = 0;
 		while(!BN_is_zero(t))
 		{
 			*lp = BN_div_word(t, BN_DEC_CONV);
@@ -192,7 +191,6 @@ int BN_hex2bn(BIGNUM **bn, const char *a)
 	if(bn_expand(ret, i * 4) == NULL) { goto err; }
 
 	j = i; /* least significant 'hex' */
-	m = 0;
 	h = 0;
 	while(j > 0)
 	{

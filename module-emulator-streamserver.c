@@ -242,7 +242,7 @@ static int8_t stream_client_get_caid(emu_stream_client_data *cdata)
 
 static void ParseDescriptors(uint8_t *buffer, uint16_t info_length, uint8_t *type)
 {
-	uint8_t descriptor_tag = buffer[0], descriptor_length = 0;
+	uint8_t descriptor_tag = 0, descriptor_length = 0;
 	uint32_t j, k;
 
 	if (info_length < 1)
@@ -1330,7 +1330,7 @@ static void *stream_client_handler(void *arg)
 
 	uint8_t *stream_buf;
 	uint16_t packetCount = 0, packetSize = 0, startOffset = 0;
-	uint32_t remainingDataPos, remainingDataLength, tmp_pids[4];
+	uint32_t remainingDataPos, remainingDataLength, tmp_pids[4] = {0};
 
 	cs_log("Stream client %i connected", conndata->connid);
 

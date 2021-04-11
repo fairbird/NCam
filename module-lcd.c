@@ -58,10 +58,7 @@ static void refresh_lcd_file(void)
 			char *status;
 
 			// Statuslines start
-			secs = 0;
-			fullmins = 0;
 			mins = 0;
-			fullhours = 0;
 			hours = 0;
 			days = 0;
 
@@ -104,10 +101,7 @@ static void refresh_lcd_file(void)
 					type = "";
 					label = "";
 					status = "OFF";
-					secs = 0;
-					fullmins = 0;
 					mins = 0;
-					fullhours = 0;
 					hours = 0;
 					days = 0;
 

@@ -281,7 +281,6 @@ static int32_t send_sid_list(void)
 
 		network_message_send(cl->udp_fd, &cl->ncd_msgid, mbuf, portion_sid_num * 3,
 								cl->ncd_skey, COMMTYPE_SERVER, 0, &cd);
-		portion_sid_num = 0;
 	}
 
 	cs_log("%d deny SIDs in the %d messages were sent to the client.", sid_num, portion_num);

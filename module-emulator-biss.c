@@ -431,7 +431,6 @@ static int8_t biss_mode1_ecm(struct s_reader *rdr, const uint8_t *ecm, uint16_t 
 
 			if (get_sw(hash, sw, sw_length, rdr->emu_datecodedenabled, i == 0 ? 2 : 1)) // Do not print "key not found" for frequency off by 1, 2
 			{
-				memcpy(sw + sw_length, sw, sw_length);
 				return EMU_OK;
 			}
 
@@ -454,7 +453,6 @@ static int8_t biss_mode1_ecm(struct s_reader *rdr, const uint8_t *ecm, uint16_t 
 
 		if (get_sw(hash, sw, sw_length, rdr->emu_datecodedenabled, 2))
 		{
-			memcpy(sw + sw_length, sw, sw_length);
 			return EMU_OK;
 		}
 
@@ -467,7 +465,6 @@ static int8_t biss_mode1_ecm(struct s_reader *rdr, const uint8_t *ecm, uint16_t 
 	{
 		if (get_sw(tsid << 16 | onid, sw, sw_length, 0, 2))
 		{
-			memcpy(sw + sw_length, sw, sw_length);
 			return EMU_OK;
 		}
 	}
@@ -486,7 +483,6 @@ static int8_t biss_mode1_ecm(struct s_reader *rdr, const uint8_t *ecm, uint16_t 
 
 		if (get_sw((srvid << 16) | pid, sw, sw_length, 0, 2))
 		{
-			memcpy(sw + sw_length, sw, sw_length);
 			return EMU_OK;
 		}
 	}
@@ -494,7 +490,6 @@ static int8_t biss_mode1_ecm(struct s_reader *rdr, const uint8_t *ecm, uint16_t 
 	// 5. Legacy [srvid] [ecm pid] combination
 	if (get_sw((srvid << 16) | ecm_pid, sw, sw_length, 0, 2))
 	{
-		memcpy(sw + sw_length, sw, sw_length);
 		return EMU_OK;
 	}
 
@@ -502,7 +497,6 @@ static int8_t biss_mode1_ecm(struct s_reader *rdr, const uint8_t *ecm, uint16_t 
 	// (limited to local ecms, network ecms with ecm pid equal to zero are blocked)
 	if (ecm_pid != 0 && get_sw(0xA11FEED5, sw, sw_length, rdr->emu_datecodedenabled, 2))
 	{
-		memcpy(sw + sw_length, sw, sw_length);
 		cs_hexdump(0, sw, sw_length, tmp_buffer1, sizeof(tmp_buffer1));
 		cs_log("No specific match found. Using 'All Feeds' key: %s", tmp_buffer1);
 		return EMU_OK;

@@ -1163,7 +1163,7 @@ void report_card(struct cc_card *card, LLIST *new_reported_carddatas, LLIST *new
  */
 void update_card_list(void)
 {
-	int32_t i, j, k, l, flt, card_count = 0;
+	int32_t i, j, k, l, card_count = 0;
 
 	LLIST *server_cards[CAID_KEY];
 	LLIST *new_reported_carddatas[CAID_KEY];
@@ -1228,7 +1228,7 @@ void update_card_list(void)
 				}
 			}
 
-			flt = 0;
+			int32_t flt = 0;
 
 			int8_t reshare = rdr->cc_reshare > -1 ? rdr->cc_reshare : cfg.cc_reshare;
 

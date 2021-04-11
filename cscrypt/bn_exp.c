@@ -207,9 +207,7 @@ int BN_mod_exp_simple(BIGNUM *r, BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	start = 1;    /* This is used to avoid multiplication etc
              * when there is only the value '1' in the
              * buffer. */
-	wvalue = 0; /* The 'value' of the window */
 	wstart = bits - 1; /* The top bit of the window */
-	wend = 0;   /* The bottom bit of the window */
 
 	if(!BN_one(r)) { goto err; }
 
@@ -228,7 +226,6 @@ int BN_mod_exp_simple(BIGNUM *r, BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 		 * how bit a window to do.  To do this we need to scan
 		 * forward until the last set bit before the end of the
 		 * window */
-		j = wstart;
 		wvalue = 1;
 		wend = 0;
 		for(i = 1; i < window; i++)
@@ -258,7 +255,6 @@ int BN_mod_exp_simple(BIGNUM *r, BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 
 		/* move the 'window' down further */
 		wstart -= wend + 1;
-		wvalue = 0;
 		start = 0;
 		if(wstart < 0) { break; }
 	}

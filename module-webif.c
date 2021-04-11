@@ -362,9 +362,6 @@ static void set_ecm_info(struct templatevars * vars)
 	double tskuk = 0, tskg = 0, tsks = 0, tskuq = 0;
 	double tbluk = 0, tblg = 0, tbls = 0, tbluq = 0;
 
-	ecmsum = 0;
-	emmsum = 0;
-
 	cs_readlock(__func__, &readerlist_lock);
 	LL_ITER itr = ll_iter_create(configured_readers);
 	struct s_reader *rdr;
@@ -4566,10 +4563,8 @@ static char *send_ncam_user_config(struct templatevars *vars, struct uriparams *
 	{
 		//clear for next client
 		total_users++;
-		isactive = 1;
 
 		status = "offline";
-		expired = "";
 		classname = "offline";
 		isec = 0;
 		chsec = 0;
@@ -4599,7 +4594,6 @@ static char *send_ncam_user_config(struct templatevars *vars, struct uriparams *
 			expired = " (expired)";
 			classname = "expired";
 			expired_users++;
-			isactive = 0;
 		}
 		else
 		{
@@ -4614,7 +4608,6 @@ static char *send_ncam_user_config(struct templatevars *vars, struct uriparams *
 			tpl_addVar(vars, TPLADD, "SWITCHTITLE", "Enable");
 			tpl_addVar(vars, TPLADD, "SWITCH", "enable");
 			disabled_users++;
-			isactive = 0;
 		}
 		else
 		{
@@ -6440,7 +6433,6 @@ static char *send_ncam_status(struct templatevars * vars, struct uriparams * par
 						if(shown || cl->wihidden)
 						{
 							tpl_addVar(vars, TPLADD, "SERVERHEADLINE", tpl_getTpl(vars, "STATUSHEADLINE"));
-							usr = username(cl);
 						}
 					}
 					else

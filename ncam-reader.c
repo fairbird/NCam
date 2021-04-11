@@ -413,13 +413,13 @@ int32_t ecm_ratelimit_check(struct s_reader *reader, ECM_REQUEST *er, int32_t re
 	int32_t gone = comp_timeb(&now, &reader->cooldowntime);
 	if(reader->cooldownstate == 1) // Cooldown in ratelimit phase
 	{
-		if(gone <= reader->cooldown[1] * 1000) // check if cooldowntime is elapsed
-			{ maxslots = reader->ratelimitecm; } // use user defined ratelimitecm
-		else // Cooldown time is elapsed
+		/*if(gone <= reader->cooldown[1] * 1000) // check if cooldowntime is elapsed
+			{ (warning: Value stored to 'maxslots' is never read) maxslots = reader->ratelimitecm; } // use user defined ratelimitecm
+		else // Cooldown time is elapsed*/
 		{
 			reader->cooldownstate = 0; // set cooldown setup phase
 			reader->cooldowntime.time = -1; // reset cooldowntime
-			maxslots = MAXECMRATELIMIT; //use ncam defined max slots
+			// (warning: Value stored to 'maxslots' is never read) maxslots = MAXECMRATELIMIT; //use ncam defined max slots
 			cs_log("Reader: %s ratelimiter returning to setup phase cooling down period of %d seconds is done!",
 					reader->label, reader->cooldown[1]);
 		}
@@ -448,7 +448,7 @@ int32_t ecm_ratelimit_check(struct s_reader *reader, ECM_REQUEST *er, int32_t re
 		{
 			reader->cooldownstate = 0; // set cooldown setup phase
 			reader->cooldowntime.time = -1; // reset cooldowntime
-			maxslots = MAXECMRATELIMIT; // maxslots is maxslots again
+			// (warning: Value stored to 'maxslots' is never read) maxslots = MAXECMRATELIMIT; // maxslots is maxslots again
 			cs_log("Reader: %s ratelimiter returning to setup phase after %d seconds cooldowndelay!",
 					reader->label, reader->cooldown[0]);
 		}
@@ -456,7 +456,7 @@ int32_t ecm_ratelimit_check(struct s_reader *reader, ECM_REQUEST *er, int32_t re
 		{
 			reader->cooldownstate = 1; // Entering ratelimit for cooldown ratelimitseconds
 			cs_ftime(&reader->cooldowntime); // set time to enforce ecmratelimit for defined cooldowntime
-			maxslots = reader->ratelimitecm; // maxslots is maxslots again
+			// (warning: Value stored to 'maxslots' is never read) maxslots = reader->ratelimitecm; // maxslots is maxslots again
 			sort_ecmrl(reader); // keep youngest ecm requests in list + housekeeping
 			cs_log("Reader: %s ratelimiter starting cooling down period of %d seconds!",
 					reader->label, reader->cooldown[1]);

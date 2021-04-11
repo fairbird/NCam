@@ -430,7 +430,7 @@ void bn_mul_high(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, BN_ULONG *l, int n2,
 {
 	int i, n;
 	int c1, c2;
-	int neg, oneg, zero;
+	int neg, oneg;
 	BN_ULONG ll, lc, *lp, *mp;
 
 # ifdef BN_COUNT
@@ -439,7 +439,7 @@ void bn_mul_high(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, BN_ULONG *l, int n2,
 	n = n2 / 2;
 
 	/* Calculate (al-ah)*(bh-bl) */
-	neg = zero = 0;
+	neg = 0;
 	c1 = bn_cmp_words(&(a[0]), &(a[n]), n);
 	c2 = bn_cmp_words(&(b[n]), &(b[0]), n);
 	switch(c1 * 3 + c2)
@@ -449,7 +449,6 @@ void bn_mul_high(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, BN_ULONG *l, int n2,
 		bn_sub_words(&(r[n]), &(b[0]), &(b[n]), n);
 		break;
 	case -3:
-		zero = 1;
 		break;
 	case -2:
 		bn_sub_words(&(r[0]), &(a[n]), &(a[0]), n);
@@ -459,7 +458,6 @@ void bn_mul_high(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, BN_ULONG *l, int n2,
 	case -1:
 	case 0:
 	case 1:
-		zero = 1;
 		break;
 	case 2:
 		bn_sub_words(&(r[0]), &(a[0]), &(a[n]), n);
@@ -467,7 +465,6 @@ void bn_mul_high(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, BN_ULONG *l, int n2,
 		neg = 1;
 		break;
 	case 3:
-		zero = 1;
 		break;
 	case 4:
 		bn_sub_words(&(r[0]), &(a[0]), &(a[n]), n);
@@ -500,20 +497,20 @@ void bn_mul_high(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, BN_ULONG *l, int n2,
 	if(l != NULL)
 	{
 		lp = &(t[n2 + n]);
-		c1 = (int)(bn_add_words(lp, &(r[0]), &(l[0]), n));
+		bn_add_words(lp, &(r[0]), &(l[0]), n);
 	}
 	else
 	{
-		c1 = 0;
 		lp = &(r[0]);
 	}
 
 	if(neg)
-		{ neg = (int)(bn_sub_words(&(t[n2]), lp, &(t[0]), n)); }
+	{
+		bn_sub_words(&(t[n2]), lp, &(t[0]), n);
+	}
 	else
 	{
 		bn_add_words(&(t[n2]), lp, &(t[0]), n);
-		neg = 0;
 	}
 
 	if(l != NULL)

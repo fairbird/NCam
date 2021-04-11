@@ -1388,13 +1388,14 @@ void request_cw_from_readers(ECM_REQUEST *er, uint8_t stop_stage)
 
 			er->reader_requested++;
 #ifdef READER_JET
-			if(caid_is_dvn(er->caid) && er->ecm[0] != 0x80 && er->ecm[0] != 0x81 && rdr->jet_fix_ecm && (rdr->typ & R_IS_NETWORK))
-			{
-				static uint8_t last = 0;
+			if(caid_is_dvn(er->caid) && er->ecm[0] != 0x80 && er->ecm[0] != 0x81 && (ea->reader->jet_fix_ecm) && is_network_reader(ea->reader))
+			{                                //     ^
+				static uint8_t last = 0; // <-- | ??? (so there will always be only 80), or maybe if(er->ecm[0]==0x50) ...???
 				if(last == 0x80)
-					last = 0x81;
+					{ last = 0x81; }
 				else
-					last = 0x80;
+					{ last = 0x80; }
+				cs_log("dvn jet, ecm head: %02x, new ecm head: %02x", er->ecm[0], last);
 				er->ecm[0] = last;
 			}
 #endif

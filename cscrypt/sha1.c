@@ -238,9 +238,6 @@ void SHA1_Transform(uint32_t state[5], const uint8_t buffer[64])
 	state[2] += c;
 	state[3] += d;
 	state[4] += e;
-
-	/* Wipe variables */
-	a = b = c = d = e = 0;
 }
 
 
@@ -312,7 +309,6 @@ void SHA1_Final(uint8_t digest[SHA_DIGEST_LENGTH], SHA_CTX *context)
 	}
 
 	/* Wipe variables */
-	i = 0;
 	memset(context->buffer, 0, 64);
 	memset(context->state, 0, 20);
 	memset(context->count, 0, 8);

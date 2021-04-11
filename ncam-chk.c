@@ -562,7 +562,7 @@ int32_t chk_ufilters(ECM_REQUEST *er)
 
 int32_t chk_rsfilter(struct s_reader *reader, ECM_REQUEST *er)
 {
-	int32_t i, rc = 1;
+	int32_t i, rc = 0;
 	uint16_t caid;
 	uint32_t prid;
 
@@ -572,9 +572,7 @@ int32_t chk_rsfilter(struct s_reader *reader, ECM_REQUEST *er)
 		return 1;
 	}
 
-	rc = prid = 0;
 	caid = reader->caid;
-	rc = 0;
 	if(caid == er->caid)
 	{
 		for(i = 0; (!rc) && (i < reader->nprov); i++)

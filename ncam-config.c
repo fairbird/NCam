@@ -104,7 +104,6 @@ static void chk_entry4sidtab(char *value, struct s_sidtab *sidtab, int32_t what)
 	char *ptr, *saveptr1 = NULL;
 	uint16_t *slist = (uint16_t *) 0;
 	uint32_t *llist = (uint32_t *) 0;
-	uint32_t caid;
 #ifdef CS_CACHEEX_AIO
 	uint8_t disablecrccws_only_for_exception = 0;
 	uint8_t no_wait_time = 0;
@@ -135,7 +134,6 @@ static void chk_entry4sidtab(char *value, struct s_sidtab *sidtab, int32_t what)
 
 	for(i = 0, ptr = strtok_r(value, ",", &saveptr1); ptr; ptr = strtok_r(NULL, ",", &saveptr1))
 	{
-		caid = a2i(ptr, b);
 		if(!errno) { i++; }
 	}
 	//if (!i) return(0);
@@ -150,7 +148,7 @@ static void chk_entry4sidtab(char *value, struct s_sidtab *sidtab, int32_t what)
 	cs_strncpy(value, buf, sizeof(buf));
 	for(i = 0, ptr = strtok_r(value, ",", &saveptr1); ptr; ptr = strtok_r(NULL, ",", &saveptr1))
 	{
-		caid = a2i(ptr, b);
+		uint32_t caid = a2i(ptr, b);
 		if(errno) { continue; }
 		if(b == sizeof(uint16_t))
 			{ slist[i++] = (uint16_t) caid; }
@@ -1547,7 +1545,7 @@ static int add_reader_from_line(char s[512], int type)
 	int32_t stealth = 4;
 #endif
 	int32_t port;
-	char host[128], u_name[64], u_pass[64];
+	char host[128] = {0}, u_name[64] = {0}, u_pass[64] = {0};
 
 	struct s_reader *rdr;
 

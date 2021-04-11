@@ -569,7 +569,6 @@ void DES_encrypt1(DES_LONG *data, DES_key_schedule *ks, int enc)
 	FP(r, l);
 	data[0] = l;
 	data[1] = r;
-	l = r = t = u = 0;
 }
 #endif
 

@@ -138,8 +138,6 @@ void idea_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 		l2n(xor0, iv);
 		l2n(xor1, iv);
 	}
-	tin0 = tin1 = tout0 = tout1 = xor0 = xor1 = 0;
-	tin[0] = tin[1] = 0;
 }
 
 void idea_encrypt(unsigned long *d, IDEA_KEY_SCHEDULE *key)

@@ -593,8 +593,6 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 
 		ep->client = client;
 
-		int32_t writeemm = 1; // 0= dont write emm, 1=write emm, default = write
-
 		if(aureader->cachemm && !(caid_is_irdeto(caid) || caid_is_videoguard(caid))) // Check emmcache early:
 		{
 			uint8_t md5tmp[MD5_DIGEST_LENGTH];
@@ -616,39 +614,34 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 				if(emmstat->count >= aureader->rewritemm)
 				{
 					reader_log_emm(aureader, ep, emmstat->count, 2, NULL);
-					writeemm = 0; // don't write emm!
 					saveemm(aureader, ep, "emmcache");
 					continue; // found emm match needs no further handling, proceed with next reader!
 				}
 			}
 		}
 
-		if(writeemm) // only write on no cache hit or cache hit that needs further rewrite
+		EMM_PACKET *emm_pack;
+		if(cs_malloc(&emm_pack, sizeof(EMM_PACKET)))
 		{
-			EMM_PACKET *emm_pack;
-			if(cs_malloc(&emm_pack, sizeof(EMM_PACKET)))
-			{
 #ifdef READER_CRYPTOWORKS
-				if ((ep->type == SHARED) && ((caid == 0x0D96) || (caid == 0x0D98)) && (aureader->last_g_emm_valid == true) && (aureader->needsglobalfirst == 1))
+			if((ep->type == SHARED) && ((caid == 0x0D96) || (caid == 0x0D98)) && (aureader->last_g_emm_valid == true) && (aureader->needsglobalfirst == 1))
+			{
+				EMM_PACKET *emm_pack_global;
+				if(cs_malloc(&emm_pack_global, sizeof(EMM_PACKET)))
 				{
-					EMM_PACKET *emm_pack_global;
-					if(cs_malloc(&emm_pack_global, sizeof(EMM_PACKET)))
-					{
-						rdr_log_dbg(aureader, D_EMM, "Last stored global EMM for caid 0x%04X is being sent to Reader first", caid);
-						memcpy(emm_pack_global, aureader->last_g_emm, sizeof(EMM_PACKET));
-						add_job(aureader->client, ACTION_READER_EMM, emm_pack_global, sizeof(EMM_PACKET));
-						saveemm(aureader, aureader->last_g_emm, "written stored global");
-						cs_log_dump_dbg(D_EMM, emm_pack_global->emm, emm_pack_global->emmlen, "Last stored global EMM to be written before shared EMM:");
-					}
+					rdr_log_dbg(aureader, D_EMM, "Last stored global EMM for caid 0x%04X is being sent to Reader first", caid);
+					memcpy(emm_pack_global, aureader->last_g_emm, sizeof(EMM_PACKET));
+					add_job(aureader->client, ACTION_READER_EMM, emm_pack_global, sizeof(EMM_PACKET));
+					saveemm(aureader, aureader->last_g_emm, "written stored global");
+					cs_log_dump_dbg(D_EMM, emm_pack_global->emm, emm_pack_global->emmlen, "Last stored global EMM to be written before shared EMM:");
 				}
-#endif
-				rdr_log_dbg(aureader, D_EMM, "emm is being sent to reader");
-				memcpy(emm_pack, ep, sizeof(EMM_PACKET));
-				add_job(aureader->client, ACTION_READER_EMM, emm_pack, sizeof(EMM_PACKET));
-				saveemm(aureader, ep, "written");
 			}
+#endif
+			rdr_log_dbg(aureader, D_EMM, "emm is being sent to reader");
+			memcpy(emm_pack, ep, sizeof(EMM_PACKET));
+			add_job(aureader->client, ACTION_READER_EMM, emm_pack, sizeof(EMM_PACKET));
+			saveemm(aureader, ep, "written");
 		}
-
 	} // done with this reader, process next reader!
 
 	if(emmnok > 0 && emmnok == ll_count(client->aureader_list))

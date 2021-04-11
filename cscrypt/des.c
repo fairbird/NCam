@@ -708,7 +708,6 @@ static void des_encrypt_int(uint32_t* data, const uint32_t* ks, int8_t do_encryp
 
 	data[0]=l;
 	data[1]=r;
-	l=r=t=u=0;
 }
 
 void des(uint8_t* data, const uint32_t* schedule, int8_t do_encrypt)

@@ -264,7 +264,7 @@ uint32_t cs_atoi(char *asc, int32_t l, int32_t val_on_err)
 			rc = val_on_err ? 0xFFFFFFFF : 0;
 			break;
 		}
-		int32_t b = (gethexval(asc[i]) << 4) | gethexval(asc[i + 1]);
+		int32_t b = ((uint32_t)gethexval(asc[i]) << 4) | gethexval(asc[i + 1]);
 		if(b < 0)
 		{
 			errno = EINVAL;
@@ -484,7 +484,6 @@ uint32_t a2i(char *asc, int32_t bytes)
 	{
 		if(n >= 0)
 		{
-			int32_t rcl;
 			if(!gethexval_within_range(asc[n]))
 			{
 				errno = EINVAL;
@@ -492,8 +491,7 @@ uint32_t a2i(char *asc, int32_t bytes)
 			}
 			else
 			{
-				rcl = gethexval(asc[n]);
-				rc |= rcl << (i << 2);
+				rc |= (uint32_t)gethexval(asc[n]) << (i << 2);
 			}
 		}
 		else

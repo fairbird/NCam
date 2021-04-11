@@ -456,7 +456,6 @@ static int32_t Protocol_T0_ExchangeTPDU(struct s_reader *reader, unsigned char *
 				if(ICC_Async_Receive(reader, 5, buffer + recved, 0, timeout) != OK) { return ERROR; }   /* Send remaining data bytes */
 				if(ICC_Async_Receive(reader, MAX(buffer[recved + 4] + 2, 0), buffer + recved + 5, 0, timeout) != OK) { return ERROR; }   /* Send remaining data bytes */
 
-				sent = Lc;
 				recved = 5 + buffer[recved + 4] + 2;
 				break;
 			}
