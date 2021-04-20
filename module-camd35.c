@@ -679,6 +679,7 @@ static void camd35_send_dcw(struct s_client *client, ECM_REQUEST *er)
 
 	camd35_send(client, buf, 0);
 	camd35_request_emm(er);
+	NULLFREE(er->src_data);
 }
 
 static void camd35_process_ecm(uint8_t *buf, int buflen)
