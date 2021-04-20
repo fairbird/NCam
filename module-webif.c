@@ -2020,10 +2020,9 @@ static char *send_ncam_reader(struct templatevars *vars, struct uriparams *param
 			char *new_proto;
 			if(rdr->cacheex.feature_bitfield || (cl && cl->c35_extmode > 1))
 			{
-				const char *aio_suffix = " (cx-aio)";
-				if(cs_malloc(&new_proto, cs_strlen(proto) + cs_strlen(aio_suffix) + 1)) {
-					cs_strncpy(new_proto, proto, cs_strlen(proto) + 1);
-					cs_strncpy(new_proto + cs_strlen(new_proto), aio_suffix, cs_strlen(aio_suffix) + 1);
+				if(cs_malloc(&new_proto, cs_strlen(proto) + 10))
+				{
+					snprintf(new_proto, cs_strlen(proto) + 10, "%s (cx-aio)", proto);
 				}
 			}
 #endif
@@ -2087,10 +2086,8 @@ static char *send_ncam_reader(struct templatevars *vars, struct uriparams *param
 			if(rdr->tcp_connected)
 			{
 				connected_readers += 1;
-
-				proto = client_get_proto(rdr->client);
 #ifdef CS_CACHEEX_AIO
-				if(rdr->cacheex.feature_bitfield || (cl && cl->c35_extmode))
+				if(rdr->cacheex.feature_bitfield || (cl && cl->c35_extmode > 1))
 				{
 					proto = new_proto;
 				}
@@ -2252,9 +2249,9 @@ static char *send_ncam_reader(struct templatevars *vars, struct uriparams *param
 				}
 			}
 #ifdef CS_CACHEEX_AIO
-			if(rdr->cacheex.feature_bitfield || (cl && cl->c35_extmode))
+			if(rdr->cacheex.feature_bitfield || (cl && cl->c35_extmode > 1))
 			{
-				free(new_proto);
+				NULLFREE(new_proto);
 			}
 #endif
 		}
@@ -4845,13 +4842,11 @@ static char *send_ncam_user_config(struct templatevars *vars, struct uriparams *
 		if(latestclient != NULL && (latestclient->account->cacheex.feature_bitfield || latestclient->c35_extmode > 1))
 		{
 			char *new_proto;
-			const char *aio_suffix = " (cx-aio)";
-			if(cs_malloc(&new_proto, cs_strlen(proto)+cs_strlen(aio_suffix) + 1))
+			if(cs_malloc(&new_proto, cs_strlen(proto) + 10))
 			{
-				cs_strncpy(new_proto, proto, cs_strlen(proto) + 1);
-				cs_strncpy(new_proto + cs_strlen(new_proto), aio_suffix, cs_strlen(aio_suffix) + 1);
+				snprintf(new_proto, cs_strlen(proto) + 10, "%s (cx-aio)", proto);
 				webif_add_client_proto(vars, latestclient, new_proto, apicall);
-				free(new_proto);
+				NULLFREE(new_proto);
 			}
 		}
 		else
@@ -5989,13 +5984,11 @@ static char *send_ncam_status(struct templatevars * vars, struct uriparams * par
 					 )
 					{
 						char *new_proto;
-						const char *aio_suffix = " (cx-aio)";
-						if(cs_malloc(&new_proto, cs_strlen(proto)+cs_strlen(aio_suffix) + 1))
+						if(cs_malloc(&new_proto, cs_strlen(proto) + 10))
 						{
-							cs_strncpy(new_proto, proto, cs_strlen(proto) + 1);
-							cs_strncpy(new_proto + cs_strlen(new_proto), aio_suffix, cs_strlen(aio_suffix) + 1);
+							snprintf(new_proto, cs_strlen(proto) + 10, "%s (cx-aio)", proto);
 							webif_add_client_proto(vars, cl, new_proto, apicall);
-							free(new_proto);
+							NULLFREE(new_proto);
 						}
 					}
 					else
