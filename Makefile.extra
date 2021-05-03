@@ -74,9 +74,10 @@ cross-sh4-linux:
 
 cross-sh4-linux-stapi:
 	$(MAKE) --no-print-directory \
-		CROSS=sh4-linux- \
+		CROSS=$(CROSS) \
 		CONF_DIR=/var/tuxbox/config \
 		USE_STAPI=1 \
+		USE_LIBCRYPTO=1 \
 		$(MAKEFLAGS)
 
 cross-sh4-linux-stapi5:
@@ -86,7 +87,7 @@ cross-sh4-linux-stapi5:
 		USE_STAPI5=1 \
 		USE_LIBCRYPTO=1 \
 		USE_UTF8=1 \
-                STAPI5_LIB=stapi/liboscam_stapi5_OPENBOX.a \
+		STAPI5_LIB=stapi/liboscam_stapi5_OPENBOX.a \
 		$(MAKEFLAGS)
 
 cross-i386-pc-cygwin:
@@ -254,7 +255,6 @@ cross-mipsel-router-linux-uclibc:
 		LIB_RT= \
 		LIB_PTHREAD=$(LIB_PTHREAD) \
 		EXTRA_FLAGS="-static-libgcc -I. -s" \
-		EXTRA_LDFLAGS="-static" \
 		CONF_DIR=/usr/local/etc \
 		$(MAKEFLAGS)
 
@@ -329,6 +329,13 @@ cross-mipsel-tuxbox-linux-glibc:
 		EXTRA_FLAGS="-mips1 -static-libgcc -EL -I. -s" \
 		$(MAKEFLAGS)
 
+cross-arm-coreelec-linux:
+	$(MAKE) --no-print-directory \
+		CROSS=$(CROSS) \
+		CONF_DIR=/var/tuxbox/config \
+		EXTRA_FLAGS="-march=armv8-a+crc -mtune=cortex-a53 -mabi=aapcs-linux -Wno-psabi -Wa,-mno-warn-deprecated -mcpu=cortex-a53 -mfloat-abi=hard -mfpu=neon-fp-armv8 -fomit-frame-pointer -Wall -pipe -Os -Wall -O2 -Os -DNDEBUG -W -Wall" \
+		$(MAKEFLAGS)
+
 cross-arm-tuxbox-linux-libusb:
 	$(MAKE) --no-print-directory \
 		CROSS=$(CROSS) \
@@ -388,8 +395,8 @@ cross-arm-marvell-linux-libusb:
 cross-arm-marvell-linux:
 	$(MAKE) --no-print-directory \
 		CROSS=$(CROSS) \
-		CONF_DIR=/var/tuxbox/config \
-		EXTRA_FLAGS="-static-libgcc -I. -s" \
+		CONF_DIR=/usr/local/etc \
+		EXTRA_LIBS="-lrt" \
 		$(MAKEFLAGS)
 
 cross-sh4-tuxbox-linux-libusb-pcsc:
@@ -651,6 +658,7 @@ android-arm-stapi:
 		CROSS=$(CROSS) \
 		LIB_RT= \
 		LIB_PTHREAD= \
+		USE_LIBCRYPTO=1 \
 		CONF_DIR=/data/plugin/ncam \
 		USE_WI=1 \
 		$(MAKEFLAGS)
@@ -701,4 +709,3 @@ uclinux:
 		LIB_DL= STRIP=true \
 		CROSS=m68k-uclinux- \
 		$(MAKEFLAGS)
-

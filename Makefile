@@ -45,8 +45,10 @@ LIB_DL := -ldl
 
 LIB_RT :=
 ifeq ($(uname_S),Linux)
-	ifeq "$(shell ./config.sh --enabled CLOCKFIX)" "Y"
-		LIB_RT := -lrt
+	ifndef ANDROID_NDK
+		ifeq "$(shell ./config.sh --enabled CLOCKFIX)" "Y"
+			LIB_RT := -lrt
+		endif
 	endif
 endif
 ifeq ($(uname_S),FreeBSD)
@@ -59,11 +61,13 @@ override STD_DEFS += -D'CS_GIT_VERSION="$(shell ./config.sh --ncam-revision | cu
 override STD_DEFS += -D'CS_DATE_BUILD="$(shell date +"%d-%m-%Y")"'
 override STD_DEFS += -D'CS_CONFDIR="$(CONF_DIR)"'
 
+MODFLAGS_OPTS = -fwrapv -fomit-frame-pointer
+
 # Compiler warnings
-CC_WARN = -W -Wall -Wshadow -Wredundant-decls -Wstrict-prototypes -Wold-style-definition
+CC_WARN = -W -Wall -Wshadow -Wno-shadow -Wredundant-decls -Wstrict-prototypes -Wold-style-definition
 
 # Compiler optimizations
-CC_OPTS = -O2 -ggdb -pipe -ffunction-sections -fdata-sections
+CC_OPTS = -Os -ggdb -pipe -ffunction-sections -fdata-sections $(MODFLAGS_OPTS)
 
 CC = $(CROSS_DIR)$(CROSS)gcc
 STRIP = $(CROSS_DIR)$(CROSS)strip
@@ -105,8 +109,8 @@ TARGET := $(shell $(CC) -dumpmachine 2>/dev/null)
 # Process USE_ variables
 ifdef USE_WI
 override USE_STAPI=1
-override CFLAGS += -DWITH_WI=1
-override LDFLAGS += -DWITH_WI=1
+override CFLAGS += -DWITH_WI=1 # -DXCAM3
+override LDFLAGS += -DWITH_WI=1 # -DXCAM3
 DEFAULT_STAPI_LIB = -L./stapi -lwi
 DEFAULT_STAPI_FLAGS = -I./stapi/include
 else
@@ -122,6 +126,7 @@ DEFAULT_AZBOX_LIB = -Lextapi/openxcas -lOpenXCASAPI
 DEFAULT_LIBCRYPTO_LIB = -lcrypto
 DEFAULT_SSL_LIB = -lssl
 DEFAULT_LIBCURL_LIB = -lcurl
+#DEFAULT_LIBCURL_FLAGS = -lrt -lssl -lcrypto # (static libcurl ...??? += -static -lcurl -lssl -lcrypto -ldl -lm -lz -DCURL_STATICLIB)
 ifeq ($(uname_S),Linux)
 	DEFAULT_LIBUSB_LIB = -lusb-1.0 -lrt
 else
@@ -863,8 +868,6 @@ NCam build system documentation\n\
      make CROSS=csky-linux- USE_GXAPI=1\n\n\
    Build NCam for ARM with MCA support:\n\
      make CROSS=arm-none-linux-gnueabi- USE_MCA=1\n\n\
-   Build NCam for Android with STAPI and changed configuration directory:\n\
-     make CROSS=arm-linux-androideabi- USE_WI=1 CONF_DIR=/data/plugin/ncam\n\n\
    Build NCam with libusb and PCSC:\n\
      make USE_LIBUSB=1 USE_PCSC=1\n\n\
    Build NCam with static libusb:\n\
@@ -882,6 +885,32 @@ NCam build system documentation\n\
    Build and set ncam file name depending on revision:\n\
      make NCAM_BIN=ncam-\`./config.sh -r\`\n\n\
 "
+
+# ANDROID #
+ifdef ANDROID_NDK
+NDK_ROOT = $(ANDROID_NDK)
+endif
+ifdef NDK_ROOT
+APP_ABI = armeabi-v7a
+APP_PLATFORM = android-16
+NDK_PROJECT_PATH = $(BUILD_DIR)/$(APP_ABI)-$(APP_PLATFORM)$(PLUS_TARGET)
+ifdef LOCAL_DIR
+local_dir = LOCAL_DIR=$(LOCAL_DIR)
+endif
+endif
+
+android:
+ifneq ($(wildcard $(NDK_ROOT)/build/ndk-build),)
+	$(SHELL) $(NDK_ROOT)/ndk-build \
+		APP_ABI=$(APP_ABI) \
+		APP_PLATFORM=$(APP_PLATFORM) \
+		NDK_PROJECT_PATH=$(NDK_PROJECT_PATH) \
+		APP_BUILD_SCRIPT=Android.mk $(local_dir) $(addsuffix =1,$(USE_FLAGS)) $(EXTRA_FLAGS)		
+	mv $(NDK_PROJECT_PATH)/libs/$(APP_ABI)/ncam* $(BINDIR)
+	@rm -rf $(NDK_PROJECT_PATH)/libs
+else
+	@echo "make $@ NDK_ROOT='dir ?'"
+endif
 
 simple: all
 default: all
