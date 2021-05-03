@@ -1387,15 +1387,11 @@ static int32_t gbox_chk_recvd_dcw(struct s_client *cli, uint8_t *dcw, int32_t *r
 	*rc = 1;
 	memcpy(dcw, data + 14, 16);
 	uint32_t crc = b2i(4, data + 30);
-
-	if(cs_dblevel & D_READER)
-	{
-		char tmp_dbg[33];
-		cs_log_dbg(D_READER,"-> CW (->%d) received cw: %s from CW-source-peer=%04X, caid=%04X, slot= %d, ecm_pid=%04X, sid=%04X, crc=%08X, cw-src-type=%d, cw-dist=%d, hw-type=%d, rev=%01X.%01X, chid=%04X", data[42] & 0x0f,
-			cs_hexdump(0, dcw, 16, tmp_dbg, sizeof(tmp_dbg)), data[10] << 8 | data[11], data[34] << 8 | data[35], data[36], data[6] << 8 | data[7],
+	char tmp[33];
+	cs_log_dbg(D_READER,"-> CW (->%d) received cw: %s from CW-source-peer=%04X, caid=%04X, slot= %d, ecm_pid=%04X, sid=%04X, crc=%08X, cw-src-type=%d, cw-dist=%d, hw-type=%d, rev=%01X.%01X, chid=%04X", data[42] & 0x0f,
+			cs_hexdump(0, dcw, 16, tmp, sizeof(tmp)), data[10] << 8 | data[11], data[34] << 8 | data[35], data[36], data[6] << 8 | data[7],
 			data[8] << 8 | data[9], crc, data[41], data[42] & 0x0f, data[42] >> 4, data[43] >> 4,
 			data[43] & 0x0f, data[37] << 8 | data[38]);
-	}
 
 	struct timeb t_now;
 	cs_ftime(&t_now);
@@ -1795,6 +1791,7 @@ static int8_t gbox_check_header_recvd(struct s_client *cli, struct s_client *pro
 	struct gbox_peer *peer = NULL;
 	if (proxy) { peer = proxy->gbox; }
 
+	char tmp[128];
 	int32_t n = l;
 	uint8_t authentication_done = 0;
 	uint16_t peer_recvd_id = 0;
@@ -1813,8 +1810,8 @@ static int8_t gbox_check_header_recvd(struct s_client *cli, struct s_client *pro
 	if(!chk_gbx_hdr_rcvd(rcvd_header_cmd))
 		{
 		 cs_log("-> ATTACK ALERT from IP %s - Received unknown Header: %02X", cs_inet_ntoa(cli->ip), b2i(2, data));
-		//cs_log_dump_dbg(D_READER, data, n, "-> received data:");
-		cs_log_dump(data, n, "-> received data:");
+		//cs_log_dbg(D_READER,"-> received data: %s", cs_hexdump(1, data, n, tmp, sizeof(tmp)));
+		cs_log("-> received data: %s", cs_hexdump(1, data, n, tmp, sizeof(tmp)));
 		handle_attack(cli, GBOX_ATTACK_UNKWN_HDR, 0);
 		return -1;
 		}
@@ -1827,7 +1824,7 @@ static int8_t gbox_check_header_recvd(struct s_client *cli, struct s_client *pro
 			peer_recvd_id = gbox_convert_password_to_id(peer_received_pw);
 
 			//cs_log_dbg(D_READER, "-> data from IP: %s", cs_inet_ntoa(cli->ip));
-			cs_log_dump_dbg(D_READER, data, l, "-> data from peer: %04X data:", peer_recvd_id);
+			cs_log_dbg(D_READER, "-> data from peer: %04X data: %s", peer_recvd_id, cs_hexdump(0, data, l, tmp, sizeof(tmp)));
 			//cs_log_dbg(D_READER,"my_received pw: %08X - peer_recvd pw: %08X - peer_recvd_id: %04X ", my_received_pw, peer_received_pw, peer_recvd_id);
 
 			if (check_peer_ignored(peer_recvd_id))
@@ -1874,7 +1871,8 @@ static int8_t gbox_check_header_recvd(struct s_client *cli, struct s_client *pro
 		}
 		else // is MSG_CW
 		{
-			cs_log_dump_dbg(D_READER, data, l, "-> CW MSG from peer: %04X data:", cli->gbox_peer_id);
+			cs_log_dbg(D_READER, "-> CW MSG from peer: %04X data: %s",
+				cli->gbox_peer_id, cs_hexdump(0, data, l, tmp, sizeof(tmp)));
 
 			if((data[39] != ((local_gbox.id >> 8) & 0xff)) || (data[40] != (local_gbox.id & 0xff)))
 			{
@@ -1885,8 +1883,8 @@ static int8_t gbox_check_header_recvd(struct s_client *cli, struct s_client *pro
 	else // error my passw
 	{
 		cs_log("-> ATTACK ALERT from IP %s - received corrupted data - local password: %08X - peer password: %08X", cs_inet_ntoa(cli->ip), my_received_pw, peer_received_pw);
-		//cs_log_dump_dbg(D_READER, data, n, "-> received data:");
-		cs_log_dump(data, n, "-> received data:");
+		//cs_log_dbg(D_READER,"-> received data: %s", cs_hexdump(1, data, n, tmp, sizeof(tmp)));
+		cs_log("-> received data: %s", cs_hexdump(1, data, n, tmp, sizeof(tmp)));
 		handle_attack(cli, GBOX_ATTACK_LOCAL_PW, 0);
 		return -1;
 	}

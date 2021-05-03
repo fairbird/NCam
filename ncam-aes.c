@@ -65,7 +65,7 @@ void add_aes_entry(AES_ENTRY **list, uint16_t caid, uint32_t ident, int32_t keyi
 	if(memcmp(aesKey, "\xFF\xFF", 2))
 	{
 		AES_set_decrypt_key((const uint8_t *)aesKey, 128, &(new_entry->key));
-		// cs_log_dump(aesKey, 16, "adding key :");
+		// cs_log("adding key : %s",cs_hexdump(1,aesKey,16, tmp, sizeof(tmp)));
 	}
 	else
 	{

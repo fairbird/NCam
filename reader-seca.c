@@ -519,7 +519,7 @@ static int32_t seca_get_emm_type(EMM_PACKET *ep, struct s_reader *rdr)
 {
 	rdr_log_dbg(rdr, D_EMM, "Entered seca_get_emm_type ep->emm[0]=%i", ep->emm[0]);
 	int32_t i;
-	char tmp_dbg[(6 * 3) + 1];
+	char tmp_dbg[25];
 
 	switch(ep->emm[0])
 	{
@@ -528,14 +528,12 @@ static int32_t seca_get_emm_type(EMM_PACKET *ep, struct s_reader *rdr)
 			memset(ep->hexserial, 0, 8);
 			memcpy(ep->hexserial, ep->emm + 3, 6);
 
-			if(cs_dblevel & D_EMM)
-			{
-				rdr_log_dbg_sensitive(rdr, D_EMM, "UNIQUE, ep->hexserial = {%s}",
+			rdr_log_dbg_sensitive(rdr, D_EMM, "UNIQUE, ep->hexserial = {%s}",
 								cs_hexdump(1, ep->hexserial, 6, tmp_dbg, sizeof(tmp_dbg)));
 
-				rdr_log_dbg_sensitive(rdr, D_EMM, "UNIQUE, rdr->hexserial = {%s}",
+			rdr_log_dbg_sensitive(rdr, D_EMM, "UNIQUE, rdr->hexserial = {%s}",
 								cs_hexdump(1, rdr->hexserial, 6, tmp_dbg, sizeof(tmp_dbg)));
-			}
+
 			return (!memcmp(rdr->hexserial, ep->hexserial, 6));
 			break;
 
@@ -544,17 +542,16 @@ static int32_t seca_get_emm_type(EMM_PACKET *ep, struct s_reader *rdr)
 			memset(ep->hexserial, 0, 8);
 			memcpy(ep->hexserial, ep->emm + 5, 3); // don't include custom byte; this way the network also knows SA
 			i = get_prov_index(rdr, ep->emm + 3);
+
+			rdr_log_dbg_sensitive(rdr, D_EMM, "SHARED, ep->hexserial = {%s}",
+								cs_hexdump(1, ep->hexserial, 3, tmp_dbg, sizeof(tmp_dbg)));
+
 			if(i == -1) // provider not found on this card
 				{ return 0; } //do not pass this EMM
 
-			if(cs_dblevel & D_EMM)
-			{
-				rdr_log_dbg_sensitive(rdr, D_EMM, "SHARED, ep->hexserial = {%s}",
-								cs_hexdump(1, ep->hexserial, 3, tmp_dbg, sizeof(tmp_dbg)));
-
-				rdr_log_dbg_sensitive(rdr, D_EMM, "SHARED, rdr->sa[%i] = {%s}", i,
+			rdr_log_dbg_sensitive(rdr, D_EMM, "SHARED, rdr->sa[%i] = {%s}", i,
 								cs_hexdump(1, rdr->sa[i], 3, tmp_dbg, sizeof(tmp_dbg)));
-			}
+
 			return (!memcmp(rdr->sa[i], ep->hexserial, 3));
 			break;
 

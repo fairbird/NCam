@@ -1074,13 +1074,14 @@ int32_t cc_send_srv_data(struct s_client *cl)
 
 	memcpy(buf, cc->node_id, 8);
 
-	char cc_build[7];
+	char cc_build[7], tmp_dbg[17];
 	memset(cc_build, 0, sizeof(cc_build));
 	cc_check_version((char *) cfg.cc_version, cc_build);
 	memcpy(buf + 8, cfg.cc_version, sizeof(cfg.cc_version)); // cccam version (ascii)
 	memcpy(buf + 40, cc_build, sizeof(cc_build)); // build number (ascii)
 
-	cs_log_dump_dbg(D_CLIENT, cc->peer_node_id, 8, "%s version: %s, build: %s nodeid:", getprefix(), cfg.cc_version, cc_build);
+	cs_log_dbg(D_CLIENT, "%s version: %s, build: %s nodeid: %s", getprefix(),
+				cfg.cc_version, cc_build, cs_hexdump(0, cc->peer_node_id, 8, tmp_dbg, sizeof(tmp_dbg)));
 
 	return cc_cmd_send(cl, buf, 0x48, MSG_SRV_DATA);
 }
@@ -1450,11 +1451,13 @@ void set_au_data(struct s_client *cl, struct s_reader *rdr, struct cc_card *card
 	}
 
 	struct cc_data *cc = cl->cc;
+	char tmp_dbg[17];
 	cc->last_emm_card = card;
 
 	cc_UA_cccam2ncam(card->hexserial, rdr->hexserial, rdr->caid);
 
-	cs_log_dump_dbg(D_EMM, rdr->hexserial, 8, "%s au info: caid %04X UA:", getprefix(), card->caid);
+	cs_log_dbg(D_EMM, "%s au info: caid %04X UA: %s", getprefix(), card->caid,
+				cs_hexdump(0, rdr->hexserial, 8, tmp_dbg, sizeof(tmp_dbg)));
 
 	rdr->nprov = 0;
 	LL_ITER it2 = ll_iter_create(card->providers);
@@ -2138,11 +2141,15 @@ int32_t cc_send_emm(EMM_PACKET *ep)
 	if(!emm_card)
 	{
 		uint8_t hs[8];
+		char tmp_dbg[17];
 
 		cc_UA_ncam2cccam(ep->hexserial, hs, caid);
 
-		cs_log_dump_dbg(D_EMM, ep->hexserial, 8, "%s au info: searching card for caid %04X ncam-UA:", getprefix(), b2i(2, ep->caid));
-		cs_log_dump_dbg(D_EMM, hs, 8, "%s au info: searching card for caid %04X cccam-UA:", getprefix(), b2i(2, ep->caid));
+		cs_log_dbg(D_EMM, "%s au info: searching card for caid %04X ncam-UA: %s",
+					getprefix(), b2i(2, ep->caid), cs_hexdump(0, ep->hexserial, 8, tmp_dbg, sizeof(tmp_dbg)));
+
+		cs_log_dbg(D_EMM, "%s au info: searching card for caid %04X cccam-UA: %s",
+					getprefix(), b2i(2, ep->caid), cs_hexdump(0, hs, 8, tmp_dbg, sizeof(tmp_dbg)));
 
 		emm_card = get_card_by_hexserial(cl, hs, caid);
 	}
@@ -2744,6 +2751,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 	struct s_reader *rdr = (cl->typ == 'c') ? NULL : cl->reader;
 	int32_t ret = buf[1];
 	struct cc_data *cc = cl->cc;
+	char tmp_dbg[33];
 
 	if(!cc || cl->kill)
 	{
@@ -2826,7 +2834,8 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 				}
 
 				cs_writeunlock(__func__, &cc->cards_busy);
-				cs_log_dump_dbg(D_READER, cc->peer_node_id, 8, "%s remote server running v%s (%s) nodeid", getprefix(), cc->remote_version, cc->remote_build);
+				cs_log_dbg(D_READER, "%s remote server %s running v%s (%s)", getprefix(), cs_hexdump(0,
+							cc->peer_node_id, 8, tmp_dbg, sizeof(tmp_dbg)), cc->remote_version, cc->remote_build);
 
 				chk_peer_node_for_ncam(cc);
 				// Trick: when discovered partner is an NCam Client, then we send him our version string:
@@ -3602,7 +3611,8 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 						}
 						else
 						{
-							cs_log_dump_dbg(D_READER, cc->dcw, 16, "%s cws: %d", getprefix(), ecm_idx);
+							cs_log_dbg(D_READER, "%s cws: %d %s", getprefix(), ecm_idx,
+										cs_hexdump(0, cc->dcw, 16, tmp_dbg, sizeof(tmp_dbg)));
 
 							// check response time, if > fallbacktime, switch cards!
 							struct timeb tpe;
@@ -3648,7 +3658,8 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 							cc_crypt(&cc->block[DECRYPT], buf + 4, l - 4, ENCRYPT);
 						}
 
-						cs_log_dump_dbg(D_READER, cc->dcw, 16, "%s cws: %d", getprefix(), ecm_idx);
+						cs_log_dbg(D_READER, "%s cws: %d %s", getprefix(), ecm_idx,
+									cs_hexdump(0, cc->dcw, 16, tmp_dbg, sizeof(tmp_dbg)));
 					}
 				}
 				cs_readunlock(__func__, &cc->cards_busy);
@@ -3985,7 +3996,8 @@ int32_t cc_recv_chk(struct s_client *cl, uint8_t *dcw, int32_t *rc, uint8_t *buf
 	)
 	{
 		memcpy(dcw, cc->dcw, 16);
-		//cs_log_dump_dbg(D_CLIENT, dcw, 16, "cccam: recv chk - MSG_CW %d -", cc->recv_ecmtask);
+		//cs_log_dbg(D_CLIENT, "cccam: recv chk - MSG_CW %d - %s", cc->recv_ecmtask,
+		//			cs_hexdump(0, dcw, 16, tmp_dbg, sizeof(tmp_dbg)));
 		*rc = 1;
 #ifdef CS_CACHEEX_AIO
 		if(buf[1] == MSG_CW_ECM_LGF)
@@ -4263,7 +4275,7 @@ int32_t cc_srv_connect(struct s_client *cl)
 	int32_t i, ccversion_pos, ccbuild_pos;
 	int32_t no_delay = 1;
 	uint8_t data[16];
-	char usr[21], pwd[65];
+	char usr[21], pwd[65], tmp_dbg[17];
 	struct s_auth *account;
 	struct cc_data *cc;
 
@@ -4524,7 +4536,8 @@ int32_t cc_srv_connect(struct s_client *cl)
 	cs_strncpy(cc->remote_version, (char *)buf + ccversion_pos, sizeof(cc->remote_version));
 	cs_strncpy(cc->remote_build, (char *)buf + ccbuild_pos, sizeof(cc->remote_build));
 
-	cs_log_dump_dbg(D_CLIENT, cc->peer_node_id, 8, "%s client '%s' running v%s (%s) nodeid", getprefix(), buf + 4, cc->remote_version, cc->remote_build);
+	cs_log_dbg(D_CLIENT, "%s client '%s' (%s) running v%s (%s)", getprefix(), buf + 4,
+				cs_hexdump(0, cc->peer_node_id, 8, tmp_dbg, sizeof(tmp_dbg)), cc->remote_version, cc->remote_build);
 
 	// send cli data ack
 	cc_cmd_send(cl, NULL, 0, MSG_CLI_DATA);

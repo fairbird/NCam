@@ -2,6 +2,8 @@
 #ifdef READER_DGCRYPT
 #include "reader-common.h"
 
+#define DEBUG 0
+
 static const uint8_t dgcrypt_atr[8] = { 0x3B, 0xE9, 0x00, 0x00, 0x81, 0x31, 0xC3, 0x45 };
 static const uint8_t cmd_CWKEY[5]   = { 0x81, 0xD0, 0x00, 0x01, 0x08 };
 //static const uint8_t cmd_CAID[5]   = { 0x81, 0xC0, 0x00, 0x01, 0x0A };
@@ -20,12 +22,18 @@ static int32_t dgcrypt_cmd(struct s_reader *rdr, const uint8_t *buf, const int32
 	rdr->ifsc = 195;
 	rdr->ns = 1;
 
-	rdr_log_dump_dbg(rdr, D_READER, buf, buflen, "SEND -> (%d)", buflen);
-
+	if(DEBUG)
+	{
+		char tmp[512];
+		rdr_log(rdr, "SEND -> %s(%d)", cs_hexdump(1, buf, buflen, tmp, sizeof(tmp)), buflen);
+	}
 	int32_t ret = reader_cmd2icc(rdr, buf, buflen, response, response_length);
 
-	rdr_log_dump_dbg(rdr, D_READER, buf, buflen, "RECV <- ret=%d (%d)", ret, *response_length);
-
+	if(DEBUG)
+	{
+		char tmp[512];
+		rdr_log(rdr, "RECV <- %s(%d) ret=%d", cs_hexdump(1, response, *response_length, tmp, sizeof(tmp)), *response_length, ret);
+	}
 	// reader_cmd2icc retuns ERROR=1, OK=0 - the opposite of OK and ERROR defines in reader-common.h
 
 	if(ret)

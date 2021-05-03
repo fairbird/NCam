@@ -194,13 +194,14 @@ static int32_t CamStateRequest(struct s_reader *reader)
 {
 	def_resp;
 	struct nagra_data *csystem_data = reader->csystem_data;
+	char tmp_dbg[10];
 
 	if(do_cmd(reader, 0xC0, 0x02, 0xB0, 0x06, NULL, cta_res, &cta_lr))
 	{
 		csystem_data->ird_info = cta_res[2];
 		rdr_log_dbg(reader, D_READER, "Irdinfo: %02X", csystem_data->ird_info);
 		memcpy(csystem_data->cam_state, cta_res + 3, 3);
-		rdr_log_dump_dbg(reader, D_READER, csystem_data->cam_state, 3, "Camstate:");
+		rdr_log_dbg(reader, D_READER, "Camstate: %s", cs_hexdump(1, csystem_data->cam_state, 3, tmp_dbg, sizeof(tmp_dbg)));
 	}
 	else
 	{
@@ -233,7 +234,7 @@ static int32_t NegotiateSessionKey_Tiger(struct s_reader *reader)
 	uint8_t tmp[104];
 	uint8_t idea_key[16];
 	uint8_t rnd[88];
-	char tmp2[(4 * 3) + 1];
+	char tmp2[17];
 	struct nagra_data *csystem_data = reader->csystem_data;
 
 	if(!do_cmd(reader, 0xd1, 0x02, 0x51, 0xd2, NULL, cta_res, &cta_lr))
@@ -264,8 +265,8 @@ static int32_t NegotiateSessionKey_Tiger(struct s_reader *reader)
 	memcpy(tmp + 4, parte_fija + 11, 100);
 	memset(idea_key, 0x37, 16);
 	Signature(sign1, idea_key, tmp, 104);
-	rdr_log_dump_dbg(reader, D_READER, sign1, 8, "sign1:");
-	rdr_log_dump_dbg(reader, D_READER, parte_fija + 111, 8, "sign2:");
+	rdr_log_dbg(reader, D_READER, "sign1: %s", cs_hexdump(0, sign1, 8, tmp2, sizeof(tmp2)));
+	rdr_log_dbg(reader, D_READER, "sign2: %s", cs_hexdump(0, parte_fija + 111, 8, tmp2, sizeof(tmp2)));
 
 	if((!memcmp(parte_fija + 111, sign1, 8)) == 0)
 	{
@@ -313,7 +314,7 @@ static int32_t NegotiateSessionKey_Tiger(struct s_reader *reader)
 	memcpy(sk, &parte_variable[79], 8);
 	memset(sk + 8, 0xBB, 8);
 	rdr_log_sensitive(reader, "type: NAGRA, caid: %04X, IRD ID: {%s}", reader->caid, cs_hexdump(1, reader->irdId, 4, tmp2, sizeof(tmp2)));
-	rdr_log_dump(reader, reader->prid[0], 4, "ProviderID:");
+	rdr_log(reader, "ProviderID: %s", cs_hexdump(1, reader->prid[0], 4, tmp2, sizeof(tmp2)));
 
 	memcpy(rnd, sk, 8);
 	memset(&rnd[8], 0xBB, 79);
@@ -544,7 +545,7 @@ static void decryptDT08(struct s_reader *reader, uint8_t *cta_res)
 	uint8_t sign2[8];
 	uint8_t static_dt08[73];
 	uint8_t camid[4];
-	char tmp_dbg[(4 * 3) + 1];
+	char tmp_dbg[13];
 	int32_t i, n;
 	BN_CTX *ctx;
 	BIGNUM *bn_mod, *bn_exp, *bn_data, *bn_res;
@@ -1008,7 +1009,7 @@ static int32_t nagra2_card_info(struct s_reader *reader)
 
 	for(i = 1; i < reader->nprov; i++)
 	{
-		rdr_log_dump(reader, reader->prid[i], 4, "Prv.ID:");
+		rdr_log(reader, "Prv.ID: %s", cs_hexdump(1, reader->prid[i], 4, tmp, sizeof(tmp)));
 	}
 	cs_clear_entitlement(reader); // reset the entitlements
 
@@ -1069,7 +1070,7 @@ static int32_t nagra2_card_info(struct s_reader *reader)
 									break;
 
 								default:
-									rdr_log_dump(reader, &cta_res[j], 17, "Unknown record:");
+									rdr_log(reader, "Unknown record : %s", cs_hexdump(1, &cta_res[j], 17, tmp, sizeof(tmp)));
 							}
 
 							if(val_offs > 0)
@@ -1209,7 +1210,7 @@ static int32_t nagra2_card_info(struct s_reader *reader)
 	else
 	{
 		def_resp;
-		char tmp_dbg[(4 * 3) + 1];
+		char tmp_dbg[13];
 		CamStateRequest(reader);
 
 		if(!do_cmd(reader, 0x12, 0x02, 0x92, 0x06, 0, cta_res, &cta_lr))
@@ -1367,6 +1368,7 @@ static int32_t nagra2_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, str
 			memset(v, 0, sizeof(v));
 			uint8_t _cwe0[8];
 			uint8_t _cwe1[8];
+			char tmp_dbg[25];
 
 			if(csystem_data->swapCW == 1)
 			{
@@ -1381,8 +1383,8 @@ static int32_t nagra2_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, str
 				memset(v, 0, sizeof(v));
 				idea_cbc_encrypt(&cta_res[4], &_cwe1[0], 8, &csystem_data->ksSession, v, IDEA_DECRYPT);
 			}
-			rdr_log_dump_dbg(reader, D_READER, _cwe0, 8, "CW0 after IDEA decrypt:");
-			rdr_log_dump_dbg(reader, D_READER, _cwe1, 8, "CW1 after IDEA decrypt:");
+			rdr_log_dbg(reader, D_READER, "CW0 after IDEA decrypt: %s", cs_hexdump(1, _cwe0, 8, tmp_dbg, sizeof(tmp_dbg)));
+			rdr_log_dbg(reader, D_READER, "CW1 after IDEA decrypt: %s", cs_hexdump(1, _cwe1, 8, tmp_dbg, sizeof(tmp_dbg)));
 
 			if(CW_NEEDS_3DES())
 			{
@@ -1396,8 +1398,8 @@ static int32_t nagra2_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, str
 
 				des_ecb3_decrypt(_cwe0, reader->cwekey);
 				des_ecb3_decrypt(_cwe1, reader->cwekey);
-				rdr_log_dump_dbg(reader, D_READER, _cwe0, 8, "CW0 after 3DES decrypt:");
-				rdr_log_dump_dbg(reader, D_READER, _cwe1, 8, "CW1 after 3DES decrypt:");
+				rdr_log_dbg(reader, D_READER, "CW0 after 3DES decrypt: %s", cs_hexdump(1, _cwe0, 8, tmp_dbg, sizeof(tmp_dbg)));
+				rdr_log_dbg(reader, D_READER, "CW1 after 3DES decrypt: %s", cs_hexdump(1, _cwe1, 8, tmp_dbg, sizeof(tmp_dbg)));
 
 				int chkok = 1;
 				if(((_cwe0[0] + _cwe0[1] + _cwe0[2]) & 0xFF) != _cwe0[3])

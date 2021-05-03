@@ -1099,7 +1099,7 @@ static int32_t camd35_recv_chk(struct s_client *client, uint8_t *dcw, int32_t *r
 	// reading CMD05 Emm request and set serial
 	if(buf[0] == 0x05 && buf[1] == 111)
 	{
-		//cs_log_dump(buf, buf[1], "CMD05:");
+		//cs_log("CMD05: %s", cs_hexdump(1, buf, buf[1], tmp, sizeof(tmp)));
 
 		rdr->nprov = 0; // reset if number changes on reader change
 		rdr->nprov = buf[47];

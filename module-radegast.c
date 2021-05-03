@@ -44,8 +44,9 @@ static int32_t radegast_recv_chk(struct s_client *client, uint8_t *dcw, int32_t 
 {
 	if((buf[0] == 2) && (buf[1] == 0x12))
 	{
+		char tmp_dbg[33];
 		memcpy(dcw, buf + 4, 16);
-		cs_log_dump_dbg(D_CLIENT, dcw, 16, "radegast: recv chk -");
+		cs_log_dbg(D_CLIENT, "radegast: recv chk - %s", cs_hexdump(0, dcw, 16, tmp_dbg, sizeof(tmp_dbg)));
 		*rc = 1;
 		return (client->reader->msg_idx);
 	}

@@ -345,7 +345,7 @@ int32_t emu_get_ird2_emm_type(EMM_PACKET *ep, struct s_reader *rdr)
 {
 	int32_t l = (ep->emm[3] & 0x07);
 	int32_t base = (ep->emm[3] >> 3);
-	char tmp_dbg1[(l * 3) + 1], tmp_dbg2[(l * 3) + 1];
+	char dumprdrserial[l * 3], dumpemmserial[l * 3];
 
 	switch (l)
 	{
@@ -360,12 +360,10 @@ int32_t emu_get_ird2_emm_type(EMM_PACKET *ep, struct s_reader *rdr)
 			ep->type = SHARED;
 			memset(ep->hexserial, 0, 8);
 			memcpy(ep->hexserial, ep->emm + 4, l);
-			if(cs_dblevel & D_EMM)
-			{
-				rdr_log_dbg_sensitive(rdr, D_EMM, "SHARED l = %d ep = {%s} rdr = {%s} base = %02x", l,
-					cs_hexdump(1, ep->hexserial, l, tmp_dbg1, sizeof(tmp_dbg1)),
-					cs_hexdump(1, rdr->hexserial, l, tmp_dbg2, sizeof(tmp_dbg2)), base);
-			}
+			cs_hexdump(1, rdr->hexserial, l, dumprdrserial, sizeof(dumprdrserial));
+			cs_hexdump(1, ep->hexserial, l, dumpemmserial, sizeof(dumpemmserial));
+			rdr_log_dbg_sensitive(rdr, D_EMM, "SHARED l = %d ep = {%s} rdr = {%s} base = %02x",
+									l, dumpemmserial, dumprdrserial, base);
 			return 1;
 
 		case 3:
@@ -373,12 +371,10 @@ int32_t emu_get_ird2_emm_type(EMM_PACKET *ep, struct s_reader *rdr)
 			ep->type = UNIQUE;
 			memset(ep->hexserial, 0, 8);
 			memcpy(ep->hexserial, ep->emm + 4, l);
-			if(cs_dblevel & D_EMM)
-			{
-				rdr_log_dbg_sensitive(rdr, D_EMM, "UNIQUE l = %d ep = {%s} rdr = {%s} base = %02x", l,
-					cs_hexdump(1, ep->hexserial, l, tmp_dbg1, sizeof(tmp_dbg1)),
-					cs_hexdump(1, rdr->hexserial, l, tmp_dbg2, sizeof(tmp_dbg2)), base);
-			}
+			cs_hexdump(1, rdr->hexserial, l, dumprdrserial, sizeof(dumprdrserial));
+			cs_hexdump(1, ep->hexserial, l, dumpemmserial, sizeof(dumpemmserial));
+			rdr_log_dbg_sensitive(rdr, D_EMM, "UNIQUE l = %d ep = {%s} rdr = {%s} base = %02x",
+									l, dumpemmserial, dumprdrserial, base);
 			return 1;
 
 		default:

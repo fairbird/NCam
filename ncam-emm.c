@@ -624,7 +624,7 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 		if(cs_malloc(&emm_pack, sizeof(EMM_PACKET)))
 		{
 #ifdef READER_CRYPTOWORKS
-			if((ep->type == SHARED) && ((caid == 0x0D96) || (caid == 0x0D98)) && (aureader->last_g_emm_valid == true) && (aureader->needsglobalfirst == 1))
+			if ((ep->type == SHARED) && ((caid == 0x0D96) || (caid == 0x0D98)) && (aureader->last_g_emm_valid == true) && (aureader->needsglobalfirst == 1))
 			{
 				EMM_PACKET *emm_pack_global;
 				if(cs_malloc(&emm_pack_global, sizeof(EMM_PACKET)))
@@ -633,7 +633,7 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 					memcpy(emm_pack_global, aureader->last_g_emm, sizeof(EMM_PACKET));
 					add_job(aureader->client, ACTION_READER_EMM, emm_pack_global, sizeof(EMM_PACKET));
 					saveemm(aureader, aureader->last_g_emm, "written stored global");
-					cs_log_dump_dbg(D_EMM, emm_pack_global->emm, emm_pack_global->emmlen, "Last stored global EMM to be written before shared EMM:");
+					cs_log_dump_dbg(D_EMM,emm_pack_global->emm, emm_pack_global->emmlen, "Last stored global EMM to be written before shared EMM:");
 				}
 			}
 #endif
@@ -642,6 +642,7 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 			add_job(aureader->client, ACTION_READER_EMM, emm_pack, sizeof(EMM_PACKET));
 			saveemm(aureader, ep, "written");
 		}
+
 	} // done with this reader, process next reader!
 
 	if(emmnok > 0 && emmnok == ll_count(client->aureader_list))

@@ -597,25 +597,6 @@ static void __cs_log_check_duplicates(uint8_t hdr_len, uint8_t hdr_logcount_offs
 		} \
 	} while(0)
 
-#define __do_log_hex() \
-	do { \
-		va_list params; \
-		va_start(params, fmt); \
-		__init_log_prefix("%10s "); \
-		vsnprintf(log_txt + hdr_len + log_prefix_len, sizeof(log_txt) - (hdr_len + log_prefix_len), fmt, params); \
-		int len = cs_strlen(log_txt); \
-		if(log_txt[len - 1] != 0x20) { log_txt[len] = 0x20; len += 1; } \
-		cs_hexdump(0, buf, n, log_txt + len, (n * 2) + 1); \
-		va_end(params); \
-		if(cfg.logduplicatelines) \
-		{ \
-			memcpy(last_log_txt, log_txt + hdr_len, LOG_BUF_SIZE - hdr_len); \
-			write_to_log_int(log_txt, hdr_len, hdr_logcount_offset, hdr_date_offset, hdr_time_offset, hdr_info_offset); \
-		} else { \
-			__cs_log_check_duplicates(hdr_len, hdr_logcount_offset, hdr_date_offset, hdr_time_offset, hdr_info_offset); \
-		} \
-	} while(0)
-
 void cs_log_txt(const char *log_prefix, const char *fmt, ...)
 {
 	if(logStarted == 0)
@@ -632,23 +613,16 @@ void cs_log_hex(const char *log_prefix, const uint8_t *buf, int32_t n, const cha
 		{ return; }
 
 	SAFE_MUTEX_LOCK_NOLOG(&log_mutex);
-	if(n > 16)
+	__do_log();
+	if(buf)
 	{
-		__do_log();
-		if(buf)
+		int32_t i;
+		__init_log_prefix("%10s   ");
+		for(i = 0; i < n; i += 16)
 		{
-			int32_t i;
-			__init_log_prefix("%10s   ");
-			for(i = 0; i < n; i += 16)
-			{
-				cs_hexdump(1, buf + i, (n - i > 16) ? 16 : n - i, log_txt + hdr_len + log_prefix_len, sizeof(log_txt) - (hdr_len + log_prefix_len));
-				write_to_log_int(log_txt, hdr_len, hdr_logcount_offset, hdr_date_offset, hdr_time_offset, hdr_info_offset);
-			}
+			cs_hexdump(1, buf + i, (n - i > 16) ? 16 : n - i, log_txt + hdr_len + log_prefix_len, sizeof(log_txt) - (hdr_len + log_prefix_len));
+			write_to_log_int(log_txt, hdr_len, hdr_logcount_offset, hdr_date_offset, hdr_time_offset, hdr_info_offset);
 		}
-	}
-	else if(buf)
-	{
-		__do_log_hex();
 	}
 	SAFE_MUTEX_UNLOCK_NOLOG(&log_mutex);
 }

@@ -485,7 +485,7 @@ static uint32_t cryptoworks_get_emm_provid(uint8_t *buffer, int32_t len)
 
 static int32_t cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader *rdr)
 {
-	char tmp_dbg1[(5 * 3) + 1], tmp_dbg2[(5 * 3) + 1];
+	char dumprdrserial[16], dumpemmserial[16];
 
 	rdr_log_dbg(rdr, D_EMM, "Entered cryptoworks_get_emm_type ep->emm[0]=%02x", ep->emm[0]);
 	switch(ep->emm[0])
@@ -496,14 +496,15 @@ static int32_t cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader *rdr)
 				ep->type = UNIQUE;
 				memset(ep->hexserial, 0, 8);
 				memcpy(ep->hexserial, ep->emm + 5, 5);
-				i2b_buf(4, cryptoworks_get_emm_provid(ep->emm + 12, ep->emmlen - 12), ep->provid);
+#ifdef WITH_DEBUG
 				if(cs_dblevel & D_EMM)
 				{
-					rdr_log_dbg_sensitive(rdr, D_EMM, "UNIQUE, ep = {%s} rdr = {%s}",
-						cs_hexdump(1, ep->hexserial, 5, tmp_dbg1, sizeof(tmp_dbg1)),
-						cs_hexdump(1, rdr->hexserial, 5, tmp_dbg2, sizeof(tmp_dbg2)));
+					cs_hexdump(1, rdr->hexserial, 5, dumprdrserial, sizeof(dumprdrserial));
+					cs_hexdump(1, ep->hexserial, 5, dumpemmserial, sizeof(dumpemmserial));
 				}
-
+#endif
+				i2b_buf(4, cryptoworks_get_emm_provid(ep->emm + 12, ep->emmlen - 12), ep->provid);
+				rdr_log_dbg_sensitive(rdr, D_EMM, "UNIQUE, ep = {%s} rdr = {%s}", dumpemmserial, dumprdrserial);
 				return (!memcmp(ep->emm + 5, rdr->hexserial, 5)); // check for serial
 			}
 			break;
@@ -514,14 +515,15 @@ static int32_t cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader *rdr)
 				ep->type = SHARED;
 				memset(ep->hexserial, 0, 8);
 				memcpy(ep->hexserial, ep->emm + 5, 4);
-				i2b_buf(4, cryptoworks_get_emm_provid(ep->emm + 12, ep->emmlen - 12), ep->provid);
-
+#ifdef WITH_DEBUG
 				if(cs_dblevel & D_EMM)
 				{
-					rdr_log_dbg_sensitive(rdr, D_EMM, "SHARED, ep = {%s} rdr = {%s}",
-						cs_hexdump(1, ep->hexserial, 4, tmp_dbg1, sizeof(tmp_dbg1)),
-						cs_hexdump(1, rdr->hexserial, 4, tmp_dbg2, sizeof(tmp_dbg2)));
+					cs_hexdump(1, rdr->hexserial, 4, dumprdrserial, sizeof(dumprdrserial));
+					cs_hexdump(1, ep->hexserial, 4, dumpemmserial, sizeof(dumpemmserial));
 				}
+#endif
+				i2b_buf(4, cryptoworks_get_emm_provid(ep->emm + 12, ep->emmlen - 12), ep->provid);
+				rdr_log_dbg_sensitive(rdr, D_EMM, "SHARED, ep = {%s} rdr = {%s}", dumpemmserial, dumprdrserial);
 				return (!memcmp(ep->emm + 5, rdr->hexserial, 4)); // check for SA
 			}
 			break;

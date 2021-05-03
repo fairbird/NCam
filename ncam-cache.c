@@ -444,8 +444,12 @@ static void cacheex_cache_add(ECM_REQUEST *er, ECMHASH *result, CW *cw, bool add
 		if (er->cacheex_src->account)
 			er->cacheex_src->account->cwcacheexerrcw++;
 
-		if(cs_dblevel & (D_CACHEEX | D_CSP)) // avoid useless operations if debug is not enabled
+		if (((0x0200| 0x0800) & cs_dblevel)) // avoid useless operations if debug is not enabled
 		{
+			char cw1[16*3+2], cw2[16*3+2];
+			cs_hexdump(0, er->cw, 16, cw1, sizeof(cw1));
+			cs_hexdump(0, cw_first->cw, 16, cw2, sizeof(cw2));
+
 			char ip1[20]="", ip2[20]="";
 			if (check_client(er->cacheex_src))
 				cs_strncpy(ip1, cs_inet_ntoa(er->cacheex_src->ip), sizeof(ip1));
@@ -453,6 +457,7 @@ static void cacheex_cache_add(ECM_REQUEST *er, ECMHASH *result, CW *cw, bool add
 				cs_strncpy(ip2, cs_inet_ntoa(cw_first->cacheex_src->ip), sizeof(ip2));
 			else if (cw_first->selected_reader && check_client(cw_first->selected_reader->client))
 				cs_strncpy(ip2, cs_inet_ntoa(cw_first->selected_reader->client->ip), sizeof(ip2));
+
 #ifdef CS_CACHEEX_AIO
 			uint8_t remotenodeid[8];
 			cacheex_get_srcnodeid(er, remotenodeid);
@@ -469,34 +474,34 @@ static void cacheex_cache_add(ECM_REQUEST *er, ECMHASH *result, CW *cw, bool add
 			{
 				fakeF0 = 1;
 			}
-#endif // CS_CACHEEX_AIO
-			char tmp_dbg1[(16 * 2) + 1], tmp_dbg2[(16 * 2) + 1];
-#ifdef CS_CACHEEX_AIO
-			debug_ecm(D_CACHEEX | D_CSP, "WARNING: Different CWs %s from %s(%s)<>%s(%s): %s<>%s lg: %i<>%i, hop:%02i, src-nodeid: %" PRIu64 "X%s", buf,
-#else // CS_CACHEEX_AIO
-			debug_ecm(D_CACHEEX | D_CSP, "WARNING: Different CWs %s from %s(%s)<>%s(%s): %s<>%s ", buf,
-#endif // CS_CACHEEX_AIO
+
+			debug_ecm(D_CACHEEX| D_CSP, "WARNING: Different CWs %s from %s(%s)<>%s(%s): %s<>%s lg: %i<>%i, hop:%02i, src-nodeid: %" PRIu64 "X%s", buf,
+#else
+			debug_ecm(D_CACHEEX| D_CSP, "WARNING: Different CWs %s from %s(%s)<>%s(%s): %s<>%s ", buf,
+#endif
 				er->from_csp ? "csp" : username(er->cacheex_src), ip1,
 				check_client(cw_first->cacheex_src)?username(cw_first->cacheex_src):(cw_first->selected_reader?cw_first->selected_reader->label:"unknown/csp"), ip2,
-				cs_hexdump(0, er->cw, 16, tmp_dbg1, sizeof(tmp_dbg1)),
-				cs_hexdump(0, cw_first->cw, 16, tmp_dbg2, sizeof(tmp_dbg2))
 #ifdef CS_CACHEEX_AIO
-				, er->localgenerated, cw_first->localgenerated, er->csp_lastnodes ? ll_count(er->csp_lastnodes) : 0,
-				er->csp_lastnodes ? cacheex_node_id(remotenodeid): 0, fakeF0 ? " [last byte xor 0xF0]" : "");
-#else // CS_CACHEEX_AIO
-				);
-#endif // CS_CACHEEX_AIO
-			LL_LOCKITER *li = ll_li_create(er->csp_lastnodes, 0);
-			uint8_t *nodeid;
-			uint8_t hops = 0;
-			while((nodeid = ll_li_next(li)))
+				cw1, cw2, er->localgenerated, cw_first->localgenerated, er->csp_lastnodes ? ll_count(er->csp_lastnodes) : 0, er->csp_lastnodes ? cacheex_node_id(remotenodeid): 0, fakeF0 ? " [last byte xor 0xF0]" : "");
+#else
+				cw1, cw2);
+#endif
+#ifdef WITH_DEBUG
+			if(cs_dblevel & D_CACHEEX)
 			{
-				cs_log_dbg(D_CACHEEX, "Different CW-nodelist hop%02u: %" PRIu64 "X", ++hops, cacheex_node_id(nodeid));
+				LL_LOCKITER *li = ll_li_create(er->csp_lastnodes, 0);
+				uint8_t *nodeid;
+				uint8_t hops = 0;
+				while((nodeid = ll_li_next(li)))
+				{
+					cs_log_dbg(D_CACHEEX, "Different CW-nodelist hop%02u: %" PRIu64 "X", ++hops, cacheex_node_id(nodeid));
+				}
+				ll_li_destroy(li);
 			}
-			ll_li_destroy(li);
+#endif
 		}
 	}
-#endif // CS_CACHEEX
+#endif
 }
 
 #ifdef CS_CACHEEX_AIO
@@ -594,8 +599,8 @@ static bool cw_cache_check(ECM_REQUEST *er)
 			// cw found
 			else
 			{
-				char cw1[(16 * 2) + 1];
-				char cw2[(16 * 2) + 1];
+				char cw1[16*3+2];
+				char cw2[16*3+2];
 				int8_t drop_cw = 0;
 				int64_t gone_diff = 0;
 
