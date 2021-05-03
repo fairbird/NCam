@@ -316,7 +316,7 @@ list_config() {
 	update_deps
 	# Handle use flags
 	have_flag USE_STAPI && echo "CONFIG_WITH_STAPI=y" || echo "# CONFIG_WITH_STAPI=n"
-	have_flag USE_STAPI && enable_opt CARDREADER_STAPI >/dev/null || disable_opt CARDREADER_STAPI >/dev/null
+#	have_flag USE_STAPI && enable_opt CARDREADER_STAPI >/dev/null || disable_opt CARDREADER_STAPI >/dev/null
 	have_flag USE_STAPI5 && echo "CONFIG_WITH_STAPI5=y" || echo "# CONFIG_WITH_STAPI5=n"
 	have_flag USE_STAPI5 && enable_opt CARDREADER_STAPI5 >/dev/null || disable_opt CARDREADER_STAPI5 >/dev/null
 	have_flag USE_GXAPI && echo "CONFIG_WITH_GXAPI=y" || echo "# CONFIG_WITH_GXAPI=n"
