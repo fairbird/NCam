@@ -2686,7 +2686,7 @@ void dvbapi_stop_descrambling(int32_t demux_id, uint32_t msgid)
 	}
 	demux[demux_id].pidindex = -1;
 	demux[demux_id].curindex = -1;
-	
+
 	if(!cfg.dvbapi_listenport && cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX)
 	{
 		unlink(ECMINFO_FILE);
@@ -6388,7 +6388,7 @@ static void dvbapi_get_packet_size(uint8_t *mbuf, uint16_t mbuf_len, uint16_t *c
 			}
 			break;
 		}
-		
+
 		default:
 		{
 			if((opcode & 0xFFFFFF00) == DVBAPI_AOT_CA_PMT)
@@ -6404,13 +6404,13 @@ static void dvbapi_get_packet_size(uint8_t *mbuf, uint16_t mbuf_len, uint16_t *c
 			break;
 		}
 	}
-	
+
 	if(tmp_data_len == 0 || commandsize == 0)
 	{
 		set_chunksize_data_len_to_invalid(chunksize, data_len);
 		return;
 	}
-	
+
 	if(tmp_data_len + commandsize > 0xFFFF)
 	{
 		cs_log("This packet is too big: %d bytes => truncated!", tmp_data_len);
@@ -6419,7 +6419,7 @@ static void dvbapi_get_packet_size(uint8_t *mbuf, uint16_t mbuf_len, uint16_t *c
 
 	(*data_len) = tmp_data_len;
 	(*chunksize) += commandsize + tmp_data_len;
-	
+
 	if(*chunksize > mbuf_len)
 	{
 		cs_log_dbg(D_DVBAPI, "This %s packet is incomplete => command length is (%" PRIu16 ")", command, *chunksize);
@@ -6445,7 +6445,7 @@ static void dvbapi_handlesockmsg(uint8_t *mbuf, uint16_t chunksize, uint16_t dat
 	}
 
 	uint32_t opcode = b2i(4, mbuf);
-	
+
 	switch(opcode)
 	{
 		case DVBAPI_FILTER_DATA:
@@ -6482,8 +6482,8 @@ static void dvbapi_handlesockmsg(uint8_t *mbuf, uint16_t chunksize, uint16_t dat
 			dvbapi_net_send(DVBAPI_SERVER_INFO, connfd, msgid, -1, -1, NULL, NULL, NULL, client_proto);
 
 			// now the protocol handshake is complete set correct version so all further packets are sent with correct message id.
-			(*client_proto_version) = client_proto; 
-				
+			(*client_proto_version) = client_proto;
+
 			// setting the global var according to the client
 			last_client_proto_version = client_proto;
 			break;
@@ -6496,7 +6496,7 @@ static void dvbapi_handlesockmsg(uint8_t *mbuf, uint16_t chunksize, uint16_t dat
 			break;
 		}
 
-		case (DVBAPI_AOT_CA_STOP):
+		case DVBAPI_AOT_CA_STOP:
 		{
 			cs_log_dbg(D_DVBAPI, "Received DVBAPI_AOT_CA_STOP object on socket %d:", connfd);
 			if(cfg.dvbapi_boxtype == BOXTYPE_IPBOX || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX || cfg.dvbapi_listenport)
@@ -6580,11 +6580,11 @@ static bool dvbapi_handlesockdata(int32_t connfd, uint8_t *mbuf, uint16_t mbuf_s
 	{
 		msgid_size = 5;
 	}
-	
+
 	do
 	{
 		missing_header_bytes = dvbapi_get_nbof_missing_header_bytes(mbuf, unhandled_len, msgid_size);
-	
+
 		if(missing_header_bytes != 0)
 		{
 			// read first few bytes so we know packet type and length
@@ -6606,10 +6606,10 @@ static bool dvbapi_handlesockdata(int32_t connfd, uint8_t *mbuf, uint16_t mbuf_s
 				}
 			}
 		}
-	
+
 		cs_log_dump_dbg(D_DVBAPI, mbuf, unhandled_len, "Got packetdata (msgid size: %d, clientprotocol: %d)", msgid_size, *client_proto_version);
 		dvbapi_get_packet_size(mbuf+msgid_size, unhandled_len-msgid_size, &chunksize, &data_len);
-		
+
 		chunksize+=msgid_size;
 		if(chunksize > mbuf_size)
 		{
@@ -6646,7 +6646,7 @@ static bool dvbapi_handlesockdata(int32_t connfd, uint8_t *mbuf, uint16_t mbuf_s
 			memmove(mbuf, mbuf + chunksize, unhandled_len);
 		}
 	} while(unhandled_len != 0 && packet_count++ < 8);
-	
+
 	cs_log_dbg(D_DVBAPI, "Processing socketdata completed after %d packets with %d bytes left unprocessed", packet_count, unhandled_len);
 
 	(*new_unhandled_len) = unhandled_len;
@@ -9429,8 +9429,10 @@ uint32_t is_ca_used(uint8_t cadevice, int32_t pid)
 
 uint32_t count_active_indexers(void)
 {
+	uint i, usecounter = 0;
 	struct s_streampid *listitem;
 	LL_ITER itr;
+
 	if(!ll_activestreampids)
 	{
 		return 0;
@@ -9439,18 +9441,17 @@ uint32_t count_active_indexers(void)
 	bool indexer_in_use[ca_descramblers_total];
 	memset(&indexer_in_use, 0, sizeof(indexer_in_use));
 
-	uint32_t usecounter = 0;
 	if(ll_count(ll_activestreampids) > 0)
 	{
 		itr = ll_iter_create(ll_activestreampids);
 		while((listitem = ll_iter_next(&itr)))
-		{	
+		{
 			if(listitem->caindex != INDEX_INVALID && listitem->caindex < INDEX_MAX)
 			{
 				indexer_in_use[listitem->caindex] = true;
 			}
 		}
-		uint32_t i = 0;
+
 		for(i = 0; i < ca_descramblers_total; i++)
 		{
 			if(indexer_in_use[i] == true)
