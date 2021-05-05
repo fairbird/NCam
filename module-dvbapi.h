@@ -398,6 +398,7 @@ enum stream_type
 #define MAX_DEMUX       16
 #else
 #define MAX_DEMUX       32 // Max number of demuxes supported by NCam - each channel/service occupies one demux
+#define MAX_ASSOC_FD    MAX_DEMUX
 #endif
 #define MAX_ECM_PIDS    24 // Max number of ECM pids per demux
 #define MAX_EMM_PIDS    24 // Max number of EMM pids per demux
