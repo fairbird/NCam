@@ -375,7 +375,7 @@ typedef uint8_t uint8_t;
 /* ===========================
  *         constants
  * =========================== */
-#define CS_VERSION    "Unoffical"
+#define CS_VERSION    "Unofficial"
 #ifndef CS_REVISION
 #define CS_REVISION   "r1"
 #endif
