@@ -117,12 +117,12 @@ int32_t ATR_GetProtocolType(ATR *atr, uint32_t number_protocol, unsigned char *p
 int32_t ATR_GetInterfaceByte(ATR *atr, uint32_t number, int32_t character, unsigned char *ib);
 int32_t ATR_GetIntegerValue(ATR *atr, int32_t name, unsigned char *value);
 int32_t ATR_GetParameter(ATR *atr, int32_t name, uint32_t *parameter);
-int32_t ATR_GetHistoricalBytes(ATR *atr, unsigned char *hist, uint32_t *length);
+int32_t ATR_GetHistoricalBytes(ATR *atr, unsigned char hist[ATR_MAX_HISTORICAL], uint32_t *length);
 int32_t ATR_GetCheckByte(ATR *atr, unsigned char *check_byte);
 int32_t ATR_GetFsMax(ATR *atr, uint32_t *fsmax);
 
 /* Raw ATR retrieving */
-int32_t ATR_GetRaw(ATR *atr, unsigned char *buffer, uint32_t *lenght);
+int32_t ATR_GetRaw(ATR *atr, unsigned char buffer[ATR_MAX_SIZE], uint32_t *length);
 int32_t ATR_GetSize(ATR *atr, uint32_t *size);
 
 /* Invert order of bits in a byte: b7->b0, b0->b7 */
