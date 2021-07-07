@@ -1524,7 +1524,7 @@ struct ecmtw get_twin(ECM_REQUEST *er)
 #endif
 
 #if defined(MODULE_CCCAM) || defined(MODULE_NEWCAMD) || defined(MODULE_CAMD35) || defined(MODULE_RADEGAST)
-static int add_reader_from_line(char s[512], int type)
+static int add_reader_from_line(char s[510], int type)
 {
 	if(!s || !type) { return 0; }
 
