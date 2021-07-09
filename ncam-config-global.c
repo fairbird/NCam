@@ -1372,7 +1372,7 @@ static const struct config_list dvbapi_opts[] =
 	DEF_OPT_INT8("read_sdt"       , OFS(dvbapi_read_sdt)       , 0),
 	DEF_OPT_INT8("write_sdt_prov" , OFS(dvbapi_write_sdt_prov) , 0),
 	DEF_OPT_INT8("extended_cw_api", OFS(dvbapi_extended_cw_api), 0),
-#ifdef WITH_WI
+#if defined(WITH_WI) && !defined(WI_OLD)
 	DEF_OPT_INT8("wi_sosket_id"   , OFS(dvbapi_wi_sosket_id)   , SOCKET_ID),
 #endif
 	DEF_OPT_FUNC("boxtype"        , OFS(dvbapi_boxtype)        , dvbapi_boxtype_fn),
