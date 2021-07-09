@@ -19,6 +19,10 @@ extern int32_t STReader_SetClockrate(uint32_t stsmart_handle);
 extern char *STReader_GetRevision(void);
 #endif
 
+#if defined(WITH_WI) && !defined(WI_OLD)
+extern char *WiSmart_Init(void);
+#endif
+
 #define OK 0
 #define ERROR 1
 
@@ -35,6 +39,10 @@ static int32_t stapi_init(struct s_reader *reader)
 
 #ifdef CARDREADER_STAPI5
 	STReader_GetRevision();
+#endif
+
+#if defined(WITH_WI) && !defined(WI_OLD)
+	WiSmart_Init();
 #endif
 
 	return STReader_Open(reader->device, &crdr_data->stapi_handle);

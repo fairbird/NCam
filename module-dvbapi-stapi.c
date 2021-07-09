@@ -131,8 +131,10 @@ int32_t stapi_open(void)
 	stapi_on = 1;
 	int32_t i;
 #ifdef WITH_WI
+#ifndef WI_OLD
 	WiWrapper_Init(cfg.dvbapi_wi_sosket_id);
 	cs_log("Wi socket id: %d", cfg.dvbapi_wi_sosket_id);
+#endif
 	WiDemux_Init();
 	cs_log_dbg(D_DVBAPI, "[%s] dvbapi_priority(%p)", __func__, dvbapi_priority);
 #else
@@ -454,6 +456,11 @@ static int32_t stapi_do_set_filter(int32_t demux_id, FILTERTYPE *filter, uint16_
 		break;
 	}
 
+#ifdef WI_OLD
+	WiDumpMemory(filt, 8, 2);
+	WiDumpMemory(mask, 8, 2);
+#endif
+
 	ret = WiDemux_FilterStart(
 			/*dev_list[dev_id].SessionHandle*/demux_id,
 			pids[0],
@@ -481,6 +488,10 @@ static int32_t stapi_do_set_filter(int32_t demux_id, FILTERTYPE *filter, uint16_
 	{
 		cs_log("[%s] %d.pid=[%04x]", __func__, k,  pids[k]);
 
+#ifdef WI_OLD
+		WiDumpMemory(filt, 8, 2);
+		WiDumpMemory(mask, 8, 2);
+#endif
 		ret = WiDemux_FilterStart(
 				/*dev_list[dev_id].SessionHandle*/demux_id,
 				pids[k],
