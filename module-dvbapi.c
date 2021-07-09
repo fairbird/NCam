@@ -8121,7 +8121,9 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				else
 				{
 					demux[i].ECMpids[j].useMultipleIndices = 0;
-
+#ifdef WI_OLD
+					memcpy(cw, er->cw, 16);
+#else
 					if(er->cw_ex.algo == CW_ALGO_AES128)
 					{
 						typ = 4;
@@ -8131,6 +8133,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 					{
 						memcpy(cw, er->cw, 16);
 					}
+#endif
 				}
 #else
 				memcpy(cw, er->cw, 16);
