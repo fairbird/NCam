@@ -1703,7 +1703,7 @@ static char *send_ncam_config_dvbapi(struct templatevars *vars, struct uriparams
 	//extended_cw_api
 	tpl_printf(vars, TPLADD, "TMP", "EXTENDEDCWAPISELECTED%d", cfg.dvbapi_extended_cw_api);
 	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
-#ifdef WITH_WI
+#if defined(WITH_WI) && !defined(WI_OLD)
 	//wi_sosket_id
 	tpl_printf(vars, TPLAPPEND, "WISOCKETID", "\t\t<TR><TD>Wi socket id:</TD><TD><input name=\"""wi_sosket_id""\" class=\"""withunit short""\" type=\"""text""\" maxlength=\"""2""\" value=\"""%d""\"></TD></TR>", cfg.dvbapi_wi_sosket_id);
 #endif
