@@ -35,7 +35,7 @@ void start_gbx_ticker(void);
 
 char *get_gbox_tmp_fname(char *fext)
 {
-	static char gbox_tmpfile_buf[64] = { 0 };
+	static char gbox_tmpfile_buf[64 + 1] = { 0 };
 	const char *slash = "/";
 	if(!cfg.gbox_tmp_dir)
 	{
