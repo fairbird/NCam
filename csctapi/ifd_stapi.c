@@ -16,6 +16,9 @@ extern int32_t STReader_SetClockrate(uint32_t stsmart_handle);
 
 #ifdef CARDREADER_STAPI5
 /* These functions are implemented in liboscam_stapi5.a */
+#ifdef STAPI5_V03
+#define STReader_GetRevision oscam_stapi5_GetRevision
+#endif
 extern char *STReader_GetRevision(void);
 #endif
 
