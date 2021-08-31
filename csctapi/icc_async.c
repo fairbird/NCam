@@ -15,7 +15,6 @@
 #endif
 #ifdef WITH_CARDLIST
 #include "../cardlist.h"
-struct atrlist current;
 #endif
 
 #define OK 0
