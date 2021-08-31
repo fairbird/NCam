@@ -66,7 +66,7 @@ EMM_GLOBAL: 4
 EMM_UNKNOWN: 8
 SUM EMM for Value
 */
-extern struct atrlist current;
+struct atrlist current;
 
 void findatr(struct s_reader *reader)
 {
