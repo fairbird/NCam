@@ -6,7 +6,6 @@
 #include "../ncam-string.h"
 #ifdef WITH_CARDLIST
 #include "../cardlist.h"
-struct atrlist current;
 #endif
 
 #if defined(__CYGWIN__)
