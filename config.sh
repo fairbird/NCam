@@ -318,9 +318,9 @@ list_config() {
 	have_flag USE_STAPI && echo "CONFIG_WITH_STAPI=y" || echo "# CONFIG_WITH_STAPI=n"
 #	have_flag USE_STAPI && enable_opt CARDREADER_STAPI >/dev/null || disable_opt CARDREADER_STAPI >/dev/null
 	have_flag USE_STAPI5 && echo "CONFIG_WITH_STAPI5=y" || echo "# CONFIG_WITH_STAPI5=n"
-	have_flag USE_STAPI5 && enable_opt CARDREADER_STAPI5 >/dev/null || disable_opt CARDREADER_STAPI5 >/dev/null
+#	have_flag USE_STAPI5 && enable_opt CARDREADER_STAPI5 >/dev/null || disable_opt CARDREADER_STAPI5 >/dev/null
 	have_flag USE_GXAPI && echo "CONFIG_WITH_GXAPI=y" || echo "# CONFIG_WITH_GXAPI=n"
-	have_flag USE_GXAPI && enable_opt CARDREADER_GXAPI >/dev/null || disable_opt CARDREADER_GXAPI >/dev/null
+#	have_flag USE_GXAPI && enable_opt CARDREADER_GXAPI >/dev/null || disable_opt CARDREADER_GXAPI >/dev/null
 	have_flag USE_COOLAPI && echo "CONFIG_WITH_COOLAPI=y" || echo "# CONFIG_WITH_COOLAPI=n"
 	have_flag USE_COOLAPI2 && echo "CONFIG_WITH_COOLAPI2=y" || echo "# CONFIG_WITH_COOLAPI2=n"
 	have_flag USE_SU980 && echo "CONFIG_WITH_SU980=y" || echo "# CONFIG_WITH_SU980=n"
