@@ -1050,7 +1050,7 @@ static void fix_stacksize(void)
 #ifndef PTHREAD_STACK_MIN
 #define PTHREAD_STACK_MIN 64000
 #endif
-#define NCAM_STACK_MIN PTHREAD_STACK_MIN+32768
+#define NCAM_STACK_MIN PTHREAD_STACK_MIN + 32768
 
 	if(ncam_stacksize < NCAM_STACK_MIN)
 	{
@@ -1061,7 +1061,7 @@ static void fix_stacksize(void)
 			return;
 		}
 
-		ncam_stacksize = (((NCAM_STACK_MIN) / pagesize) + 1) * pagesize;
+		ncam_stacksize = (NCAM_STACK_MIN / pagesize + 1) * pagesize;
 	}
 }
 
