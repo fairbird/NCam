@@ -134,7 +134,7 @@ static char *prog_name;
 static char *stb_boxtype;
 static char *stb_boxname;
 
-static int32_t ncam_stacksize = 0;
+static uint32_t ncam_stacksize = 0;
 
 /*****************************************************************************
 		Statics
@@ -1061,7 +1061,7 @@ static void fix_stacksize(void)
 			return;
 		}
 
-		ncam_stacksize = (NCAM_STACK_MIN / pagesize + 1) * pagesize;
+		ncam_stacksize = ((NCAM_STACK_MIN / pagesize) + 1) * pagesize;
 	}
 }
 
