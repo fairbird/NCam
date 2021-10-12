@@ -134,7 +134,7 @@ static char *prog_name;
 static char *stb_boxtype;
 static char *stb_boxname;
 
-static uint32_t ncam_stacksize = 0;
+static int32_t ncam_stacksize = 0;
 
 /*****************************************************************************
 		Statics
@@ -1050,7 +1050,7 @@ static void fix_stacksize(void)
 #ifndef PTHREAD_STACK_MIN
 #define PTHREAD_STACK_MIN 64000
 #endif
-#define NCAM_STACK_MIN PTHREAD_STACK_MIN + 32768
+#define NCAM_STACK_MIN ((int32_t)(PTHREAD_STACK_MIN + 32768))
 
 	if(ncam_stacksize < NCAM_STACK_MIN)
 	{
