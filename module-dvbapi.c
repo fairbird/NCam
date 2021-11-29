@@ -4239,7 +4239,7 @@ static void dvbapi_parse_pmt_program_info(int32_t demux_id, const uint8_t *buffe
 	}
 }
 
-tatic void dvbapi_parse_pmt_es_info(int32_t demux_id, const uint8_t *buffer, uint16_t length, uint8_t *ca_pmt_cmd_id, uint16_t *video_pid
+static void dvbapi_parse_pmt_es_info(int32_t demux_id, const uint8_t *buffer, uint16_t length, uint8_t *ca_pmt_cmd_id, uint16_t *video_pid
 #ifdef WITH_EMU
 , uint16_t pcr_pid 
 #endif
