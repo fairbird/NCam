@@ -4375,6 +4375,7 @@ static void dvbapi_parse_pmt_info(int32_t demux_id, const uint8_t *buffer, uint1
 #ifdef WITH_EMU
 , uint16_t pcr_pid 
 #endif
+)
 {
 	uint16_t i, program_info_length, video_pid = 0;
 
@@ -4406,6 +4407,7 @@ static void dvbapi_parse_pmt_info(int32_t demux_id, const uint8_t *buffer, uint1
 #ifdef WITH_EMU
 			, pcr_pid 
 #endif
+			);
 
 	cs_log("Demuxer %d found %d ECM pids and %d STREAM pids in %sPMT", demux_id,
 		demux[demux_id].ECMpidcount, demux[demux_id].STREAMpidcount, ca_pmt_cmd_id != NULL ? "CA " : "");
