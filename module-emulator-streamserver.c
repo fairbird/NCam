@@ -468,6 +468,13 @@ static void ParsePmtData(emu_stream_client_data *cdata)
 		}
 	}
 
+	if(!cdata->video_pid)
+	{
+		cdata->video_pid = cdata->pcr_pid;
+		cs_log_dbg(D_READER, "Stream client %i forced video pid: 0x%04X (%i)",
+					cdata->connid, cdata->video_pid, cdata->video_pid);
+	}
+
 	// If we haven't found a CAID for this service,
 	// search the keyDB for a fake one
 	if (cdata->caid == NO_CAID_VALUE && stream_client_get_caid(cdata) == 1)
