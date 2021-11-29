@@ -4243,6 +4243,7 @@ static void dvbapi_parse_pmt_es_info(int32_t demux_id, const uint8_t *buffer, ui
 #ifdef WITH_EMU
 , uint16_t pcr_pid 
 #endif
+)
 {
 	uint16_t i, elementary_pid, es_info_length, offset = 0;
 	uint8_t stream_type, type;
