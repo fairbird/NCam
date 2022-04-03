@@ -4013,6 +4013,8 @@ static char *send_ncam_user_config_edit(struct templatevars *vars, struct uripar
 
 	tpl_addVar(vars, TPLADD, "STEALTH", cfg.cc_stealth ? "enable" : "disable");
 #endif
+	// Connect on init (newcamd)
+	tpl_addVar(vars, TPLADD, "CONNECTONINITCHECKED", (cfg.cccam_cfg_inactivity == 1) ? "checked" : "");
 
 	//Failban
 	tpl_printf(vars, TPLADD, "FAILBAN", "%d", account->failban);

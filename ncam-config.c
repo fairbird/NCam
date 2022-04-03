@@ -1524,7 +1524,7 @@ struct ecmtw get_twin(ECM_REQUEST *er)
 #endif
 
 #if defined(MODULE_CCCAM) || defined(MODULE_NEWCAMD) || defined(MODULE_CAMD35) || defined(MODULE_RADEGAST)
-static int add_reader_from_line(char s[510], int type)
+static int add_reader_from_line(char s[510], int type, bool fs)
 {
 	if(!s || !type) { return 0; }
 
@@ -1597,7 +1597,8 @@ static int add_reader_from_line(char s[510], int type)
 			break;
 		}
 	}
-	if(!cfg.cccam_cfg_repetitions_forced && found) { return 0; }
+	if(fs) { if(found) { return 0; } }
+	else { if(!cfg.cccam_cfg_repetitions_forced && found) { return 0; } }
 	if(!cs_malloc(&rdr, sizeof(struct s_reader))) { return 0; }
 	memset(rdr, 0, sizeof(struct s_reader));
 	reader_set_defaults(rdr);
@@ -1611,7 +1612,7 @@ static int add_reader_from_line(char s[510], int type)
 	if(rdr->grp < 1) { rdr->grp = 0x8000000000000000ULL; }
 	rdr->audisabled = 1;
 	rdr->from_cccam_cfg = 1;
-	if(cfg.cccam_cfg_save) { rdr->cccam_cfg_save = 0; }
+	if(!fs && cfg.cccam_cfg_save) { rdr->cccam_cfg_save = 0; }
 	else { rdr->cccam_cfg_save = 1; }
 	switch(type)
 	{
@@ -1638,8 +1639,19 @@ static int add_reader_from_line(char s[510], int type)
 				{ snprintf(sncd_key + 2 * i, sizeof(sncd_key) - 2 * i, "%02x", ncd_key[i]); }
 			chk_reader("key", sncd_key, rdr);
 		}
-		char connectoninit[2] = "1";
-		chk_reader("connectoninit", connectoninit, rdr);
+		//char connectoninit[2] = "1";
+		//chk_reader("connectoninit", connectoninit, rdr);
+		if(cfg.cccam_cfg_inactivity)
+		{
+			rdr->ncd_connect_on_init = 0;
+			rdr->tcp_ito = 30;
+			//chk_reader("services", "!no", rdr); // ncam.services
+
+		}
+		else
+		{
+			rdr->ncd_connect_on_init = 1;
+		}
 		ret = type;
 #endif
 		break;
@@ -1711,7 +1723,7 @@ static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, voi
 	return realsize;
 }
 
-static void down_line(char url[512])
+static void down_line(char url[512], bool fs)
 {
 	CURL *curl_handle;
 	struct MemoryStruct chunk;
@@ -1761,7 +1773,7 @@ static void down_line(char url[512])
 				{
 					if(line[u] == '<' || line[u] == '"' || line[u] == '\0') { line[u]='\0'; break; }
 				}
-				switch(add_reader_from_line(line, m))
+				switch(add_reader_from_line(line, m, fs))
 				{
 					case 1: c++; break;
 					case 2: n++; break;
@@ -1780,6 +1792,7 @@ void read_cccamcfg(const char *file)
 	FILE *fp;
 	char *path;
 	uint32_t pathLength;
+	bool fs = false;
 	if(cfg.cccam_cfg_path && strncmp(file, "CCcam.cfg", 9) == 0)
 	{
 		pathLength = cs_strlen(cfg.cccam_cfg_path);
@@ -1791,11 +1804,33 @@ void read_cccamcfg(const char *file)
 		fp = fopen(path, "r");
 		if(!fp) { cs_log("CCcam.cfg file not found in: %s", cfg.cccam_cfg_path); }
 	}
+	else if(strncmp(file, "tmp", 3) == 0)
+	{
+		char tmp[5] = "/tmp";
+		pathLength = sizeof(tmp) + 10 + 1;
+		if(cs_malloc(&path, pathLength))
+		{
+			snprintf(path, pathLength, "%s/ncam.fs", tmp);
+		}
+		else
+		{
+			NULLFREE(path);
+			return;
+		}
+
+		fp = fopen(path, "r");
+		if(!fp)
+		{
+			snprintf(path, pathLength, "%s/CCcam.cfg", tmp);
+			fp = fopen(path, "r");
+		}
+	}
 	else
 	{
 		pathLength = cs_strlen(file) + 1;
 		if(cs_malloc(&path, pathLength))
 			{ cs_strncpy(path, file, pathLength); }
+		if(strncmp(path, "ncam.fs", 8) == 0) { fs = true; }
 		fp = open_config_file(path);
 	}
 
@@ -1830,7 +1865,7 @@ void read_cccamcfg(const char *file)
 
 			if (type)
 			{
-				switch(add_reader_from_line(line + 2, type))
+				switch(add_reader_from_line(line + 2, type, fs))
 				{
 					case 1: c++; break;
 					case 2: n++; break;
@@ -1842,7 +1877,7 @@ void read_cccamcfg(const char *file)
 #if defined(WITH_LIBCURL) && (defined(MODULE_CCCAM) || defined(MODULE_NEWCAMD))
 		else if(line[0] == 'h' && line[1] == 't' && line[2] == 't' && line[3] == 'p')
 		{
-			down_line(line);
+			down_line(line, fs);
 		}
 #endif
 	}

@@ -2552,6 +2552,7 @@ struct s_config
 	int8_t          cccam_cfg_repetitions_forced;
 	int32_t         cccam_cfg_reconnect_delay;  // max tcp connection block delay
 	int8_t          cccam_cfg_reconnect_attempts;
+	int8_t          cccam_cfg_inactivity;
 };
 
 struct s_clientinit
