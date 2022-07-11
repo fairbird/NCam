@@ -52,49 +52,44 @@ static uint8_t github(struct pvu_reader *pvu, uint16_t ecmSrvid)
 		memset(ok, 0, sizeof(ok));
 		cs_log("Find and download keys: %s", url);
 		//cs_log_dbg(D_ATR|D_READER,"Find and download keys: %s", url);
-		*chunk.memory = 0;
-		chunk.size = 0;
 
-		if(curl(curl_handle, url))
+		for(i = 0; i < (long)chunk.size; i++)
 		{
-			for(i = 0; i < (long)chunk.size; i++)
+			if((strncmp(chunk.memory + i, "P 00090066", 10) == 0) || (strncmp(chunk.memory + i, "P 0009FFFF", 10) == 0))
 			{
-				if((strncmp(chunk.memory + i, "P 00090066", 10) == 0) || (strncmp(chunk.memory + i, "P 0009FFFF", 10) == 0))
+				i += 11;
+				if(chunk.memory[i] == '0' && (chunk.memory[i + 1] == '0' || chunk.memory[i + 1] == '1') && (chunk.memory[i + 2] == ' ' || chunk.memory[i + 2] == ':'))
 				{
-					i += 11;
-					if(chunk.memory[i] == '0' && (chunk.memory[i + 1] == '0' || chunk.memory[i + 1] == '1') && (chunk.memory[i + 2] == ' ' || chunk.memory[i + 2] == ':'))
+					sscanf(chunk.memory + i, "%02X", &keyIndex);
+					i += 2;
+					if(sscanf(chunk.memory + i, "%02X%02X%02X%02X%02X%02X%02X",
+						&buf[0], &buf[1], &buf[2], &buf[3], &buf[4], &buf[5], &buf[6]) == 7)
 					{
-						sscanf(chunk.memory + i, "%02X", &keyIndex);
-						i += 2;
-						if(sscanf(chunk.memory + i, "%02X%02X%02X%02X%02X%02X%02X",
-							&buf[0], &buf[1], &buf[2], &buf[3], &buf[4], &buf[5], &buf[6]) == 7)
-						{
-							i += 7;
-							ok[keyIndex] = 1;
-							ret = 1;
-							pvu->key[keyIndex][0] = buf[0];
-							pvu->key[keyIndex][1] = buf[1];
-							pvu->key[keyIndex][2] = buf[2];
-							pvu->key[keyIndex][3] = buf[3];
-							pvu->key[keyIndex][4] = buf[4];
-							pvu->key[keyIndex][5] = buf[5];
-							pvu->key[keyIndex][6] = buf[6];
-							//cs_log_dbg(D_ATR|D_READER, Found keys: P 0%d %02X%02X%02X%02X%02X%02X%02X", keyIndex, buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6]);
-						}
+						i += 7;
+						ok[keyIndex] = 1;
+						ret = 1;
+						pvu->key[keyIndex][0] = buf[0];
+						pvu->key[keyIndex][1] = buf[1];
+						pvu->key[keyIndex][2] = buf[2];
+						pvu->key[keyIndex][3] = buf[3];
+						pvu->key[keyIndex][4] = buf[4];
+						pvu->key[keyIndex][5] = buf[5];
+						pvu->key[keyIndex][6] = buf[6];
+						//cs_log_dbg(D_ATR|D_READER, Found keys: P 0%d %02X%02X%02X%02X%02X%02X%02X", keyIndex, buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6]);
 					}
 				}
 			}
-
-			if(ret && ok[0] && ok[1])
-			{
-				for(i = 0; i < 2; i++)
-				{
-					cs_log("Key loaded: P 0%d %02X%02X%02X%02X%02X%02X%02X", i, pvu->key[i][0], pvu->key[i][1], pvu->key[i][2], pvu->key[i][3], pvu->key[i][4], pvu->key[i][5], pvu->key[i][6]);
-					//cs_log_dbg(D_ATR|D_READER, "Key loaded: P 0%d %02X%02X%02X%02X%02X%02X%02X", i, pvu->key[i][0], pvu->key[i][1], pvu->key[i][2], pvu->key[i][3], pvu->key[i][4], pvu->key[i][5], pvu->key[i][6]);
-				}
-			}
-			else { ret = 0; }
 		}
+
+		if(ret && ok[0] && ok[1])
+		{
+			for(i = 0; i < 2; i++)
+			{
+				cs_log("Key loaded: P 0%d %02X%02X%02X%02X%02X%02X%02X", i, pvu->key[i][0], pvu->key[i][1], pvu->key[i][2], pvu->key[i][3], pvu->key[i][4], pvu->key[i][5], pvu->key[i][6]);
+				//cs_log_dbg(D_ATR|D_READER, "Key loaded: P 0%d %02X%02X%02X%02X%02X%02X%02X", i, pvu->key[i][0], pvu->key[i][1], pvu->key[i][2], pvu->key[i][3], pvu->key[i][4], pvu->key[i][5], pvu->key[i][6]);
+			}
+		}
+		else { ret = 0; }
 	}
 	curl_easy_cleanup(curl_handle); // cleanup curl stuff
 	if(chunk.memory) { NULLFREE(chunk.memory); }
