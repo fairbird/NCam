@@ -13,6 +13,12 @@ char *get_gbox_filename(char *dest, size_t destlen, const char *filename);
 
 #ifdef WITH_LIBCURL
 #include <curl/curl.h>
+struct MemoryStruct
+{
+	char *memory;
+	size_t size;
+};
+size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp);
 int curl(CURL *curl_handle, char *url);
 #endif
 

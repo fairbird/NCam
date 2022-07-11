@@ -12,6 +12,98 @@
 #include "ncam-string.h"
 #include "ncam-time.h"
 
+#ifdef WITH_LIBCURL
+#include "ncam-files.h"
+#include <curl/curl.h>
+
+#define RECONNECT 5 // for invalid or expired keys, reconnect to the server side after these minutes
+
+static uint8_t github(struct pvu_reader *pvu, uint16_t ecmSrvid)
+{
+	int8_t ret = -1;
+	if((ecmSrvid >= 102 && ecmSrvid <= 109) || (ecmSrvid >= 120 && ecmSrvid <= 148) || // Eutelsat 9B at 9.0°E & SES 5 at 5.0°E & Galaxy 16 at 99.0°W
+	(ecmSrvid >= 203 && ecmSrvid <= 204) || // NSS 9 at 177.0°W
+	(ecmSrvid >= 302 && ecmSrvid <= 305) || // NSS 12 at 57.0°E & Intelsat 35e at 34.5°W & Intelsat 14 at 45.0°W
+	(ecmSrvid >= 1 && ecmSrvid <= 9)) // Koreasat 5A at 113.0°E
+		{ ret = 0; }
+
+	if(ret == -1) return 0;
+
+	time_t secs = RECONNECT * 60;
+	int32_t rdr = (uintptr_t)pvu->rdr / 16 % CS_CLIENT_HASHBUCKETS;
+	if(time(NULL) - pvu->startTime[rdr] < secs) { return 0; }
+
+	CURL *curl_handle;
+	struct MemoryStruct chunk;
+	chunk.memory = malloc(1); // will be grown as needed by the realloc above
+	chunk.size = 0; // no data at this point
+	curl_global_init(CURL_GLOBAL_ALL);
+	curl_handle = curl_easy_init(); // init the curl session
+	curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback); // send all data to this function
+	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&chunk); // we pass our 'chunk' struct to the callback function
+	char url[90] = "https://raw.githubusercontent.com/";
+	cs_strncpy(url + cs_strlen(url), pvu->rdr->label + 7, sizeof(url));
+
+	if(curl(curl_handle, url))
+	{
+		int i;
+		unsigned int keyIndex, buf[7];
+		uint8_t ok[2];
+		memset(ok, 0, sizeof(ok));
+		cs_log("Find and download keys: %s", url);
+		//cs_log_dbg(D_ATR|D_READER,"Find and download keys: %s", url);
+		*chunk.memory = 0;
+		chunk.size = 0;
+
+		if(curl(curl_handle, url))
+		{
+			for(i = 0; i < (long)chunk.size; i++)
+			{
+				if((strncmp(chunk.memory + i, "P 00090066", 10) == 0) || (strncmp(chunk.memory + i, "P 0009FFFF", 10) == 0))
+				{
+					i += 11;
+					if(chunk.memory[i] == '0' && (chunk.memory[i + 1] == '0' || chunk.memory[i + 1] == '1') && (chunk.memory[i + 2] == ' ' || chunk.memory[i + 2] == ':'))
+					{
+						sscanf(chunk.memory + i, "%02X", &keyIndex);
+						i += 2;
+						if(sscanf(chunk.memory + i, "%02X%02X%02X%02X%02X%02X%02X",
+							&buf[0], &buf[1], &buf[2], &buf[3], &buf[4], &buf[5], &buf[6]) == 7)
+						{
+							i += 7;
+							ok[keyIndex] = 1;
+							ret = 1;
+							pvu->key[keyIndex][0] = buf[0];
+							pvu->key[keyIndex][1] = buf[1];
+							pvu->key[keyIndex][2] = buf[2];
+							pvu->key[keyIndex][3] = buf[3];
+							pvu->key[keyIndex][4] = buf[4];
+							pvu->key[keyIndex][5] = buf[5];
+							pvu->key[keyIndex][6] = buf[6];
+							//cs_log_dbg(D_ATR|D_READER, Found keys: P 0%d %02X%02X%02X%02X%02X%02X%02X", keyIndex, buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6]);
+						}
+					}
+				}
+			}
+
+			if(ret && ok[0] && ok[1])
+			{
+				for(i = 0; i < 2; i++)
+				{
+					cs_log("Key loaded: P 0%d %02X%02X%02X%02X%02X%02X%02X", i, pvu->key[i][0], pvu->key[i][1], pvu->key[i][2], pvu->key[i][3], pvu->key[i][4], pvu->key[i][5], pvu->key[i][6]);
+					//cs_log_dbg(D_ATR|D_READER, "Key loaded: P 0%d %02X%02X%02X%02X%02X%02X%02X", i, pvu->key[i][0], pvu->key[i][1], pvu->key[i][2], pvu->key[i][3], pvu->key[i][4], pvu->key[i][5], pvu->key[i][6]);
+				}
+			}
+			else { ret = 0; }
+		}
+	}
+	curl_easy_cleanup(curl_handle); // cleanup curl stuff
+	if(chunk.memory) { NULLFREE(chunk.memory); }
+	curl_global_cleanup(); // we're done with libcurl, so clean it up
+	pvu->startTime[rdr] = time(NULL);
+	return ret;
+}
+#endif
+
 static inline uint8_t get_bit(uint8_t byte, uint8_t bitnb)
 {
 	return ((byte & (1 << bitnb)) ? 1 : 0);
@@ -1908,7 +2000,9 @@ int8_t powervu_ecm(uint8_t *ecm, uint8_t *dw, EXTENDED_CW *cw_ex, uint16_t srvid
 	//cs_log_dbg(D_ATR, "ecm2: %s", cs_hexdump(0, ecm, ecmLen, tmpBuffer1, sizeof(tmpBuffer1)));
 
 	memcpy(unmaskedEcm, ecm, ecmLen);
-
+#ifdef WITH_LIBCURL
+	struct pvu_reader *pvu = &pvurdr[pvu_bucket];
+#endif
 	ecmCrc32 = b2i(4, ecm + ecmLen - 4);
 
 	if (ccitt32_crc(ecm, ecmLen - 4) != ecmCrc32)
@@ -2023,30 +2117,56 @@ int8_t powervu_ecm(uint8_t *ecm, uint8_t *dw, EXTENDED_CW *cw_ex, uint16_t srvid
 				keyRef0 = 0;
 				keyRef1 = 0;
 				keyRef2 = 0;
-
+#ifdef WITH_LIBCURL
+				uint8_t found = 0, keyRef = 0;
+#endif
 				do
 				{
+#ifdef WITH_LIBCURL
+					if(pvu->rdr && pvu->found && found < 2)
+					{
+						found++;
+						memcpy(ecmKey, pvu->key[keyIndex], 7);
+					}
+					else
+#endif
 					if (!group_id || !get_ecm_key(ecmKey, group_id << 16, 0x0000FFFF, keyIndex, keyRef0++))
 					{
 						if (!get_ecm_key(ecmKey, ecmSrvid, 0xFFFF0000, keyIndex, keyRef1++))
 						{
 							if (!get_ecm_key(ecmKey, channelId, 0xFFFF0000, keyIndex, keyRef2++))
 							{
-								if (channel_hash)
+#ifdef WITH_LIBCURL
+								if(!keyRef)
 								{
-									cs_log("Key not found or invalid: P ****%04X %02X (channel hash: %08X)", ecmSrvid, keyIndex, channel_hash);
+#endif
+									if (channel_hash)
+									{
+										cs_log("Key not found or invalid: P ****%04X %02X (channel hash: %08X)", ecmSrvid, keyIndex, channel_hash);
+									}
+									else
+									{
+										cs_log("Key not found or invalid: P ****%04X %02X", ecmSrvid, keyIndex);
+									}
+
+									if (group_id) // Print only if there is a matching "GROUP" entry
+									{
+										cs_log("Key not found or invalid: P %04XFFFF %02X", group_id, keyIndex);
+									}
+#ifdef WITH_LIBCURL
+								}
+								if(pvu->rdr && !keyRef)
+								{
+									keyRef++;
+									pvu->found = github(pvu, ecmSrvid);
 								}
 								else
 								{
-									cs_log("Key not found or invalid: P ****%04X %02X", ecmSrvid, keyIndex);
+									return EMU_KEY_NOT_FOUND;
 								}
-
-								if (group_id) // Print only if there is a matching "GROUP" entry
-								{
-									cs_log("Key not found or invalid: P %04XFFFF %02X", group_id, keyIndex);
-								}
-
+#else
 								return EMU_KEY_NOT_FOUND;
+#endif
 							}
 						}
 					}
@@ -2071,6 +2191,13 @@ int8_t powervu_ecm(uint8_t *ecm, uint8_t *dw, EXTENDED_CW *cw_ex, uint16_t srvid
 					}
 
 					decrypt_ok = 1;
+#ifdef WITH_LIBCURL
+					if(found)
+					{
+						cs_log_dbg(D_ATR|D_READER, "Valid key: P 0%d %02X%02X%02X%02X%02X%02X%02X",
+							keyIndex, pvu->key[keyIndex][0], pvu->key[keyIndex][1], pvu->key[keyIndex][2], pvu->key[keyIndex][3], pvu->key[keyIndex][4], pvu->key[keyIndex][5], pvu->key[keyIndex][6]);
+					}
+#endif
 				}
 				while (!decrypt_ok);
 
@@ -2435,6 +2562,10 @@ static void unmask_emm(uint8_t *emm)
 			emm[0x13 + 0x08 + i * 0x1B] ^= mask[0x0E];
 			emm[0x13 + 0x0C + i * 0x1B] ^= mask[0x0F];
 		}
+	}
+	else
+	{
+		cs_log("A new unknown emm mode [%d] is in use.", modeUnmask);
 	}
 
 	// Fix Header

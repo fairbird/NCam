@@ -1700,29 +1700,6 @@ static int add_reader_from_line(char s[510], int type, bool fs)
 
 int32_t c, n;
 #if defined(WITH_LIBCURL) && (defined(MODULE_CCCAM) || defined(MODULE_NEWCAMD))
-struct MemoryStruct
-{
-	char *memory;
-	size_t size;
-};
-
-static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
-{
-	size_t realsize = size * nmemb;
-	struct MemoryStruct *mem = (struct MemoryStruct *)userp;
-	mem->memory = realloc(mem->memory, mem->size + realsize + 1);
-	if(mem->memory == NULL)
-	{
-		/* out of memory! */
-		cs_log("not enough memory (realloc returned NULL)");
-		return 0;
-	}
-	memcpy(&(mem->memory[mem->size]), contents, realsize);
-	mem->size += realsize;
-	mem->memory[mem->size] = 0;
-	return realsize;
-}
-
 static void down_line(char url[512], bool fs)
 {
 	CURL *curl_handle;

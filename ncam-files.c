@@ -207,6 +207,23 @@ char *get_gbox_filename(char *dest, size_t destlen, const char *filename)
 #endif
 
 #ifdef WITH_LIBCURL
+size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
+{
+	size_t realsize = size * nmemb;
+	struct MemoryStruct *mem = (struct MemoryStruct *)userp;
+	mem->memory = realloc(mem->memory, mem->size + realsize + 1);
+	if(mem->memory == NULL)
+	{
+		/* out of memory! */
+		cs_log("not enough memory (realloc returned NULL)");
+		return 0;
+	}
+	memcpy(&(mem->memory[mem->size]), contents, realsize);
+	mem->size += realsize;
+	mem->memory[mem->size] = 0;
+	return realsize;
+}
+
 int curl(CURL *curl_handle, char *url)
 {
 	if(url[0] != 0x68 || url[1] != 0x74 || url[2] != 0x74 || url[3] != 0x70) { return 0; }
@@ -236,7 +253,7 @@ int curl(CURL *curl_handle, char *url)
 	if(res != CURLE_OK) // check for errors
 	{
 		size_t len = cs_strlen(errbuf);
-		cs_log("libcurl: (url) %s", url);
+		cs_log_dbg(D_TRACE, "libcurl: (url) %s", url);
 		if(len)
 		{
 			cs_log("libcurl: (%d) %s%s", res, errbuf, ((errbuf[len - 1] != '\n') ? "\n" : ""));

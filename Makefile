@@ -35,6 +35,10 @@ ifdef USE_SSL
 	override USE_LIBCRYPTO=1
 endif
 
+ifdef USE_LIBCURL
+	override USE_LIBCRYPTO=1
+endif
+
 CONF_DIR = /usr/local/etc
 
 LIB_PTHREAD = -lpthread

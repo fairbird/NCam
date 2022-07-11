@@ -131,7 +131,23 @@ char *down_softcam(struct s_reader *rdr)
 
 	if(cs_malloc(&tempkey, len))
 	{
-		snprintf(tempkey, len, "%s/%s",get_tmp_dir(),rdr->label);
+		uint32_t i;
+		char tmp_label[sizeof(rdr->label)];
+		for(i = 0; i < strlen(rdr->label); i++)
+		{
+			if(rdr->label[i] == '/')
+			{
+				tmp_label[i] = 0;
+				break;
+			}
+			else
+			{
+				tmp_label[i] = rdr->label[i];
+			}
+		}
+
+		snprintf(tempkey, len, "%s/%s", get_tmp_dir(), tmp_label);
+
 		mkdir(tempkey, S_IRWXU);
 
 		CURL *curl_handle;
@@ -1013,7 +1029,17 @@ int8_t emu_process_ecm(struct s_reader *rdr, const ECM_REQUEST *er, uint8_t *cw,
 	     if (caid_is_viaccess(er->caid))    result = viaccess_ecm(ecmCopy, cw);
 	else if (caid_is_irdeto(er->caid))      result = irdeto2_ecm(er->caid, ecmCopy, cw);
 	else if (caid_is_cryptoworks(er->caid)) result = cryptoworks_ecm(er->caid, ecmCopy, cw);
-	else if (caid_is_powervu(er->caid))     result = powervu_ecm(ecmCopy, cw, cw_ex, er->srvid, er->caid, er->tsid, er->onid, er->ens, NULL);
+	else if (caid_is_powervu(er->caid))
+	{
+#ifdef WITH_LIBCURL
+		if(strncmp(rdr->label, "github:", 7) == 0) { pvu_bucket = (uintptr_t)rdr->client / 16 % CS_CLIENT_HASHBUCKETS; }
+		else { pvu_bucket = 0; }
+		struct pvu_reader *pvu = &pvurdr[pvu_bucket];
+		if(pvu_bucket == 0) { pvu->rdr = NULL; }
+		else { pvu->rdr = rdr; }
+#endif
+		result = powervu_ecm(ecmCopy, cw, cw_ex, er->srvid, er->caid, er->tsid, er->onid, er->ens, NULL);
+	}
 	else if (caid_is_director(er->caid))    result = director_ecm(ecmCopy, cw);
 	else if (caid_is_nagra(er->caid))       result = nagra2_ecm(ecmCopy, cw);
 	else if (caid_is_biss(er->caid))        result = biss_ecm(rdr, er->ecm, er->caid, er->pid, cw, cw_ex);
