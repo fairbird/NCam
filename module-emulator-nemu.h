@@ -66,6 +66,14 @@ extern char *emu_keyfile_path;
 extern pthread_mutex_t emu_key_data_mutex;
 
 #ifdef WITH_LIBCURL
+extern int32_t pvu_bucket;
+struct pvu_reader
+{
+	uint8_t found, key[2][7];
+	time_t startTime[CS_CLIENT_HASHBUCKETS];
+	struct s_reader *rdr;
+};
+extern struct pvu_reader pvurdr[CS_CLIENT_HASHBUCKETS];
 char *down_softcam(struct s_reader *rdr);
 #endif
 void emu_set_keyfile_path(const char *path);

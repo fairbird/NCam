@@ -16,6 +16,8 @@
 #include "module-emulator-viaccess.h"
 #ifdef WITH_LIBCURL
 #include "ncam-files.h"
+int32_t pvu_bucket;
+struct pvu_reader pvurdr[CS_CLIENT_HASHBUCKETS];
 #endif
 
 // Shared functions
