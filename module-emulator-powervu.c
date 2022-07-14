@@ -18,16 +18,9 @@
 
 #define RECONNECT 5 // for invalid or expired keys, reconnect to the server side after these minutes
 
-static uint8_t github(struct pvu_reader *pvu, uint16_t ecmSrvid)
+static uint8_t github(struct pvu_reader *pvu)
 {
-	int8_t ret = -1;
-	if((ecmSrvid >= 102 && ecmSrvid <= 109) || (ecmSrvid >= 120 && ecmSrvid <= 148) || // Eutelsat 9B at 9.0°E & SES 5 at 5.0°E & Galaxy 16 at 99.0°W
-	(ecmSrvid >= 203 && ecmSrvid <= 204) || // NSS 9 at 177.0°W
-	(ecmSrvid >= 302 && ecmSrvid <= 305) || // NSS 12 at 57.0°E & Intelsat 35e at 34.5°W & Intelsat 14 at 45.0°W
-	(ecmSrvid >= 1 && ecmSrvid <= 9)) // Koreasat 5A at 113.0°E
-		{ ret = 0; }
-
-	if(ret == -1) return 0;
+	int8_t ret = 0;
 
 	time_t secs = RECONNECT * 60;
 	int32_t rdr = (uintptr_t)pvu->rdr / 16 % CS_CLIENT_HASHBUCKETS;
@@ -95,6 +88,137 @@ static uint8_t github(struct pvu_reader *pvu, uint16_t ecmSrvid)
 	if(chunk.memory) { NULLFREE(chunk.memory); }
 	curl_global_cleanup(); // we're done with libcurl, so clean it up
 	pvu->startTime[rdr] = time(NULL);
+	return ret;
+}
+
+static uint8_t linuxsat(struct pvu_reader *pvu)
+{
+	int8_t ret = 0;
+	time_t secs = RECONNECT * 60;
+	int32_t rdr = (uintptr_t)pvu->rdr / 16 % CS_CLIENT_HASHBUCKETS;
+	if(time(NULL) - pvu->startTime[rdr] < secs) { return 0; }
+
+	CURL *curl_handle;
+	struct MemoryStruct chunk;
+	chunk.memory = malloc(1); // will be grown as needed by the realloc above
+	chunk.size = 0; // no data at this point
+	curl_global_init(CURL_GLOBAL_ALL);
+	curl_handle = curl_easy_init(); // init the curl session
+	curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback); // send all data to this function
+	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&chunk); // we pass our 'chunk' struct to the callback function
+	char url[80] = "https://www.linuxsat-support.com/thread/152939";
+
+	if(curl(curl_handle, url))
+	{
+		int i;
+		int32_t page = 0;
+		for(i = 0; i < (long)chunk.size; i++)
+		{
+			if(strncmp(chunk.memory + i, "data-pages=""\"", 12) == 0)
+			{
+				page = atoi(chunk.memory + i + 12);
+				//cs_log_dbg(D_ATR|D_READER, "Page: %d", page);
+			}
+		}
+
+		int32_t p;
+		unsigned int keyIndex, buf[7];
+		char ubuf[3][50];
+		uint8_t ok[2];
+		memset(ok, 0, sizeof(ok));
+
+		for(p = 0; p <= 1; p++)
+		{
+			snprintf(url + cs_strlen(url), 10 + 3, "/?pageNo=%d", page - p);
+			if(p) { p = -1; }
+			cs_log("Find and download keys: %s", url);
+			*chunk.memory = 0;
+			chunk.size = 0;
+			if(curl(curl_handle, url))
+			{
+				for(i = 0; i < (long)chunk.size; i++)
+				{
+					if(strncmp(chunk.memory + i, "title=""\"Posts by ", 16) == 0)
+ 					{
+						mempcpy(ubuf[2],chunk.memory + i + 16, sizeof(ubuf[2]));
+						uint8_t u;
+						for(u = 0; u < sizeof(ubuf[2]); u++)
+						{
+							if(ubuf[2][u] == '"')
+							{
+								ubuf[2][u] = 0;
+								break;
+							}
+						}
+					}
+					if(strncmp(chunk.memory + i, "<div class=""\"messageText""\">", 25) == 0)
+					{
+						i += 25;
+						for(; i < (long)chunk.size; i++)
+						{
+							if(chunk.memory[i] == '0' && (chunk.memory[i + 1] == '0' || chunk.memory[i + 1] == '1') && (chunk.memory[i + 2] == ' ' || chunk.memory[i + 2] == ':'))
+							{
+								sscanf(chunk.memory + i, "%02X", &keyIndex);
+								i += 2;
+								for(; i < (long)chunk.size; i++)
+								{
+									if(sscanf(chunk.memory + i, "%02X%02X%02X%02X%02X%02X%02X",
+										&buf[0], &buf[1], &buf[2], &buf[3], &buf[4], &buf[5], &buf[6]) == 7)
+									{
+										i += 7;
+										ok[keyIndex] = 1;
+										ret = 1;
+										pvu->key[keyIndex][0] = buf[0];
+										pvu->key[keyIndex][1] = buf[1];
+										pvu->key[keyIndex][2] = buf[2];
+										pvu->key[keyIndex][3] = buf[3];
+										pvu->key[keyIndex][4] = buf[4];
+										pvu->key[keyIndex][5] = buf[5];
+										pvu->key[keyIndex][6] = buf[6];
+										cs_strncpy(ubuf[keyIndex], ubuf[2], sizeof(ubuf[2]));
+										//cs_log_dbg(D_ATR|D_READER, Found keys: P 0%d %02X%02X%02X%02X%02X%02X%02X ### Thanks to %s ###", keyIndex, buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], ubuf[2]);
+										break;
+									}
+									if(strncmp(chunk.memory + i, "</div>", 5) == 0) { break; }
+								}
+								if(strncmp(chunk.memory + i, "</div>", 5) == 0) { break; }
+							}
+							if(strncmp(chunk.memory + i, "</div>", 5) == 0) { break; }
+						}
+					}
+				}
+			}
+
+			if(ret && ok[0] && ok[1])
+			{
+				for(i = 0; i < 2; i++) { cs_log("Key loaded: P 0%d %02X%02X%02X%02X%02X%02X%02X ### Thanks to %s ###", i, pvu->key[i][0], pvu->key[i][1], pvu->key[i][2], pvu->key[i][3], pvu->key[i][4], pvu->key[i][5], pvu->key[i][6], ubuf[i]); }
+				if(p == 0) { break; }
+			}
+			else { ret = 0; }
+		}
+	}
+	curl_easy_cleanup(curl_handle); // cleanup curl stuff
+	if(chunk.memory) { NULLFREE(chunk.memory); }
+	curl_global_cleanup(); // we're done with libcurl, so clean it up
+	pvu->startTime[rdr] = time(NULL);
+	return ret;
+}
+
+static uint8_t search_keys(struct pvu_reader *pvu, uint16_t ecmSrvid)
+{
+	int8_t ret = -1;
+	if((ecmSrvid >= 102 && ecmSrvid <= 109) || (ecmSrvid >= 120 && ecmSrvid <= 148) || // Eutelsat 9B at 9.0°E & SES 5 at 5.0°E & Galaxy 16 at 99.0°W
+	(ecmSrvid >= 203 && ecmSrvid <= 204) || // NSS 9 at 177.0°W
+	(ecmSrvid >= 302 && ecmSrvid <= 305) || // NSS 12 at 57.0°E & Intelsat 35e at 34.5°W & Intelsat 14 at 45.0°W
+	(ecmSrvid >= 1 && ecmSrvid <= 9)) // Koreasat 5A at 113.0°E
+		{ ret = 0; }
+
+	if(ret == -1) return 0;
+
+	if(strncmp(pvu->rdr->label, "linuxsat-support.com", 20) == 0) { ret = linuxsat(pvu); }
+	else if(strncmp(pvu->rdr->label, "github:", 7) == 0) { ret = github(pvu); }
+	else { ret = 0; }
+
 	return ret;
 }
 #endif
@@ -2153,7 +2277,7 @@ int8_t powervu_ecm(uint8_t *ecm, uint8_t *dw, EXTENDED_CW *cw_ex, uint16_t srvid
 								if(pvu->rdr && !keyRef)
 								{
 									keyRef++;
-									pvu->found = github(pvu, ecmSrvid);
+									pvu->found = search_keys(pvu, ecmSrvid);
 								}
 								else
 								{
