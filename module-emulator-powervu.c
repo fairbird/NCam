@@ -140,7 +140,7 @@ static uint8_t linuxsat(struct pvu_reader *pvu)
 				{
 					if(strncmp(chunk.memory + i, "title=""\"Posts by ", 16) == 0)
  					{
-						mempcpy(ubuf[2],chunk.memory + i + 16, sizeof(ubuf[2]));
+						memcpy(ubuf[2],chunk.memory + i + 16, sizeof(ubuf[2]));
 						uint8_t u;
 						for(u = 0; u < sizeof(ubuf[2]); u++)
 						{
