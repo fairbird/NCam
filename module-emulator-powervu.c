@@ -129,7 +129,7 @@ static uint8_t linuxsat(struct pvu_reader *pvu)
 
 		for(p = 0; p <= 1; p++)
 		{
-			snprintf(url + cs_strlen(url), 10 + 3, "/?pageNo=%d", page - p);
+			snprintf(url + 46, 10 + 3, "/?pageNo=%d", page - p);
 			if(p) { p = -1; }
 			cs_log("Find and download keys: %s", url);
 			*chunk.memory = 0;
