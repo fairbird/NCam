@@ -107,7 +107,20 @@ static uint8_t linuxsat(struct pvu_reader *pvu)
 	curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback); // send all data to this function
 	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&chunk); // we pass our 'chunk' struct to the callback function
 	char url[80] = "https://www.linuxsat-support.com/thread/152939";
-
+	if(pvu->rdr->label[20] == ':')
+	{
+		snprintf(url + 40, sizeof(url) - 40, "%s", pvu->rdr->label + 21);
+		int e;
+		for(e = 40; e < (int)strlen(url); e++)
+		{
+			if(url[e] == '-')
+			{
+				url[e] = 0;
+				break;
+			}	
+		}
+	}
+	size_t url_len = strlen(url);
 	if(curl(curl_handle, url))
 	{
 		int i;
@@ -118,29 +131,32 @@ static uint8_t linuxsat(struct pvu_reader *pvu)
 			{
 				page = atoi(chunk.memory + i + 12);
 				//cs_log_dbg(D_ATR|D_READER, "Page: %d", page);
+				break;
 			}
 		}
 
 		int32_t p;
 		unsigned int keyIndex, buf[7];
 		char ubuf[3][50];
-		uint8_t ok[2];
+		uint8_t step = 0, ok[2];
 		memset(ok, 0, sizeof(ok));
 
 		for(p = 0; p <= 1; p++)
 		{
-			snprintf(url + 46, 10 + 3, "/?pageNo=%d", page - p);
-			if(p) { p = -1; }
+			if(page != 0) { snprintf(url + url_len, 10 + 3, "/?pageNo=%d", page - p); }
+			if(p == 1) { p = -1; }
 			cs_log("Find and download keys: %s", url);
 			*chunk.memory = 0;
 			chunk.size = 0;
+			step++;
+
 			if(curl(curl_handle, url))
 			{
 				for(i = 0; i < (long)chunk.size; i++)
 				{
 					if(strncmp(chunk.memory + i, "title=""\"Posts by ", 16) == 0)
  					{
-						memcpy(ubuf[2],chunk.memory + i + 16, sizeof(ubuf[2]));
+						mempcpy(ubuf[2],chunk.memory + i + 16, sizeof(ubuf[2]));
 						uint8_t u;
 						for(u = 0; u < sizeof(ubuf[2]); u++)
 						{
@@ -194,7 +210,8 @@ static uint8_t linuxsat(struct pvu_reader *pvu)
 				for(i = 0; i < 2; i++) { cs_log("Key loaded: P 0%d %02X%02X%02X%02X%02X%02X%02X ### Thanks to %s ###", i, pvu->key[i][0], pvu->key[i][1], pvu->key[i][2], pvu->key[i][3], pvu->key[i][4], pvu->key[i][5], pvu->key[i][6], ubuf[i]); }
 				if(p == 0) { break; }
 			}
-			else { ret = 0; }
+			else if(page != 0) { ret = 0; }
+			if(page == 0 || step > 2) { break; }
 		}
 	}
 	curl_easy_cleanup(curl_handle); // cleanup curl stuff
