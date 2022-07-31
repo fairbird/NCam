@@ -404,6 +404,8 @@ void class_fn(const char *token, char *value, void *setting, FILE *f)
 static void account_fixups_fn(void *var)
 {
 	struct s_auth *account = var;
+#endif
+#if defined(CS_ANTICASC)
 	if(account->ac_users < -1) { account->ac_users = DEFAULT_AC_USERS; }
 	if(account->ac_penalty < -1) { account->ac_penalty = DEFAULT_AC_PENALTY; }
 	if(account->acosc_max_ecms_per_minute < -1) { account->acosc_max_ecms_per_minute = -1; }
@@ -425,13 +427,15 @@ static void account_fixups_fn(void *var)
 			account->acosc_penalty_duration = (60 / account->acosc_max_ecms_per_minute);
 		}
 	}
-#ifdef CS_CACHEEX_AIO
+#endif
+#if defined(CS_CACHEEX_AIO)
 	// lgo-ctab -> lgo-ftab port
 	caidtab2ftab_add(&account->cacheex.localgenerated_only_in_caidtab, &account->cacheex.lg_only_in_tab);
 	caidtab_clear(&account->cacheex.localgenerated_only_in_caidtab);
 	caidtab2ftab_add(&account->cacheex.localgenerated_only_caidtab, &account->cacheex.lg_only_tab);
 	caidtab_clear(&account->cacheex.localgenerated_only_caidtab);
 #endif
+#if defined(CS_ANTICASC) || defined(CS_CACHEEX_AIO)
 }
 #endif
 
