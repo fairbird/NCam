@@ -454,6 +454,7 @@ static void write_versionfile(bool use_stdout)
 #ifdef WITH_CARDLIST
 	write_conf(WITH_CARDLIST, "Cardlist support");
 #endif
+	write_conf(WITH_LIBCURL, "Curl to access URLs");
 	write_conf(WITH_EMU, "Emulator support");
 	write_conf(WITH_SOFTCAM, "Built-in SoftCam.Key");
 

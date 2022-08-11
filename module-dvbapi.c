@@ -1513,7 +1513,7 @@ uint16_t tunemm_caid_map(uint8_t direct, uint16_t caid, uint16_t srvid)
 
 int32_t dvbapi_stop_filter(int32_t demux_id, int32_t type, uint32_t msgid)
 {
-#if defined(WITH_COOLAPI) || defined(WITH_COOLAPI2) || defined(WITH_GXAPI)
+#if defined(WITH_COOLAPI) || defined(WITH_COOLAPI2) || defined(WITH_GXAPI) || defined(WITH_WI)
 	// We prevented PAT and PMT from starting, so lets don't close them either.
 	if(type == TYPE_PAT || type == TYPE_PMT)
 	{
@@ -1843,7 +1843,7 @@ void dvbapi_start_sdt_filter(int32_t demux_id)
 
 void dvbapi_start_pat_filter(int32_t demux_id)
 {
-#if defined(WITH_COOLAPI) || defined(WITH_COOLAPI2) || defined(WITH_GXAPI)
+#if defined(WITH_COOLAPI) || defined(WITH_COOLAPI2) || defined(WITH_GXAPI) || defined(WITH_WI)
 	// PAT-Filter breaks API and NCAM for Coolstream.
 	// Don't use it
 	return;
@@ -1853,7 +1853,7 @@ void dvbapi_start_pat_filter(int32_t demux_id)
 
 void dvbapi_start_pmt_filter(int32_t demux_id)
 {
-#if defined(WITH_COOLAPI) || defined(WITH_COOLAPI2) || defined(WITH_GXAPI)
+#if defined(WITH_COOLAPI) || defined(WITH_COOLAPI2) || defined(WITH_GXAPI) || defined(WITH_WI)
 	// PMT-Filter breaks API and NCAM for Coolstream.
 	// Don't use it
 	return;
@@ -4651,7 +4651,7 @@ static void dvbapi_prepare_descrambling(int32_t demux_id, uint32_t msgid)
 		dvbapi_client->lastswitch = dvbapi_client->last = time((time_t *)0); // reset idle-Time & last switch
 	}
 
-#if defined(WITH_COOLAPI) || defined(WITH_COOLAPI2) || defined(WITH_GXAPI)
+#if defined(WITH_COOLAPI) || defined(WITH_COOLAPI2) || defined(WITH_GXAPI) || defined(WITH_WI)
 		// Don't start and Stop EMM Filters over and over again if we are on FTA
 		if(dvbapi_client->last_caid == NO_CAID_VALUE)
 		{

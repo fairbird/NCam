@@ -7487,7 +7487,7 @@ static char *send_ncam_files(struct templatevars * vars, struct uriparams * para
 		tpl_addVar(vars, TPLADD, "BTNDISABLED", "DISABLED");
 	}
 
-	if(!cfg.cccam_cfg_path)
+	if((cfg.cccam_cfg_enabled) && (!cfg.cccam_cfg_path))
 		{ tpl_addVar(vars, TPLADD, "VIEW_FILEMENUCCCAMCFG", tpl_getTpl(vars, "FILEMENUCCCAMCFG")); }
 
 	if(open_config_file("ncam.fs"))
@@ -9193,7 +9193,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 			tpl_addVar(vars, TPLADD, "CS_REVISION", CS_REVISION);
 			if(cs_strlen(CS_GIT_VERSION) >= 6)
 			{
-				tpl_printf(vars, TPLADD, "GIT_VERSION", "commit/%s", CS_GIT_VERSION);
+				tpl_printf(vars, TPLADD, "GIT_VERSION", "commits/%s", CS_GIT_VERSION);
 			}
 			tpl_addVar(vars, TPLADD, "CS_DATE_BUILD", CS_DATE_BUILD);
 			tpl_addVar(vars, TPLADD, "CS_TARGET", CS_TARGET);

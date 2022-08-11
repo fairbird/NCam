@@ -1036,8 +1036,8 @@ int8_t emu_process_ecm(struct s_reader *rdr, const ECM_REQUEST *er, uint8_t *cw,
 #ifdef WITH_LIBCURL
 		if((strncmp(rdr->label, "linuxsat-support.com", 20) == 0) || (strncmp(rdr->label, "github:", 7) == 0))
 		{
-            		pvu_bucket = (uintptr_t)rdr->client / 16 % CS_CLIENT_HASHBUCKETS; // Fixme: For Android this value is 0 (...???)
-            		cs_log_dbg(D_ATR|D_READER, "Reader label: %s client bucket: %d", rdr->label, pvu_bucket);
+			pvu_bucket = (uintptr_t)rdr->client / 16 % CS_CLIENT_HASHBUCKETS; // Fixme: For Android this value is 0 (...???)
+			cs_log_dbg(D_ATR|D_READER, "Reader label: %s client bucket: %d", rdr->label, pvu_bucket);
 		}
 		else { pvu_bucket = 0; }
 		struct pvu_reader *pvu = &pvurdr[pvu_bucket];
