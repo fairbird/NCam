@@ -3,6 +3,7 @@
 
 #define WITH_EMU 1
 #define WITH_SOFTCAM 1
+#define WITH_ARM_NEON 1
 #define WEBIF 1
 #define WEBIF_LIVELOG 1
 #define WEBIF_JQUERY 1
@@ -34,7 +35,7 @@
 #define MODULE_CCCAM 1
 #define MODULE_CCCSHARE 1
 #define MODULE_GBOX 1
-//#define MODULE_RADEGAST 1
+#define MODULE_RADEGAST 1
 //#define MODULE_SERIAL 1
 #define MODULE_CONSTCW 1
 //#define MODULE_PANDORA 1

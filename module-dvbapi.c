@@ -12,6 +12,7 @@
 #include "module-dvbapi-stapi.h"
 #include "module-dvbapi-gxapi.h"
 #include "module-dvbapi-chancache.h"
+#include "module-emulator-streamserver.h"
 #include "module-stat.h"
 #include "ncam-chk.h"
 #include "ncam-client.h"
@@ -8074,7 +8075,13 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 			cs_log_dbg(D_DVBAPI, "------------");
 		}
 #endif // WITH_DEBUG
-		if(!chk_ctab_ex(er->caid, &cfg.emu_stream_relay_ctab) || !cfg.emu_stream_relay_enabled)
+		bool set_dvbapi_cw = true;
+		if(chk_ctab_ex(er->caid, &cfg.emu_stream_relay_ctab) && cfg.emu_stream_relay_enabled)
+		{
+			// streamserver set cw
+			set_dvbapi_cw = !stream_write_cw(er);
+		}
+		if (set_dvbapi_cw)
 #endif
 		switch(selected_api)
 		{

@@ -62,7 +62,7 @@ override STD_DEFS += -D'CS_GIT_VERSION="$(shell ./config.sh --ncam-revision | cu
 override STD_DEFS += -D'CS_DATE_BUILD="$(shell date +"%d-%m-%Y")"'
 override STD_DEFS += -D'CS_CONFDIR="$(CONF_DIR)"'
 
-MODFLAGS_OPTS = -fwrapv -fomit-frame-pointer
+MODFLAGS_OPTS = -fwrapv -fomit-frame-pointer -funroll-loops -fno-tree-vectorize
 
 # Compiler warnings
 CC_WARN = -W -Wall -Wshadow -Wno-shadow -Wredundant-decls -Wstrict-prototypes -Wold-style-definition
@@ -78,6 +78,8 @@ LDFLAGS = -Wl,--gc-sections
 TARGETHELP := $(shell $(CC) --target-help 2>&1)
 ifneq (,$(findstring sse2,$(TARGETHELP)))
 override CFLAGS += -fexpensive-optimizations -mmmx -msse -msse2 -msse3
+else ifneq (,$(findstring neon,$(TARGETHELP)))
+override CFLAGS += -fexpensive-optimizations -mfpu=neon
 else
 override CFLAGS += -fexpensive-optimizations
 endif
@@ -329,6 +331,7 @@ SRC-$(CONFIG_WITH_EMU) += module-emulator-director.c
 SRC-$(CONFIG_WITH_EMU) += module-emulator-irdeto.c
 SRC-$(CONFIG_WITH_EMU) += module-emulator-nagravision.c
 SRC-$(CONFIG_WITH_EMU) += module-emulator-powervu.c
+SRC-$(CONFIG_WITH_EMU) += module-emulator-icam.c
 SRC-$(CONFIG_WITH_EMU) += module-emulator-viaccess.c
 SRC-$(CONFIG_WITH_EMU) += ffdecsa/ffdecsa.c
 ifeq "$(CONFIG_WITH_EMU)" "y"
@@ -496,7 +499,7 @@ $(OBJDIR)/config.o: $(OBJDIR)/config.c
 	$(Q)$(CC) $(STD_DEFS) $(CC_OPTS) $(CC_WARN) $(CFLAGS) -c $< -o $@
 
 $(OBJDIR)/%.o: %.c Makefile
-	@$(CC) -MP -MM -MT $@ -o $(subst .o,.d,$@) $<
+	@$(CC) $(CFLAGS) -MP -MM -MT $@ -o $(subst .o,.d,$@) $<
 	$(SAY) "CC	$<"
 	$(Q)$(CC) $(STD_DEFS) $(CC_OPTS) $(CC_WARN) $(CFLAGS) -c $< -o $@
 
