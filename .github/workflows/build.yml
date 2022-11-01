@@ -20,7 +20,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Install dependencies
-        run: sudo apt-get install openssl libcurl4-openssl-dev libusb-1.0-0-dev libpcsclite-dev
+        run: |
+          sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+          sudo apt-get -q update
+          sudo apt-get install openssl libcurl4-openssl-dev libusb-1.0-0-dev libpcsclite-dev
       - name: Configuration
         run: |
           if [ ${{ github.event_name }} == 'workflow_dispatch' ]; then
