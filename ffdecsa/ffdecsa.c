@@ -497,7 +497,7 @@ static void block_decypher_group(
 
   roff=GROUP_PARALLELISM*56;
 
-#define FASTTRASP1
+//#define FASTTRASP1
 #ifndef FASTTRASP1
   for(g=0;g<count;g++){
     // Init registers 
@@ -578,7 +578,7 @@ static void block_decypher_group(
 #endif
   }
 
-#define FASTTRASP2
+//#define FASTTRASP2
 #ifndef FASTTRASP2
   for(g=0;g<count;g++){
     // Copy results
