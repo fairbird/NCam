@@ -68,7 +68,7 @@ MODFLAGS_OPTS = -fwrapv -fomit-frame-pointer -funroll-loops -fno-tree-vectorize
 CC_WARN = -W -Wall -Wshadow -Wno-shadow -Wredundant-decls -Wstrict-prototypes -Wold-style-definition
 
 # Compiler optimizations
-CC_OPTS = -Os -ggdb -pipe -ffunction-sections -fdata-sections $(MODFLAGS_OPTS)
+CC_OPTS = -Os -ggdb -pipe -ffunction-sections -fdata-sections -funroll-loops -fomit-frame-pointer -fno-schedule-insns $(MODFLAGS_OPTS)
 
 CC = $(CROSS_DIR)$(CROSS)gcc
 STRIP = $(CROSS_DIR)$(CROSS)strip
