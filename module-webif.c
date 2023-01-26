@@ -2089,7 +2089,14 @@ static char *send_ncam_reader(struct templatevars *vars, struct uriparams *param
 					proto = new_proto;
 				}
 #endif
-				webif_add_client_proto(vars, rdr->client, proto, apicall);
+				if(cfg.http_showpicons)
+				{
+					tpl_addVar(vars, TPLADD, "CLIENTPROTO", proto);
+				}
+				else
+				{
+					webif_add_client_proto(vars, rdr->client, proto, apicall);
+				}
 
 				if(rdr->card_status == CARD_INSERTED)
 				{
