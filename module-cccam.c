@@ -4680,6 +4680,7 @@ int32_t cc_cli_connect(struct s_client *cl)
 	if(handle <= 0)
 	{
 		cs_log_dbg(D_READER, "%s network connect error!", rdr->label);
+		if(rdr->from_cccam_cfg && cfg.cccam_cfg_reconnect_attempts > 0) { block_connect(rdr); }
 		return -1;
 	}
 
