@@ -65,7 +65,7 @@ override STD_DEFS += -D'CS_CONFDIR="$(CONF_DIR)"'
 MODFLAGS_OPTS = -fwrapv -fomit-frame-pointer -funroll-loops -fno-tree-vectorize
 
 # Compiler warnings
-CC_WARN = -W -Wall -Wshadow -Wno-shadow -Wredundant-decls -Wstrict-prototypes -Wold-style-definition
+CC_WARN = -W -Wall -Wshadow -Wno-shadow -Wredundant-decls -Wstrict-prototypes -Wold-style-definition -Wno-deprecated-declarations
 
 # Compiler optimizations
 CC_OPTS = -Os -ggdb -pipe -ffunction-sections -fdata-sections -funroll-loops -fomit-frame-pointer -fno-schedule-insns $(MODFLAGS_OPTS)
