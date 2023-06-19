@@ -1317,20 +1317,20 @@ static void DescrambleTsPacketsICam(emu_stream_client_data *data, uint8_t *strea
 
 static int32_t connect_to_stream(char *http_buf, int32_t http_buf_len, char *stream_path)
 {
-	struct sockaddr_in cservaddr;
+	struct SOCKADDR cservaddr;
 	IN_ADDR_T in_addr;
 
-	int32_t streamfd = socket(AF_INET, SOCK_STREAM, 0);
+	int32_t streamfd = socket(DEFAULT_AF, SOCK_STREAM, 0);
 	if (streamfd == -1)
 	{
 		return -1;
 	}
 
 	bzero(&cservaddr, sizeof(cservaddr));
-	cservaddr.sin_family = AF_INET;
+	SIN_GET_FAMILY(cservaddr) = DEFAULT_AF;
+	SIN_GET_PORT(cservaddr) = htons(emu_stream_source_port);
 	cs_resolve(emu_stream_source_host, &in_addr, NULL, NULL);
 	SIN_GET_ADDR(cservaddr) = in_addr;
-	cservaddr.sin_port = htons(emu_stream_source_port);
 
 	if (connect(streamfd, (struct sockaddr *)&cservaddr, sizeof(cservaddr)) == -1)
 	{
