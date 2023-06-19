@@ -29,8 +29,6 @@
 
 #define PING_INTVL     4
 
-int32_t cspsock; // Output Socket
-
 static void *csp_server(struct s_client *client __attribute__((unused)), uint8_t *mbuf __attribute__((unused)), int32_t n __attribute__((unused)))
 {
 	return NULL;
