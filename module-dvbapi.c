@@ -1161,7 +1161,7 @@ static int32_t dvbapi_get_descrambler_info(void)
 #ifdef WITH_WI
 		cs_log_dbg(D_DVBAPI, "ERROR: Can't open device %s (errno=%d %s)", device_path, errno, strerror(errno));
 #else
- 		cs_log("ERROR: Can't open device %s (errno=%d %s)", device_path, errno, strerror(errno));
+		cs_log("ERROR: Can't open device %s (errno=%d %s)", device_path, errno, strerror(errno));
 #endif
 		return 0;
 	}
