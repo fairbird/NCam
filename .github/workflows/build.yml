@@ -14,7 +14,7 @@ on:
         default: 'USE_LIBCRYPTO=1 USE_SSL=1 USE_LIBCURL=1 USE_LIBUSB=1 USE_PCSC=1'
 jobs:
   build:
-    name: name: x86_64
+    name: x86_64
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
