@@ -103,12 +103,6 @@ static int32_t csp_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	SIN_GET_PORT(peer_sa) = htons(12346);
 	int32_t status = sendto(cl->udp_fd, buf, size, 0, (struct sockaddr *)&peer_sa, sizeof(peer_sa));
 	 */
-	// In Test
-	struct sockaddr_in peer_sa;
-	SIN_GET_FAMILY(peer_sa) = SIN_GET_FAMILY(cl->udp_sa);
-	inet_pton(AF_INET, "127.0.0.1", &SIN_GET_ADDR(peer_sa));
-	SIN_GET_PORT(peer_sa) = htons(12346);
-	sendto(cl->udp_fd, buf, size, 0, (struct sockaddr *) &peer_sa, sizeof(peer_sa));
 
 	int32_t status = sendto(cl->udp_fd, buf, size, 0, (struct sockaddr *) &cl->udp_sa, cl->udp_sa_len);
 	NULLFREE(buf);
@@ -213,14 +207,6 @@ static int32_t csp_recv(struct s_client *client, uint8_t *buf, int32_t l)
 			int32_t status = sendto(client->udp_fd, pingrpl, sizeof(pingrpl), 0, (struct sockaddr *) &client->udp_sa, client->udp_sa_len);
 			cs_log_dbg(D_TRACE, "received ping from cache peer: %s:%d (replied: %d)", cs_inet_ntoa(SIN_GET_ADDR(client->udp_sa)), port, status);
 		}
-		else
-		{
-			//cs_ddump_mask(D_TRACE, buf, l, "received ping request from csp");
-			buf[0] = TYPE_PINGRPL;
-			int32_t port = buf[11]<<8 | buf[12];
-			SIN_GET_PORT(client->udp_sa) = htons((uint16_t)port);
-			sendto( cspsock, buf, 9, 0, (struct sockaddr *)&client->udp_sa, client->udp_sa_len);
-		}
 		break;
 
 	case TYPE_PINGRPL:
@@ -277,8 +263,6 @@ void module_csp(struct s_module *ph)
 {
 	ph->ptab.nports = 1;
 	ph->ptab.ports[0].s_port = cfg.csp_port;
-
-	cspsock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
 	ph->desc = "csp";
 	ph->type = MOD_CONN_UDP;
