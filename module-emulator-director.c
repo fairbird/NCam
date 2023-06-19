@@ -480,13 +480,13 @@ static int8_t parse_emm_nano_tags(uint8_t *data, uint32_t length, uint8_t keyInd
 
 						des_set_key(emmKey, ks);
 						des(tagData + 4 + 5, ks, 0);
-
+#if __GNUC__ < 12
 						if ((tagData + 4 + 5 + 7) != 0x00) // check if key looks valid (last byte 0x00)
 						{
 							cs_log_dbg(D_READER, "Key rejected from EMM (looks invalid)");
 							return EMU_KEY_REJECTED;
 						}
-
+#endif
 						SAFE_MUTEX_LOCK(&emu_key_data_mutex);
 						if (emu_update_key('T', entitlementId, "01", tagData + 4 + 5, 8, 1, NULL))
 						{
