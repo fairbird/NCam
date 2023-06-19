@@ -105,7 +105,7 @@ void icam_ecm(emu_stream_client_data *cdata)
 
 bool icam_connect_to_radegast(void)
 {
-	struct sockaddr_in cservaddr;
+	struct SOCKADDR cservaddr;
 
 	if (gRadegastFd == 0)
 		gRadegastFd = socket(AF_INET, SOCK_STREAM, 0);
@@ -120,11 +120,15 @@ bool icam_connect_to_radegast(void)
 	fcntl(gRadegastFd, F_SETFL, flags | O_NONBLOCK);
 
 	bzero(&cservaddr, sizeof(cservaddr));
-	cservaddr.sin_family = AF_INET;
+	SIN_GET_FAMILY(cservaddr) = DEFAULT_AF;
+	SIN_GET_PORT(cservaddr) = htons(cfg.rad_port);
 	SIN_GET_ADDR(cservaddr) = cfg.rad_srvip;
-	cservaddr.sin_port = htons(cfg.rad_port);
 
-	connect(gRadegastFd,(struct sockaddr *)&cservaddr, sizeof(cservaddr));
+	if (connect(gRadegastFd, (struct sockaddr *)&cservaddr, sizeof(cservaddr)) == -1)
+	{
+		return false;
+	}
+
 	return true;
 }
 
