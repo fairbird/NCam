@@ -2771,6 +2771,11 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 	{
 		for(i = 0; i < 26 ; i++) { tpl_printf(vars, TPLAPPEND, "INS7E", "%02X", rdr->ins7E[i]); }
 	}
+	// ins42
+	if(rdr->ins42[0x25])
+	{
+		for(i = 0; i < 37 ; i++) { tpl_printf(vars, TPLAPPEND, "INS42", "%02X", rdr->ins42[i]); }
+	}
 
 	// ins7E11
 	if(rdr->ins7E11[0x01])
