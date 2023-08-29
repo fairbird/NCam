@@ -37,7 +37,9 @@
 #include <termios.h>
 #include <inttypes.h>
 #include <sys/utsname.h>
+#if !defined(__APPLE__)
 #include <sys/sysmacros.h>
+#endif
 #include <sys/sysinfo.h>
 
 /*
