@@ -180,7 +180,6 @@ struct csa_key_t{
         int iA[8];  // iA[0] is for A1, iA[7] is for A8
         int iB[8];  // iB[0] is for B1, iB[7] is for B8
 // used by stream (group)
-        MEMALIGN group ck_g[8][8]; // [byte][bit:0=LSB,7=MSB]
         MEMALIGN group iA_g[8][4]; // [0 for A1][0 for LSB]
         MEMALIGN group iB_g[8][4]; // [0 for B1][0 for LSB]
 // used by block
@@ -564,11 +563,6 @@ static void schedule_key(struct csa_key_t *key, const unsigned char *pk, const u
   memcpy(key->ck,pk,8);
 // precalculations for stream
   key_schedule_stream(key->ck,key->iA,key->iB);
-  for(by=0;by<8;by++){
-    for(bi=0;bi<8;bi++){
-      key->ck_g[by][bi]=(key->ck[by]&(1<<bi))?FF1():FF0();
-    }
-  }
   for(by=0;by<8;by++){
     for(bi=0;bi<4;bi++){
       key->iA_g[by][bi]=(key->iA[by]&(1<<bi))?FF1():FF0();

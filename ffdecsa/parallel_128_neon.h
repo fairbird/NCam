@@ -268,7 +268,7 @@
 	#endif
 #endif
 
-#define MEMALIGN_VAL 4
+#define MEMALIGN_VAL 16
 #define M_EMPTY()
 
 #undef XOR_8_BY
