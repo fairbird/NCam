@@ -41,46 +41,41 @@
 #define __SPAN_16__
 
 /* GROUP */
+#define FF0() ff0
+#define FF1() ff1
+
 #if defined(__GROUP_u8x16__)
-	static const uint8x16_t ff0 = { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 };
-	static const uint8x16_t ff1 = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
-	typedef uint8x16_t group;
 	#define GROUP_PARALLELISM 128
-	#define FF0() ff0
-	#define FF1() ff1
+	typedef uint8x16_t group;
+	static const group ff0 = { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 };
+	static const group ff1 = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 	#define FFAND(a,b) vandq_u8(a,b)
 	#define FFOR(a,b)  vorrq_u8(a,b)
 	#define FFXOR(a,b) veorq_u8(a,b)
 	#define FFNOT(a)   vmvnq_u8(a)
 #elif defined(__GROUP_u16x8__)
-	static const uint16x8_t ff0 = { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 };
-	static const uint16x8_t ff1 = { 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff };
-	typedef uint16x8_t group;
 	#define GROUP_PARALLELISM 128
-	#define FF0() ff0
-	#define FF1() ff1
+	typedef uint16x8_t group;
+	static const group ff0 = { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 };
+	static const group ff1 = { 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff };
 	#define FFAND(a,b) vandq_u16(a,b)
 	#define FFOR(a,b)  vorrq_u16(a,b)
 	#define FFXOR(a,b) veorq_u16(a,b)
 	#define FFNOT(a)   vmvnq_u16(a)
 #elif defined(__GROUP_u32x4__)
-	static const uint32x4_t ff0 = { 0x0, 0x0, 0x0, 0x0 };
-	static const uint32x4_t ff1 = { 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff};
-	typedef uint32x4_t group;
 	#define GROUP_PARALLELISM 128
-	#define FF0() ff0
-	#define FF1() ff1
+	typedef uint32x4_t group;
+	static const group ff0 = { 0x0, 0x0, 0x0, 0x0 };
+	static const group ff1 = { 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff};
 	#define FFAND(a,b) vandq_u32(a,b)
 	#define FFOR(a,b)  vorrq_u32(a,b)
 	#define FFXOR(a,b) veorq_u32(a,b)
 	#define FFNOT(a)   vmvnq_u32(a)
 #else /* (__GROUP_u64x2__) */
-	static const uint64x2_t ff0 = { 0x0, 0x0 };
-	static const uint64x2_t ff1 = { 0xffffffffffffffff, 0xffffffffffffffff };
-	typedef uint64x2_t group;
 	#define GROUP_PARALLELISM 128
-	#define FF0() ff0
-	#define FF1() ff1
+	typedef uint64x2_t group;
+	static const group ff0 = { 0x0, 0x0 };
+	static const group ff1 = { 0xffffffffffffffff, 0xffffffffffffffff };
 	#define FFAND(a,b) vandq_u64(a,b)
 	#define FFOR(a,b)  vorrq_u64(a,b)
 	#define FFXOR(a,b) veorq_u64(a,b)
@@ -92,21 +87,22 @@
 #endif
 
 /* BATCH */
+#define B_FFN_ALL_29() ff29
+#define B_FFN_ALL_02() ff02
+#define B_FFN_ALL_04() ff04
+#define B_FFN_ALL_10() ff10
+#define B_FFN_ALL_40() ff40
+#define B_FFN_ALL_80() ff80
+
 #if defined(__BATCH_u8x8__)
-	static const uint8x8_t ff29 = { 0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29 };
-	static const uint8x8_t ff02 = { 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02 };
-	static const uint8x8_t ff04 = { 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04 };
-	static const uint8x8_t ff10 = { 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10 };
-	static const uint8x8_t ff40 = { 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40 };
-	static const uint8x8_t ff80 = { 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80 };
-	typedef uint8x8_t batch;
 	#define BYTES_PER_BATCH 8
-	#define B_FFN_ALL_29() ff29
-	#define B_FFN_ALL_02() ff02
-	#define B_FFN_ALL_04() ff04
-	#define B_FFN_ALL_10() ff10
-	#define B_FFN_ALL_40() ff40
-	#define B_FFN_ALL_80() ff80
+	typedef uint8x8_t batch;
+	static const batch ff29 = { 0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29 };
+	static const batch ff02 = { 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02 };
+	static const batch ff04 = { 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04 };
+	static const batch ff10 = { 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10 };
+	static const batch ff40 = { 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40 };
+	static const batch ff80 = { 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80 };
 	#define B_FFAND(a,b)  vand_u8(a,b)
 	#define B_FFOR(a,b)   vorr_u8(a,b)
 	#define B_FFXOR(a,b)  veor_u8(a,b)
@@ -114,20 +110,14 @@
 	#define B_FFSH8R(a,n) vshr_n_u8(a,n)
 	typedef batch _u64;
 #elif defined(__BATCH_u16x4__)
-	static const uint16x4_t ff29 = { 0x2929, 0x2929, 0x2929, 0x2929 };
-	static const uint16x4_t ff02 = { 0x0202, 0x0202, 0x0202, 0x0202 };
-	static const uint16x4_t ff04 = { 0x0404, 0x0404, 0x0404, 0x0404 };
-	static const uint16x4_t ff10 = { 0x1010, 0x1010, 0x1010, 0x1010 };
-	static const uint16x4_t ff40 = { 0x4040, 0x4040, 0x4040, 0x4040 };
-	static const uint16x4_t ff80 = { 0x8080, 0x8080, 0x8080, 0x8080 };
-	typedef uint16x4_t batch;
 	#define BYTES_PER_BATCH 8
-	#define B_FFN_ALL_29() ff29
-	#define B_FFN_ALL_02() ff02
-	#define B_FFN_ALL_04() ff04
-	#define B_FFN_ALL_10() ff10
-	#define B_FFN_ALL_40() ff40
-	#define B_FFN_ALL_80() ff80
+	typedef uint16x4_t batch;
+	static const batch ff29 = { 0x2929, 0x2929, 0x2929, 0x2929 };
+	static const batch ff02 = { 0x0202, 0x0202, 0x0202, 0x0202 };
+	static const batch ff04 = { 0x0404, 0x0404, 0x0404, 0x0404 };
+	static const batch ff10 = { 0x1010, 0x1010, 0x1010, 0x1010 };
+	static const batch ff40 = { 0x4040, 0x4040, 0x4040, 0x4040 };
+	static const batch ff80 = { 0x8080, 0x8080, 0x8080, 0x8080 };
 	#define B_FFAND(a,b)  vand_u16(a,b)
 	#define B_FFOR(a,b)   vorr_u16(a,b)
 	#define B_FFXOR(a,b)  veor_u16(a,b)
@@ -135,20 +125,14 @@
 	#define B_FFSH8R(a,n) vshr_n_u16(a,n)
 	typedef batch _u64;
 #elif defined(__BATCH_u32x2__)
-	static const uint32x2_t ff29 = { 0x29292929, 0x29292929 };
-	static const uint32x2_t ff02 = { 0x02020202, 0x02020202 };
-	static const uint32x2_t ff04 = { 0x04040404, 0x04040404 };
-	static const uint32x2_t ff10 = { 0x10101010, 0x10101010 };
-	static const uint32x2_t ff40 = { 0x40404040, 0x40404040 };
-	static const uint32x2_t ff80 = { 0x80808080, 0x80808080 };
-	typedef uint32x2_t batch;
 	#define BYTES_PER_BATCH 8
-	#define B_FFN_ALL_29() ff29
-	#define B_FFN_ALL_02() ff02
-	#define B_FFN_ALL_04() ff04
-	#define B_FFN_ALL_10() ff10
-	#define B_FFN_ALL_40() ff40
-	#define B_FFN_ALL_80() ff80
+	typedef uint32x2_t batch;
+	static const batch ff29 = { 0x29292929, 0x29292929 };
+	static const batch ff02 = { 0x02020202, 0x02020202 };
+	static const batch ff04 = { 0x04040404, 0x04040404 };
+	static const batch ff10 = { 0x10101010, 0x10101010 };
+	static const batch ff40 = { 0x40404040, 0x40404040 };
+	static const batch ff80 = { 0x80808080, 0x80808080 };
 	#define B_FFAND(a,b)  vand_u32(a,b)
 	#define B_FFOR(a,b)   vorr_u32(a,b)
 	#define B_FFXOR(a,b)  veor_u32(a,b)
@@ -156,14 +140,14 @@
 	#define B_FFSH8R(a,n) vshr_n_u32(a,n)
 	typedef batch _u64;
 #elif defined(__BATCH_u64x1__)
-	typedef uint64x1_t batch;
 	#define BYTES_PER_BATCH 8
-	#define B_FFN_ALL_29() 0x2929292929292929
-	#define B_FFN_ALL_02() 0x0202020202020202
-	#define B_FFN_ALL_04() 0x0404040404040404
-	#define B_FFN_ALL_10() 0x1010101010101010
-	#define B_FFN_ALL_40() 0x4040404040404040
-	#define B_FFN_ALL_80() 0x8080808080808080
+	typedef uint64x1_t batch;
+	static const batch ff29 = { 0x2929292929292929 };
+	static const batch ff02 = { 0x0202020202020202 };
+	static const batch ff04 = { 0x0404040404040404 };
+	static const batch ff10 = { 0x1010101010101010 };
+	static const batch ff40 = { 0x4040404040404040 };
+	static const batch ff80 = { 0x8080808080808080 };
 	#define B_FFAND(a,b)   vand_u64(a,b)
 	#define B_FFOR(a,b)    vorr_u64(a,b)
 	#define B_FFXOR(a,b)   veor_u64(a,b)
@@ -171,20 +155,14 @@
 	#define B_FFSH8R(a,n)  vshr_n_u64(a,n)
 	typedef batch _u64;
 #elif defined(__BATCH_u8x16__)
-	static const uint8x16_t ff29 = { 0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29 };
-	static const uint8x16_t ff02 = { 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02 };
-	static const uint8x16_t ff04 = { 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04 };
-	static const uint8x16_t ff10 = { 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10 };
-	static const uint8x16_t ff40 = { 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40 };
-	static const uint8x16_t ff80 = { 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80 };
-	typedef uint8x16_t batch;
 	#define BYTES_PER_BATCH 16
-	#define B_FFN_ALL_29() ff29
-	#define B_FFN_ALL_02() ff02
-	#define B_FFN_ALL_04() ff04
-	#define B_FFN_ALL_10() ff10
-	#define B_FFN_ALL_40() ff40
-	#define B_FFN_ALL_80() ff80
+	typedef uint8x16_t batch;
+	static const batch ff29 = { 0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29 };
+	static const batch ff02 = { 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02 };
+	static const batch ff04 = { 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04 };
+	static const batch ff10 = { 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10 };
+	static const batch ff40 = { 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40 };
+	static const batch ff80 = { 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80 };
 	#define B_FFAND(a,b)  vandq_u8(a,b)
 	#define B_FFOR(a,b)   vorrq_u8(a,b)
 	#define B_FFXOR(a,b)  veorq_u8(a,b)
@@ -195,20 +173,14 @@
 		#define __SPAN_16__
 	#endif
 #elif defined(__BATCH_u16x8__)
-	static const uint16x8_t ff29 = { 0x2929, 0x2929, 0x2929, 0x2929, 0x2929, 0x2929, 0x2929, 0x2929 };
-	static const uint16x8_t ff02 = { 0x0202, 0x0202, 0x0202, 0x0202, 0x0202, 0x0202, 0x0202, 0x0202 };
-	static const uint16x8_t ff04 = { 0x0404, 0x0404, 0x0404, 0x0404, 0x0404, 0x0404, 0x0404, 0x0404 };
-	static const uint16x8_t ff10 = { 0x1010, 0x1010, 0x1010, 0x1010, 0x1010, 0x1010, 0x1010, 0x1010 };
-	static const uint16x8_t ff40 = { 0x4040, 0x4040, 0x4040, 0x4040, 0x4040, 0x4040, 0x4040, 0x4040 };
-	static const uint16x8_t ff80 = { 0x8080, 0x8080, 0x8080, 0x8080, 0x8080, 0x8080, 0x8080, 0x8080 };
-	typedef uint16x8_t batch;
 	#define BYTES_PER_BATCH 16
-	#define B_FFN_ALL_29() ff29
-	#define B_FFN_ALL_02() ff02
-	#define B_FFN_ALL_04() ff04
-	#define B_FFN_ALL_10() ff10
-	#define B_FFN_ALL_40() ff40
-	#define B_FFN_ALL_80() ff80
+	typedef uint16x8_t batch;
+	static const batch ff29 = { 0x2929, 0x2929, 0x2929, 0x2929, 0x2929, 0x2929, 0x2929, 0x2929 };
+	static const batch ff02 = { 0x0202, 0x0202, 0x0202, 0x0202, 0x0202, 0x0202, 0x0202, 0x0202 };
+	static const batch ff04 = { 0x0404, 0x0404, 0x0404, 0x0404, 0x0404, 0x0404, 0x0404, 0x0404 };
+	static const batch ff10 = { 0x1010, 0x1010, 0x1010, 0x1010, 0x1010, 0x1010, 0x1010, 0x1010 };
+	static const batch ff40 = { 0x4040, 0x4040, 0x4040, 0x4040, 0x4040, 0x4040, 0x4040, 0x4040 };
+	static const batch ff80 = { 0x8080, 0x8080, 0x8080, 0x8080, 0x8080, 0x8080, 0x8080, 0x8080 };
 	#define B_FFAND(a,b)  vandq_u16(a,b)
 	#define B_FFOR(a,b)   vorrq_u16(a,b)
 	#define B_FFXOR(a,b)  veorq_u16(a,b)
@@ -219,20 +191,14 @@
 		#define __SPAN_16__
 	#endif
 #elif defined(__BATCH_u32x4__)
-	static const uint32x4_t ff29 = { 0x29292929, 0x29292929, 0x29292929, 0x29292929 };
-	static const uint32x4_t ff02 = { 0x02020202, 0x02020202, 0x02020202, 0x02020202 };
-	static const uint32x4_t ff04 = { 0x04040404, 0x04040404, 0x04040404, 0x04040404 };
-	static const uint32x4_t ff10 = { 0x10101010, 0x10101010, 0x10101010, 0x10101010 };
-	static const uint32x4_t ff40 = { 0x40404040, 0x40404040, 0x40404040, 0x40404040 };
-	static const uint32x4_t ff80 = { 0x80808080, 0x80808080, 0x80808080, 0x80808080 };
-	typedef uint32x4_t batch;
 	#define BYTES_PER_BATCH 16
-	#define B_FFN_ALL_29() ff29
-	#define B_FFN_ALL_02() ff02
-	#define B_FFN_ALL_04() ff04
-	#define B_FFN_ALL_10() ff10
-	#define B_FFN_ALL_40() ff40
-	#define B_FFN_ALL_80() ff80
+	typedef uint32x4_t batch;
+	static const batch ff29 = { 0x29292929, 0x29292929, 0x29292929, 0x29292929 };
+	static const batch ff02 = { 0x02020202, 0x02020202, 0x02020202, 0x02020202 };
+	static const batch ff04 = { 0x04040404, 0x04040404, 0x04040404, 0x04040404 };
+	static const batch ff10 = { 0x10101010, 0x10101010, 0x10101010, 0x10101010 };
+	static const batch ff40 = { 0x40404040, 0x40404040, 0x40404040, 0x40404040 };
+	static const batch ff80 = { 0x80808080, 0x80808080, 0x80808080, 0x80808080 };
 	#define B_FFAND(a,b)  vandq_u32(a,b)
 	#define B_FFOR(a,b)   vorrq_u32(a,b)
 	#define B_FFXOR(a,b)  veorq_u32(a,b)
@@ -243,20 +209,14 @@
 		#define __SPAN_16__
 	#endif
 #else /* (__BATCH_u64x2__) */
-	static const uint64x2_t ff29 = { 0x2929292929292929, 0x2929292929292929 };
-	static const uint64x2_t ff02 = { 0x0202020202020202, 0x0202020202020202 };
-	static const uint64x2_t ff04 = { 0x0404040404040404, 0x0404040404040404 };
-	static const uint64x2_t ff10 = { 0x1010101010101010, 0x1010101010101010 };
-	static const uint64x2_t ff40 = { 0x4040404040404040, 0x4040404040404040 };
-	static const uint64x2_t ff80 = { 0x8080808080808080, 0x8080808080808080 };
-	typedef uint64x2_t batch;
 	#define BYTES_PER_BATCH 16
-	#define B_FFN_ALL_29() ff29
-	#define B_FFN_ALL_02() ff02
-	#define B_FFN_ALL_04() ff04
-	#define B_FFN_ALL_10() ff10
-	#define B_FFN_ALL_40() ff40
-	#define B_FFN_ALL_80() ff80
+	typedef uint64x2_t batch;
+	static const batch ff29 = { 0x2929292929292929, 0x2929292929292929 };
+	static const batch ff02 = { 0x0202020202020202, 0x0202020202020202 };
+	static const batch ff04 = { 0x0404040404040404, 0x0404040404040404 };
+	static const batch ff10 = { 0x1010101010101010, 0x1010101010101010 };
+	static const batch ff40 = { 0x4040404040404040, 0x4040404040404040 };
+	static const batch ff80 = { 0x8080808080808080, 0x8080808080808080 };
 	#define B_FFAND(a,b)  vandq_u64(a,b)
 	#define B_FFOR(a,b)   vorrq_u64(a,b)
 	#define B_FFXOR(a,b)  veorq_u64(a,b)

@@ -1,6 +1,7 @@
 # generated binaries
 Distribution/ncam*
 Distribution/list_smargo*
+Distribution/ffdecsa*
 Distribution/*.zip
 Distribution/.*
 

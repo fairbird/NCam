@@ -465,7 +465,9 @@ void stream_cypher_group_normal(
 #endif
   int aboff;
   int i,j,k,b;
+#ifdef DEBUG
   int dbg;
+#endif
 
 #ifdef STREAM_INIT
   DBG(fprintf(stderr,":::::::::: BEGIN STREAM INIT\n"));
@@ -474,11 +476,12 @@ void stream_cypher_group_normal(
   DBG(fprintf(stderr,":::::::::: BEGIN STREAM NORMAL\n"));
 #endif
 #ifdef STREAM_INIT
+#ifdef DEBUG
 for(j=0;j<64;j++){
   DBG(fprintf(stderr,"precall prerot stream_in[%2i]=",j));
   DBG(dump_mem("",sb+BYPG*j,BYPG,BYPG));
 }
-
+#endif
 DBG(dump_mem("stream_prerot ",sb,GROUP_PARALLELISM*8,BYPG));
 #if GROUP_PARALLELISM==32
 trasp64_32_88ccw(sb);
@@ -490,11 +493,12 @@ trasp64_64_88ccw(sb);
 trasp64_128_88ccw(sb);
 #endif
 DBG(dump_mem("stream_postrot",sb,GROUP_PARALLELISM*8,BYPG));
-
+#ifdef DEBUG
 for(j=0;j<64;j++){
   DBG(fprintf(stderr,"precall stream_in[%2i]=",j));
   DBG(dump_mem("",sb+BYPG*j,BYPG,BYPG));
 }
+#endif
 #endif
 
   aboff=32;
@@ -532,12 +536,14 @@ DBG(dump_mem("",(unsigned char *)&iB[i][b],BYPG,BYPG));
   regs->r=FF0();
 #endif
 
+#ifdef DEBUG
 for(dbg=0;dbg<4;dbg++){
   DBG(fprintf(stderr,"dbg A0[%i]=",dbg));
   DBG(dump_mem("",(unsigned char *)&regs->A[aboff+0][dbg],BYPG,BYPG));
   DBG(fprintf(stderr,"dbg B0[%i]=",dbg));
   DBG(dump_mem("",(unsigned char *)&regs->B[aboff+0][dbg],BYPG,BYPG));
 }
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -683,11 +689,12 @@ for(dbg=0;dbg<4;dbg++){
       extra_B[2]=FFXOR(FFXOR(FFXOR(regs->B[aboff+5][0],regs->B[aboff+7][1]),regs->B[aboff+2][3]),regs->B[aboff+3][2]);
       extra_B[1]=FFXOR(FFXOR(FFXOR(regs->B[aboff+4][3],regs->B[aboff+7][2]),regs->B[aboff+3][0]),regs->B[aboff+4][1]);
       extra_B[0]=FFXOR(FFXOR(FFXOR(regs->B[aboff+8][2],regs->B[aboff+5][3]),regs->B[aboff+2][1]),regs->B[aboff+7][0]);
+#ifdef DEBUG
 for(dbg=0;dbg<4;dbg++){
   DBG(fprintf(stderr,"extra_B[%i]=",dbg));
   DBG(dump_mem("",(unsigned char *)&extra_B[dbg],BYPG,BYPG));
 }
-
+#endif
       // T1 = xor all inputs
       // in1, in2, D are only used in T1 during initialisation, not generation
       for(b=0;b<4;b++){
@@ -700,10 +707,12 @@ for(dbg=0;dbg<4;dbg++){
       }
 #endif
 
+#ifdef DEBUG
 for(dbg=0;dbg<4;dbg++){
   DBG(fprintf(stderr,"next_A0[%i]=",dbg));
   DBG(dump_mem("",(unsigned char *)&regs->A[aboff-1][dbg],BYPG,BYPG));
 }
+#endif
 
       // T2 =  xor all inputs
       // in1, in2 are only used in T1 during initialisation, not generation
@@ -718,10 +727,12 @@ for(dbg=0;dbg<4;dbg++){
       }
 #endif
 
+#ifdef DEBUG
 for(dbg=0;dbg<4;dbg++){
   DBG(fprintf(stderr,"next_B0[%i]=",dbg));
   DBG(dump_mem("",(unsigned char *)&regs->B[aboff-1][dbg],BYPG,BYPG));
 }
+#endif
 
       // if p=1, rotate left (yes, this is what we're doing)
       tmp3=regs->B[aboff-1][3];
@@ -730,20 +741,24 @@ for(dbg=0;dbg<4;dbg++){
       regs->B[aboff-1][1]=FFXOR(regs->B[aboff-1][1],FFAND(FFXOR(regs->B[aboff-1][1],regs->B[aboff-1][0]),regs->p));
       regs->B[aboff-1][0]=FFXOR(regs->B[aboff-1][0],FFAND(FFXOR(regs->B[aboff-1][0],tmp3),regs->p));
 
+#ifdef DEBUG
 for(dbg=0;dbg<4;dbg++){
   DBG(fprintf(stderr,"next_B0[%i]=",dbg));
   DBG(dump_mem("",(unsigned char *)&regs->B[aboff-1][dbg],BYPG,BYPG));
 }
+#endif
 
       // T3 = xor all inputs
       for(b=0;b<4;b++){
         regs->D[b]=FFXOR(FFXOR(regs->E[b],regs->Z[b]),extra_B[b]);
       }
 
+#ifdef DEBUG
 for(dbg=0;dbg<4;dbg++){
   DBG(fprintf(stderr,"D[%i]=",dbg));
   DBG(dump_mem("",(unsigned char *)&regs->D[dbg],BYPG,BYPG));
 }
+#endif
 
       // T4 = sum, carry of Z + E + r
       for(b=0;b<4;b++){
@@ -789,6 +804,8 @@ for(dbg=0;dbg<4;dbg++){
       for(b=0;b<4;b++){
         regs->E[b]=next_E[b];
       }
+
+#ifdef DEBUG
 for(dbg=0;dbg<4;dbg++){
   DBG(fprintf(stderr,"F[%i]=",dbg));
   DBG(dump_mem("",(unsigned char *)&regs->F[dbg],BYPG,BYPG));
@@ -799,7 +816,7 @@ for(dbg=0;dbg<4;dbg++){
   DBG(fprintf(stderr,"E[%i]=",dbg));
   DBG(dump_mem("",(unsigned char *)&regs->E[dbg],BYPG,BYPG));
 }
-
+#endif
       // this simple instruction is virtually shifting all the shift registers
       aboff--;
 
@@ -824,6 +841,7 @@ for(dbg=0;dbg<4;dbg++){
       regs->Z[3]=s2b;
       regs->p=s7a;
       regs->q=s7b;
+#ifdef DEBUG
 for(dbg=0;dbg<4;dbg++){
   DBG(fprintf(stderr,"X[%i]=",dbg));
   DBG(dump_mem("",(unsigned char *)&regs->X[dbg],BYPG,BYPG));
@@ -840,17 +858,20 @@ DBG(fprintf(stderr,"p="));
 DBG(dump_mem("",(unsigned char *)&regs->p,BYPG,BYPG));
 DBG(fprintf(stderr,"q="));
 DBG(dump_mem("",(unsigned char *)&regs->q,BYPG,BYPG));
-
+#endif
 #ifdef STREAM_NORMAL
       // require 4 loops per output byte
       // 2 output bits are a function of the 4 bits of D
       // xor 2 by 2
       cb_g[8*i+7-2*j]=FFXOR(regs->D[2],regs->D[3]);
       cb_g[8*i+6-2*j]=FFXOR(regs->D[0],regs->D[1]);
+#ifdef DEBUG
 for(dbg=0;dbg<8;dbg++){
   DBG(fprintf(stderr,"op[%i]=",dbg));
   DBG(dump_mem("",(unsigned char *)&cb_g[8*i+dbg],BYPG,BYPG));
 }
+#endif
+
 #endif
 
 DBG(fprintf(stderr,"---END INTERNAL LOOP\n"));
@@ -874,10 +895,13 @@ DBG(fprintf(stderr,"moving forward AB k=%i b=%i\n",k,b));
 ////////////////////////////////////////////////////////////////////////////////
 
 #ifdef STREAM_NORMAL
+
+#ifdef DEBUG
 for(j=0;j<64;j++){
   DBG(fprintf(stderr,"postcall prerot cb[%2i]=",j));
   DBG(dump_mem("",(unsigned char *)(cb+BYPG*j),BYPG,BYPG));
 }
+#endif
 
 #if GROUP_PARALLELISM==32
 trasp64_32_88cw(cb);
@@ -889,10 +913,13 @@ trasp64_64_88cw(cb);
 trasp64_128_88cw(cb);
 #endif
 
+#ifdef DEBUG
 for(j=0;j<64;j++){
   DBG(fprintf(stderr,"postcall postrot cb[%2i]=",j));
   DBG(dump_mem("",(unsigned char *)(cb+BYPG*j),BYPG,BYPG));
 }
+#endif
+
 #endif
 
 #ifdef STREAM_INIT

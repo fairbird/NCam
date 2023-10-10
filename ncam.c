@@ -382,7 +382,6 @@ static void write_versionfile(bool use_stdout)
 				st.tm_hour, st.tm_min, st.tm_sec);
 	}
 
-	fprintf(fp, "Version:        NCam-%s\n", CS_VERSION);
 	fprintf(fp, "Version:        NCam-%s%s\n", CS_VERSION, "-ICAM-v9");
 	fprintf(fp, "Revision:       %s\n", CS_REVISION);
 	fprintf(fp, "Build:          %s\n", CS_DATE_BUILD);
@@ -434,10 +433,7 @@ static void write_versionfile(bool use_stdout)
 #endif
 		write_conf(WITH_NEUTRINO, "DVB API with NEUTRINO support");
 		write_conf(READ_SDT_CHARSETS, "DVB API read-sdt charsets");
-		if(config_enabled(WITH_EMU))
-		{
-			write_conf(true, "DVB API with ICAM streamrelay support");
-		}
+		write_conf(WITH_EMU, "DVB API with ICAM streamrelay support");
 	}
 	write_conf(IRDETO_GUESSING, "Irdeto guessing");
 	write_conf(CS_ANTICASC, "Anti-cascading support");

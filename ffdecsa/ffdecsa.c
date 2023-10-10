@@ -24,7 +24,6 @@
 #include <stdlib.h>
 
 #include "ffdecsa.h"
-#include "../config.h"
 
 #ifndef NULL
 #define NULL 0
@@ -62,8 +61,10 @@
 #if defined(__x86_64__) || defined(_M_X64)
 #define PARALLEL_MODE PARALLEL_128_SSE2
 
+#elif defined(__i386__)
+#define PARALLEL_MODE PARALLEL_64_MMX
+
 #elif defined(__mips__) || defined(__mips) || defined(__MIPS__)
-//#define PARALLEL_MODE PARALLEL_64_LONG
 #define PARALLEL_MODE PARALLEL_32_INT
 
 #elif defined(__sh__) || defined(__SH4__)
@@ -72,11 +73,7 @@
 #define MEMALIGN_VAL 4
 
 #elif defined(__ARM_NEON__) || defined(__ARM_NEON)
-#ifdef WITH_ARM_NEON
 #define PARALLEL_MODE PARALLEL_128_NEON
-#else
-#define PARALLEL_MODE PARALLEL_32_INT
-#endif
 
 #else
 #define PARALLEL_MODE PARALLEL_32_INT
@@ -138,6 +135,12 @@
 #define MEMALIGN_VAL 4
 #endif
 #define COPY_UNALIGNED_PKT
+#endif
+
+//
+
+#ifndef NO_FASTTRASP
+#define FASTTRASP
 #endif
 
 //
@@ -310,15 +313,13 @@ static void key_schedule_block(
 }
 
 //-----block utils
-
-static inline __attribute__((always_inline)) void trasp_N_8 (unsigned char *in,unsigned char* out,int count){
-  int *ri=(int *)in;
-  int *ibi=(int *)out;
+#ifdef FASTTRASP
+static inline __attribute__((always_inline)) void trasp_N_8 (int *in, int* out, int count){
   int j,i,k,g;
   // copy and first step
   for(g=0;g<count;g++){
-    ri[g]=ibi[2*g];
-    ri[GROUP_PARALLELISM+g]=ibi[2*g+1];
+    in[g]=out[2*g];
+    in[GROUP_PARALLELISM+g]=out[2*g+1];
   }
 //dump_mem("NE1 r[roff]",&r[roff],GROUP_PARALLELISM*8,GROUP_PARALLELISM);
 // now 01230123
@@ -327,10 +328,10 @@ static inline __attribute__((always_inline)) void trasp_N_8 (unsigned char *in,u
     for(i=0;i<2;i++){
       for(k=0;k<INTS_PER_ROW;k++){
         unsigned int t,b;
-        t=ri[INTS_PER_ROW*(j+i)+k];
-        b=ri[INTS_PER_ROW*(j+i+2)+k];
-        ri[INTS_PER_ROW*(j+i)+k]=     (t&0x0000ffff)      | ((b           )<<16);
-        ri[INTS_PER_ROW*(j+i+2)+k]=  ((t           )>>16) |  (b&0xffff0000) ;
+        t=in[INTS_PER_ROW*(j+i)+k];
+        b=in[INTS_PER_ROW*(j+i+2)+k];
+        in[INTS_PER_ROW*(j+i)+k]=     (t&0x0000ffff)      | ((b           )<<16);
+        in[INTS_PER_ROW*(j+i+2)+k]=  ((t           )>>16) |  (b&0xffff0000) ;
       }
     }
   }
@@ -340,10 +341,10 @@ static inline __attribute__((always_inline)) void trasp_N_8 (unsigned char *in,u
     for(i=0;i<1;i++){
       for(k=0;k<INTS_PER_ROW;k++){
         unsigned int t,b;
-        t=ri[INTS_PER_ROW*(j+i)+k];
-        b=ri[INTS_PER_ROW*(j+i+1)+k];
-        ri[INTS_PER_ROW*(j+i)+k]=     (t&0x00ff00ff)     | ((b&0x00ff00ff)<<8);
-        ri[INTS_PER_ROW*(j+i+1)+k]=  ((t&0xff00ff00)>>8) |  (b&0xff00ff00);
+        t=in[INTS_PER_ROW*(j+i)+k];
+        b=in[INTS_PER_ROW*(j+i+1)+k];
+        in[INTS_PER_ROW*(j+i)+k]=     (t&0x00ff00ff)     | ((b&0x00ff00ff)<<8);
+        in[INTS_PER_ROW*(j+i+1)+k]=  ((t&0xff00ff00)>>8) |  (b&0xff00ff00);
       }
     }
   }
@@ -351,9 +352,7 @@ static inline __attribute__((always_inline)) void trasp_N_8 (unsigned char *in,u
 // now 00000000
 }
 
-static inline __attribute__((always_inline)) void trasp_8_N (unsigned char *in,unsigned char* out,int count){
-  int *ri=(int *)in;
-  int *bdi=(int *)out;
+static inline __attribute__((always_inline)) void trasp_8_N (int *in, int* out, int count){
   int j,i,k,g;
 #define INTS_PER_ROW (GROUP_PARALLELISM/8*2)
 //dump_mem("NE1 r[roff]",&r[roff],GROUP_PARALLELISM*8,GROUP_PARALLELISM);
@@ -362,10 +361,10 @@ static inline __attribute__((always_inline)) void trasp_8_N (unsigned char *in,u
     for(i=0;i<1;i++){
       for(k=0;k<INTS_PER_ROW;k++){
         unsigned int t,b;
-        t=ri[INTS_PER_ROW*(j+i)+k];
-        b=ri[INTS_PER_ROW*(j+i+1)+k];
-        ri[INTS_PER_ROW*(j+i)+k]=     (t&0x00ff00ff)     | ((b&0x00ff00ff)<<8);
-        ri[INTS_PER_ROW*(j+i+1)+k]=  ((t&0xff00ff00)>>8) |  (b&0xff00ff00);
+        t=in[INTS_PER_ROW*(j+i)+k];
+        b=in[INTS_PER_ROW*(j+i+1)+k];
+        in[INTS_PER_ROW*(j+i)+k]=     (t&0x00ff00ff)     | ((b&0x00ff00ff)<<8);
+        in[INTS_PER_ROW*(j+i+1)+k]=  ((t&0xff00ff00)>>8) |  (b&0xff00ff00);
       }
     }
   }
@@ -375,21 +374,21 @@ static inline __attribute__((always_inline)) void trasp_8_N (unsigned char *in,u
     for(i=0;i<2;i++){
       for(k=0;k<INTS_PER_ROW;k++){
         unsigned int t,b;
-        t=ri[INTS_PER_ROW*(j+i)+k];
-        b=ri[INTS_PER_ROW*(j+i+2)+k];
-        ri[INTS_PER_ROW*(j+i)+k]=     (t&0x0000ffff)      | ((b           )<<16);
-        ri[INTS_PER_ROW*(j+i+2)+k]=  ((t           )>>16) |  (b&0xffff0000) ;
+        t=in[INTS_PER_ROW*(j+i)+k];
+        b=in[INTS_PER_ROW*(j+i+2)+k];
+        in[INTS_PER_ROW*(j+i)+k]=     (t&0x0000ffff)      | ((b           )<<16);
+        in[INTS_PER_ROW*(j+i+2)+k]=  ((t           )>>16) |  (b&0xffff0000) ;
       }
     }
   }
 //dump_mem("NE3 r[roff]",&r[roff],GROUP_PARALLELISM*8,GROUP_PARALLELISM);
 // now 01230123
   for(g=0;g<count;g++){
-    bdi[2*g]=ri[g];
-    bdi[2*g+1]=ri[GROUP_PARALLELISM+g];
+    out[2*g]=in[g];
+    out[2*g+1]=in[GROUP_PARALLELISM+g];
   }
 }
-
+#endif
 //-----block main function
 
 // block group
@@ -421,22 +420,18 @@ static void block_decypher_group(
   };
   MEMALIGN unsigned char r[GROUP_PARALLELISM*(8+56)];  /* 56 because we will move back in memory while looping */
   MEMALIGN unsigned char sbox_in[GROUP_PARALLELISM],sbox_out[GROUP_PARALLELISM],perm_out[GROUP_PARALLELISM];
-  int roff;
+  int roff=GROUP_PARALLELISM*56;
   int i,g,count_all=GROUP_PARALLELISM;
 
-  roff=GROUP_PARALLELISM*56;
-
-//#define FASTTRASP1
-#ifndef FASTTRASP1
+#ifndef FASTTRASP
   for(g=0;g<count;g++){
     // Init registers 
-    int j;
-    for(j=0;j<8;j++){
-      r[roff+GROUP_PARALLELISM*j+g]=ib[8*g+j];
+    for(i=0;i<8;i++){
+      r[roff+GROUP_PARALLELISM*i+g]=ib[8*g+i];
     }
   }
 #else
-  trasp_N_8((unsigned char *)&r[roff],(unsigned char *)ib,count);
+  trasp_N_8((int *)&r[roff],(int *)ib,count);
 #endif
 //dump_mem("OLD r[roff]",&r[roff],GROUP_PARALLELISM*8,GROUP_PARALLELISM);
 
@@ -461,28 +456,26 @@ static void block_decypher_group(
 
     // bit permutation
     {
-      unsigned char *po=(unsigned char *)perm_out;
-      unsigned char *so=(unsigned char *)sbox_out;
-//dump_mem("pre perm ",(unsigned char *)so,GROUP_PARALLELISM,GROUP_PARALLELISM);
+//dump_mem("pre perm ",(unsigned char *)sbox_out,GROUP_PARALLELISM,GROUP_PARALLELISM);
       for(g=0;g<count_all;g+=BYTES_PER_BATCH){
         MEMALIGN batch in,out;
-        in=*(batch *)&so[g];
+        in=*(batch *)&sbox_out[g];
 
         out=B_FFOR(
 	    B_FFOR(
 	    B_FFOR(
-	    B_FFOR(
-	    B_FFOR(
 	           B_FFSH8L(B_FFAND(in,B_FFN_ALL_29()),1),
 	           B_FFSH8L(B_FFAND(in,B_FFN_ALL_02()),6)),
-	           B_FFSH8L(B_FFAND(in,B_FFN_ALL_04()),3)),
-	           B_FFSH8R(B_FFAND(in,B_FFN_ALL_10()),2)),
-	           B_FFSH8R(B_FFAND(in,B_FFN_ALL_40()),6)),
-	           B_FFSH8R(B_FFAND(in,B_FFN_ALL_80()),4));
+	    B_FFOR(
+                   B_FFSH8L(B_FFAND(in,B_FFN_ALL_04()),3),
+	           B_FFSH8R(B_FFAND(in,B_FFN_ALL_10()),2))),
+	    B_FFOR(
+                   B_FFSH8R(B_FFAND(in,B_FFN_ALL_40()),6),
+	           B_FFSH8R(B_FFAND(in,B_FFN_ALL_80()),4)));
 
-        *(batch *)&po[g]=out;
+        *(batch *)&perm_out[g]=out;
       }
-//dump_mem("post perm",(unsigned char *)po,GROUP_PARALLELISM,GROUP_PARALLELISM);
+//dump_mem("post perm",(unsigned char *)perm_out,GROUP_PARALLELISM,GROUP_PARALLELISM);
     }
 
     roff-=GROUP_PARALLELISM; /* virtual shift of registers */
@@ -507,17 +500,15 @@ static void block_decypher_group(
 #endif
   }
 
-//#define FASTTRASP2
-#ifndef FASTTRASP2
+#ifndef FASTTRASP
   for(g=0;g<count;g++){
     // Copy results
-    int j;
-    for(j=0;j<8;j++){
-      bd[8*g+j]=r[roff+GROUP_PARALLELISM*j+g];
+    for(i=0;i<8;i++){
+      bd[8*g+i]=r[roff+GROUP_PARALLELISM*i+g];
     }
   }
 #else
-  trasp_8_N((unsigned char *)&r[roff],(unsigned char *)bd,count);
+  trasp_8_N((int *)&r[roff],(int *)bd,count);
 #endif
 }
 
@@ -557,16 +548,15 @@ void free_key_struct(void *keys){
 
 static void schedule_key(struct csa_key_t *key, const unsigned char *pk, const unsigned char ecm){
   // could be made faster, but is not run often
-  int bi,by;
   int i,j;
 // key
   memcpy(key->ck,pk,8);
 // precalculations for stream
   key_schedule_stream(key->ck,key->iA,key->iB);
-  for(by=0;by<8;by++){
-    for(bi=0;bi<4;bi++){
-      key->iA_g[by][bi]=(key->iA[by]&(1<<bi))?FF1():FF0();
-      key->iB_g[by][bi]=(key->iB[by]&(1<<bi))?FF1():FF0();
+  for(i=0;i<8;i++){
+    for(j=0;j<4;j++){
+      key->iA_g[i][j]=(key->iA[i]&(1<<j))?FF1():FF0();
+      key->iB_g[i][j]=(key->iB[i]&(1<<j))?FF1():FF0();
     }
   }
 // precalculations for block
@@ -592,11 +582,12 @@ void set_odd_control_word_ecm(void *keys, const unsigned char *pk, const unsigne
 }
 
 //-----get control words
-
+#if 0
 void get_control_words(void *keys, unsigned char *even, unsigned char *odd){
   memcpy(even,&((struct csa_keys_t *)keys)->even.ck,8);
   memcpy(odd,&((struct csa_keys_t *)keys)->odd.ck,8);
 }
+#endif
 
 //----- decrypt
 
@@ -628,7 +619,7 @@ int decrypt_packets(void *keys, unsigned char **cluster){
   MEMALIGN unsigned char stream_in[GROUP_PARALLELISM*8];
   MEMALIGN unsigned char stream_out[GROUP_PARALLELISM*8];
   MEMALIGN unsigned char ib[GROUP_PARALLELISM*8];
-  MEMALIGN unsigned char block_out[GROUP_PARALLELISM*8];
+  MEMALIGN unsigned char block_out[GROUP_PARALLELISM*8]={0};
 #ifdef COPY_UNALIGNED_PKT
   unsigned char *unaligned[GROUP_PARALLELISM];
   MEMALIGN unsigned char alignedBuff[GROUP_PARALLELISM][188];
@@ -745,9 +736,11 @@ int decrypt_packets(void *keys, unsigned char **cluster){
   //  sort them, longest payload first
   //  we expect many n=23 packets and a few n<23
   DBG(fprintf(stderr,"PRESORTING\n"));
+#ifdef DEBUG
   for(i=0;i<grouped;i++){
     DBG(fprintf(stderr,"%2i of %2i: pkt=%p len=%03i n=%2i residue=%i\n",i,grouped,g_pkt[i],g_len[i],g_n[i],g_residue[i]));
     }
+#endif
   // grouped is always <= GROUP_PARALLELISM
 
 #define g_swap(a,b) \
@@ -797,9 +790,11 @@ DBG(fprintf(stderr,"new t23=%i,tsmall=%i\n\n",t23,tsmall));
   }
   DBG(fprintf(stderr,"packets with n=23, t23=%i   grouped=%i\n",t23,grouped));
   DBG(fprintf(stderr,"MIDSORTING\n"));
+#ifdef DEBUG
   for(i=0;i<grouped;i++){
     DBG(fprintf(stderr,"%2i of %2i: pkt=%p len=%03i n=%2i residue=%i\n",i,grouped,g_pkt[i],g_len[i],g_n[i],g_residue[i]));
     }
+#endif
 
   // step 2: sort small packets in decreasing order of n (bubble sort is enough)
   for(i=t23;i<grouped;i++){
@@ -828,9 +823,11 @@ DBG(fprintf(stderr,"new t23=%i,tsmall=%i\n\n",t23,tsmall));
     alive[i]+=alive[i+1];
   }
   DBG(fprintf(stderr,"ALIVE\n"));
+#ifdef DEBUG
   for(i=0;i<=23;i++){
     DBG(fprintf(stderr,"alive%2i=%i\n",i,alive[i]));
     }
+#endif
 
   // choose key
   if(group_ev_od==0){
@@ -923,7 +920,7 @@ DBG(dump_mem("jd_after_decrypt_residue ",encp[g]+8,g_residue[g],g_residue[g]));
     }
     // alive packets: pointers++
     for(g=0;g<alive[iter];g++) encp[g]+=8;
-  };
+  }
   // ITER N
 DBG(fprintf(stderr,">>>>>ITER 23\n"));
   iter=23;

@@ -62,13 +62,15 @@ override STD_DEFS += -D'CS_GIT_VERSION="$(shell ./config.sh --ncam-revision | cu
 override STD_DEFS += -D'CS_DATE_BUILD="$(shell date +"%d-%m-%Y")"'
 override STD_DEFS += -D'CS_CONFDIR="$(CONF_DIR)"'
 
-MODFLAGS_OPTS = -fwrapv -fomit-frame-pointer -funroll-loops -fno-tree-vectorize
-
 # Compiler warnings
 CC_WARN = -W -Wall -Wshadow -Wno-shadow -Wredundant-decls -Wstrict-prototypes -Wold-style-definition -Wno-deprecated-declarations -Wno-restrict
+FFDECSA_WARN = -W -Wall # -Wold-style-definition -Wmissing-prototypes
+
+# Compiler errors
+FFDECSA_ERROR = -Werror=uninitialized
 
 # Compiler optimizations
-CC_OPTS = -Os -ggdb -pipe -ffunction-sections -fdata-sections -funroll-loops -fomit-frame-pointer -fno-schedule-insns $(MODFLAGS_OPTS)
+CC_OPTS = -Os -ggdb -pipe -ffunction-sections -fdata-sections
 
 CC = $(CROSS_DIR)$(CROSS)gcc
 STRIP = $(CROSS_DIR)$(CROSS)strip
@@ -79,13 +81,14 @@ endif
 
 LDFLAGS = -Wl,--gc-sections
 
+FFDECSA_OPTS = -O3 -funroll-loops -fomit-frame-pointer -fno-schedule-insns
 TARGETHELP := $(shell $(CC) --target-help 2>&1)
 ifneq (,$(findstring sse2,$(TARGETHELP)))
-override CFLAGS += -fexpensive-optimizations -mmmx -msse -msse2 -msse3
+FFDECSA_OPTS += -fexpensive-optimizations -mmmx -msse -msse2 -msse3
 else ifneq (,$(findstring neon,$(TARGETHELP)))
-override CFLAGS += -fexpensive-optimizations -mfpu=neon
+FFDECSA_OPTS += -fexpensive-optimizations -mfpu=neon
 else
-override CFLAGS += -fexpensive-optimizations
+FFDECSA_OPTS += -fexpensive-optimizations
 endif
 
 # The linker for powerpc have bug that prevents --gc-sections from working
@@ -261,6 +264,17 @@ NCAM_BIN := $(BINDIR)/ncam-$(VER)-$(REV)-$(subst cygwin,cygwin.exe,$(TARGET))
 TESTS_BIN := tests.bin
 LIST_SMARGO_BIN := $(BINDIR)/list_smargo-$(VER)-$(REV)-$(subst cygwin,cygwin.exe,$(TARGET))
 
+ifeq "$(shell ./config.sh --enabled WITH_EMU)" "Y"
+	FFDECSA_OBJ = $(OBJDIR)/ffdecsa/ffdecsa.o
+	ifdef FFDECSA_TEST
+		FFDECSA_TEST_BIN := $(BINDIR)/ffdecsa-test-$(VER)-$(REV)-$(subst cygwin,cygwin.exe,$(TARGET))
+	endif
+	FFDECSA_INFO = $(shell echo '| FFdecsa:\n|  FFDECSA_WARN  = $(FFDECSA_WARN)\n|  FFDECSA_ERROR = $(FFDECSA_ERROR)\n|  FFDECSA_OPTS  = $(FFDECSA_OPTS)\n')
+	ifdef PARALLEL_MODE
+		override CFLAGS += -DPARALLEL_MODE=$(PARALLEL_MODE)
+	endif
+endif
+
 # Build list_smargo-.... only when WITH_LIBUSB build is requested.
 ifndef USE_LIBUSB
 	override LIST_SMARGO_BIN =
@@ -342,7 +356,6 @@ SRC-$(CONFIG_WITH_EMU) += module-emulator-nagravision.c
 SRC-$(CONFIG_WITH_EMU) += module-emulator-powervu.c
 SRC-$(CONFIG_WITH_EMU) += module-emulator-icam.c
 SRC-$(CONFIG_WITH_EMU) += module-emulator-viaccess.c
-SRC-$(CONFIG_WITH_EMU) += ffdecsa/ffdecsa.c
 ifeq "$(CONFIG_WITH_EMU)" "y"
 ifeq "$(CONFIG_WITH_SOFTCAM)" "y"
 UNAME := $(shell uname -s)
@@ -481,6 +494,7 @@ $(UPX_INFO)\
 |  LDFLAGS  = $(strip $(LDFLAGS))\n\
 |  LIBS     = $(strip $(LIBS))\n\
 |  UseFlags = $(addsuffix =1,$(USE_FLAGS))\n\
+$(FFDECSA_INFO)\
 | Config:\n\
 |  Addons   : $(shell ./config.sh --use-flags "$(USE_FLAGS)" --show-enabled addons)\n\
 |  Protocols: $(shell ./config.sh --use-flags "$(USE_FLAGS)" --show-enabled protocols | sed -e 's|MODULE_||g')\n\
@@ -493,11 +507,11 @@ $(UPX_INFO)\
 ifeq "$(shell ./config.sh --enabled WEBIF)" "Y"
 	@$(MAKE) --no-print-directory --quiet -C webif
 endif
-	@$(MAKE) --no-print-directory $(NCAM_BIN) $(LIST_SMARGO_BIN)
+	@$(MAKE) --no-print-directory $(NCAM_BIN) $(LIST_SMARGO_BIN) $(FFDECSA_TEST_BIN)
 
-$(NCAM_BIN).debug: $(OBJ)
+$(NCAM_BIN).debug: $(OBJ) $(FFDECSA_OBJ)
 	$(SAY) "LINK	$@"
-	$(Q)$(CC) $(LDFLAGS) $(OBJ) $(LIBS) -o $@
+	$(Q)$(CC) $(LDFLAGS) $(OBJ) $(FFDECSA_OBJ) $(LIBS) -o $@
 
 $(NCAM_BIN): $(NCAM_BIN).debug
 	$(SAY) "STRIP	$@"
@@ -509,16 +523,27 @@ $(LIST_SMARGO_BIN): utils/list_smargo.c
 	$(SAY) "BUILD	$@"
 	$(Q)$(CC) $(STD_DEFS) $(CC_OPTS) $(CC_WARN) $(CFLAGS) $(LDFLAGS) utils/list_smargo.c $(LIBS) -o $@
 
+$(FFDECSA_OBJ): ffdecsa/ffdecsa.c
+	@$(CC) -MP -MM -MT $@ -o $(subst .o,.d,$@) $<
+	$(SAY) "CC	$<"
+	$(Q)$(CC) $(FFDECSA_WARN) $(FFDECSA_ERROR) $(CFLAGS) $(FFDECSA_OPTS) -c $< -o $@
+
+$(FFDECSA_TEST_BIN): $(FFDECSA_OBJ)
+	$(SAY) "STRIP	$@"
+	$(Q)$(CC) $(CC_OPTS) $(CC_WARN) $(CFLAGS) $(FFDECSA_OBJ) ffdecsa/ffdecsa_test.c -o $@
+	$(Q)$(STRIP) $(FFDECSA_TEST_BIN)
+
 $(OBJDIR)/config.o: $(OBJDIR)/config.c
 	$(SAY) "CONF	$<"
 	$(Q)$(CC) $(STD_DEFS) $(CC_OPTS) $(CC_WARN) $(CFLAGS) -c $< -o $@
 
 $(OBJDIR)/%.o: %.c Makefile
-	@$(CC) $(CFLAGS) -MP -MM -MT $@ -o $(subst .o,.d,$@) $<
+	@$(CC) -MP -MM -MT $@ -o $(subst .o,.d,$@) $<
 	$(SAY) "CC	$<"
 	$(Q)$(CC) $(STD_DEFS) $(CC_OPTS) $(CC_WARN) $(CFLAGS) -c $< -o $@
 
 -include $(subst .o,.d,$(OBJ))
+-include $(subst .o,.d,$(FFDECSA_OBJ))
 
 tests:
 	@-$(MAKE) --no-print-directory BUILD_TESTS=1 NCAM_BIN=$(TESTS_BIN)
@@ -553,7 +578,7 @@ clean:
 	@-rm -rf $(BUILD_DIR) lib
 
 distclean: clean
-	@-for FILE in $(BINDIR)/list_smargo-* $(BINDIR)/ncam-$(VER)*; do \
+	@-for FILE in $(BINDIR)/list_smargo-* $(BINDIR)/ffdecsa* $(BINDIR)/ncam-$(VER)*; do \
 		echo "RM	$$FILE"; \
 		rm -rf $$FILE; \
 	done
@@ -614,6 +639,45 @@ NCam build system documentation\n\
                     Default CC_WARN value is:\n\
                     '$(CC_WARN)'\n\
                     To add text to this variable set EXTRA_CC_WARN=text.\n\
+\n\
+   FFDECSA_WARN=  - This variable holds compiler warning parameters.\n\
+                    Default FFDECSA_WARN value is:\n\
+                    '$(FFDECSA_WARN)'\n\
+                    To change the text, set this variable to FFDECSA_WARN=text.\n\
+\n\
+   FFDECSA_ERROR= - This variable holds compiler error parameters.\n\
+                    Default FFDECSA_ERROR value is:\n\
+                    '$(FFDECSA_ERROR)'\n\
+                    To change the text, set this variable to FFDECSA_ERROR=text.\n\
+\n\
+   FFDECSA_OPTS=  - This variable holds compiler optimization parameters.\n\
+                    Default FFDECSA_OPTS value is:\n\
+                    '$(FFDECSA_OPTS)'\n\
+                    To change the text, set this variable to FFDECSA_OPTS=text.\n\
+\n\
+   Parallel mode  - Parallelization stuff, large speed differences are possible.\n\
+                    Possible choices:\n\
+                    'PARALLEL_32_4CHAR'\n\
+                    'PARALLEL_32_4CHARA'\n\
+                    'PARALLEL_32_INT'\n\
+                    'PARALLEL_64_8CHAR'\n\
+                    'PARALLEL_64_8CHARA'\n\
+                    'PARALLEL_64_2INT'\n\
+                    'PARALLEL_64_LONG'\n\
+                    'PARALLEL_64_MMX'\n\
+                    'PARALLEL_128_16CHAR'\n\
+                    'PARALLEL_128_16CHARA'\n\
+                    'PARALLEL_128_4INT'\n\
+                    'PARALLEL_128_2LONG'\n\
+                    'PARALLEL_128_2MMX'\n\
+                    'PARALLEL_128_SSE'\n\
+                    'PARALLEL_128_SSE2'\n\
+                    For example, if you want.\n\
+                    'make PARALLEL_MODE=PARALLEL_32_INT'\n\
+                    or \n\
+                    'make CFLAGS="\"-DPARALLEL_MODE=PARALLEL_32_INT"\"'\n\
+\n\
+   FFDECSA_TEST=1 - Builds '$(BINDIR)/ffdecsa-test-$(VER)-$(REV)-$(subst cygwin,cygwin.exe,$(TARGET))' binary\n\
 \n\
    V=1            - Request build process to print verbose messages. By\n\
                     default the only messages that are shown are simple info\n\
