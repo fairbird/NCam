@@ -456,10 +456,12 @@ static void block_decypher_group(
 
     // bit permutation
     {
-//dump_mem("pre perm ",(unsigned char *)sbox_out,GROUP_PARALLELISM,GROUP_PARALLELISM);
+      unsigned char *po=(unsigned char *)perm_out;
+      unsigned char *so=(unsigned char *)sbox_out;
+//dump_mem("pre perm ",(unsigned char *)so,GROUP_PARALLELISM,GROUP_PARALLELISM);
       for(g=0;g<count_all;g+=BYTES_PER_BATCH){
         MEMALIGN batch in,out;
-        in=*(batch *)&sbox_out[g];
+        in=*(batch *)&so[g];
 
         out=B_FFOR(
 	    B_FFOR(
@@ -473,9 +475,9 @@ static void block_decypher_group(
                    B_FFSH8R(B_FFAND(in,B_FFN_ALL_40()),6),
 	           B_FFSH8R(B_FFAND(in,B_FFN_ALL_80()),4)));
 
-        *(batch *)&perm_out[g]=out;
+        *(batch *)&po[g]=out;
       }
-//dump_mem("post perm",(unsigned char *)perm_out,GROUP_PARALLELISM,GROUP_PARALLELISM);
+//dump_mem("post perm",(unsigned char *)po,GROUP_PARALLELISM,GROUP_PARALLELISM);
     }
 
     roff-=GROUP_PARALLELISM; /* virtual shift of registers */
