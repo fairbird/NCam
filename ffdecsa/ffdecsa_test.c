@@ -54,8 +54,8 @@ int compare(unsigned char *p1, unsigned char *p2, int n, int silently){
 
 //MAIN
 
-#define TS_PKTS_FOR_TEST 30*1000
-//#define TS_PKTS_FOR_TEST 1000*1000
+//#define TS_PKTS_FOR_TEST 30*1000
+#define TS_PKTS_FOR_TEST 1000*1000
 unsigned char megabuf[188*TS_PKTS_FOR_TEST];
 unsigned char onebuf[188];
 

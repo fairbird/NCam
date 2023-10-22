@@ -672,6 +672,8 @@ NCam build system documentation\n\
                     'PARALLEL_128_2MMX'\n\
                     'PARALLEL_128_SSE'\n\
                     'PARALLEL_128_SSE2'\n\
+                    'PARALLEL_256_AVX2'\n\
+                    'PARALLEL_512_AVX512'\n\
                     For example, if you want.\n\
                     'make PARALLEL_MODE=PARALLEL_32_INT'\n\
                     or \n\

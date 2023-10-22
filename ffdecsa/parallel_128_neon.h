@@ -19,7 +19,9 @@
  */
 #include <arm_neon.h>
 
+#if __GNUC__ > 10
 #define __XOREQ_8_BY__
+#endif
 
 /* group */
 //#define __GROUP_u8x16__

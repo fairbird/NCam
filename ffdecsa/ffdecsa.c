@@ -54,6 +54,8 @@
 #define PARALLEL_128_SSE     1285
 #define PARALLEL_128_SSE2    1286
 #define PARALLEL_128_NEON    1287
+#define PARALLEL_256_AVX2    2560
+#define PARALLEL_512_AVX512  5120
 
 //////// our choice //////////////// our choice //////////////// our choice //////////////// our choice ////////
 #ifndef PARALLEL_MODE
@@ -116,6 +118,10 @@
 #include "parallel_128_sse2.h"
 #elif PARALLEL_MODE==PARALLEL_128_NEON
 #include "parallel_128_neon.h"
+#elif PARALLEL_MODE==PARALLEL_256_AVX2
+#include "parallel_256_avx2.h"
+#elif PARALLEL_MODE==PARALLEL_512_AVX512
+#include "parallel_512_avx512.h"
 #else
 #error "unknown/undefined parallel mode"
 #endif

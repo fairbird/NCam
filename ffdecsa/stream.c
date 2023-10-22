@@ -432,6 +432,135 @@ static inline void trasp64_128_88cw(unsigned char *data){
   }
 #undef halfrow
 }
+
+//64-64*num-------------------------------------------------------
+static inline void trasp64_88ccw(unsigned char *data, const int num){
+/* 64 rows of 64 * num bits transposition (bytes transp. - 8x8 rotate counterclockwise)*/
+#define row ((unsigned long long int *)data)
+  int i,j,n;
+  unsigned long long int t,b;
+  for(i=0;i<32;i++){
+    for(n=0;n<num;n++){
+      t=row[num*(i)+n];
+      b=row[num*(32+i)+n];
+      row[num*(i)+n]   = (t&0x00000000ffffffffULL)      | ((b                      )<<32);
+      row[num*(32+i)+n]=((t                      )>>32) |  (b&0xffffffff00000000ULL) ;
+    }
+  }
+  for(j=0;j<64;j+=32){
+    for(i=0;i<16;i++){
+      for(n=0;n<num;n++){
+        t=row[num*(j+i)+n];
+        b=row[num*(j+16+i)+n];
+        row[num*(j+i)+n]   = (t&0x0000ffff0000ffffULL)      | ((b&0x0000ffff0000ffffULL)<<16);
+        row[num*(j+16+i)+n]=((t&0xffff0000ffff0000ULL)>>16) |  (b&0xffff0000ffff0000ULL) ;
+      }
+    }
+  }
+  for(j=0;j<64;j+=16){
+    for(i=0;i<8;i++){
+      for(n=0;n<num;n++){
+        t=row[num*(j+i)+n];
+        b=row[num*(j+8+i)+n];
+        row[num*(j+i)+n]   = (t&0x00ff00ff00ff00ffULL)     | ((b&0x00ff00ff00ff00ffULL)<<8);
+        row[num*(j+8+i)+n] =((t&0xff00ff00ff00ff00ULL)>>8) |  (b&0xff00ff00ff00ff00ULL);
+      }
+    }
+  }
+  for(j=0;j<64;j+=8){
+    for(i=0;i<4;i++){
+      for(n=0;n<num;n++){
+        t=row[num*(j+i)+n];
+        b=row[num*(j+4+i)+n];
+        row[num*(j+i)+n]   =((t&0x0f0f0f0f0f0f0f0fULL)<<4) |  (b&0x0f0f0f0f0f0f0f0fULL);
+        row[num*(j+4+i)+n] = (t&0xf0f0f0f0f0f0f0f0ULL)     | ((b&0xf0f0f0f0f0f0f0f0ULL)>>4);
+      }
+    }
+  }
+  for(j=0;j<64;j+=4){
+    for(i=0;i<2;i++){
+      for(n=0;n<num;n++){
+        t=row[num*(j+i)+n];
+        b=row[num*(j+2+i)+n];
+        row[num*(j+i)+n]   =((t&0x3333333333333333ULL)<<2) |  (b&0x3333333333333333ULL);
+        row[num*(j+2+i)+n] = (t&0xccccccccccccccccULL)     | ((b&0xccccccccccccccccULL)>>2);
+      }
+    }
+  }
+  for(j=0;j<64;j+=2){
+    for(n=0;n<num;n++){
+      t=row[num*(j)+n];
+      b=row[num*(j+1)+n];
+      row[num*(j)+n]   =((t&0x5555555555555555ULL)<<1) |  (b&0x5555555555555555ULL);
+      row[num*(j+1)+n] = (t&0xaaaaaaaaaaaaaaaaULL)     | ((b&0xaaaaaaaaaaaaaaaaULL)>>1);
+    }
+  }
+#undef row
+}
+
+static inline void trasp64_88cw(unsigned char *data, const int num){
+/* 64 rows of 64 * num bits transposition (bytes transp. - 8x8 rotate clockwise)*/
+#define row ((unsigned long long int *)data)
+  int i,j,n;
+  unsigned long long int t,b;
+  for(i=0;i<32;i++){
+    for(n=0;n<num;n++){
+      t=row[num*(i)+n];
+      b=row[num*(32+i)+n];
+      row[num*(i)+n]   = (t&0x00000000ffffffffULL)      | ((b                      )<<32);
+      row[num*(32+i)+n]=((t                      )>>32) |  (b&0xffffffff00000000ULL) ;
+   }
+  }
+  for(j=0;j<64;j+=32){
+    for(i=0;i<16;i++){
+      for(n=0;n<num;n++){
+        t=row[num*(j+i)+n];
+        b=row[num*(j+16+i)+n];
+        row[num*(j+i)+n]   = (t&0x0000ffff0000ffffULL)      | ((b&0x0000ffff0000ffffULL)<<16);
+        row[num*(j+16+i)+n]=((t&0xffff0000ffff0000ULL)>>16) |  (b&0xffff0000ffff0000ULL) ;
+      }
+    }
+  }
+  for(j=0;j<64;j+=16){
+    for(i=0;i<8;i++){
+      for(n=0;n<num;n++){
+        t=row[num*(j+i)+n];
+        b=row[num*(j+8+i)+n];
+        row[num*(j+i)+n]   = (t&0x00ff00ff00ff00ffULL)     | ((b&0x00ff00ff00ff00ffULL)<<8);
+        row[num*(j+8+i)+n] =((t&0xff00ff00ff00ff00ULL)>>8) |  (b&0xff00ff00ff00ff00ULL);
+      }
+    }
+  }
+  for(j=0;j<64;j+=8){
+    for(i=0;i<4;i++){
+      for(n=0;n<num;n++){
+        t=row[num*(j+i)+n];
+        b=row[num*(j+4+i)+n];
+        row[num*(j+i)+n]   =((t&0xf0f0f0f0f0f0f0f0ULL)>>4) |   (b&0xf0f0f0f0f0f0f0f0ULL);
+        row[num*(j+4+i)+n] = (t&0x0f0f0f0f0f0f0f0fULL)     |  ((b&0x0f0f0f0f0f0f0f0fULL)<<4);
+      }
+    }
+  }
+  for(j=0;j<64;j+=4){
+    for(i=0;i<2;i++){
+      for(n=0;n<num;n++){
+        t=row[num*(j+i)+n];
+        b=row[num*(j+2+i)+n];
+        row[num*(j+i)+n]   =((t&0xccccccccccccccccULL)>>2) |  (b&0xccccccccccccccccULL);
+        row[num*(j+2+i)+n] = (t&0x3333333333333333ULL)     | ((b&0x3333333333333333ULL)<<2);
+      }
+    }
+  }
+  for(j=0;j<64;j+=2){
+    for(n=0;n<num;n++){
+      t=row[num*(j)+n];
+      b=row[num*(j+1)+n];
+      row[num*(j)+n]   =((t&0xaaaaaaaaaaaaaaaaULL)>>1) |  (b&0xaaaaaaaaaaaaaaaaULL);
+      row[num*(j+1)+n] = (t&0x5555555555555555ULL)     | ((b&0x5555555555555555ULL)<<1);
+    }
+  }
+#undef row
+}
 #endif
 
 
@@ -485,12 +614,12 @@ for(j=0;j<64;j++){
 DBG(dump_mem("stream_prerot ",sb,GROUP_PARALLELISM*8,BYPG));
 #if GROUP_PARALLELISM==32
 trasp64_32_88ccw(sb);
-#endif
-#if GROUP_PARALLELISM==64
+#elif GROUP_PARALLELISM==64
 trasp64_64_88ccw(sb);
-#endif
-#if GROUP_PARALLELISM==128
+#elif GROUP_PARALLELISM==128
 trasp64_128_88ccw(sb);
+#else
+trasp64_88ccw(sb,GROUP_PARALLELISM/64);
 #endif
 DBG(dump_mem("stream_postrot",sb,GROUP_PARALLELISM*8,BYPG));
 #ifdef DEBUG
@@ -905,12 +1034,12 @@ for(j=0;j<64;j++){
 
 #if GROUP_PARALLELISM==32
 trasp64_32_88cw(cb);
-#endif
-#if GROUP_PARALLELISM==64
+#elif GROUP_PARALLELISM==64
 trasp64_64_88cw(cb);
-#endif
-#if GROUP_PARALLELISM==128
+#elif GROUP_PARALLELISM==128
 trasp64_128_88cw(cb);
+#else
+trasp64_88cw(cb,GROUP_PARALLELISM/64);
 #endif
 
 #ifdef DEBUG

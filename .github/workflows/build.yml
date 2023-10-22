@@ -36,7 +36,7 @@ jobs:
           if [ ${{ github.event_name }} == 'workflow_dispatch' ]; then
             make ${{ github.event.inputs.use }}
           else
-            make USE_LIBCURL=1 USE_LIBUSB=1 FFDECSA_TEST=1
+            make USE_LIBCURL=1 USE_LIBUSB=1 FFDECSA_TEST=1 PARALLEL_MODE=PARALLEL_256_AVX2 FFDECSA_OPTS="-O3 -funroll-loops -fomit-frame-pointer -fno-schedule-insns -fexpensive-optimizations -mavx2"
           fi
       - name: Test
         run: |
@@ -46,6 +46,8 @@ jobs:
           echo
           echo -e "\033[1mNCam binary configuration and version:\033[m"
           ${{github.workspace}}/Distribution/ncam*debug -V
-          echo
-          echo -e "\033[1mFFdecsa test:\033[m"
-          sleep 1 && ${{github.workspace}}/Distribution/ffdecsa-test*
+          if [ ${{ github.event_name }} == 'push' ]; then
+            echo
+            echo -e "\033[1mFFdecsa test:\033[m"
+            sleep 1 && ${{github.workspace}}/Distribution/ffdecsa-test*
+          fi

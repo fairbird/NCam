@@ -11,7 +11,7 @@ FFDECSA_ERROR = -Werror=uninitialized
 FFDECSA_OPTS = -O3 -funroll-loops -fomit-frame-pointer -fno-schedule-insns
 TARGETHELP := $(shell $(CC) --target-help 2>&1)
 ifneq (,$(findstring sse2,$(TARGETHELP)))
-FFDECSA_OPTS += -fexpensive-optimizations -mmmx -msse -msse2 -msse3
+FFDECSA_OPTS += -fexpensive-optimizations -mmmx -msse -msse2 -msse3 # Fixme: for avx... (-mavx2 or -mavx512bw)
 else ifneq (,$(findstring neon,$(TARGETHELP)))
 FFDECSA_OPTS += -fexpensive-optimizations -mfpu=neon
 else
@@ -93,6 +93,8 @@ help:
                     'PARALLEL_128_2MMX'\n\
                     'PARALLEL_128_SSE'\n\
                     'PARALLEL_128_SSE2'\n\
+                    'PARALLEL_256_AVX2'\n\
+                    'PARALLEL_512_AVX512'\n\
                     For example, if you want.\n\
                     'make PARALLEL_MODE=PARALLEL_32_INT'\n\
                     or \n\
