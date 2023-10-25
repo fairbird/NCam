@@ -63,7 +63,7 @@ override STD_DEFS += -D'CS_DATE_BUILD="$(shell date +"%d-%m-%Y")"'
 override STD_DEFS += -D'CS_CONFDIR="$(CONF_DIR)"'
 
 # Compiler warnings
-CC_WARN = -W -Wall -Wshadow -Wno-shadow -Wredundant-decls -Wstrict-prototypes -Wold-style-definition -Wno-deprecated-declarations -Wno-restrict
+CC_WARN = -W -Wall -Wshadow -Wno-shadow -Wredundant-decls -Wstrict-prototypes -Wold-style-definition -Wno-deprecated-declarations
 FFDECSA_WARN = -W -Wall # -Wold-style-definition -Wmissing-prototypes
 
 # Compiler errors

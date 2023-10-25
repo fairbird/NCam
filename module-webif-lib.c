@@ -408,6 +408,9 @@ void send_header304(FILE *f, char *extraheader)
 /*
  * function for sending files.
  */
+#if defined(__GNUC__) && (__GNUC__ >= 12)
+#pragma GCC diagnostic ignored "-Wrestrict" /* Fixme: allocated... */
+#endif
 void send_file(FILE *f, char *filename, char *subdir, time_t modifiedheader, uint32_t etagheader, char *extraheader)
 {
 	int8_t filen = 0;
