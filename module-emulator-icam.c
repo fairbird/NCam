@@ -21,7 +21,7 @@ static bool connect_to_radegast(void)
 
 	if (gRadegastFd == 0)
 	{
-		gRadegastFd = socket(AF_INET, SOCK_STREAM, 0);
+		gRadegastFd = socket(DEFAULT_AF, SOCK_STREAM, 0);
 	}
 
 	if (gRadegastFd < 0)
