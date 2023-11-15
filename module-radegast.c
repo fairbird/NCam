@@ -92,7 +92,9 @@ static void radegast_send_dcw(struct s_client *client, ECM_REQUEST *er)
 	{
 #ifdef WITH_EMU
 		if(chk_ctab_ex(er->caid, &cfg.emu_stream_relay_ctab) && cfg.emu_stream_relay_enabled)
-			{ stream_write_cw(er); }
+		{
+			stream_write_cw(er);
+		}
 #endif
 		mbuf[1] = 0x12; // len (overall)
 		mbuf[2] = 0x05; // ACCESS

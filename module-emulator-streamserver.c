@@ -1560,7 +1560,6 @@ static void *stream_client_handler(void *arg)
 				cs_sleepms(100);
 				break;
 			}
-
 			else if (ret == 0) // timeout
 			{
 				cs_log("WARNING: stream client %i no data from stream source", conndata->connid);
@@ -1573,6 +1572,7 @@ static void *stream_client_handler(void *arg)
 				{
 					streamStatus = recv(streamfd, stream_buf + bytesRead, cur_dvb_buffer_size - bytesRead, MSG_DONTWAIT);
 				}
+
 				if ((pfd[0].revents & POLLHUP) || (pfd[0].revents & POLLRDHUP)) // incoming connection closed
 				{
 					cs_log("WARNING: stream client %i - stream source closed connection", conndata->connid);
@@ -1580,6 +1580,7 @@ static void *stream_client_handler(void *arg)
 					cs_sleepms(100);
 					break;
 				}
+
 				if ((pfd[1].revents & POLLHUP) || (pfd[1].revents & POLLRDHUP)) // outgoing connection was closed -> e.g. user zapped to other channel
 				{
 					clientStatus = -1;
@@ -1648,7 +1649,7 @@ static void *stream_client_handler(void *arg)
 							{
 								DescrambleTsPacketsCompel(data, stream_buf + startOffset, packetCount * packetSize, packetSize);
 							}
-							else if (caid_is_icam(data->caid)) //ICAM
+							else if (caid_is_icam(data->caid)) // ICAM
 							{
 								DescrambleTsPacketsICam(data, stream_buf + startOffset, packetCount * packetSize, packetSize);
 							}
@@ -1696,6 +1697,7 @@ static void *stream_client_handler(void *arg)
 			free_key_struct(data->key.pvu_csa_ks[i]);
 		}
 	}
+
 	if (data->key.icam_csa_ks)
 	{
 		free_key_struct(data->key.icam_csa_ks);
@@ -1703,6 +1705,7 @@ static void *stream_client_handler(void *arg)
 #ifdef MODULE_RADEGAST
 	icam_reset(data->connid);
 #endif
+
 	NULLFREE(data);
 
 	stream_client_disconnect(conndata);
@@ -1940,7 +1943,7 @@ bool stream_write_cw(ECM_REQUEST *er)
 			{
 				icam_write_cw(er, i);
 				cw_written = true;
-				// don't return as there might be more connections which for the same channel (recording)
+				// don't return as there might be more connections for the same channel (e.g. recordings)
 			}
 		}
 		//SAFE_MUTEX_UNLOCK(&emu_fixed_key_srvid_mutex);

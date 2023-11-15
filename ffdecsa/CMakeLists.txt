@@ -10,7 +10,7 @@ if (NOT FFDECSA_ERROR)
 endif (NOT FFDECSA_ERROR)
 
 if (NOT FFDECSA_OPTS)
-	set(FFDECSA_OPTS "-O3 -funroll-loops -fomit-frame-pointer -fno-schedule-insns")
+	set(FFDECSA_OPTS "-O3 -funroll-loops -fomit-frame-pointer -fno-schedule-insns -fexpensive-optimizations")
 	if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)")
 		set(FFDECSA_OPTS "${FFDECSA_OPTS} -msse -msse2 -msse3")
 		message (STATUS "  use system ffdecsa sse2 functions")
