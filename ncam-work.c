@@ -130,6 +130,9 @@ void *work_thread(void *ptr)
 
 	cl->work_mbuf = mbuf; // Track locally allocated data, because some callback may call cs_exit/cs_disconect_client/pthread_exit and then mbuf would be leaked
 	int32_t n = 0, rc = 0, i, idx, s;
+#if defined(WITH_SENDCMD) && defined(READER_VIDEOGUARD)
+	int32_t dblvl;
+#endif
 	uint8_t dcw[16];
 	int8_t restart_reader = 0;
 
@@ -303,7 +306,28 @@ void *work_thread(void *ptr)
 				case ACTION_READER_EMM:
 					reader_do_emm(reader, data->ptr);
 					break;
-
+#if defined(WITH_SENDCMD) && defined(READER_VIDEOGUARD)
+				case ACTION_READER_SENDCMD:
+					dblvl = cs_dblevel;
+					cs_dblevel = dblvl | D_READER;
+					rc = cardreader_do_rawcmd(reader, data->ptr);
+					cs_log_dbg(D_TRACE, "sendcmd rc: %i, csystem: %s", rc, reader->csystem->desc);
+					if(rc == -9)
+					{
+						CMD_PACKET *cp = data->ptr;
+						uint8_t response[MAX_CMD_SIZE];
+						memset(response, 0, sizeof(response));
+						uint16_t response_length[1] = { 0 };
+						rc = reader_cmd2icc(reader, cp->cmd, cp->cmdlen, response, response_length);
+						cs_log_dbg(D_TRACE, "sendcmd rc: %i, len: %i", rc, *response_length);
+						if (*response_length)
+						{
+							cs_log_dump_dbg(D_TRACE, response, *response_length, "sendcmd response:");
+						}
+					}
+					cs_dblevel = dblvl;
+					break;
+#endif
 				case ACTION_READER_CARDINFO:
 					reader_do_card_info(reader);
 					break;

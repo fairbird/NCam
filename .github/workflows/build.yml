@@ -36,7 +36,7 @@ jobs:
           if [ ${{ github.event_name }} == 'workflow_dispatch' ]; then
             make ${{ github.event.inputs.use }}
           else
-            make USE_LIBCURL=1 USE_LIBUSB=1 FFDECSA_TEST=1 PARALLEL_MODE=PARALLEL_256_AVX2 FFDECSA_OPTS="-O3 -funroll-loops -fomit-frame-pointer -fno-schedule-insns -fexpensive-optimizations -mavx2"
+            make USE_LIBCURL=1 USE_LIBUSB=1 FFDECSA_TEST=1 PARALLEL_MODE=PARALLEL_256_AVX2 FFDECSA_OPTS="-O3 -funroll-loops -fomit-frame-pointer -fno-schedule-insns -fexpensive-optimizations -mavx2" EXTRA_CFLAGS="-DOPENSSL_API_COMPAT=0x10101000L -DWITH_SENDCMD"
           fi
       - name: Test
         run: |

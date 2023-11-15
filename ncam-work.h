@@ -19,6 +19,9 @@ enum actions
 #ifdef READER_NAGRA_MERLIN
 	ACTION_READER_RENEW_SK     = 14,    // wr14
 #endif
+#if defined(WITH_SENDCMD) && defined(READER_VIDEOGUARD)
+	ACTION_READER_SENDCMD      = 15,    // wr15
+#endif
 	// Client actions
 	ACTION_CLIENT_UDP          = 22,    // wc22
 	ACTION_CLIENT_TCP          = 23,    // wc23

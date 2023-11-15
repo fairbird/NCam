@@ -516,6 +516,19 @@ int32_t cardreader_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 	return (rc);
 }
 
+#if defined(WITH_SENDCMD) && defined(READER_VIDEOGUARD)
+int32_t cardreader_do_rawcmd(struct s_reader *reader, CMD_PACKET *cp)
+{
+	int32_t rc;
+	rc = -9;  // means no dedicated support by csystem
+	if(reader->csystem_active && reader->csystem && reader->csystem->do_rawcmd)
+	{
+		rc = reader->csystem->do_rawcmd(reader, cp);
+	}
+	return (rc);
+}
+#endif
+
 void cardreader_process_ecm(struct s_reader *reader, struct s_client *cl, ECM_REQUEST *er)
 {
 	struct timeb tps, tpe;
