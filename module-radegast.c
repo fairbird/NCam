@@ -7,8 +7,8 @@
 #include "ncam-net.h"
 #include "ncam-string.h"
 #include "ncam-reader.h"
-#ifdef WITH_EMU
-#include "module-emulator-streamserver.h"
+#ifdef MODULE_STREAMRELAY
+#include "module-streamrelay.h"
 #include "ncam-chk.h"
 #endif
 
@@ -90,8 +90,8 @@ static void radegast_send_dcw(struct s_client *client, ECM_REQUEST *er)
 	mbuf[0] = 0x02; // DCW
 	if(er->rc < E_NOTFOUND)
 	{
-#ifdef WITH_EMU
-		if(chk_ctab_ex(er->caid, &cfg.emu_stream_relay_ctab) && cfg.emu_stream_relay_enabled)
+#ifdef MODULE_STREAMRELAY
+		if(chk_ctab_ex(er->caid, &cfg.stream_relay_ctab) && cfg.stream_relay_enabled)
 		{
 			stream_write_cw(er);
 		}

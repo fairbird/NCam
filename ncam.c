@@ -22,6 +22,7 @@
 #include "module-webif.h"
 #include "module-webif-tpl.h"
 #include "module-cw-cycle-check.h"
+#include "module-streamrelay.h"
 #include "ncam-chk.h"
 #include "ncam-cache.h"
 #include "ncam-client.h"
@@ -42,7 +43,6 @@
 
 #ifdef WITH_EMU
 	void add_emu_reader(void);
-	void stop_stream_server(void);
 #endif
 
 #ifdef WITH_SSL
@@ -431,7 +431,7 @@ static void write_versionfile(bool use_stdout)
 #endif
 		write_conf(WITH_NEUTRINO, "DVB API with NEUTRINO support");
 		write_conf(READ_SDT_CHARSETS, "DVB API read-sdt charsets");
-		write_conf(WITH_EMU, "DVB API with ICAM streamrelay support");
+		write_conf(MODULE_STREAMRELAY, "DVB API with Stream Relay support");
 	}
 	write_conf(CS_ANTICASC, "Anti-cascading support");
 	write_conf(WITH_DEBUG, "Debug mode");
@@ -470,6 +470,7 @@ static void write_versionfile(bool use_stdout)
 	write_conf(MODULE_CONSTCW, "constant CW");
 	write_conf(MODULE_PANDORA, "Pandora");
 	write_conf(MODULE_GHTTP, "ghttp");
+	write_conf(MODULE_STREAMRELAY, "Streamrelay");
 
 	fprintf(fp, "\n");
 	write_conf(WITH_CARDREADER, "Reader support");
@@ -1891,6 +1892,9 @@ int32_t main(int32_t argc, char *argv[])
 
 	init_sidtab();
 	init_readerdb();
+#ifdef MODULE_STREAMRELAY
+	init_stream_server();
+#endif
 #ifdef WITH_EMU
 	add_emu_reader();
 #endif
@@ -1979,7 +1983,7 @@ int32_t main(int32_t argc, char *argv[])
 #ifdef MODULE_GBOX
 	stop_gbx_ticker();
 #endif
-#ifdef WITH_EMU
+#ifdef MODULE_STREAMRELAY
 	stop_stream_server();
 #endif
 	webif_close();

@@ -1306,7 +1306,7 @@ static char *send_ncam_config_scam(struct templatevars *vars, struct uriparams *
 }
 #endif
 
-#ifdef WITH_EMU
+#ifdef MODULE_STREAMRELAY
 static char *send_ncam_config_streamrelay(struct templatevars *vars, struct uriparams *params)
 {
 	char *value;
@@ -1315,22 +1315,27 @@ static char *send_ncam_config_streamrelay(struct templatevars *vars, struct urip
 
 	webif_save_config("streamrelay", vars, params);
 
-	tpl_printf(vars, TPLADD, "STREAM_SOURCE_HOST", "%s", cfg.emu_stream_source_host);
-	tpl_printf(vars, TPLADD, "STREAM_SOURCE_PORT", "%d", cfg.emu_stream_source_port);
-	if(cfg.emu_stream_source_auth_user)
-		{ tpl_printf(vars, TPLADD, "STREAM_SOURCE_AUTH_USER", "%s", cfg.emu_stream_source_auth_user); }
-	if(cfg.emu_stream_source_auth_password)
-		{ tpl_printf(vars, TPLADD, "STREAM_SOURCE_AUTH_PASSWORD", "%s", cfg.emu_stream_source_auth_password); }
-	tpl_printf(vars, TPLADD, "STREAM_RELAY_PORT", "%d", cfg.emu_stream_relay_port);
-	tpl_printf(vars, TPLADD, "STREAM_ECM_DELAY", "%d", cfg.emu_stream_ecm_delay);
-
-	tpl_printf(vars, TPLADD, "TMP", "STREAMRELAYENABLEDSELECTED%d", cfg.emu_stream_relay_enabled);
-	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
-
+	tpl_printf(vars, TPLADD, "STREAM_SOURCE_HOST", "%s", cfg.stream_source_host);
+	tpl_printf(vars, TPLADD, "STREAM_SOURCE_PORT", "%d", cfg.stream_source_port);
+	if(cfg.stream_source_auth_user)
+		{ tpl_printf(vars, TPLADD, "STREAM_SOURCE_AUTH_USER", "%s", cfg.stream_source_auth_user); }
+	if(cfg.stream_source_auth_password)
+		{ tpl_printf(vars, TPLADD, "STREAM_SOURCE_AUTH_PASSWORD", "%s", cfg.stream_source_auth_password); }
+#ifdef MODULE_RADEGAST
+	tpl_addVar(vars, TPLADD, "STREAM_CLIENT_SOURCE_HOST", (cfg.stream_client_source_host == 1) ? "checked" : "");
+#endif
+	tpl_printf(vars, TPLADD, "STREAM_RELAY_PORT", "%d", cfg.stream_relay_port);
+#ifdef WITH_EMU
 	tpl_printf(vars, TPLADD, "TMP", "STREAMEMMENABLEDSELECTED%d", cfg.emu_stream_emm_enabled);
 	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
+	tpl_printf(vars, TPLADD, "STREAM_ECM_DELAY", "%d", cfg.emu_stream_ecm_delay);
+#endif
+	tpl_printf(vars, TPLADD, "STREAM_RELAY_BUFFER_TIME", "%d", cfg.stream_relay_buffer_time);
 
-	value = mk_t_caidtab(&cfg.emu_stream_relay_ctab);
+	tpl_printf(vars, TPLADD, "TMP", "STREAMRELAYENABLEDSELECTED%d", cfg.stream_relay_enabled);
+	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
+
+	value = mk_t_caidtab(&cfg.stream_relay_ctab);
 	tpl_addVar(vars, TPLADD, "STREAM_RELAY_CTAB", value);
 	free_mk_t(value);
 
@@ -1785,7 +1790,7 @@ static char *send_ncam_config(struct templatevars *vars, struct uriparams *param
 #ifdef MODULE_SCAM
 	else if(!strcmp(part, "scam")) { return send_ncam_config_scam(vars, params); }
 #endif
-#ifdef WITH_EMU
+#ifdef MODULE_STREAMRELAY
 	else if(!strcmp(part, "streamrelay")) { return send_ncam_config_streamrelay(vars, params); }
 #endif
 #ifdef MODULE_CCCAM

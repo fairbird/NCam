@@ -67,6 +67,7 @@ CONFIGCCCAM                   config/cccam.html                                 
 CONFIGCCCAMCTRL               config/cccam_control.html                                   MODULE_CCCSHARE
 CONFIGCONTENT                 config/config.html
 CONFIGDVBAPI                  config/dvbapi.html                                          HAVE_DVBAPI
+DEMUXERFIX                    config/dvbapi_demuxerfix.html                               MODULE_STREAMRELAY
 CCCAMRESHAREBIT               config/cccreshare.html                                      MODULE_GBOX
 CONFIGGBOX                    config/gbox.html                                            MODULE_GBOX
 CONFIGGLOBAL                  config/global.html
@@ -96,13 +97,15 @@ CONFIGMENUMONITOR             config/menu_monitor.html                          
 CONFIGMENUNEWCAMD             config/menu_newcamd.html                                    MODULE_NEWCAMD
 CONFIGMENURADEGAST            config/menu_radegast.html                                   MODULE_RADEGAST
 CONFIGMENUSCAM                config/menu_scam.html                                       MODULE_SCAM
-CONFIGMENUSTREAMRELAY         config/menu_streamrelay.html                                WITH_EMU
+CONFIGMENUSTREAMRELAY         config/menu_streamrelay.html                                MODULE_STREAMRELAY
+STREAMCLIENTSOURCEHOST        config/streamrelay_streamclientsourcehost.html              MODULE_RADEGAST
+CONFIGSTREAMRELAYEMUBIT       config/streamrelay_emubit.html                              WITH_EMU
 CONFIGMENUSERIAL              config/menu_serial.html                                     MODULE_SERIAL
 CONFIGMONITOR                 config/monitor.html                                         MODULE_MONITOR
 CONFIGNEWCAMD                 config/newcamd.html                                         MODULE_NEWCAMD
 CONFIGRADEGAST                config/radegast.html                                        MODULE_RADEGAST
 CONFIGSCAM                    config/scam.html                                            MODULE_SCAM
-CONFIGSTREAMRELAY             config/streamrelay.html                                     WITH_EMU
+CONFIGSTREAMRELAY             config/streamrelay.html                                     MODULE_STREAMRELAY
 CONFIGSERIAL                  config/serial.html                                          MODULE_SERIAL
 CONFIGSERIALDEVICEBIT         config/serial_devices.html                                  MODULE_SERIAL
 CONFIGWEBIF                   config/webif.html
