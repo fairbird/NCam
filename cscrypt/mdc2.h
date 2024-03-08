@@ -62,26 +62,16 @@
 #if defined(WITH_SSL) || defined(WITH_LIBCRYPTO)
 #include <openssl/des.h>
 #else
-#include "des.h"
-
-typedef unsigned int DES_LONG;
-
+#define DES_KEY_SZ    (sizeof(DES_cblock))
+typedef unsigned int  DES_LONG;
 typedef unsigned char DES_cblock[8];
-typedef /* const */ unsigned char const_DES_cblock[8];
-/*
- * With "const", gcc 2.8.1 on Solaris thinks that DES_cblock * and
- * const_DES_cblock * are incompatible pointer types.
- */
+typedef unsigned char const_DES_cblock[8];
 typedef struct DES_ks {
 	union {
 		DES_cblock cblock;
-		/*
-		* make sure things are correct size on machines with 8 byte longs
-		*/
 		DES_LONG deslong[2];
 	} ks[16];
 } DES_key_schedule;
-# define DES_KEY_SZ      (sizeof(DES_cblock))
 #endif
 
 #ifdef  __cplusplus

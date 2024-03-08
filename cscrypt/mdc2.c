@@ -2,30 +2,30 @@
 #ifdef READER_NAGRA_MERLIN
 #include "mdc2.h"
 
+
 #undef c2l
 #define c2l(c,l)        (l =((DES_LONG)(*((c)++)))    , \
-                         l|=((DES_LONG)(*((c)++)))<< 8L, \
-                         l|=((DES_LONG)(*((c)++)))<<16L, \
-                         l|=((DES_LONG)(*((c)++)))<<24L)
+						 l|=((DES_LONG)(*((c)++)))<< 8L, \
+						 l|=((DES_LONG)(*((c)++)))<<16L, \
+						 l|=((DES_LONG)(*((c)++)))<<24L)
 
 #undef l2c
 #define l2c(l,c)        (*((c)++)=(unsigned char)(((l)     )&0xff), \
-                        *((c)++)=(unsigned char)(((l)>> 8L)&0xff), \
-                        *((c)++)=(unsigned char)(((l)>>16L)&0xff), \
-                        *((c)++)=(unsigned char)(((l)>>24L)&0xff))
+						*((c)++)=(unsigned char)(((l)>> 8L)&0xff), \
+						*((c)++)=(unsigned char)(((l)>>16L)&0xff), \
+						*((c)++)=(unsigned char)(((l)>>24L)&0xff))
 
 # define FP(l,r) \
-        { \
-        register DES_LONG tt; \
-        PERM_OP(l,r,tt, 1,0x55555555L); \
-        PERM_OP(r,l,tt, 8,0x00ff00ffL); \
-        PERM_OP(l,r,tt, 2,0x33333333L); \
-        PERM_OP(r,l,tt,16,0x0000ffffL); \
-        PERM_OP(l,r,tt, 4,0x0f0f0f0fL); \
-        }
+		{ \
+		register DES_LONG tt; \
+		PERM_OP(l,r,tt, 1,0x55555555L); \
+		PERM_OP(r,l,tt, 8,0x00ff00ffL); \
+		PERM_OP(l,r,tt, 2,0x33333333L); \
+		PERM_OP(r,l,tt,16,0x0000ffffL); \
+		PERM_OP(l,r,tt, 4,0x0f0f0f0fL); \
+		}
 
-#if (OPENSSL_VERSION_NUMBER < 0x10101000L) //|| ((OPENSSL_VERSION_NUMBER > 0x10101000L) && !defined(WITH_SSL))
-//OPENSSL_GLOBAL const DES_LONG DES_SPtrans[8][64] =
+#if !defined(WITH_SSL) || !defined(WITH_LIBCRYPTO)
 const DES_LONG DES_SPtrans[8][64] =
 {
 	{
@@ -184,42 +184,42 @@ const DES_LONG DES_SPtrans[8][64] =
 #endif
 
 
-#  define LOAD_DATA_tmp(a,b,c,d,e,f) LOAD_DATA(a,b,c,d,e,f,g)
-#  define LOAD_DATA(R,S,u,t,E0,E1,tmp) \
-        u=R^s[S  ]; \
-        t=R^s[S+1]
+#define LOAD_DATA_tmp(a,b,c,d,e,f) LOAD_DATA(a,b,c,d,e,f,g)
+#define LOAD_DATA(R,S,u,t,E0,E1,tmp) \
+		u=R^s[S  ]; \
+		t=R^s[S+1]
 
-# define D_ENCRYPT(LL,R,S) { \
-        LOAD_DATA_tmp(R,S,u,t,E0,E1); \
-        t=ROTATE(t,4); \
-        LL^= \
-            DES_SPtrans[0][(u>> 2L)&0x3f]^ \
-            DES_SPtrans[2][(u>>10L)&0x3f]^ \
-            DES_SPtrans[4][(u>>18L)&0x3f]^ \
-            DES_SPtrans[6][(u>>26L)&0x3f]^ \
-            DES_SPtrans[1][(t>> 2L)&0x3f]^ \
-            DES_SPtrans[3][(t>>10L)&0x3f]^ \
-            DES_SPtrans[5][(t>>18L)&0x3f]^ \
-            DES_SPtrans[7][(t>>26L)&0x3f]; }
+#define D_ENCRYPT(LL,R,S) { \
+		LOAD_DATA_tmp(R,S,u,t,E0,E1); \
+		t=ROTATE(t,4); \
+		LL^= \
+			DES_SPtrans[0][(u>> 2L)&0x3f]^ \
+			DES_SPtrans[2][(u>>10L)&0x3f]^ \
+			DES_SPtrans[4][(u>>18L)&0x3f]^ \
+			DES_SPtrans[6][(u>>26L)&0x3f]^ \
+			DES_SPtrans[1][(t>> 2L)&0x3f]^ \
+			DES_SPtrans[3][(t>>10L)&0x3f]^ \
+			DES_SPtrans[5][(t>>18L)&0x3f]^ \
+			DES_SPtrans[7][(t>>26L)&0x3f]; }
 
 #define IP(l,r) \
-        { \
-        register DES_LONG tt; \
-        PERM_OP(r,l,tt, 4,0x0f0f0f0fL); \
-        PERM_OP(l,r,tt,16,0x0000ffffL); \
-        PERM_OP(r,l,tt, 2,0x33333333L); \
-        PERM_OP(l,r,tt, 8,0x00ff00ffL); \
-        PERM_OP(r,l,tt, 1,0x55555555L); \
-        }
+		{ \
+		register DES_LONG tt; \
+		PERM_OP(r,l,tt, 4,0x0f0f0f0fL); \
+		PERM_OP(l,r,tt,16,0x0000ffffL); \
+		PERM_OP(r,l,tt, 2,0x33333333L); \
+		PERM_OP(l,r,tt, 8,0x00ff00ffL); \
+		PERM_OP(r,l,tt, 1,0x55555555L); \
+		}
 
-# define PERM_OP(a,b,t,n,m) ((t)=((((a)>>(n))^(b))&(m)),\
-        (b)^=(t),\
-        (a)^=((t)<<(n)))
+#define PERM_OP(a,b,t,n,m) ((t)=((((a)>>(n))^(b))&(m)),\
+		(b)^=(t),\
+		(a)^=((t)<<(n)))
 
-#  define ROTATE(a,n)     (((a)>>(n))+((a)<<(32-(n))))
+#define ROTATE(a,n)     (((a)>>(n))+((a)<<(32-(n))))
 
 
-#if (OPENSSL_VERSION_NUMBER < 0x10101000L) //|| ((OPENSSL_VERSION_NUMBER > 0x10101000L) && !defined(WITH_SSL))
+
 static const unsigned char odd_parity[256] =
 {
 	1, 1, 2, 2, 4, 4, 7, 7, 8, 8, 11, 11, 13, 13, 14, 14,
@@ -251,7 +251,7 @@ static const unsigned char odd_parity[256] =
 };
 
 #define HPERM_OP(a,t,n,m) ((t)=((((a)<<(16-(n)))^(a))&(m)),\
-        (a)=(a)^(t)^(t>>(16-(n))))
+		(a)=(a)^(t)^(t>>(16-(n))))
 
 # define ITERATIONS 16
 # define HALF_ITERATIONS 8
@@ -490,9 +490,12 @@ void DES_set_odd_parity(DES_cblock *key)
 		(*key)[i] = odd_parity[(*key)[i]];
 }
 
+
+#if !defined(WITH_SSL) || !defined(WITH_LIBCRYPTO)
 void DES_encrypt1(DES_LONG *data, DES_key_schedule *ks, int enc)
 {
 	register DES_LONG l, r, t, u;
+
 	register DES_LONG *s;
 
 	r = data[0];
