@@ -79,7 +79,7 @@ LD = $(CROSS_DIR)$(CROSS)ld
 OBJCOPY = $(CROSS_DIR)$(CROSS)objcopy
 endif
 
-LDFLAGS = -Wl,--gc-sections
+LDFLAGS = -Wl,--gc-sections,-z noexecstack
 
 # The linker for powerpc have bug that prevents --gc-sections from working
 # Check for the linker version and if it matches disable --gc-sections
