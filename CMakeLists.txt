@@ -118,7 +118,6 @@ if (NCamOperatingSystem MATCHES "Windows/Cygwin")
 		${CMAKE_CURRENT_SOURCE_DIR}/csctapi
 		${CMAKE_CURRENT_SOURCE_DIR}/cscrypt
 		${CMAKE_CURRENT_SOURCE_DIR}/minilzo
-		${CMAKE_CURRENT_SOURCE_DIR}/ffdecsa
 		${CMAKE_CURRENT_SOURCE_DIR}/extapi/cygwin
 		/usr/include/w32api
 		${OPTIONAL_INCLUDE_DIR}
@@ -128,7 +127,6 @@ else (NCamOperatingSystem MATCHES "Windows/Cygwin")
 		${CMAKE_CURRENT_SOURCE_DIR}/csctapi
 		${CMAKE_CURRENT_SOURCE_DIR}/cscrypt
 		${CMAKE_CURRENT_SOURCE_DIR}/minilzo
-		${CMAKE_CURRENT_SOURCE_DIR}/ffdecsa
 		${OPTIONAL_INCLUDE_DIR}
 		)
 endif (NCamOperatingSystem MATCHES "Windows/Cygwin")
@@ -602,6 +600,29 @@ elseif (HAVE_LIBCURL)
 	message(STATUS "  no curl found. ")
 endif (HAVE_LIBCURL)
 
+execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --enabled MODULE_STREAMRELAY OUTPUT_VARIABLE CONFIG_STREAMRELAY OUTPUT_STRIP_TRAILING_WHITESPACE)
+if (CONFIG_STREAMRELAY MATCHES "Y" AND NOT MODULE_STREAMRELAY EQUAL 1)
+	check_include_file ("dvbcsa/dvbcsa.h" HAVE_LIBDVBCSA)
+	if (HAVE_LIBDVBCSA)
+		if (STATIC_LIBDVBCSA AND LIBDVBCSADIR AND EXISTS ${LIBDVBCSADIR}/lib/libdvbcsa.a)
+			message(STATUS " static libdvbcsa found (${LIBDVBCSADIR}/lib/libdvbcsa.a) ")
+			add_library(imp_libdvbcsa STATIC IMPORTED)
+			set_property(TARGET imp_libdvbcsa PROPERTY IMPORTED_LOCATION ${LIBDVBCSADIR}/lib/libdvbcsa.a)
+			set (dvbcsa_link "imp_libdvbcsa")
+			set (STATIC_LIBDVBCSA True)
+		else (STATIC_LIBDVBCSA AND LIBDVBCSADIR AND EXISTS ${LIBDVBCSADIR}/lib/libdvbcsa.a)
+			find_library(LIBDVBCSA_LIBRARY NAMES dvbcsa)
+			message(STATUS " libdvbcsa found (${LIBDVBCSA_LIBRARY}) ")
+			set(dvbcsa_link dvbcsa)
+			set (STATIC_LIBDVBCSA False)
+		endif (STATIC_LIBDVBCSA AND LIBDVBCSADIR AND EXISTS ${LIBDVBCSADIR}/lib/libdvbcsa.a)
+	else (HAVE_LIBDVBCSA)
+		#set (MODULE_STREAMRELAY "0")
+		#message (STATUS "  ERROR: dvbcsa not found!!!")
+		message(FATAL_ERROR "  ERROR: dvbcsa not found!!!")
+	endif (HAVE_LIBDVBCSA)
+endif (CONFIG_STREAMRELAY MATCHES "Y" AND NOT MODULE_STREAMRELAY EQUAL 1)
+
 # Manage config.h based on command line parameters
 # Manipulate config file based on given parameters and read unset parameters
 
@@ -650,7 +671,6 @@ execute_process (COMMAND make --no-print-directory --quiet -C ${CMAKE_CURRENT_SO
 add_subdirectory (csctapi)
 add_subdirectory (minilzo)
 add_subdirectory (cscrypt)
-add_subdirectory (ffdecsa)
 
 #----------------------- file groups ------------------------------
 execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --enabled MODULE_CAMD33 OUTPUT_VARIABLE CAMD33 OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -700,7 +720,7 @@ add_library (${csncam} STATIC ${csncam_srcs} ${csncam_hdrs})
 
 set (exe_name "ncam")
 add_executable (${exe_name} ${exe_srcs} ${exe_hdrs})
-target_link_libraries (${exe_name} ${csncam} ${csmodules} ${csreaders} csctapi cscrypt minilzo ffdecsa)
+target_link_libraries (${exe_name} ${csncam} ${csmodules} ${csreaders} csctapi cscrypt minilzo)
 if(HAVE_LIBRT AND HAVE_LIBUSB)
    if (LIBUSBDIR)
 	set (libusb_link "imp_libusb")
@@ -842,7 +862,7 @@ elseif (NCamOperatingSystem MATCHES "WETEK")
     target_link_libraries (${exe_name} rt entropic)
 endif (NCamOperatingSystem MATCHES "Linux")
 
-target_link_libraries (${exe_name} ${libusb_link} ${rt_link} ${setupapi_link} ${ole32_link} ${shell32_link} ${pthread_link} ${dl_link} ${xcas_link} ${gx_link} ${libpcsc_link} ${ssl_link} ${crypto_link} ${libcurl_link})
+target_link_libraries (${exe_name} ${libusb_link} ${rt_link} ${setupapi_link} ${ole32_link} ${shell32_link} ${pthread_link} ${dl_link} ${xcas_link} ${gx_link} ${libpcsc_link} ${ssl_link} ${crypto_link} ${libcurl_link} ${dvbcsa_link})
 
 #----------------------- put svnversion in the build ------------------------------
 # at every target rebuild, we re-build the ncam.c compilation...
@@ -1078,6 +1098,13 @@ if (HAVE_LIBCURL)
 		message (STATUS "  use system curl functions")
 	endif (STATIC_LIBCURL)
 endif (HAVE_LIBCURL)
+if (HAVE_LIBDVBCSA AND CONFIG_STREAMRELAY MATCHES "Y" AND NOT MODULE_STREAMRELAY EQUAL 1)
+	if(STATIC_LIBDVBCSA)
+		message (STATUS "  use static libdvbcsa functions")
+	else(STATIC_LIBDVBCSA)
+		message (STATUS "  use system libdvbcsa functions")
+	endif(STATIC_LIBDVBCSA)
+endif (HAVE_LIBDVBCSA AND CONFIG_STREAMRELAY MATCHES "Y" AND NOT MODULE_STREAMRELAY EQUAL 1)
 
 if (WITH_EMU)
 	message (STATUS "  Compile with EMU support")

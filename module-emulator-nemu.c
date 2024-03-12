@@ -5,8 +5,8 @@
 #ifdef WITH_EMU
 
 #include "ncam-string.h"
+#include "module-streamrelay.h"
 #include "module-emulator-nemu.h"
-#include "module-emulator-streamserver.h"
 #include "module-emulator-biss.h"
 #include "module-emulator-cryptoworks.h"
 #include "module-emulator-director.h"
@@ -1048,7 +1048,11 @@ int8_t emu_process_ecm(struct s_reader *rdr, const ECM_REQUEST *er, uint8_t *cw,
 		else { pvu->rdr = rdr; }
 #endif
 #endif
-		result = powervu_ecm(ecmCopy, cw, cw_ex, er->srvid, er->caid, er->tsid, er->onid, er->ens, NULL);
+		result = powervu_ecm(ecmCopy, cw, cw_ex, er->srvid, er->caid, er->tsid, er->onid, er->ens
+#ifdef MODULE_STREAMRELAY
+				, NULL
+#endif
+			);
 	}
 	else if (caid_is_director(er->caid))    result = director_ecm(ecmCopy, cw);
 	else if (caid_is_nagra(er->caid))       result = nagra2_ecm(ecmCopy, cw);

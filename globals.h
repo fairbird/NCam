@@ -2422,6 +2422,9 @@ struct s_config
 #if defined(WITH_WI) && !defined(WI_OLD)
 	int8_t      dvbapi_wi_sosket_id;
 #endif
+#ifdef MODULE_STREAMRELAY
+	int8_t      dvbapi_demuxer_fix;
+#endif
 #endif
 
 #ifdef CS_ANTICASC
@@ -2470,16 +2473,27 @@ struct s_config
 	struct s_ip *scam_allowed;
 #endif
 
+#ifdef MODULE_STREAMRELAY
+	char        *stream_source_host;
+	int32_t     stream_source_port;
+	char        *stream_source_auth_user;
+	char        *stream_source_auth_password;
+	int32_t     stream_relay_port;
+#ifdef MODULE_RADEGAST
+	int8_t      stream_client_source_host;
+#endif
+	int8_t      stream_relay_enabled;
+	uint32_t    stream_relay_buffer_time;
+	CAIDTAB     stream_relay_ctab;              // use the stream server for these caids
+#ifdef WITH_NEUTRINO
+#define DEFAULT_STREAM_SOURCE_PORT 31339 //Neutrino
+#else
+#define DEFAULT_STREAM_SOURCE_PORT 8001 //Enigma2
+#endif
 #ifdef WITH_EMU
-	char        *emu_stream_source_host;
-	int32_t     emu_stream_source_port;
-	char        *emu_stream_source_auth_user;
-	char        *emu_stream_source_auth_password;
-	int32_t     emu_stream_relay_port;
 	uint32_t    emu_stream_ecm_delay;
-	int8_t      emu_stream_relay_enabled;
 	int8_t      emu_stream_emm_enabled;
-	CAIDTAB     emu_stream_relay_ctab;              // use the stream server for these caids
+#endif
 #endif
 
 	int32_t     max_cache_time;  //seconds ecms are stored in ecmcwcache
