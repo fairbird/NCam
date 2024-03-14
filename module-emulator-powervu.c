@@ -2429,7 +2429,6 @@ int8_t powervu_ecm(uint8_t *ecm, uint8_t *dw, EXTENDED_CW *cw_ex, uint16_t srvid
 								if (ecm[0] == 0x80)
 								{
 									dvbcsa_bs_key_set(cw[j], key_data[cdata->connid].key[j][EVEN]);
-
 								}
 								else
 								{

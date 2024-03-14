@@ -380,7 +380,7 @@ static void write_versionfile(bool use_stdout)
 				st.tm_hour, st.tm_min, st.tm_sec);
 	}
 
-	fprintf(fp, "Version:        NCam-%s%s\n", CS_VERSION, "-ICAM-v9");
+	fprintf(fp, "Version:        NCam-%s\n", CS_VERSION);
 	fprintf(fp, "Revision:       %s\n", CS_REVISION);
 	fprintf(fp, "Build:          %s\n", CS_DATE_BUILD);
 #ifdef CS_CACHEEX_AIO
