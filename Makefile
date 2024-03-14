@@ -79,7 +79,7 @@ LD = $(CROSS_DIR)$(CROSS)ld
 OBJCOPY = $(CROSS_DIR)$(CROSS)objcopy
 endif
 
-LDFLAGS = -Wl,--gc-sections,-z noexecstack
+LDFLAGS = -Wl,--gc-sections
 
 # The linker for powerpc have bug that prevents --gc-sections from working
 # Check for the linker version and if it matches disable --gc-sections
@@ -347,7 +347,7 @@ $(shell $(LD) -r -o "SoftCam.Key.o" -z noexecstack --format=binary "SoftCam.Key"
 $(shell $(OBJCOPY) --rename-section .data=.rodata,alloc,load,readonly,data,contents "SoftCam.Key.o")
 EXTRA_LIBS += SoftCam.Key.o
 else
-override LDFLAGS += -Wl,--format=binary -Wl,SoftCam.Key -Wl,--format=default
+override LDFLAGS += -Wl,--format=binary -Wl,SoftCam.Key -Wl,--format=default -Wl,-z,noexecstack
 endif
 endif
 endif
