@@ -76,7 +76,7 @@ static void ssl_done(void) { }
 extern char *config_mak;
 
 /*****************************************************************************
-		Globals
+        Globals
 *****************************************************************************/
 const char *syslog_ident = "ncam";
 static char *ncam_pidfile;
@@ -380,7 +380,11 @@ static void write_versionfile(bool use_stdout)
 				st.tm_hour, st.tm_min, st.tm_sec);
 	}
 
+#if defined(MODULE_STREAMRELAY) && (DVBCSA_KEY_ECM > 0)
+	fprintf(fp, "Version:        NCam-%s-StreamRelay\n", CS_VERSION);
+#else
 	fprintf(fp, "Version:        NCam-%s\n", CS_VERSION);
+#endif
 	fprintf(fp, "Revision:       %s\n", CS_REVISION);
 	fprintf(fp, "Build:          %s\n", CS_DATE_BUILD);
 #ifdef CS_CACHEEX_AIO
