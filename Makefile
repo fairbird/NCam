@@ -347,7 +347,10 @@ $(shell $(LD) -r -o "SoftCam.Key.o" -z noexecstack --format=binary "SoftCam.Key"
 $(shell $(OBJCOPY) --rename-section .data=.rodata,alloc,load,readonly,data,contents "SoftCam.Key.o")
 EXTRA_LIBS += SoftCam.Key.o
 else
-override LDFLAGS += -Wl,--format=binary -Wl,SoftCam.Key -Wl,--format=default -Wl,-z,noexecstack
+override LDFLAGS += -Wl,--format=binary -Wl,SoftCam.Key -Wl,--format=default
+ifneq ($(uname_S),Cygwin)
+override LDFLAGS += -Wl,-z,noexecstack
+endif
 endif
 endif
 endif
