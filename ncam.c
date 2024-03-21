@@ -380,7 +380,7 @@ static void write_versionfile(bool use_stdout)
 				st.tm_hour, st.tm_min, st.tm_sec);
 	}
 
-#if defined(MODULE_STREAMRELAY) && (DVBCSA_KEY_ECM > 0)
+#ifdef MODULE_STREAMRELAY
 	fprintf(fp, "Version:        NCam-%s-StreamRelay\n", CS_VERSION);
 #else
 	fprintf(fp, "Version:        NCam-%s\n", CS_VERSION);

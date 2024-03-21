@@ -35,7 +35,7 @@ typedef struct
 static char stream_source_host[256];
 static char *stream_source_auth = NULL;
 static uint32_t cluster_size = 50;
-bool has_dvbcsa_ecm = 0, is_dvbcsa_static = 0;
+static bool has_dvbcsa_ecm = 0, is_dvbcsa_static = 0;
 
 static uint8_t stream_server_mutex_init = 0;
 static pthread_mutex_t stream_server_mutex;
@@ -184,7 +184,6 @@ void ParseEcmData(stream_client_data *cdata)
 #endif
 
 #if DVBCSA_KEY_ECM > 0
-#define dvbcsa_bs_key_set(a,b) dvbcsa_bs_key_set_ecm(ecm,a,b)
 #define DVBCSA_ECM_HEADER 1
 #endif
 #ifndef DVBCSA_ECM_HEADER
@@ -194,6 +193,11 @@ void ParseEcmData(stream_client_data *cdata)
 #define LIBDVBCSA_LIB ""
 #endif
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wredundant-decls"
+void dvbcsa_bs_key_set_ecm(unsigned char ecm, const dvbcsa_cw_t cw, struct dvbcsa_bs_key_s *key) __attribute__((weak));
+#pragma GCC diagnostic pop
+
 static void write_cw(ECM_REQUEST *er, int32_t connid)
 {
 	const uint8_t ecm = (caid_is_videoguard(er->caid) && (er->ecm[4] != 0 && (er->ecm[2] - er->ecm[4]) == 4)) ? er->ecm[21] : 0;
@@ -201,11 +205,19 @@ static void write_cw(ECM_REQUEST *er, int32_t connid)
 	{
 		if (has_dvbcsa_ecm)
 		{
+			dvbcsa_bs_key_set_ecm(ecm, er->cw, key_data[connid].key
+#ifdef WITH_EMU
+			[0]
+#endif
+			[EVEN]);
+		}
+		else
+		{
 			dvbcsa_bs_key_set(er->cw, key_data[connid].key
 #ifdef WITH_EMU
-				[0]
+			[0]
 #endif
-				[EVEN]);
+			[EVEN]);
 		}
 	}
 
@@ -213,11 +225,19 @@ static void write_cw(ECM_REQUEST *er, int32_t connid)
 	{
 		if (has_dvbcsa_ecm)
 		{
-		dvbcsa_bs_key_set(er->cw + 8, key_data[connid].key
+			dvbcsa_bs_key_set_ecm(ecm, er->cw + 8, key_data[connid].key
 #ifdef WITH_EMU
-				[0]
+			[0]
 #endif
-				[ODD]);
+			[ODD]);
+		}
+		else
+		{
+			dvbcsa_bs_key_set(er->cw + 8, key_data[connid].key
+#ifdef WITH_EMU
+			[0]
+#endif
+			[ODD]);
 		}
 	}
 #ifdef WITH_EMU
@@ -1822,7 +1842,7 @@ void *stream_server(void *UNUSED(a))
 		is_dvbcsa_static = 1;
 	}
 
-	cs_log("INFO: %s %s dvbcsa parallel mode = %d (relay buffer time: %d ms)", (!has_dvbcsa_ecm) ? "(wrong)" : "(ecm)", (!is_dvbcsa_static) ? "dynamic" : "static", cluster_size, cfg.stream_relay_buffer_time);
+	cs_log("INFO:%s %s dvbcsa parallel mode = %d (relay buffer time: %d ms)", (!has_dvbcsa_ecm) ? "" : " (ecm)", (!is_dvbcsa_static) ? "dynamic" : "static", cluster_size, cfg.stream_relay_buffer_time);
 
 	if (!stream_server_mutex_init)
 	{
@@ -1970,7 +1990,6 @@ void init_stream_server(void)
 void *stream_key_delayer(void *UNUSED(arg))
 {
 	int32_t i, j;
-	const uint8_t ecm = 0;
 	emu_stream_client_key_data *cdata;
 	LL_ITER it;
 	emu_stream_cw_item *item;
