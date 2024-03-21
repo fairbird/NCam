@@ -4,6 +4,7 @@
 
 #ifdef MODULE_STREAMRELAY
 
+#include <dlfcn.h>
 #include "module-streamrelay.h"
 #include "ncam-config.h"
 #include "ncam-net.h"
@@ -34,6 +35,7 @@ typedef struct
 static char stream_source_host[256];
 static char *stream_source_auth = NULL;
 static uint32_t cluster_size = 50;
+bool has_dvbcsa_ecm = 0, is_dvbcsa_static = 0;
 
 static uint8_t stream_server_mutex_init = 0;
 static pthread_mutex_t stream_server_mutex;
@@ -183,6 +185,13 @@ void ParseEcmData(stream_client_data *cdata)
 
 #if DVBCSA_KEY_ECM > 0
 #define dvbcsa_bs_key_set(a,b) dvbcsa_bs_key_set_ecm(ecm,a,b)
+#define DVBCSA_ECM_HEADER 1
+#endif
+#ifndef DVBCSA_ECM_HEADER
+#define DVBCSA_ECM_HEADER 0
+#endif
+#ifndef LIBDVBCSA_LIB
+#define LIBDVBCSA_LIB
 #endif
 
 static void write_cw(ECM_REQUEST *er, int32_t connid)
@@ -190,20 +199,26 @@ static void write_cw(ECM_REQUEST *er, int32_t connid)
 	const uint8_t ecm = (caid_is_videoguard(er->caid) && (er->ecm[4] != 0 && (er->ecm[2] - er->ecm[4]) == 4)) ? er->ecm[21] : 0;
 	if (memcmp(er->cw, "\x00\x00\x00\x00\x00\x00\x00\x00", 8) != 0)
 	{
-		dvbcsa_bs_key_set(er->cw, key_data[connid].key
+		if (has_dvbcsa_ecm)
+		{
+			dvbcsa_bs_key_set(er->cw, key_data[connid].key
 #ifdef WITH_EMU
 				[0]
 #endif
 				[EVEN]);
+		}
 	}
 
 	if (memcmp(er->cw + 8, "\x00\x00\x00\x00\x00\x00\x00\x00", 8) != 0)
 	{
+		if (has_dvbcsa_ecm)
+		{
 		dvbcsa_bs_key_set(er->cw + 8, key_data[connid].key
 #ifdef WITH_EMU
 				[0]
 #endif
 				[ODD]);
+		}
 	}
 #ifdef WITH_EMU
 	SAFE_MUTEX_LOCK(&emu_fixed_key_data_mutex[connid]);
@@ -1796,11 +1811,18 @@ void *stream_server(void *UNUSED(a))
 	stream_client_conn_data *conndata;
 
 	cluster_size = dvbcsa_bs_batch_size();
-	cs_log("INFO: "
-#if DVBCSA_KEY_ECM > 0
-		"(ecm) "
-#endif
-		"dvbcsa parallel mode = %d (relay buffer time: %d ms)", cluster_size, cfg.stream_relay_buffer_time);
+
+	if(strcmp(LIBDVBCSA_LIB, "libdvbcsa.a"))
+	{
+		has_dvbcsa_ecm = (dlsym(RTLD_DEFAULT, "dvbcsa_bs_key_set_ecm"));
+	}
+	else
+	{
+		has_dvbcsa_ecm = DVBCSA_ECM_HEADER;
+		is_dvbcsa_static = 1;
+	}
+
+	cs_log("INFO: %s %s dvbcsa parallel mode = %d (relay buffer time: %d ms)", (!has_dvbcsa_ecm) ? "(wrong)" : "(ecm)", (!is_dvbcsa_static) ? "dynamic" : "static", cluster_size, cfg.stream_relay_buffer_time);
 
 	if (!stream_server_mutex_init)
 	{
