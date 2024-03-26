@@ -4,13 +4,25 @@
 
 #ifdef MODULE_STREAMRELAY
 
-#include <dlfcn.h>
 #include "module-streamrelay.h"
 #include "ncam-config.h"
 #include "ncam-net.h"
 #include "ncam-string.h"
 #include "ncam-time.h"
 #include "ncam-chk.h"
+
+#ifndef DVBCSA_KEY_ECM
+#define DVBCSA_KEY_ECM 0
+#endif
+
+#ifndef STATIC_LIBDVBCSA
+#include <dlfcn.h>
+#endif
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wredundant-decls"
+void dvbcsa_bs_key_set_ecm(const unsigned char ecm, const dvbcsa_cw_t cw, struct dvbcsa_bs_key_s *key) __attribute__((weak));
+#pragma GCC diagnostic pop
 
 #ifdef WITH_EMU
 #include "cscrypt/des.h"
@@ -35,7 +47,7 @@ typedef struct
 static char stream_source_host[256];
 static char *stream_source_auth = NULL;
 static uint32_t cluster_size = 50;
-static bool has_dvbcsa_ecm = 0, is_dvbcsa_static = 0;
+static bool has_dvbcsa_ecm = 0;
 
 static uint8_t stream_server_mutex_init = 0;
 static pthread_mutex_t stream_server_mutex;
@@ -182,21 +194,6 @@ void ParseEcmData(stream_client_data *cdata)
 #else
 #define ParseEcmData radegast_client_ecm
 #endif
-
-#if DVBCSA_KEY_ECM > 0
-#define DVBCSA_ECM_HEADER 1
-#endif
-#ifndef DVBCSA_ECM_HEADER
-#define DVBCSA_ECM_HEADER 0
-#endif
-#ifndef LIBDVBCSA_LIB
-#define LIBDVBCSA_LIB ""
-#endif
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wredundant-decls"
-void dvbcsa_bs_key_set_ecm(unsigned char ecm, const dvbcsa_cw_t cw, struct dvbcsa_bs_key_s *key) __attribute__((weak));
-#pragma GCC diagnostic pop
 
 static void write_cw(ECM_REQUEST *er, int32_t connid)
 {
@@ -1832,17 +1829,13 @@ void *stream_server(void *UNUSED(a))
 
 	cluster_size = dvbcsa_bs_batch_size();
 
-	if(strcmp(LIBDVBCSA_LIB, "libdvbcsa.a"))
-	{
-		has_dvbcsa_ecm = (dlsym(RTLD_DEFAULT, "dvbcsa_bs_key_set_ecm"));
-	}
-	else
-	{
-		has_dvbcsa_ecm = DVBCSA_ECM_HEADER;
-		is_dvbcsa_static = 1;
-	}
-
-	cs_log("INFO:%s %s dvbcsa parallel mode = %d (relay buffer time: %d ms)", (!has_dvbcsa_ecm) ? "" : " (ecm)", (!is_dvbcsa_static) ? "dynamic" : "static", cluster_size, cfg.stream_relay_buffer_time);
+#ifdef STATIC_LIBDVBCSA
+	has_dvbcsa_ecm = DVBCSA_KEY_ECM;
+	cs_log("INFO: static dvbcsa%s parallel mode = %d (relay buffer time: %d ms)", (!has_dvbcsa_ecm) ? "" : " (with icam)", cluster_size, cfg.stream_relay_buffer_time);
+#else
+	has_dvbcsa_ecm = (dlsym(RTLD_DEFAULT, "dvbcsa_bs_key_set_ecm"));
+	cs_log("INFO: dynamic dvbcsa%s parallel mode = %d (relay buffer time: %d ms)", (!has_dvbcsa_ecm) ? "" : " (with icam)", cluster_size, cfg.stream_relay_buffer_time);
+#endif
 
 	if (!stream_server_mutex_init)
 	{
