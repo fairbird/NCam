@@ -35,11 +35,11 @@
 
 typedef struct
 {
-	struct dvbcsa_bs_key_s *key
 #ifdef WITH_EMU
-	[EMU_STREAM_MAX_AUDIO_SUB_TRACKS + 2]
+	struct dvbcsa_bs_key_s *key[EMU_STREAM_MAX_AUDIO_SUB_TRACKS + 2][2];
+#else
+	struct dvbcsa_bs_key_s *key[2];
 #endif
-	[2];
 } stream_client_key_data;
 
 #ifdef WITH_EMU
@@ -106,6 +106,7 @@ extern pthread_mutex_t fixed_key_srvid_mutex;
 extern uint16_t stream_cur_srvid[STREAM_SERVER_MAX_CONNECTIONS];
 extern int8_t stream_server_has_ecm[STREAM_SERVER_MAX_CONNECTIONS];
 extern uint8_t emu_stream_server_mutex_init;
+extern bool has_dvbcsa_ecm;
 
 typedef struct
 {

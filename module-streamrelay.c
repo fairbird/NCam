@@ -4,7 +4,9 @@
 
 #ifdef MODULE_STREAMRELAY
 
+#if !STATIC_LIBDVBCSA
 #include <dlfcn.h>
+#endif
 #include "module-streamrelay.h"
 #include "ncam-config.h"
 #include "ncam-net.h"
@@ -35,7 +37,7 @@ typedef struct
 static char stream_source_host[256];
 static char *stream_source_auth = NULL;
 static uint32_t cluster_size = 50;
-static bool has_dvbcsa_ecm = 0, is_dvbcsa_static = 0;
+bool has_dvbcsa_ecm = 0, is_dvbcsa_static = 1;
 
 static uint8_t stream_server_mutex_init = 0;
 static pthread_mutex_t stream_server_mutex;
@@ -183,41 +185,30 @@ void ParseEcmData(stream_client_data *cdata)
 #define ParseEcmData radegast_client_ecm
 #endif
 
-#if DVBCSA_KEY_ECM > 0
-#define DVBCSA_ECM_HEADER 1
+#if DVBCSA_KEY_ECM
+#define DVBCSA_HEADER_ECM 1
+#define dvbcsa_bs_key_set(a,b) dvbcsa_bs_key_set_ecm(ecm,a,b)
+#else
+#define DVBCSA_HEADER_ECM 0
 #endif
-#ifndef DVBCSA_ECM_HEADER
-#define DVBCSA_ECM_HEADER 0
+#ifndef STATIC_LIBDVBCSA
+#define STATIC_LIBDVBCSA 0
 #endif
-#ifndef LIBDVBCSA_LIB
-#define LIBDVBCSA_LIB ""
-#endif
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wredundant-decls"
-void dvbcsa_bs_key_set_ecm(unsigned char ecm, const dvbcsa_cw_t cw, struct dvbcsa_bs_key_s *key) __attribute__((weak));
-#pragma GCC diagnostic pop
 
 static void write_cw(ECM_REQUEST *er, int32_t connid)
 {
-	const uint8_t ecm = (caid_is_videoguard(er->caid) && (er->ecm[4] != 0 && (er->ecm[2] - er->ecm[4]) == 4)) ? er->ecm[21] : 0;
+#if DVBCSA_KEY_ECM
+	const uint8_t ecm = (caid_is_videoguard(er->caid) && (er->ecm[4] != 0 && (er->ecm[2] - er->ecm[4]) == 4)) ? 4 : 0;
+#endif
 	if (memcmp(er->cw, "\x00\x00\x00\x00\x00\x00\x00\x00", 8) != 0)
 	{
 		if (has_dvbcsa_ecm)
 		{
-			dvbcsa_bs_key_set_ecm(ecm, er->cw, key_data[connid].key
 #ifdef WITH_EMU
-			[0]
+			dvbcsa_bs_key_set(er->cw, key_data[connid].key[0][EVEN]);
+#else
+			dvbcsa_bs_key_set(er->cw, key_data[connid].key[EVEN]);
 #endif
-			[EVEN]);
-		}
-		else
-		{
-			dvbcsa_bs_key_set(er->cw, key_data[connid].key
-#ifdef WITH_EMU
-			[0]
-#endif
-			[EVEN]);
 		}
 	}
 
@@ -225,19 +216,11 @@ static void write_cw(ECM_REQUEST *er, int32_t connid)
 	{
 		if (has_dvbcsa_ecm)
 		{
-			dvbcsa_bs_key_set_ecm(ecm, er->cw + 8, key_data[connid].key
 #ifdef WITH_EMU
-			[0]
+			dvbcsa_bs_key_set(er->cw + 8, key_data[connid].key[0][ODD]);
+#else
+			dvbcsa_bs_key_set(er->cw + 8, key_data[connid].key[ODD]);
 #endif
-			[ODD]);
-		}
-		else
-		{
-			dvbcsa_bs_key_set(er->cw + 8, key_data[connid].key
-#ifdef WITH_EMU
-			[0]
-#endif
-			[ODD]);
 		}
 	}
 #ifdef WITH_EMU
@@ -789,11 +772,11 @@ static void ParseTsPackets(stream_client_data *data, uint8_t *stream_buf, uint32
 	}
 }
 
-static void decrypt_csa(struct dvbcsa_bs_batch_s *tsbbatch, uint16_t fill[2], const uint8_t oddeven, const int32_t connid
 #ifdef WITH_EMU
-	, uint8_t cw_type
+static void decrypt_csa(struct dvbcsa_bs_batch_s *tsbbatch, uint16_t fill[2], const uint8_t oddeven, const int32_t connid, uint8_t cw_type)
+#else
+static void decrypt_csa(struct dvbcsa_bs_batch_s *tsbbatch, uint16_t fill[2], const uint8_t oddeven, const int32_t connid)
 #endif
-)
 {
 	if (fill[oddeven] > 0)
 	{
@@ -811,11 +794,11 @@ static void decrypt_csa(struct dvbcsa_bs_batch_s *tsbbatch, uint16_t fill[2], co
 
 		fill[oddeven] = 0;
 
-		dvbcsa_bs_decrypt(key_data[connid].key
 #ifdef WITH_EMU
-				[cw_type]
+		dvbcsa_bs_decrypt(key_data[connid].key[cw_type][oddeven], tsbbatch, 184);
+#else
+		dvbcsa_bs_decrypt(key_data[connid].key[oddeven], tsbbatch, 184);
 #endif
-				[oddeven], tsbbatch, 184);
 	}
 }
 #ifndef WITH_EMU
@@ -1824,25 +1807,35 @@ static void *stream_client_handler(void *arg)
 
 void *stream_server(void *UNUSED(a))
 {
+#ifdef IPV6SUPPORT
+	struct sockaddr_in6 servaddr, cliaddr;
+#else
 	struct sockaddr_in servaddr, cliaddr;
+#endif
 	socklen_t clilen;
 	int32_t connfd, reuse = 1, i;
 	int8_t connaccepted;
 	stream_client_conn_data *conndata;
 
 	cluster_size = dvbcsa_bs_batch_size();
+	has_dvbcsa_ecm = (DVBCSA_HEADER_ECM);
 
-	if(strcmp(LIBDVBCSA_LIB, "libdvbcsa.a"))
-	{
-		has_dvbcsa_ecm = (dlsym(RTLD_DEFAULT, "dvbcsa_bs_key_set_ecm"));
-	}
-	else
-	{
-		has_dvbcsa_ecm = DVBCSA_ECM_HEADER;
-		is_dvbcsa_static = 1;
-	}
+#if !DVBCSA_KEY_ECM
+#pragma message "WARNING: Streamrelay is compiled without dvbcsa ecm headers! ECM processing via Streamrelay will not work!"
+#endif
+#if !STATIC_LIBDVBCSA
+	has_dvbcsa_ecm = (dlsym(RTLD_DEFAULT, "dvbcsa_bs_key_set_ecm"));
+	is_dvbcsa_static = 0;
+#endif
 
-	cs_log("INFO:%s %s dvbcsa parallel mode = %d (relay buffer time: %d ms)", (!has_dvbcsa_ecm) ? "" : " (ecm)", (!is_dvbcsa_static) ? "dynamic" : "static", cluster_size, cfg.stream_relay_buffer_time);
+	cs_log("%s: (%s) %s dvbcsa parallel mode = %d (relay buffer time: %d ms)%s%s",
+		(!DVBCSA_HEADER_ECM || !has_dvbcsa_ecm) ? "WARNING" : "INFO",
+		(!has_dvbcsa_ecm) ? "wrong" : "ecm",
+		(!is_dvbcsa_static) ? "dynamic" : "static",
+		cluster_size, 
+		cfg.stream_relay_buffer_time,
+		(!DVBCSA_HEADER_ECM || !has_dvbcsa_ecm) ? "! ECM processing via Streamrelay does not work!" : "",
+		(!DVBCSA_HEADER_ECM) ? " Missing dvbcsa ecm headers during build!" : "");
 
 	if (!stream_server_mutex_init)
 	{
@@ -1864,7 +1857,19 @@ void *stream_server(void *UNUSED(a))
 	{
 		gconnfd[i] = -1;
 	}
+#ifdef IPV6SUPPORT
+	glistenfd = socket(AF_INET6, SOCK_STREAM, 0);
+	if (glistenfd == -1)
+	{
+		cs_log("ERROR: cannot create stream server socket");
+		return NULL;
+	}
 
+	bzero(&servaddr,sizeof(servaddr));
+	servaddr.sin6_family = AF_INET6;
+	servaddr.sin6_addr = in6addr_any;
+	servaddr.sin6_port = htons(cfg.stream_relay_port);
+#else
 	glistenfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (glistenfd == -1)
 	{
@@ -1876,6 +1881,7 @@ void *stream_server(void *UNUSED(a))
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	servaddr.sin_port = htons(cfg.stream_relay_port);
+#endif
 	setsockopt(glistenfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
 
 	if (bind(glistenfd,(struct sockaddr *)&servaddr, sizeof(servaddr)) == -1)
@@ -1908,12 +1914,21 @@ void *stream_server(void *UNUSED(a))
 #ifdef MODULE_RADEGAST
 		if(cfg.stream_client_source_host)
 		{
+#ifdef IPV6SUPPORT
+			// Read ip of client who wants to play the stream
+			unsigned char *ip = (unsigned char *)&cliaddr.sin6_addr;
+			cs_log("Stream Client ip is: %02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x, will fetch stream there\n", ip[0], ip[1], ip[2], ip[3], ip[4], ip[5], ip[6], ip[7], ip[8], ip[9], ip[10], ip[11], ip[12], ip[13], ip[14], ip[15]);
+
+			// Store ip of client in stream_source_host variable
+			snprintf(stream_source_host, sizeof(stream_source_host), "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x", ip[0], ip[1], ip[2], ip[3], ip[4], ip[5], ip[6], ip[7], ip[8], ip[9], ip[10], ip[11], ip[12], ip[13], ip[14], ip[15]);
+#else
 			// Read ip of client who wants to play the stream
 			unsigned char *ip = (unsigned char *)&cliaddr.sin_addr.s_addr;
 			cs_log("Stream Client ip is: %d.%d.%d.%d, will fetch stream there\n", ip[0], ip[1], ip[2], ip[3]);
 
 			// Store ip of client in stream_source_host variable
 			snprintf(stream_source_host, sizeof(stream_source_host), "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
+#endif
 		}
 #endif
 
@@ -1971,6 +1986,7 @@ void init_stream_server(void)
 
 	if (cfg.stream_relay_enabled)
 	{
+
 		cs_strncpy(stream_source_host, cfg.stream_source_host, sizeof(stream_source_host));
 
 		if (cfg.stream_source_auth_user && cfg.stream_source_auth_password)
@@ -1978,6 +1994,7 @@ void init_stream_server(void)
 			snprintf(authtmp, sizeof(authtmp), "%s:%s", cfg.stream_source_auth_user, cfg.stream_source_auth_password);
 			b64encode(authtmp, cs_strlen(authtmp), &stream_source_auth);
 		}
+
 #ifdef WITH_EMU
 		emu_stream_emm_enabled = cfg.emu_stream_emm_enabled;
 #endif
@@ -1990,6 +2007,7 @@ void init_stream_server(void)
 void *stream_key_delayer(void *UNUSED(arg))
 {
 	int32_t i, j;
+	const uint8_t ecm = 0;
 	emu_stream_client_key_data *cdata;
 	LL_ITER it;
 	emu_stream_cw_item *item;
