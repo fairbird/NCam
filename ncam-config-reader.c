@@ -1409,6 +1409,7 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_FUNC("cooldowndelay"                  , 0,                                    cooldowndelay_fn),
 	DEF_OPT_FUNC("cooldowntime"                   , 0,                                    cooldowntime_fn),
 	DEF_OPT_UINT8("read_old_classes"              , OFS(read_old_classes),                1),
+	DEF_OPT_INT8("ecmending"                      , OFS(ecmending),                       1),
 	DEF_LAST_OPT
 };
 
@@ -1431,7 +1432,7 @@ static bool reader_check_setting(const struct config_list *UNUSED(clist), void *
 	{
 		"readnano", "resetcycle", "smargopatch", "autospeed", "sc8in1_dtrrts_patch", "boxid","fix07",
 		"fix9993", "rsakey", "deskey", "ins7e", "ins42", "ins7e11", "ins2e06", "k1_generic", "k1_unique", "force_irdeto", "needsemmfirst", "boxkey",
-		"atr", "detect", "nagra_read", "mhz", "cardmhz", "readtiers", "read_old_classes", "use_gpio", "needsglobalfirst",
+		"atr", "detect", "nagra_read", "mhz", "cardmhz", "readtiers", "read_old_classes", "ecmending", "use_gpio", "needsglobalfirst",
 #ifdef READER_NAGRA_MERLIN
 		"mod1", "data50", "mod50", "key60", "exp60",
 #endif

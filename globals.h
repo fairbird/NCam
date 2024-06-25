@@ -1728,6 +1728,7 @@ struct s_reader
 	uint8_t           prid[CS_MAXPROV][8];
 	uint8_t           sa[CS_MAXPROV][4];              // viaccess & seca
 	uint8_t         read_old_classes;               // viaccess
+	int8_t          ecmending;                      // viaccess
 	uint8_t         maturity;                       // viaccess & seca maturity level
 	uint16_t        caid;
 	uint16_t        b_nano;
@@ -1911,12 +1912,6 @@ struct s_reader
 	uint8_t         k1_generic[0x10 + 1]; // k1 for generic pairing mode
 	uint8_t         k1_unique[0x10 + 1]; // k1 for unique pairing mode
 	uint8_t         sc8in1_dtrrts_patch; // fix for kernel commit 6a1a82df91fa0eb1cc76069a9efe5714d087eccd
-
-#ifdef READER_VIACCESS
-	uint8_t   initCA28; // To set when CA28 succeed
-	uint32_t        key_schedule1[32];
-	uint32_t        key_schedule2[32];
-#endif
 
 #if defined(READER_DRE) || defined(READER_DRECAS)
 	char            *userscript;

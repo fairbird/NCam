@@ -2869,6 +2869,10 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 		tpl_addVar(vars, TPLADD, "READOLDCLASSES", (rdr->read_old_classes == 1) ? "1" : "0");
 	}
 
+	// ECM ending with
+	tpl_printf(vars, TPLADD, "TMP", "ECMENDING%d", rdr->ecmending);
+	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
+
 	// Detect
 	if(rdr->detect & 0x80)
 		{ tpl_printf(vars, TPLADD, "DETECT", "!%s", RDR_CD_TXT[rdr->detect & 0x7f]); }
