@@ -275,6 +275,7 @@ SRC-$(CONFIG_LIB_BIGNUM) += cscrypt/bn_asm.c
 SRC-$(CONFIG_LIB_BIGNUM) += cscrypt/bn_ctx.c
 SRC-$(CONFIG_LIB_BIGNUM) += cscrypt/bn_div.c
 SRC-$(CONFIG_LIB_BIGNUM) += cscrypt/bn_exp.c
+SRC-$(CONFIG_LIB_BIGNUM) += cscrypt/bn_gcd.c
 SRC-$(CONFIG_LIB_BIGNUM) += cscrypt/bn_lib.c
 SRC-$(CONFIG_LIB_BIGNUM) += cscrypt/bn_mul.c
 SRC-$(CONFIG_LIB_BIGNUM) += cscrypt/bn_print.c
