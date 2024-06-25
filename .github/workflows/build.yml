@@ -26,10 +26,8 @@ jobs:
           sudo apt-get install openssl libcurl4-openssl-dev libusb-1.0-0-dev libpcsclite-dev
       - name: Build libdvbcsa
         run: |
-          git clone https://github.com/glenvt18/libdvbcsa.git
-          cd libdvbcsa && git checkout 0adea3ec7755f65f88d01a7eaea773d2b5e65c4f
-          curl --silent https://simplebuild.dedyn.io/patches/libdvbcsa/libdvbcsa.patch | git apply -v
-          ./bootstrap && ./configure --disable-shared --enable-static --enable-avx2 && make && sudo make install
+          git clone https://github.com/oe-mirrors/libdvbcsa.git
+          cd libdvbcsa && ./bootstrap && ./configure --disable-shared --enable-static --enable-avx2 && make && sudo make install
           echo
           echo -e "\033[1mTest:\033[m"
           cd test
