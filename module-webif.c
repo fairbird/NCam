@@ -5344,10 +5344,38 @@ static char *send_ncam_entitlement(struct templatevars *vars, struct uriparams *
 				if(rdr->hexserial[6] || rdr->hexserial[7]) { j = 8; }
 				else { j = 6; }
 				for(; i < j; i++)   { tpl_printf(vars, TPLAPPEND, "READERSERIAL", "%02X%s", rdr->hexserial[i], i < j - 1 ? " " : ""); }
+				bool sa = false;
 				for(i = 0; i < rdr->nprov; i++)
 				{
-					for(j = 0; j < 4; j++)  { tpl_printf(vars, TPLAPPEND, "READERPROVIDS", "%02X ", rdr->prid[i][j]); }
-					tpl_addVar(vars, TPLAPPEND, "READERPROVIDS", i == 0 ? "(sysid)<BR>\n" : "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<BR>\n");
+					if(rdr->sa[i][0] || rdr->sa[i][1] || rdr->sa[i][2] || rdr->sa[i][3]) { sa = true; }
+				}
+				if(sa)
+				{
+					tpl_addVar(vars, TPLAPPEND, "READERPROVIDS", "<div id=\"""ProviderDiv""\" style=\"""display:none;""\">");
+					for(i = 0; i < rdr->nprov; i++)
+					{
+						for(j = 0; j < 4; j++)  { tpl_printf(vars, TPLAPPEND, "READERPROVIDS", "%02X ", rdr->prid[i][j]); }
+						tpl_addVar(vars, TPLAPPEND, "READERPROVIDS", i == 0 ? "(sysid)" : "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+					
+						if(rdr->sa[i][0] || rdr->sa[i][1] || rdr->sa[i][2] || rdr->sa[i][3])
+						{
+							tpl_printf(vars, TPLAPPEND, "READERPROVIDS", " SA:%02X%02X%02X%02X<BR>", rdr->sa[i][0], rdr->sa[i][1], rdr->sa[i][2], rdr->sa[i][3]);
+						}
+						else
+						{
+							tpl_addVar(vars, TPLAPPEND, "READERPROVIDS", "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<BR>");
+						}
+					}
+					tpl_addVar(vars, TPLAPPEND, "SHOWPROVID", "\tfunction showProvider() {\n\t\tdocument.getElementById('ProviderDiv').style.display = \"""block""\";\n\t\tdocument.getElementById('providerButton').style.display = \"""none""\";\n\t\t}");
+					tpl_addVar(vars, TPLAPPEND, "READERPROVIDS", "</div><input type=\"""button""\" name=\"""provider""\" id=\"""providerButton""\" value=\"""Show""\" title=\"""Show Providers""\" onclick=\"""showProvider()""\" style=\"""margin:auto;display:block""\" />");
+				}
+				else
+				{
+ 					for(i = 0; i < rdr->nprov; i++)
+ 					{
+ 						for(j = 0; j < 4; j++)  { tpl_printf(vars, TPLAPPEND, "READERPROVIDS", "%02X ", rdr->prid[i][j]); }
+						tpl_addVar(vars, TPLAPPEND, "READERPROVIDS", i == 0 ? "(sysid)<BR>" : "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<BR>");
+					}
 				}
 
 				//CountryCode Vg card
@@ -5424,7 +5452,17 @@ static char *send_ncam_entitlement(struct templatevars *vars, struct uriparams *
 
 				if(rdr->irdId[0])
 				{
-					for(i = 0; i < 4; i++)  { tpl_printf(vars, TPLAPPEND, "READERIRDID", "%02X ", rdr->irdId[i]); }
+					if(rdr->irdId[0] != 0xFF && rdr->irdId[1] != 0xFF && rdr->irdId[2] != 0xFF && rdr->irdId[3] != 0xFF)
+					{
+						tpl_addVar(vars, TPLAPPEND, "READERIRDID", "<div id=\"""IrdidDiv""\" style=\"""display:none;""\">");
+						for(i = 0; i < 4; i++)  { tpl_printf(vars, TPLAPPEND, "READERIRDID", "%02X ", rdr->irdId[i]); }
+						tpl_addVar(vars, TPLAPPEND, "SHOWIRDID", "\tfunction showirdId() {\n\t\tdocument.getElementById('IrdidDiv').style.display = \"""block""\";\n\t\tdocument.getElementById('irdidButton').style.display = \"""none""\";\n\t\t}");
+						tpl_addVar(vars, TPLAPPEND, "READERIRDID", "</div><input type=\"""button""\" name=\"""irdid""\" id=\"""irdidButton""\" value=\"""Show""\" title=\"""Show IrdId""\" onclick=\"""showirdId()""\" style=\"""margin:auto;display:block""\" />");
+					}
+					else
+					{
+						for(i = 0; i < 4; i++)  { tpl_printf(vars, TPLAPPEND, "READERIRDID", "%02X ", rdr->irdId[i]); }
+					}
 				}
 				else
 				{
