@@ -333,6 +333,25 @@ void cardreader_init_locks(void)
 	ICC_Async_Init_Locks();
 }
 
+static bool is_dm(const char *boxtype)
+{
+	const char *devices[] =
+	{
+		"dm500hd", "dm500hdv2", "dm520", "dm525",
+		"dm7020hd", "dm7080",
+		"dm800", "dm8000", "dm800se", "dm800sev2", "dm820",
+		"dm900", "dm920",
+		"one", "two"
+	};
+
+	uint8_t i;
+	for(i = 0; i < 15; i++)
+	{
+		if(!strcasecmp(devices[i], boxtype)) { return true; }
+	}
+	return false;
+}
+
 bool cardreader_init(struct s_reader *reader)
 {
 	struct s_client *client = reader->client;
@@ -357,19 +376,16 @@ bool cardreader_init(struct s_reader *reader)
 	}
 	else
 	{
-		if(reader->typ == R_INTERNAL)
+		if(reader->typ == R_INTERNAL && reader->autospeed == 1)
 		{
-			if(boxtype_is("dm8000") || boxtype_is("dm800") || boxtype_is("dm800se") || boxtype_is("dm7080") || boxtype_is("dm525") || boxtype_is("dm520") || boxtype_is("dm820") || boxtype_is("dm900") || boxtype_is("dm920"))
-				{reader->cardmhz = 2700;}
-
 			if(boxtype_is("dm500") || boxtype_is("dm600pvr"))
-				{reader->cardmhz = 3150;}
-
-			if(boxtype_is("dm7025"))
-				{reader->cardmhz = 8300;}
-
-			if((!strncmp(boxtype_get(), "vu", 2 ))||(boxtype_is("ini-8000am")))
-				{reader->cardmhz = 2700; reader->mhz = 450;} // only one speed for vu+ and Atemio Nemesis due to usage of TDA8024
+				{ reader->cardmhz = 3150; }
+			else if(boxtype_is("dm7025"))
+				{ reader->cardmhz = 8300; }
+			else if(is_dm(boxtype_get())) // Enigma2 DreamBox devices
+				{ reader->cardmhz = 2700; }
+			else if((strncmp(boxtype_get(), "vu", 2) == 0) || (boxtype_is("ini-8000am")))
+				{ reader->cardmhz = 2700; reader->mhz = 450; } // only one speed for VU+ and Atemio Nemesis due to usage of TDA8024
 		}
 
 		if((reader->cardmhz > 2000) && (reader->typ != R_SMART))
@@ -422,7 +438,7 @@ bool cardreader_init(struct s_reader *reader)
 
 			if ((reader->typ == R_SMART || is_smargo_reader(reader)) && reader->autospeed == 1)
 			{
-				rdr_log(reader, "Reader initialized (device=%s, detect=%s%s, mhz= AUTO, cardmhz=%d)",
+				rdr_log(reader, "Reader initialized (device=%s, detect=%s%s, mhz=AUTO, cardmhz=%d)",
 						reader->device,
 						reader->detect & 0x80 ? "!" : "",
 						RDR_CD_TXT[reader->detect & 0x7f],
