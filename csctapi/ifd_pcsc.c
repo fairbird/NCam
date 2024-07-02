@@ -181,6 +181,12 @@ static int32_t pcsc_do_api(struct s_reader *pcsc_reader, const uint8_t *buf, uin
 	dwRecvLength = CTA_RES_LEN;
 
 	struct pcsc_data *crdr_data = pcsc_reader->crdr_data;
+
+	if(pcsc_reader->resetalways)
+	{
+		SCardReconnect(crdr_data->hCard, SCARD_SHARE_EXCLUSIVE, SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1,  SCARD_RESET_CARD, &crdr_data->dwActiveProtocol);
+	}
+
 	if(crdr_data->dwActiveProtocol == SCARD_PROTOCOL_T0)
 	{
 		//  explanantion as to why we do the test on buf[4] :

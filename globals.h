@@ -1642,7 +1642,6 @@ struct s_reader
 	uint8_t         exp60_length;
 	uint8_t         kdt05_00[216];
 	uint8_t         kdt05_10[208];
-	uint8_t         cardid[8];
 	uint8_t         edata[255];
 	uint8_t         dt5num;
 	uint8_t         out[255];
@@ -1665,6 +1664,9 @@ struct s_reader
 	uint8_t         cak7_aes_key[32];
 	uint8_t         cak7_aes_iv[16];
 	struct timeb    last_refresh;
+#endif
+#if defined(READER_NAGRA_MERLIN) || defined(READER_DGCRYPT)
+	uint8_t         cardid[8];
 #endif
 #ifdef CS_CACHEEX
 	CECSP           cacheex; //CacheEx Settings
@@ -1746,6 +1748,7 @@ struct s_reader
 	int16_t         deviceemm;                      // catch device specific emms (so far only used for viaccess)
 	int8_t          card_status;
 	int8_t          deprecated;                     //if 0 ATR obeyed, if 1 default speed (9600) is chosen; for devices that cannot switch baudrate
+	int8_t          resetalways;                    // send reset after each commands (for pscs)
 	struct          s_module ph;
 	const struct    s_cardreader *crdr;
 	void            *crdr_data;                     // Private card reader data

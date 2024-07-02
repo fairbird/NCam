@@ -214,6 +214,7 @@ void cardreader_do_reset(struct s_reader *reader)
 			uint16_t y;
 			uint16_t deprecated;
 
+			reader->resetalways = 0;
 			if (reader->typ == R_SMART && reader->smartdev_found >= 4) y = 2; else y = 2;
 			//rdr_log(reader, "the restart atempts in deprecated is %u", y);
 
@@ -227,6 +228,14 @@ void cardreader_do_reset(struct s_reader *reader)
 
 				if(!deprecated)
 					{ rdr_log(reader, "Normal mode failed, reverting to Deprecated Mode"); }
+			}
+			//try reset reader before each command
+			if (!ret)
+			{
+				rdr_log(reader, "Try reset reader before each command");
+				reader->resetalways = 1;
+				if(!reader_activate_card(reader, &atr, reader->deprecated)) { break; }
+				ret = reader_get_cardsystem(reader, &atr);
 			}
 		}
 

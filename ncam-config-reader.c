@@ -1397,6 +1397,7 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_FUNC_X("emu_auproviders"              , OFS(emu_auproviders),                ftab_fn, FTAB_READER | FTAB_EMUAU),
 	DEF_OPT_INT8("emu_datecodedenabled"           , OFS(emu_datecodedenabled),           0),
 #endif
+	DEF_OPT_INT8("resetalways"                    , OFS(resetalways),                     0),
 	DEF_OPT_INT8("deprecated"                     , OFS(deprecated),                      0),
 	DEF_OPT_INT8("audisabled"                     , OFS(audisabled),                      0),
 	DEF_OPT_FUNC("auprovid"                       , 0,                                    auprovid_fn),
@@ -1445,7 +1446,7 @@ static bool reader_check_setting(const struct config_list *UNUSED(clist), void *
 #ifdef WITH_AZBOX
 		"mode",
 #endif
-		"deprecated", "ndsversion",
+		"resetalways", "deprecated", "ndsversion",
 		0
 	};
 	// These are written only when the reader is network reader
