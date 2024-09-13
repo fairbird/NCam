@@ -167,6 +167,10 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 
 	if(reader->caid != caid)
 	{
+		if(reader->typ == R_CAMD35 || reader->typ == R_CS378X || reader->typ == R_CCCAM)
+		{
+			return 1; //network reader coud have multi caid
+		}
 		int caid_found = 0;
 		if (!reader->csystem)
 			return 0;
