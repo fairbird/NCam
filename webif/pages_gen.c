@@ -31,9 +31,11 @@
 #include <inttypes.h>
 #include <libgen.h>
 
-#define USE_COMPRESSION 1
-
+#include "../config.h"
+#ifdef WEBIF_COMPRESS
 #include "../minilzo/minilzo.h"
+#define USE_COMPRESSION 1
+#endif
 
 #define MAX_TEMPLATES 512
 static char *index_filename = "pages_index.txt";
