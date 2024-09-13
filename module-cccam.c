@@ -2160,7 +2160,7 @@ int32_t cc_send_emm(EMM_PACKET *ep)
 					getprefix(), (unsigned long)ep->client->thread);
 
 		cs_readunlock(__func__, &cc->cards_busy);
-		return 2;
+		return 0;
 	}
 
 	cs_log_dbg(D_EMM, "%s emm received for client %8lX caid %04X for card %08X",
