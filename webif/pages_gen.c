@@ -32,7 +32,7 @@
 #include <libgen.h>
 
 #include "../config.h"
-#ifdef WEBIF_COMPRESS
+#ifdef WITH_COMPRESS_WEBIF
 #include "../minilzo/minilzo.h"
 #define USE_COMPRESSION 1
 #endif
