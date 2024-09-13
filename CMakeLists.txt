@@ -246,6 +246,24 @@ endif (NCamOperatingSystem MATCHES "Linux")
 set (CS_CONFDIR ${DEFAULT_CS_CONFDIR} CACHE STRING "Default path for the config files")
 add_definitions ("-D'CS_CONFDIR=\"${CS_CONFDIR}\"'")
 
+# upx compression
+execute_process (COMMAND upx --version RESULT_VARIABLE UPX_RET ERROR_QUIET COMMAND head -n 1 OUTPUT_VARIABLE UPX_VER OUTPUT_STRIP_TRAILING_WHITESPACE)
+set(COMP_LEVEL "--best" CACHE STRING "${COMP_LEVEL}")
+
+if (NOT UPX_RET EQUAL 0)
+	set (UPX_VER "n.a.")
+endif (NOT UPX_RET EQUAL 0)
+
+if (NOT USE_COMPRESS OR USE_COMPRESS EQUAL 0)
+	message (STATUS "COMPRESSION is disabled")
+elseif (USE_COMPRESS EQUAL 1 AND NOT UPX_RET EQUAL 0)
+	set (USE_COMPRESS "0")
+	message ( STATUS "COMPRESSION requested but upx binary NOT FOUND  COMPILING WHITOUT UPX COMPRESSION !!!")
+else (NOT USE_COMPRESS OR USE_COMPRESS EQUAL 0)
+	set (USE_COMPRESS_FLAG "USE_COMPRESS")
+	message (STATUS "COMPRESSION is added by You, upx compress binary after compiling")
+endif (NOT USE_COMPRESS OR USE_COMPRESS EQUAL 0)
+
 if (dl_link)
 	add_definitions("-DWITH_DL")
 	set(WITH_DL True)
@@ -667,7 +685,7 @@ GENERATE_NCAM_CONFIG("${CMAKE_CURRENT_SOURCE_DIR}/config.h")
 # Build config.mak and related files
 # FIXME: Create USE_FLAGS and pass them to config.sh using --use-flags
 execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --objdir ${CMAKE_CURRENT_BINARY_DIR} --use-flags  "${USE_STAPI} ${USE_STAPI5} /
-${USE_COOLAPI} ${USE_SU980} ${USE_WETEK} ${USE_AZBOX} ${USE_GXAPI} ${USE_MCA} ${USE_SSL} ${USE_LIBCRYPTO} ${USE_LIBUSB} ${USE_PCSC} ${USE_LIBCURL}" --make-config.mak)
+${USE_COOLAPI} ${USE_SU980} ${USE_WETEK} ${USE_AZBOX} ${USE_GXAPI} ${USE_MCA} ${USE_SSL} ${USE_LIBCRYPTO} ${USE_LIBUSB} ${USE_PCSC}  ${USE_COMPRESS_FLAG}" ${USE_LIBCURL}" --make-config.mak)
 # Generate webif/pages.c
 execute_process (COMMAND make --no-print-directory --quiet -C ${CMAKE_CURRENT_SOURCE_DIR}/webif)
 
@@ -724,8 +742,16 @@ add_library (${csncam} STATIC ${csncam_srcs} ${csncam_hdrs})
 #----------------------- the executable ------------------------------
 
 set (exe_name "ncam")
-add_executable (${exe_name} ${exe_srcs} ${exe_hdrs})
+if (NOT USE_COMPRESS EQUAL 1)
+	set (exe_name "ncam")
+else (NOT USE_COMPRESS EQUAL 1)
+	set (exe_name "ncam-upx")
+endif (NOT USE_COMPRESS EQUAL 1)
+add_executable (${exe_name} ${exe_srcs} ${exe_hdrs} ${softcamkey_data})
 target_link_libraries (${exe_name} ${csncam} ${csmodules} ${csreaders} csctapi cscrypt minilzo)
+if (USE_COMPRESS EQUAL 1)
+	add_custom_command(TARGET ${exe_name} POST_BUILD COMMAND upx -q ${COMP_LEVEL} ${exe_name} COMMENT "Executing upx compression...")
+endif (USE_COMPRESS EQUAL 1)
 if(HAVE_LIBRT AND HAVE_LIBUSB)
    if (LIBUSBDIR)
 	set (libusb_link "imp_libusb")
@@ -893,6 +919,8 @@ add_definitions ("-D'CS_REVISION=\"${CS_REVISION}\"'")
 
 execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --ncam-revision COMMAND cut -d "t" -f2 -s COMMAND tr -d '\n' OUTPUT_VARIABLE CS_GIT_VERSION)
 add_definitions ("-D'CS_GIT_VERSION=\"${CS_GIT_VERSION}\"'")
+string(TIMESTAMP CS_BUILD_DATE "%d.%m.%Y %H:%M:%S")
+add_definitions ("-D'CS_BUILD_DATE=\"${CS_BUILD_DATE}\"'")
 
 execute_process (COMMAND date +'%d-%m-%Y' COMMAND tr -d '\n' OUTPUT_VARIABLE CS_DATE_BUILD)
 add_definitions ("-D'CS_DATE_BUILD=\"${CS_DATE_BUILD}\"'")
@@ -1061,6 +1089,10 @@ include (CPack)
 message (STATUS "  operating system: ${NCamOperatingSystem}")
 message (STATUS "  target system: ${CS_TARGET}")
 message (STATUS "  revision: ${CS_REVISION}")
+message (STATUS "  build date: ${CS_BUILD_DATE}")
+if (USE_COMPRESS EQUAL 1)
+	message (STATUS "  packer: ${UPX_VER} (compression level ${COMP_LEVEL})")
+endif (USE_COMPRESS EQUAL 1)
 if (HAVE_LIBCRYPTO)
     if (STATIC_LIBCRYPTO)
          message (STATUS "  use static libcrypto.")

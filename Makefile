@@ -6,6 +6,7 @@ SHELL = /bin/sh
 
 VER := $(shell ./config.sh --ncam-version)
 REV := $(shell ./config.sh --ncam-revision)
+BUILD_DATE := $(shell date +"%d.%m.%Y %T")
 
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 
@@ -67,6 +68,7 @@ override STD_LIBS := -lm $(LIB_PTHREAD) $(LIB_DL) $(LIB_RT)
 override STD_DEFS := -D'CS_REVISION="$(REV)"'
 override STD_DEFS += -D'CS_GIT_VERSION="$(shell ./config.sh --ncam-revision | cut -d "t" -f2 -s)"'
 override STD_DEFS += -D'CS_DATE_BUILD="$(shell date +"%d-%m-%Y")"'
+override STD_DEFS += -D'CS_BUILD_DATE="$(BUILD_DATE)"'
 override STD_DEFS += -D'CS_CONFDIR="$(CONF_DIR)"'
 
 # Compiler warnings
@@ -83,6 +85,18 @@ OBJCOPY = $(CROSS_DIR)$(CROSS)objcopy
 endif
 
 LDFLAGS = -Wl,--gc-sections
+
+# Enable upx compression
+UPX_VER = $(shell (upx --version 2>/dev/null || echo "n.a.") | head -n 1)
+COMP_LEVEL = --best
+ifdef USE_COMPRESS
+	ifeq ($(UPX_VER),n.a.)
+		override USE_COMPRESS =
+	else
+		UPX_INFO = $(shell echo '|  Packer   : $(UPX_VER) (compression level $(COMP_LEVEL))\n')
+		UPX_COMMAND_OSCAM = upx -q $(COMP_LEVEL) $(OSCAM_BIN)
+	endif
+endif
 
 # The linker for powerpc have bug that prevents --gc-sections from working
 # Check for the linker version and if it matches disable --gc-sections
@@ -218,6 +232,7 @@ $(eval $(call prepare_use_flags,PCSC,pcsc))
 $(eval $(call prepare_use_flags,UTF8))
 $(eval $(call prepare_use_flags,COMPRESS,upx))
 $(eval $(call prepare_use_flags,LIBDVBCSA,libdvbcsa))
+$(eval $(call prepare_use_flags,COMPRESS,upx))
 
 # Add PLUS_TARGET and EXTRA_TARGET to TARGET
 ifdef NO_PLUS_TARGET
@@ -505,6 +520,7 @@ $(NCAM_BIN): $(NCAM_BIN).debug
 	$(SAY) "STRIP	$@"
 	$(Q)cp $(NCAM_BIN).debug $(NCAM_BIN)
 	$(Q)$(STRIP) $(NCAM_BIN)
+	$(Q)$(UPX_COMMAND_NCAM)
 	$(Q)$(UPX_COMMAND)
 
 $(LIST_SMARGO_BIN): utils/list_smargo.c
@@ -777,8 +793,9 @@ NCam build system documentation\n\
                          LIBCURL_LDFLAGS='$(DEFAULT_LIBCURL_FLAGS)'\n\
                          LIBCURL_LIB='$(DEFAULT_LIBCURL_LIB)'\n\
 \n\
-   USE_LIBDVBCSA=1    - Request linking with libdvbcsa. USE_LIBDVBCSA is automatically\n\
-                     The variables that control USE_LIBDVBCSA=1 build are:\n\
+   USE_COMPRESS=1    - Request compressing oscam binary with upx.\n\
+\n\
+   USE_LIBDVBCSA=1   - Request linking with libdvbcsa. USE_LIBDVBCSA is automatically\n\
                          LIBDVBCSA_FLAGS='$(DEFAULT_LIBDVBCSA_FLAGS)'\n\
                          LIBDVBCSA_CFLAGS='$(DEFAULT_LIBDVBCSA_FLAGS)'\n\
                          LIBDVBCSA_LDFLAGS='$(DEFAULT_LIBDVBCSA_FLAGS)'\n\

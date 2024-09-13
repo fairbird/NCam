@@ -376,12 +376,12 @@ static void write_versionfile(bool use_stdout)
 		struct tm st;
 		time_t walltime = cs_time();
 		localtime_r(&walltime, &st);
-		fprintf(fp, "Unix starttime: %ld\n", walltime);
+		fprintf(fp, "Unix Starttime: %ld\n", walltime);
 		fprintf(fp, "Starttime:      %02d.%02d.%04d %02d:%02d:%02d\n",
 				st.tm_mday, st.tm_mon + 1, st.tm_year + 1900,
 				st.tm_hour, st.tm_min, st.tm_sec);
 	}
-
+	fprintf(fp, "Build Date:     %s\n", CS_BUILD_DATE);
 #ifdef MODULE_STREAMRELAY
 	fprintf(fp, "Version:        NCam-%s-StreamRelay\n", CS_VERSION);
 #else
@@ -393,7 +393,7 @@ static void write_versionfile(bool use_stdout)
 	fprintf(fp, "Cache exchange: %s\n", CS_AIO_VERSION);
 #endif
 	fprintf(fp, "Compiler:       %s\n", CS_TARGET);
-	fprintf(fp, "Box type:       %s (%s)\n", boxtype_get(), boxname_get());
+	fprintf(fp, "Box Type:       %s (%s)\n", boxtype_get(), boxname_get());
 	fprintf(fp, "PID:            %d\n", getppid());
 	fprintf(fp, "TempDir:        %s\n", cs_tmpdir);
 #ifdef MODULE_GBOX
