@@ -1058,7 +1058,6 @@ include (CPack)
 
 #----------------------- printout resume -----------------------------
 
-message (STATUS "")
 message (STATUS "  operating system: ${NCamOperatingSystem}")
 message (STATUS "  target system: ${CS_TARGET}")
 message (STATUS "  revision: ${CS_REVISION}")

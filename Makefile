@@ -70,7 +70,7 @@ override STD_DEFS += -D'CS_DATE_BUILD="$(shell date +"%d-%m-%Y")"'
 override STD_DEFS += -D'CS_CONFDIR="$(CONF_DIR)"'
 
 # Compiler warnings
-CC_WARN = -W -Wall -Wshadow -Wno-shadow -Wredundant-decls -Wstrict-prototypes -Wold-style-definition -Wno-deprecated-declarations -Wno-trigraphs
+CC_WARN = -W -Wall -Wshadow -Wno-shadow -Wredundant-decls -Wstrict-prototypes -Wold-style-definition -Wno-deprecated-declarations
 
 # Compiler optimizations
 CC_OPTS = -Os -ggdb -pipe -ffunction-sections -fdata-sections
@@ -492,6 +492,7 @@ $(UPX_INFO)\
 |  Binary   : $(NCAM_BIN)\n\
 +-------------------------------------------------------------------------------\n"
 ifeq "$(shell ./config.sh --enabled WEBIF)" "Y"
+	@-$(MAKE) --no-print-directory --quiet -C webif clean
 	@$(MAKE) --no-print-directory --quiet -C webif
 endif
 	@$(MAKE) --no-print-directory $(NCAM_BIN) $(LIST_SMARGO_BIN)
