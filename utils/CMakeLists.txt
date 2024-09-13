@@ -33,5 +33,3 @@ if(STATICLIBUSB AND NOT LIBUSBDIR)
       message(STATUS " utils use system libusb functions")
    endif(LIBUSBDIR AND STATIC_LIBUSB EQUAL 0)
  endif(STATICLIBUSB AND NOT LIBUSBDIR)
-message (STATUS "")
-
