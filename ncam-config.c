@@ -943,11 +943,9 @@ static struct s_rlimit *ratelimit_read_int(void)
 	char token[1024], str1[1024];
 	int32_t i, ret, count = 0;
 	struct s_rlimit *new_rlimit = NULL, *entry, *last = NULL;
-	uint32_t line = 0;
 
 	while(fgets(token, sizeof(token), fp))
 	{
-		line++;
 		if(cs_strlen(token) <= 1) { continue; }
 		if(token[0] == '#' || token[0] == '/') { continue; }
 		if(cs_strlen(token) > 1024) { continue; }

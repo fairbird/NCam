@@ -471,13 +471,13 @@ void chk_port_tab(char *portasc, PTAB *ptab)
 
 void chk_port_camd35_tab(char *portasc, PTAB *ptab)
 {
-	int32_t i, j, nfilts;
+	int32_t i, j;
 	PTAB *newptab;
 	char *ptr1, *ptr2, *ptr4, *provids, *saveptr1 = NULL, *saveptr2 = NULL;
 	if(!cs_malloc(&newptab, sizeof(PTAB)))
 		{ return; }
 
-	for(nfilts = i = 0, ptr1 = strtok_r(portasc, ";", &saveptr1); (i < CS_MAXPORTS) && (ptr1); ptr1 = strtok_r(NULL, ";", &saveptr1), i++)
+	for(i = 0, ptr1 = strtok_r(portasc, ";", &saveptr1); (i < CS_MAXPORTS) && (ptr1); ptr1 = strtok_r(NULL, ";", &saveptr1), i++)
 	{
 		if(!newptab->ports[newptab->nports].ncd && !cs_malloc(&newptab->ports[i].ncd, sizeof(struct ncd_port)))
 			{ break; }
@@ -503,7 +503,6 @@ void chk_port_camd35_tab(char *portasc, PTAB *ptab)
 			newptab->ports[newptab->nports].s_port = atoi(ptr1);
 			if (newptab->ports[newptab->nports].s_port) { newptab->nports++; };
 		}
-		nfilts++;
 	}
 	memcpy(ptab, newptab, sizeof(PTAB));
 	NULLFREE(newptab);

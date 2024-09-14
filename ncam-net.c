@@ -398,7 +398,7 @@ int set_socket_priority(int fd, int priority)
 	}
 #  if  defined(IPV6SUPPORT) && defined(IPV6_TCLASS)
 	int32_t family = 0;
-	uint32_t length = sizeof(int);
+	socklen_t length = sizeof(int);
 #ifndef SO_DOMAIN
 #define SO_DOMAIN 39
 #endif
