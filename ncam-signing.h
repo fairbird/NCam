@@ -34,18 +34,10 @@ struct o_sign_info
 	int		sign_digest_size;
 	int		hash_digest_size;
 	int		hash_size;
-	char	*hash_sha1;
+	char	*hash_sha256;
 };
 
 extern struct o_sign_info osi;
 bool init_signing_info(const char *binfile);
-EVP_PKEY *verify_cert(void);
-DIGEST hashBinary(const char *binfile, DIGEST *sign);
-int verifyBin(const char *binfile, EVP_PKEY *pubkey);
-char* _X509_NAME_oneline_utf8(X509_NAME *name);
-void hex_encode(unsigned char* readbuf, void *writebuf, size_t len);
-void convert_ASN1TIME(ASN1_TIME *t, char* buf, size_t len);
-time_t ASN1_TIME_to_posix_time(const ASN1_TIME* time);
-time_t posix_time(unsigned int year, unsigned int month, unsigned int day, unsigned int hour, unsigned int min, unsigned int sec);
 
 #endif

@@ -10,38 +10,108 @@
 extern char *config_cert;
 struct o_sign_info osi;
 
-bool init_signing_info(const char *binfile)
+static char* _X509_NAME_oneline_utf8(X509_NAME *name)
 {
-	EVP_PKEY *pubkey = NULL;
-	memset(&osi, 0, sizeof(struct o_sign_info));
+	BIO *bio_out = BIO_new(BIO_s_mem());
+	X509_NAME_print_ex(bio_out, name, 0, (ASN1_STRFLGS_RFC2253 | XN_FLAG_SEP_COMMA_PLUS | XN_FLAG_FN_SN | XN_FLAG_DUMP_UNKNOWN_FIELDS) & ~ASN1_STRFLGS_ESC_MSB);
 
-	// verify signing certificate and extract public key
-	pubkey = verify_cert();
+	BUF_MEM *bio_buf;
+	BIO_get_mem_ptr(bio_out, &bio_buf);
 
-	// verify binfile using public key
-	int ret = verifyBin(binfile, pubkey);
-	EVP_PKEY_free(pubkey);
-
-	cs_log ("Signature      = %s", (ret == 1 ? "Valid - Binary's signature was successfully verified using the built-in Public Key"
-											 : "Error: Binary's signature is invalid! Shutting down..."));
-
-	if (pubkey)
+	char *line = (char *)malloc(bio_buf->length + 1);
+	if (line == NULL)
 	{
-		cs_log("Certificate    = %s %s Certificate, %s %s",
-				((osi.cert_is_valid_self || osi.cert_is_valid_system) ? "Trusted" : "Untrusted"),
-				(osi.cert_is_cacert ? "CA" : "Self Signed"),
-				(osi.cert_is_expired ? "expired since" : "valid until"),
-				osi.cert_valid_to);
-	}
-	else
-	{
-		cs_log("Certificate    = Error: Built-in Public Key could not be extracted!");
+		BIO_free(bio_out);
+		return NULL;
 	}
 
-	return ret != 1 ? false : true;
+	memcpy(line, bio_buf->data, bio_buf->length);
+	line[bio_buf->length] = '\0';
+
+	BIO_free(bio_out);
+	return line;
 }
 
-EVP_PKEY *verify_cert(void)
+static void hex_encode(unsigned char* readbuf, void *writebuf, size_t len)
+{
+	size_t i;
+	for(i=0; i < len; i++)
+	{
+		char *l = (char*) (2*i + ((intptr_t) writebuf));
+		snprintf(l, len, "%02x", readbuf[i]);
+	}
+}
+
+static time_t posix_time(unsigned int year, unsigned int month, unsigned int day, unsigned int hour, unsigned int min, unsigned int sec)
+{
+	if (year < 1970 || month < 1 || month > 12 || day < 1 || day > 31
+		|| hour > 23 || min > 59 || sec > 60)
+	{
+		return -1;
+	}
+
+	// days upto months for non-leap years
+	static const unsigned int month_day[13] = {-1, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
+	year -= 1900;
+
+	// number of Februaries since 1900
+	const unsigned int year_for_leap = (month > 2) ? year + 1 : year;
+
+	return sec + min * 60 + hour * 3600 + (month_day[month] + day - 1) * 86400 +
+			(year - 70) * 31536000 + ((year_for_leap - 69) / 4) * 86400 -
+			((year_for_leap - 1) / 100) * 86400 + ((year_for_leap + 299) / 400) * 86400;
+}
+
+static unsigned int two_digits_to_uint(const char **s) {
+	unsigned int n = 10 * (**s - '0');
+	(*s)++;
+	n += (**s - '0');
+	(*s)++;
+	return n;
+}
+
+static time_t ASN1_TIME_to_posix_time(const ASN1_TIME *t) {
+	if (!t) return -1;
+	const char *s = (const char*)t->data;
+	if (!s) return -1;
+
+	unsigned int year, month, day, hour, min, sec;
+	switch(t->type) // https://www.rfc-editor.org/rfc/rfc5280#section-4.1.2.5.1
+	{
+		case V_ASN1_UTCTIME: // YYMMDDHHMMSSZ
+			year = two_digits_to_uint(&s);
+			year += year < 50 ? 2000 : 1900;
+			break;
+		case V_ASN1_GENERALIZEDTIME: // YYYYMMDDHHMMSSZ
+			year = 100 * two_digits_to_uint(&s);
+			year += two_digits_to_uint(&s);
+			break;
+		default:
+			return -1; // error
+	}
+	month = two_digits_to_uint(&s);
+	day   = two_digits_to_uint(&s);
+	hour  = two_digits_to_uint(&s);
+	min   = two_digits_to_uint(&s);
+	sec   = two_digits_to_uint(&s);
+	if (*s != 'Z') return -1;
+	if (year == 9999 && month == 12 && day == 31 && hour == 23 && min == 59
+		&& sec == 59) // 99991231235959Z rfc 5280
+	{
+		return -1;
+	}
+	return posix_time(year, month, day, hour, min, sec);
+}
+
+static void convert_ASN1TIME(ASN1_TIME *t, char *buf, size_t len) {
+	struct tm timeinfo;
+
+	time_t ct = ASN1_TIME_to_posix_time(t);
+	localtime_r(&ct, &timeinfo);
+	strftime(buf, len, "%d.%m.%Y %H:%M:%S", &timeinfo);
+}
+
+static EVP_PKEY *verify_cert(void)
 {
 	int ret = 0;
 	char system_ca_file[MAX_LEN];
@@ -127,7 +197,7 @@ EVP_PKEY *verify_cert(void)
 
 					// self signed check
 					osi.cert_is_cacert = false;
-					if (!strncmp(subj, issuer, cs_strlen(issuer)) == 0)
+					if (!(strncmp(subj, issuer, cs_strlen(issuer)) == 0))
 					{
 						osi.cert_is_cacert = true;
 					}
@@ -274,69 +344,7 @@ EVP_PKEY *verify_cert(void)
 	return pKey;
 }
 
-int verifyBin(const char *binfile, EVP_PKEY *pubkey)
-{
-	int bResult = 0;
-	osi.is_verified = false;
-	osi.sign_digest_size = 0;
-	osi.hash_digest_size = 0;
-	osi.hash_size = 0;
-	osi.hash_sha1 = NULL;
-	EVP_MD_CTX *mctx = NULL;
-	DIGEST sign = {NULL, 0};
-
-	// Get binfile hash digest and encrypted signature
-	DIGEST hash = hashBinary(binfile, &sign);
-
-	// hash sha1
-	osi.sign_digest_size = sign.size;
-	if (hash.data != NULL)
-	{
-		char shaVal[2 * hash.size + 1];
-		hex_encode(hash.data, shaVal, hash.size);
-		osi.hash_digest_size = hash.size;
-		osi.hash_size = cs_strlen(shaVal);
-		if (cs_malloc(&osi.hash_sha1, osi.hash_size + 1))
-		{
-			cs_strncpy(osi.hash_sha1, strtolower(shaVal), osi.hash_size + 1);
-		}
-		free(hash.data);
-
-		if (pubkey)
-		{
-			if (sign.data != NULL)
-			{
-				// Create message digest context
-				mctx = EVP_MD_CTX_create();
-				if (mctx == NULL)
-				{
-					cs_log("Error: EVP_MD_CTX_create() failed");
-				}
-
-				// Init SHA256 verification
-				if (!EVP_VerifyInit(mctx, EVP_sha256()))
-				{
-					cs_log("Error: EVP_VerifyInit() failed");
-				}
-
-				// Update verification with hash_sha1
-				if (!EVP_VerifyUpdate(mctx, shaVal, cs_strlen(shaVal)))
-				{
-					cs_log("Error: EVP_VerifyUpdate() failed");
-				}
-
-				// Finalize verification hash_sha1 against signature and public key
-				bResult = EVP_VerifyFinal(mctx, sign.data, sign.size, pubkey);
-				osi.is_verified = (bResult == 1 ? true : false);
-			}
-		}
-	}
-
-	EVP_MD_CTX_destroy(mctx);
-	return bResult;
-}
-
-DIGEST hashBinary(const char *binfile, DIGEST *sign)
+static DIGEST hashBinary(const char *binfile, DIGEST *sign)
 {
 	DIGEST arRetval = {NULL, 0};
 	struct stat *fi;
@@ -344,7 +352,7 @@ DIGEST hashBinary(const char *binfile, DIGEST *sign)
 	size_t file_size = 0;
 	size_t offset = 0;
 	size_t signature_size = 0;
-	char *data = NULL, *ptr = NULL, *p = NULL;
+	unsigned char *data = NULL, *ptr = NULL, *p = NULL;
 
 	if (cs_malloc(&fi, sizeof(struct stat)))
 	{
@@ -381,122 +389,114 @@ DIGEST hashBinary(const char *binfile, DIGEST *sign)
 				offset = file_size;
 			}
 
-			// SHA1 hash of binary content without encrypted signature part
-			SHA_CTX ctx;
-			SHA1_Init(&ctx);
-			SHA1_Update(&ctx, data, offset);
+			// SHA256 hash of binary content without encrypted signature part
+			mbedtls_sha256_context ctx;
+			mbedtls_sha256_init(&ctx);
+			mbedtls_sha256_starts(&ctx, 0);
+			mbedtls_sha256_update(&ctx, data, offset);
 			munmap(data, file_size);
 			close(fd);
 
 			// Return calculated digest
-			arRetval.data = (unsigned char *)OPENSSL_malloc(SHA_DIGEST_LENGTH);
-			arRetval.size = SHA_DIGEST_LENGTH;
-			SHA1_Final(arRetval.data, &ctx);
+			arRetval.data = (unsigned char *)OPENSSL_malloc(SHA256_DIGEST_LENGTH);
+			arRetval.size = SHA256_DIGEST_LENGTH;
+			mbedtls_sha256_finish(&ctx, arRetval.data);
+			mbedtls_sha256_free(&ctx);
 		}
 	}
 
 	return arRetval;
 }
 
-char* _X509_NAME_oneline_utf8(X509_NAME *name)
+static int verifyBin(const char *binfile, EVP_PKEY *pubkey)
 {
-	BIO *bio_out = BIO_new(BIO_s_mem());
-	X509_NAME_print_ex(bio_out, name, 0, (ASN1_STRFLGS_RFC2253 | XN_FLAG_SEP_COMMA_PLUS | XN_FLAG_FN_SN | XN_FLAG_DUMP_UNKNOWN_FIELDS) & ~ASN1_STRFLGS_ESC_MSB);
+	int bResult = 0;
+	osi.is_verified = false;
+	osi.sign_digest_size = 0;
+	osi.hash_digest_size = 0;
+	osi.hash_size = 0;
+	osi.hash_sha256 = NULL;
+	EVP_MD_CTX *mctx = NULL;
+	DIGEST sign = {NULL, 0};
 
-	BUF_MEM *bio_buf;
-	BIO_get_mem_ptr(bio_out, &bio_buf);
+	// Get binfile hash digest and encrypted signature
+	DIGEST hash = hashBinary(binfile, &sign);
 
-	char *line = (char *)malloc(bio_buf->length + 1);
-	if (line == NULL)
+	// hash sha256
+	osi.sign_digest_size = sign.size;
+	if (hash.data != NULL)
 	{
-		BIO_free(bio_out);
-		return NULL;
+		char shaVal[2 * hash.size + 1];
+		hex_encode(hash.data, shaVal, hash.size);
+		osi.hash_digest_size = hash.size;
+		osi.hash_size = cs_strlen(shaVal);
+		if (cs_malloc(&osi.hash_sha256, osi.hash_size + 1))
+		{
+			cs_strncpy(osi.hash_sha256, strtolower(shaVal), osi.hash_size + 1);
+		}
+		free(hash.data);
+
+		if (pubkey)
+		{
+			if (sign.data != NULL)
+			{
+				// Create message digest context
+				mctx = EVP_MD_CTX_create();
+				if (mctx == NULL)
+				{
+					cs_log("Error: EVP_MD_CTX_create() failed");
+				}
+
+				// Init SHA256 verification
+				if (!EVP_VerifyInit(mctx, EVP_sha256()))
+				{
+					cs_log("Error: EVP_VerifyInit() failed");
+				}
+
+				// Update verification with hash_sha256
+				if (!EVP_VerifyUpdate(mctx, shaVal, cs_strlen(shaVal)))
+				{
+					cs_log("Error: EVP_VerifyUpdate() failed");
+				}
+
+				// Finalize verification hash_sha256 against signature and public key
+				bResult = EVP_VerifyFinal(mctx, sign.data, sign.size, pubkey);
+				osi.is_verified = (bResult == 1 ? true : false);
+			}
+		}
 	}
 
-	memcpy(line, bio_buf->data, bio_buf->length);
-	line[bio_buf->length] = '\0';
-
-	BIO_free(bio_out);
-	return line;
+	EVP_MD_CTX_destroy(mctx);
+	return bResult;
 }
 
-void hex_encode(unsigned char* readbuf, void *writebuf, size_t len)
+bool init_signing_info(const char *binfile)
 {
-	size_t i;
-	for(i=0; i < len; i++)
+	EVP_PKEY *pubkey = NULL;
+	memset(&osi, 0, sizeof(struct o_sign_info));
+
+	// verify signing certificate and extract public key
+	pubkey = verify_cert();
+
+	// verify binfile using public key
+	int ret = verifyBin(binfile, pubkey);
+	EVP_PKEY_free(pubkey);
+
+	cs_log ("Signature      = %s", (ret == 1 ? "Valid - Binary's signature was successfully verified using the built-in Public Key"
+											 : "Error: Binary's signature is invalid! Shutting down..."));
+
+	if (pubkey)
 	{
-		char *l = (char*) (2*i + ((intptr_t) writebuf));
-		snprintf(l, len, "%02x", readbuf[i]);
+		cs_log("Certificate    = %s %s Certificate, %s %s",
+				((osi.cert_is_valid_self || osi.cert_is_valid_system) ? "Trusted" : "Untrusted"),
+				(osi.cert_is_cacert ? "CA" : "Self Signed"),
+				(osi.cert_is_expired ? "expired since" : "valid until"),
+				osi.cert_valid_to);
 	}
-}
-
-void convert_ASN1TIME(ASN1_TIME *t, char *buf, size_t len) {
-	struct tm timeinfo;
-
-	time_t ct = ASN1_TIME_to_posix_time(t);
-	localtime_r(&ct, &timeinfo);
-	strftime(buf, len, "%d.%m.%Y %H:%M:%S", &timeinfo);
-}
-
-// https://stackoverflow.com/a/47015958
-time_t ASN1_TIME_to_posix_time(const ASN1_TIME *t) {
-	if(!t) return -1;
-	const char *s = (const char*)t->data;
-	if (!s) return -1;
-
-	unsigned int two_digits_to_uint(void) // nested function
+	else
 	{
-		unsigned int n = 10 * (*s++ - '0');
-		return n + (*s++ - '0');
+		cs_log("Certificate    = Error: Built-in Public Key could not be extracted!");
 	}
 
-	unsigned int year, month, day, hour, min, sec;
-	switch(t->type) // https://www.rfc-editor.org/rfc/rfc5280#section-4.1.2.5.1
-	{
-		case V_ASN1_UTCTIME: // YYMMDDHHMMSSZ
-			year = two_digits_to_uint();
-			year += year < 50 ? 2000 : 1900;
-			break;
-		case V_ASN1_GENERALIZEDTIME: // YYYYMMDDHHMMSSZ
-			year = 100 * two_digits_to_uint();
-			year += two_digits_to_uint();
-			break;
-		default:
-			return -1; // error
-	}
-
-	month = two_digits_to_uint();
-	day   = two_digits_to_uint();
-	hour  = two_digits_to_uint();
-	min   = two_digits_to_uint();
-	sec   = two_digits_to_uint();
-
-	if (*s != 'Z') return -1;
-	if (year == 9999 && month == 12 && day == 31 && hour == 23 && min == 59
-		&& sec == 59) // 99991231235959Z rfc 5280
-	{
-		return -1;
-	}
-
-	return posix_time(year, month, day, hour, min, sec);
-}
-
-time_t posix_time(unsigned int year, unsigned int month, unsigned int day, unsigned int hour, unsigned int min, unsigned int sec)
-{
-	if (year < 1970 || month < 1 || month > 12 || day < 1 || day > 31
-		|| hour > 23 || min > 59 || sec > 60)
-	{
-		return -1;
-	}
-
-	// days upto months for non-leap years
-	static const unsigned int month_day[13] = {-1, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
-	year -= 1900;
-
-	// number of Februaries since 1900
-	const unsigned int year_for_leap = (month > 2) ? year + 1 : year;
-
-	return sec + min * 60 + hour * 3600 + (month_day[month] + day - 1) * 86400 +
-			(year - 70) * 31536000 + ((year_for_leap - 69) / 4) * 86400 -
-			((year_for_leap - 1) / 100) * 86400 + ((year_for_leap + 299) / 400) * 86400;
+	return ret != 1 ? false : true;
 }
