@@ -10,7 +10,7 @@
 extern char *config_cert;
 struct o_sign_info osi;
 
-static char* _X509_NAME_oneline_utf8(X509_NAME *name)
+static char* _X509_NAME_oneline_utf8(const X509_NAME *name)
 {
 	BIO *bio_out = BIO_new(BIO_s_mem());
 	X509_NAME_print_ex(bio_out, name, 0, (ASN1_STRFLGS_RFC2253 | XN_FLAG_SEP_COMMA_PLUS | XN_FLAG_FN_SN | XN_FLAG_DUMP_UNKNOWN_FIELDS) & ~ASN1_STRFLGS_ESC_MSB);
@@ -32,7 +32,7 @@ static char* _X509_NAME_oneline_utf8(X509_NAME *name)
 	return line;
 }
 
-static void hex_encode(unsigned char* readbuf, void *writebuf, size_t len)
+static void hex_encode(const unsigned char* readbuf, void *writebuf, size_t len)
 {
 	size_t i;
 	for(i=0; i < len; i++)
@@ -103,7 +103,7 @@ static time_t ASN1_TIME_to_posix_time(const ASN1_TIME *t) {
 	return posix_time(year, month, day, hour, min, sec);
 }
 
-static void convert_ASN1TIME(ASN1_TIME *t, char *buf, size_t len) {
+static void convert_ASN1TIME(const ASN1_TIME *t, char *buf, size_t len) {
 	struct tm timeinfo;
 
 	time_t ct = ASN1_TIME_to_posix_time(t);
