@@ -25,6 +25,7 @@
 //#define LCDSUPPORT 1
 //#define LEDSUPPORT 1
 //#define IPV6SUPPORT 1
+//#define WITH_SIGNING 1
 #define MODULE_MONITOR 1
 //#define WITH_CARDLIST 1
 

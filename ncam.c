@@ -74,6 +74,10 @@ static void ssl_init(void) { }
 static void ssl_done(void) { }
 #endif
 
+#ifdef WITH_SIGNING
+#include "ncam-signing.h"
+#endif
+
 extern char *config_mak;
 
 /*****************************************************************************
@@ -363,6 +367,9 @@ static void parse_cmdline_params(int argc, char **argv)
 
 static void write_versionfile(bool use_stdout)
 {
+#ifdef WITH_SIGNING
+	if(!init_signing_info(prog_name)) cs_exit_ncam();
+#endif
 	FILE *fp = stdout;
 	if(!use_stdout)
 	{
@@ -414,6 +421,24 @@ static void write_versionfile(bool use_stdout)
 #ifdef WEBIF
 	fprintf(fp, "WebifPort:      %d\n", cfg.http_port);
 #endif
+
+#ifdef WITH_SIGNING
+	fprintf(fp, "\n");
+	fprintf(fp, "Signature:      %s\n", (osi.is_verified ? "Valid - successfully verified using built-in Public Key" : "Invalid - wrong signature or internal error occured!"));
+	fprintf(fp, "  SHA1:         %s\n", osi.hash_sha1);
+	fprintf(fp, "Certificate:    %s %s Certificate\n", ((osi.cert_is_valid_self || osi.cert_is_valid_system) ? "Trusted" : "Untrusted"), (osi.cert_is_cacert ? "CA" : "self signed"));
+	fprintf(fp, "  Subject:      %s\n", osi.cert_subject);
+	fprintf(fp, "  Issuer:       %s\n", osi.cert_issuer);
+	fprintf(fp, "  Version:      %d\n", osi.cert_version);
+	fprintf(fp, "  Serial:       %s\n", osi.cert_serial);
+	fprintf(fp, "  Fingerpr.:    %s\n", osi.cert_fingerprint);
+	fprintf(fp, "  Valid from:   %s\n", osi.cert_valid_from);
+	fprintf(fp, "  Valid to:     %s\n", osi.cert_valid_to);
+	fprintf(fp, "  Status:       %s\n", (osi.cert_is_expired ? "Expired" : "Valid"));
+	fprintf(fp, "  Type:         %s\n", osi.pkey_type);
+	if (osi.system_ca_file) fprintf(fp, "System CA:      %s\n", osi.system_ca_file);
+#endif
+
 	fprintf(fp, "\n");
 	write_conf(WEBIF, "Web interface support");
 	write_conf(WEBIF_LIVELOG, "LiveLog support");
@@ -466,7 +491,9 @@ static void write_versionfile(bool use_stdout)
 	write_conf(WITH_LIBCURL, "Curl to access URLs");
 	write_conf(WITH_EMU, "Emulator support");
 	write_conf(WITH_SOFTCAM, "Built-in SoftCam.Key");
-
+#ifdef WITH_SIGNING
+	write_conf(WITH_SIGNING, "Binary signing support");
+#endif
 	fprintf(fp, "\n");
 	write_conf(MODULE_CAMD33, "camd 3.3x");
 	write_conf(MODULE_CAMD35, "camd 3.5 UDP");

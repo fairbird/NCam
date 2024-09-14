@@ -1,6 +1,6 @@
 #!/bin/sh
 
-addons="WEBIF WEBIF_LIVELOG WEBIF_JQUERY WITH_COMPRESS_WEBIF TOUCH WITH_SSL HAVE_DVBAPI WITH_NEUTRINO READ_SDT_CHARSETS IRDETO_GUESSING CS_ANTICASC WITH_DEBUG MODULE_MONITOR WITH_LB CS_CACHEEX CS_CACHEEX_AIO CW_CYCLE_CHECK LCDSUPPORT LEDSUPPORT CLOCKFIX IPV6SUPPORT WITH_CARDLIST WITH_EMU WITH_SOFTCAM"
+addons="WEBIF WEBIF_LIVELOG WEBIF_JQUERY WITH_COMPRESS_WEBIF TOUCH WITH_SSL HAVE_DVBAPI WITH_NEUTRINO READ_SDT_CHARSETS IRDETO_GUESSING CS_ANTICASC WITH_DEBUG MODULE_MONITOR WITH_LB CS_CACHEEX CS_CACHEEX_AIO CW_CYCLE_CHECK LCDSUPPORT LEDSUPPORT CLOCKFIX IPV6SUPPORT WITH_SIGNING WITH_CARDLIST WITH_EMU WITH_SOFTCAM"
 protocols="MODULE_CAMD33 MODULE_CAMD35 MODULE_CAMD35_TCP MODULE_NEWCAMD MODULE_CCCAM MODULE_CCCSHARE MODULE_GBOX MODULE_RADEGAST MODULE_SCAM MODULE_SERIAL MODULE_CONSTCW MODULE_PANDORA MODULE_GHTTP MODULE_STREAMRELAY"
 readers="READER_NAGRA READER_NAGRA_MERLIN READER_IRDETO READER_CONAX READER_CRYPTOWORKS READER_SECA READER_VIACCESS READER_VIDEOGUARD READER_DRE READER_TONGFANG READER_STREAMGUARD READER_JET READER_BULCRYPT READER_GRIFFIN READER_DGCRYPT"
 card_readers="CARDREADER_PHOENIX CARDREADER_INTERNAL CARDREADER_SC8IN1 CARDREADER_MP35 CARDREADER_SMARGO CARDREADER_DB2COM CARDREADER_STAPI CARDREADER_STAPI5 CARDREADER_GXAPI CARDREADER_STINGER CARDREADER_DRECAS"
@@ -27,6 +27,7 @@ CONFIG_CW_CYCLE_CHECK=y
 # CONFIG_LEDSUPPORT=n
 # CONFIG_CLOCKFIX=n
 # CONFIG_IPV6SUPPORT=n
+# CONFIG_WITH_SIGNING=n
 # CONFIG_WITH_CARDLIST=n
 CONFIG_WITH_EMU=y
 CONFIG_WITH_SOFTCAM=y
@@ -103,12 +104,30 @@ Usage: `basename $0` [parameters]
 
  -R, --restore             Restore default config.
 
- -v, --ncam-version       Display NCam version.
- -r, --ncam-revision      Display NCam SVN revision.
+ -cc, --create-cert [option]  Create a new self signed X.509 certificate and private key.
 
- -O, --detect-osx-sdk-version  Find where OS X SDK is located
+    The following [option]s in this order are supported:
+      ecdsa|rsa       - key type (default: ecdsa)
+      prime256v1|4096 - key length (default: prime256v1), any ecdsa curve or rsa length should work
+      ca              - create Root CA certificates
+      subject         - X.509 certificate subject e.g. 'My NCam Distribution'
 
- -h, --help                Display this help text.
+ -cf, --cert-file [option]    Get filename of requested (cert|privkey) type.
+ -ci, --cert-info             Get a list of useful certificate information.
+ -cl, --add-cert [option]     Create symlinks to use a custom, pre-created set of X.509 certificate and private key.
+
+    The following [option]s in this order are mandatory:
+      certificate filename - relative/absolute path to certificate file
+      private key filename - relative/absolute path to private key file
+
+ -sm, --sign-marker           Get Ncam binary signature marker.
+ -v, --ncam-version          Display Ncam version.
+ -r, --ncam-revision         Display Ncam SVN revision. //DEPRECATED, will be removed in later versions
+ -c, --ncam-commit           Display Ncam GIT short commit sha 8-digits.
+
+ -O, --detect-osx-sdk-version Find where OS X SDK is located
+
+ -h, --help                   Display this help text.
 
 Examples:
   # Enable WEBIF and SSL
@@ -129,6 +148,15 @@ Examples:
   # Disable all card readers except INTERNAL
   ./config.sh -D card_readers -E CARDREADER_INTERNAL
 
+ # Create new self signed private key and certificate with defaults
+  ./config.sh --create-cert
+
+  # Create new self signed private key and certificate with custom settings
+  ./config.sh --create-cert rsa 4096
+
+  # Create new Root CA with private key and certificate with custom settings
+  ./config.sh --create-cert ecdsa prime256v1 ca 'My NCam Distribution'
+
 Available options:
        addons: $addons
     protocols: $protocols
@@ -142,6 +170,11 @@ OBJDIR=.
 
 # Use flags set by --use-flags parameter
 USE_FLAGS=
+
+# Used by --cert, --get-cert parameter
+CERT_DIR="./certs"
+CERT_PRIVATE_KEY="private.key"
+CERT_X509="certificate.crt"
 
 have_flag() {
 	for FLAG in $USE_FLAGS
@@ -312,6 +345,7 @@ update_deps() {
 	enabled WITH_EMU && enable_opt READER_VIACCESS >/dev/null
 	enabled WITH_EMU && enable_opt MODULE_NEWCAMD >/dev/null
 	disabled WITH_EMU && disable_opt WITH_SOFTCAM >/dev/null
+	enabled WITH_SIGNING && enable_opt WITH_SSL >/dev/null
 }
 
 list_config() {
@@ -397,6 +431,16 @@ make_config_c() {
 		done
 		echo "  ;"
 	fi
+
+	if enabled WITH_SIGNING
+	then
+		printf "\nconst char *config_cert =\n"
+		cat $(cert_file 'cert') | while read LINE
+		do
+			printf "\"%s\\\\n\"\n" "$LINE"
+		done
+		echo "  ;"
+	fi
 }
 
 make_config_mak() {
@@ -471,22 +515,22 @@ print_components() {
 
 menu_addons() {
 	${DIALOG} --checklist "\nChoose add-ons:\n " $height $width $listheight \
-		WEBIF			"Web Interface"					$(check_test "WEBIF") \
+		WEBIF			"Web Interface"						$(check_test "WEBIF") \
 		WEBIF_LIVELOG		"LiveLog"						$(check_test "WEBIF_LIVELOG") \
-		WEBIF_JQUERY		"Jquery onboard (if disabled webload)"		$(check_test "WEBIF_JQUERY") \
-		WITH_COMPRESS_WEBIF	"Compress webpages"						$(check_test "WITH_COMPRESS_WEBIF") \
+		WEBIF_JQUERY		"Jquery onboard (if disabled webload)"			$(check_test "WEBIF_JQUERY") \
+		WITH_COMPRESS_WEBIF	"Compress webpages"					$(check_test "WITH_COMPRESS_WEBIF") \
 		TOUCH			"Touch Web Interface"					$(check_test "TOUCH") \
 		WITH_SSL		"OpenSSL support"					$(check_test "WITH_SSL") \
 		HAVE_DVBAPI		"DVB API"						$(check_test "HAVE_DVBAPI") \
                 WITH_NEUTRINO		"Neutrino support"                      		$(check_test "WITH_NEUTRINO") \
 		READ_SDT_CHARSETS	"DVB API read-sdt charsets"				$(check_test "READ_SDT_CHARSETS") \
-		IRDETO_GUESSING	"Irdeto guessing"					$(check_test "IRDETO_GUESSING") \
+		IRDETO_GUESSING		"Irdeto guessing"					$(check_test "IRDETO_GUESSING") \
 		CS_ANTICASC		"Anti cascading"					$(check_test "CS_ANTICASC") \
 		WITH_DEBUG		"Debug messages"					$(check_test "WITH_DEBUG") \
 		MODULE_MONITOR		"Monitor"						$(check_test "MODULE_MONITOR") \
-		WITH_LB		"Loadbalancing"					$(check_test "WITH_LB") \
+		WITH_LB			"Loadbalancing"						$(check_test "WITH_LB") \
 		CS_CACHEEX		"Cache exchange"					$(check_test "CS_CACHEEX") \
-		CS_CACHEEX_AIO		"Cache exchange aio (depend on Cache exchange)"	$(check_test "CS_CACHEEX_AIO") \
+		CS_CACHEEX_AIO		"Cache exchange aio (depend on Cache exchange)"		$(check_test "CS_CACHEEX_AIO") \
 		CW_CYCLE_CHECK		"CW Cycle Check"					$(check_test "CW_CYCLE_CHECK") \
 		LCDSUPPORT		"LCD support"						$(check_test "LCDSUPPORT") \
 		LEDSUPPORT		"LED support"						$(check_test "LEDSUPPORT") \
@@ -495,6 +539,7 @@ menu_addons() {
 		WITH_CARDLIST		"Cardlist support"					$(check_test "WITH_CARDLIST") \
 		WITH_EMU		"Emulator support"					$(check_test "WITH_EMU") \
 		WITH_SOFTCAM		"Built-in SoftCam.Key"					$(check_test "WITH_SOFTCAM") \
+		WITH_SIGNING		"Binary signing with X.509 certificate"			$(check_test "WITH_SIGNING") \
 		2> ${tempfile}
 
 	opt=${?}
@@ -623,6 +668,122 @@ config_dialog() {
 	done
 }
 
+create_cert() {
+	# define certificate details
+	CERT_SUBJECT_DEFAULT="/CN=Private NCam Self Signed Certificate"
+	CERT_DAYS=365
+
+	mkdir -p "$CERT_DIR"
+
+	# define certificate type
+	case "$1" in
+		'rsa')
+			CERT_TYPE="rsa"
+			[ -z $2 ] && CERT_ALGO="4096" || CERT_ALGO="$2"
+			PRIVATE_KEY_GEN="openssl genrsa -out "$CERT_DIR/$CERT_PRIVATE_KEY" ${CERT_ALGO}"
+			;;
+		'ecdsa'|*)
+			CERT_TYPE="ec -pkeyopt ec_paramgen_curve"
+			[ -z $2 ] && CERT_ALGO="prime256v1" || CERT_ALGO="$2"
+			PRIVATE_KEY_GEN="openssl ecparam -name ${CERT_ALGO} -genkey -noout -out "$CERT_DIR/$CERT_PRIVATE_KEY""
+			;;
+	esac
+
+	# custom subject
+	if [ -z "$4" ]; then
+		CERT_SUBJECT="$CERT_SUBJECT_DEFAULT"
+	else
+		CERT_SUBJECT="${*:4}"
+		CERT_SUBJECT="/CN=${CERT_SUBJECT/\/CN=/}"
+	fi
+
+	if [ ! -f "$CERT_DIR/$CERT_PRIVATE_KEY" ] || [ ! -f "$CERT_DIR/$CERT_X509" ]; then
+		# create X.509 V3 extensions file
+		printf "authorityKeyIdentifier=keyid,issuer\nbasicConstraints=CA:FALSE\nkeyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment\n" > "$CERT_DIR/v3.ext"
+
+		if [ "$3" != 'ca' ]; then
+			# create self signed certificate and private key
+			openssl req -nodes -x509 -utf8 -sha256 -newkey ${CERT_TYPE}:${CERT_ALGO} -addext "$(grep keyUsage "$CERT_DIR/v3.ext")" -keyout "$CERT_DIR/$CERT_PRIVATE_KEY" -out "$CERT_DIR/$CERT_X509" -days $CERT_DAYS -subj "${CERT_SUBJECT}"
+		else
+			if [ ! -f "$CERT_DIR/root-ca-$CERT_PRIVATE_KEY" ] || [ ! -f "$CERT_DIR/root-ca-$CERT_X509" ]; then
+				# create Root CA, CA certificate and private key
+				openssl req -nodes -x509 -utf8 -sha256 -newkey ${CERT_TYPE}:${CERT_ALGO} -extensions v3_ca -keyout "$CERT_DIR/root-ca-$CERT_PRIVATE_KEY" -out "$CERT_DIR/root-ca-$CERT_X509" -days $(($CERT_DAYS * 10)) -subj "$(echo "$CERT_SUBJECT" | sed "s/ Self Signed Certificate//g") Root CA"
+			fi
+
+			# create private key
+			$($PRIVATE_KEY_GEN)
+
+			# create csr
+			openssl req -new -utf8 -sha256 -key "$CERT_DIR/$CERT_PRIVATE_KEY" -out "$CERT_DIR/$CERT_X509".csr -subj "$(echo "$CERT_SUBJECT" | sed "s/Self Signed Certificate/CA Certificate/g")"
+
+			# issue new certificate by Root CA
+			openssl x509 -req -nameopt utf8 -sha256 -in "$CERT_DIR/$CERT_X509".csr -extfile "$CERT_DIR/v3.ext" -CA "$CERT_DIR/root-ca-$CERT_X509" -CAkey "$CERT_DIR/root-ca-$CERT_PRIVATE_KEY" -CAcreateserial -out "$CERT_DIR/$CERT_X509" -days $CERT_DAYS
+
+			# chain Root CA and CA certificate
+			cat "$CERT_DIR/$CERT_X509" "$CERT_DIR/root-ca-$CERT_X509" > "$CERT_DIR/$CERT_X509.chained"
+			mv "$CERT_DIR/$CERT_X509.chained" "$CERT_DIR/$CERT_X509"
+		fi
+		# cleanup
+		rm -f "$CERT_DIR/$CERT_X509".csr "$CERT_DIR/v3.ext"
+	else
+		echo "Private Key and/or Certificates still exists in $(realpath "$(pwd)/$CERT_DIR")!" 1>&2
+		return 1
+	fi
+}
+
+add_cert() {
+	if [ ! -f "$1" ] || [ ! -f "$2" ]; then
+		echo "At least one of the provided files was not found!" 1>&2
+		return 1
+	else
+		mkdir -p "$CERT_DIR"
+		# Symlink certificate
+		ln -sf "$1" "$CERT_DIR/$CERT_X509"
+		# Symlink private key
+		ln -sf "$2" "$CERT_DIR/$CERT_PRIVATE_KEY"
+	fi
+}
+
+cert_file() {
+	case "$1" in
+		'cert')
+			CHECK_FILE="$CERT_DIR/$CERT_X509"
+			HINT="Certificate"
+			;;
+		'privkey')
+			CHECK_FILE="$CERT_DIR/$CERT_PRIVATE_KEY"
+			HINT="Private Key"
+			;;
+	esac
+
+	if [ -f "$CHECK_FILE" ]; then
+		echo "$(realpath "$CHECK_FILE")"
+		return 0;
+	else
+		echo "$HINT file not found in $(realpath $(pwd)/$CERT_DIR)!" 1>&2
+		return 1;
+	fi
+}
+
+cert_info() {
+	if [ -f "$CERT_DIR/$CERT_X509" ]; then
+		for attrib in 'Subject' 'Issuer' 'Not Before' 'Not After' 'Public Key Algorithm'\
+					'Public-Key' 'ASN1 OID' 'NIST CURVE' 'Exponent' 'Signature Algorithm'; do
+			if [ "$attrib" = 'Not Before' ]; then
+				openssl x509 -in "$CERT_DIR/$CERT_X509" -noout -nameopt oneline,-esc_msb -startdate | awk -F '=' '{print $2}' | date +"%d.%m.%Y %H:%M:%S" -f - | xargs -0 printf "$attrib: %s" 2>/dev/null
+			elif [ "$attrib" = 'Not After' ]; then
+				openssl x509 -in "$CERT_DIR/$CERT_X509" -noout -nameopt oneline,-esc_msb -enddate | awk -F '=' '{print $2}' | date +"%d.%m.%Y %H:%M:%S" -f - | xargs -0 printf "$attrib: %s" 2>/dev/null
+			else
+				openssl x509 -in "$CERT_DIR/$CERT_X509" -text -noout -nameopt oneline,-esc_msb | grep -m1 "$attrib" | xargs -r | cat
+			fi
+		done
+		return 0
+	else
+		echo "$HINT file not found in $(realpath $(pwd)/$CERT_DIR)!" 1>&2
+		return 1
+	fi
+}
+
 # Change working directory to the directory where the script is
 cd $(dirname $0)
 
@@ -725,6 +886,30 @@ do
 	;;
 	'-d'|'--disabled')
 		disabled $2 && echo "Y" && exit 0 || echo "N" && exit 1
+		break
+	;;
+	'-cc'|'--create-cert')
+		shift
+		create_cert $@
+		exit $?
+		;;
+	'-cl'|'--add-cert')
+		shift
+		add_cert $@
+		exit $?
+		;;
+	'-cf'|'--cert-file')
+		shift
+		cert_file $1
+		exit $?
+		;;
+	'-ci'|'--cert-info')
+		cert_info
+		exit $?
+		;;
+	'-sm'|'--sign-marker')
+		obsm=`grep '^#define OBSM' ncam-signing.h | cut -d\" -f2`
+		echo $obsm
 		break
 	;;
 	'-v'|'--ncam-version')

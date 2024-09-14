@@ -102,6 +102,38 @@ ifdef USE_COMPRESS
 	endif
 endif
 
+# Enable binary signing
+ifeq "$(shell ./config.sh --enabled WITH_SIGNING)" "Y"
+	SIGN_CERT   := $(shell ./config.sh --create-cert ecdsa prime256v1 ca 2>/dev/null || false)
+	SIGN_CERT    = $(shell ./config.sh --cert-file cert || echo "n.a.")
+
+	ifeq ($(SIGN_CERT),n.a.)
+		override WITH_SIGNING = "N"
+		SIGN_COMMAND_OSCAM = $(SAY) "SIGN	Disabled due to missing of certificate files!";
+	else
+		override USE_SSL=1
+
+		SIGN_PRIVKEY   = $(shell ./config.sh --cert-file privkey)
+		SIGN_MARKER    = $(shell ./config.sh --sign-marker)
+		SIGN_PUBKEY    = $(OBJDIR)/signing/pkey
+		SIGN_HASH      = $(OBJDIR)/signing/sha1
+		SIGN_DIGEST    = $(OBJDIR)/signing/sha256
+		SIGN_SUBJECT   = $(shell ./config.sh --cert-info | head -n 1)
+		SIGN_SIGALGO   = $(shell ./config.sh --cert-info | tail -n 1)
+		SIGN_VALID     = $(shell ./config.sh --cert-info | head -n 4 | tail -n 1)
+		SIGN_PUBALGO   = $(shell ./config.sh --cert-info | head -n 5 | tail -n 1)
+		SIGN_PUBBIT    = $(shell ./config.sh --cert-info | head -n 6 | tail -n 1)
+		SIGN_INFO      = $(shell echo '|  Signing  : $(SIGN_PUBALGO), $(SIGN_PUBBIT), $(SIGN_SIGALGO),\n|             Valid $(SIGN_VALID), $(SIGN_SUBJECT)\n')
+		SIGN_COMMAND_OSCAM += sha1sum $@ | awk '{ print $$1 }' | tr -d '\n' > $(SIGN_HASH);
+		SIGN_COMMAND_OSCAM += printf 'SIGN	SHA1('; stat -c %s $(SIGN_HASH) | tr -d '\n'; printf '): '; cat $(SIGN_HASH); printf ' -> ';
+		SIGN_COMMAND_OSCAM += openssl x509 -pubkey -noout -in $(SIGN_CERT)         -out $(SIGN_PUBKEY);
+		SIGN_COMMAND_OSCAM += openssl dgst -sha256      -sign $(SIGN_PRIVKEY)      -out $(SIGN_DIGEST) $(SIGN_HASH);
+		SIGN_COMMAND_OSCAM += openssl dgst -sha256    -verify $(SIGN_PUBKEY) -signature $(SIGN_DIGEST) $(SIGN_HASH) | tr -d '\n';
+		SIGN_COMMAND_OSCAM += printf '$(SIGN_MARKER)' | cat - $(SIGN_DIGEST) >> $@;
+		SIGN_COMMAND_OSCAM += printf ' <- DIGEST('; stat -c %s $(SIGN_DIGEST) | tr -d '\n'; printf ')\n';
+	endif
+endif
+
 # The linker for powerpc have bug that prevents --gc-sections from working
 # Check for the linker version and if it matches disable --gc-sections
 # For more information about the bug see:
@@ -440,6 +472,7 @@ SRC-$(CONFIG_READER_VIDEOGUARD) += reader-videoguard-common.c
 SRC-$(CONFIG_READER_VIDEOGUARD) += reader-videoguard1.c
 SRC-$(CONFIG_READER_VIDEOGUARD) += reader-videoguard12.c
 SRC-$(CONFIG_READER_VIDEOGUARD) += reader-videoguard2.c
+SRC-$(CONFIG_WITH_SIGNING) += ncam-signing.c
 SRC-y += ncam-aes.c
 SRC-y += ncam-array.c
 SRC-y += ncam-hashtable.c
@@ -485,13 +518,14 @@ SRC := $(subst config.c,$(OBJDIR)/config.c,$(SRC))
 # starts the compilation.
 all:
 	@./config.sh --use-flags "$(USE_FLAGS)" --objdir "$(OBJDIR)" --make-config.mak
-	@-mkdir -p $(OBJDIR)/cscrypt $(OBJDIR)/csctapi $(OBJDIR)/minilzo $(OBJDIR)/webif
+	@-mkdir -p $(OBJDIR)/cscrypt $(OBJDIR)/csctapi $(OBJDIR)/minilzo $(OBJDIR)/webif $(OBJDIR)/signing
 	@-printf "\
 +-------------------------------------------------------------------------------\n\
 | NCam ver: $(VER) rev: $(REV) target: $(TARGET)\n\
 | Tools:\n\
 |  CROSS    = $(CROSS_DIR)$(CROSS)\n\
 |  CC       = $(CC)\n\
+|  STRIP    = $(STRIP)\n\
 $(UPX_INFO_TOOL)\
 | Settings:\n\
 |  CONF_DIR = $(CONF_DIR)\n\
@@ -507,6 +541,8 @@ $(UPX_INFO_TOOL)\
 |  Readers  : $(shell ./config.sh --use-flags "$(USE_FLAGS)" --show-enabled readers | sed -e 's|READER_||g')\n\
 |  CardRdrs : $(shell ./config.sh --use-flags "$(USE_FLAGS)" --show-enabled card_readers | sed -e 's|CARDREADER_||g')\n\
 |  Compiler : $(shell $(CC) --version 2>/dev/null | head -n 1)\n\
+$(UPX_INFO)\
+$(SIGN_INFO)\
 |  Config   : $(OBJDIR)/config.mak\n\
 |  Binary   : $(NCAM_BIN)\n\
 +-------------------------------------------------------------------------------\n"
@@ -519,13 +555,14 @@ endif
 $(NCAM_BIN).debug: $(OBJ)
 	$(SAY) "LINK	$@"
 	$(Q)$(CC) $(LDFLAGS) $(OBJ) $(LIBS) -o $@
+	$(Q)$(SIGN_COMMAND_OSCAM)
 
 $(NCAM_BIN): $(NCAM_BIN).debug
 	$(SAY) "STRIP	$@"
 	$(Q)cp $(NCAM_BIN).debug $(NCAM_BIN)
 	$(Q)$(STRIP) $(NCAM_BIN)
 	$(Q)$(UPX_COMMAND_NCAM)
-	$(Q)$(UPX_COMMAND)
+	$(Q)$(SIGN_COMMAND_OSCAM)
 
 $(LIST_SMARGO_BIN): utils/list_smargo.c
 	$(SAY) "BUILD	$@"
