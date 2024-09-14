@@ -802,9 +802,9 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 	static const char *stxtEx[16] = {"", "group", "caid", "ident", "class", "chid", "queue", "peer", "sid", "", "", "", "", "", "", ""};
 	static const char *stxtWh[16] = {"", "user ", "reader ", "server ", "lserver ", "", "", "", "", "", "", "", "" , "" , "", ""};
 #ifdef CS_CACHEEX_AIO
-	char sby[100] = "", sreason[35] = "", scwcinfo[32] = "", schaninfo[CS_SERVICENAME_SIZE] = "", srealecmtime[50]="";
+	char sby[100] = "", sreason[100] = "", scwcinfo[32] = "", schaninfo[CS_SERVICENAME_SIZE] = "", srealecmtime[50]="";
 #else
-	char sby[100] = "", sreason[32] = "", scwcinfo[32] = "", schaninfo[CS_SERVICENAME_SIZE] = "", srealecmtime[50]="";
+	char sby[100] = "", sreason[70] = "", scwcinfo[32] = "", schaninfo[CS_SERVICENAME_SIZE] = "", srealecmtime[50]="";
 #endif
 	char erEx[32] = "";
 	char usrname[38] = "";
@@ -917,7 +917,7 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 	if(er->rc < E_NOTFOUND)
 	{
 		er->rcEx = 0;
-		memset(er->msglog, 0, MSGLOGSIZE); // remove reader msglog from previous requests that failed, founds never give back msglog!
+		// memset(er->msglog, 0, MSGLOGSIZE); // remove reader msglog from previous requests that failed, founds never give back msglog!
 	}
 
 	if(er->rcEx)
@@ -933,8 +933,18 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 		snprintf(schaninfo, sizeof(schaninfo) - 1, " - %s", channame);
 	}
 
+#ifdef CS_CACHEEX
+	int cx = 0;
 	if(er->msglog[0])
-		{ snprintf(sreason, sizeof(sreason) - 1, " (%.26s)", er->msglog); }
+	{
+		cx = snprintf(sreason, sizeof(sreason) - 1, " (%s)", er->msglog);
+	}
+#else
+	if(er->msglog[0])
+	{
+		snprintf(sreason, sizeof(sreason) - 1, " (%s)", er->msglog);
+	}
+#endif
 #ifdef CW_CYCLE_CHECK
 	if(er->cwc_msg_log[0])
 		{ snprintf(scwcinfo, sizeof(scwcinfo) - 1, " (%.26s)", er->cwc_msg_log); }
@@ -943,10 +953,14 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 	cs_ftime(&tpe);
 
 #ifdef CS_CACHEEX
-	int cx = 0;
+	int cx2 = 0;
 	if(er->rc >= E_CACHEEX && er->cacheex_wait_time && er->cacheex_wait_time_expired)
 	{
-		cx = snprintf ( sreason, sizeof sreason, " (wait_time over)");
+		cx2 = snprintf(sreason+cx, (sizeof sreason)-cx, " (wait_time over)");
+	}
+	else
+	{
+		cx2 = cx;
 	}
 
 	if(er->cw_count>1)
@@ -956,15 +970,15 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 		{
 			uint32_t cw_count_cleaned = er->cw_count ^ 0x0F000000;
 			if(cw_count_cleaned > 1)
-				snprintf(sreason+cx, (sizeof sreason)-cx, " (cw count %d) (lg)", cw_count_cleaned);
+				snprintf(sreason+cx2, (sizeof sreason)-cx2, " (cw count %d) (lg)", cw_count_cleaned);
 			else
-				snprintf(sreason+cx, (sizeof sreason)-cx, " (lg)");
+				snprintf(sreason+cx2, (sizeof sreason)-cx2, " (lg)");
 		}
 		else
 		{
 #endif
 
-			snprintf (sreason+cx, (sizeof sreason)-cx, " (cw count %d)", er->cw_count);
+			snprintf (sreason+cx2, (sizeof sreason)-cx2, " (cw count %d)", er->cw_count);
 
 #ifdef CS_CACHEEX_AIO
 		}
@@ -973,7 +987,7 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 	else
 	{
 		if(er->localgenerated)
-			snprintf(sreason+cx, (sizeof sreason)-cx, " (lg)");
+			snprintf(sreason+cx2, (sizeof sreason)-cx2, " (lg)");
 #endif
 	}
 
@@ -1565,6 +1579,7 @@ void chk_dcw(struct s_ecm_answer *ea)
 		ert->rcEx = 0;
 		ert->rc = ea->rc;
 		ert->grp |= eardr->grp;
+		cs_strncpy(ert->msglog, ea->msglog, sizeof(ert->msglog));
 #ifdef HAVE_DVBAPI
 		ert->adapter_index = ea->er->adapter_index;
 #endif
