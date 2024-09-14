@@ -461,7 +461,7 @@ make_config_mak() {
 }
 
 check_test() {
-	if [ "$(cat $tempfileconfig | grep "^#define $1 1$")" != "" ]; then
+	if [ "$(cat $configfile | grep "^#define $1 1$")" != "" ]; then
 		echo "on"
 	else
 		echo "off"
@@ -509,8 +509,6 @@ print_components() {
 	for i in $card_readers; do
 		printf "\t%-20s: %s\n" $i $(check_test "$i")
 	done
-
-	cp -f $tempfileconfig $configfile
 }
 
 menu_addons() {
@@ -659,9 +657,10 @@ config_dialog() {
 			Readers) menu_readers ;;
 			CardReaders) menu_card_readers ;;
 			Save)
-				print_components
+				cp -f $tempfileconfig $configfile
 				update_deps
 				write_enabled
+				print_components
 				exit 0
 			;;
 		esac

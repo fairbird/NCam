@@ -871,7 +871,7 @@ SSL_CTX *SSL_Webif_Init(void)
 	ctx = SSL_CTX_new(SSLv23_server_method());
 
 #if defined(SSL_CTX_set_ecdh_auto)
-		SSL_CTX_set_ecdh_auto(ctx, 1);
+		(void) SSL_CTX_set_ecdh_auto(ctx, 1);
 #elif defined(EC_PKEY_NO_PARAMETERS) && defined(NID_X9_62_prime256v1)
 		EC_KEY *ecdh = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
 		if(ecdh)
