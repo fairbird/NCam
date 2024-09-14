@@ -93,12 +93,12 @@ COMP_LEVEL = --best
 ifdef USE_COMPRESS
 	ifeq ($(UPX_VER),n.a.)
 		override USE_COMPRESS =
-		UPX_COMMAND_OSCAM = $(SAY) "UPX	Disabled due to missing upx binary in PATH!";
+		UPX_COMMAND_NCAM = $(SAY) "UPX	Disabled due to missing upx binary in PATH!";
 	else
 		override STD_DEFS += -D'USE_COMPRESS="$(USE_COMPRESS)"' -D'COMP_LEVEL="$(COMP_LEVEL)"' -D'COMP_VERSION="$(UPX_VER)"'
 		UPX_INFO_TOOL = $(shell echo '|  UPX      = $(UPX)\n')
 		UPX_INFO = $(shell echo '|  Packer   : $(UPX_VER) (compression level $(COMP_LEVEL))\n')
-		UPX_COMMAND_OSCAM = $(UPX) -q $(COMP_LEVEL) $(OSCAM_BIN) | grep '^[[:space:]]*[[:digit:]]* ->' | xargs | cat | xargs -0 printf 'UPX \t%s'
+		UPX_COMMAND_NCAM = $(UPX) -q $(COMP_LEVEL) $(NCAM_BIN) | grep '^[[:space:]]*[[:digit:]]* ->' | xargs | cat | xargs -0 printf 'UPX \t%s'
 	endif
 endif
 
@@ -109,7 +109,7 @@ ifeq "$(shell ./config.sh --enabled WITH_SIGNING)" "Y"
 
 	ifeq ($(SIGN_CERT),n.a.)
 		override WITH_SIGNING = "N"
-		SIGN_COMMAND_OSCAM = $(SAY) "SIGN	Disabled due to missing of certificate files!";
+		SIGN_COMMAND_NCAM = $(SAY) "SIGN	Disabled due to missing of certificate files!";
 	else
 		override USE_SSL=1
 
@@ -124,13 +124,13 @@ ifeq "$(shell ./config.sh --enabled WITH_SIGNING)" "Y"
 		SIGN_PUBALGO   = $(shell ./config.sh --cert-info | head -n 5 | tail -n 1)
 		SIGN_PUBBIT    = $(shell ./config.sh --cert-info | head -n 6 | tail -n 1)
 		SIGN_INFO      = $(shell echo '|  Signing  : $(SIGN_PUBALGO), $(SIGN_PUBBIT), $(SIGN_SIGALGO),\n|             Valid $(SIGN_VALID), $(SIGN_SUBJECT)\n')
-		SIGN_COMMAND_OSCAM += sha1sum $@ | awk '{ print $$1 }' | tr -d '\n' > $(SIGN_HASH);
-		SIGN_COMMAND_OSCAM += printf 'SIGN	SHA1('; stat -c %s $(SIGN_HASH) | tr -d '\n'; printf '): '; cat $(SIGN_HASH); printf ' -> ';
-		SIGN_COMMAND_OSCAM += openssl x509 -pubkey -noout -in $(SIGN_CERT)         -out $(SIGN_PUBKEY);
-		SIGN_COMMAND_OSCAM += openssl dgst -sha256      -sign $(SIGN_PRIVKEY)      -out $(SIGN_DIGEST) $(SIGN_HASH);
-		SIGN_COMMAND_OSCAM += openssl dgst -sha256    -verify $(SIGN_PUBKEY) -signature $(SIGN_DIGEST) $(SIGN_HASH) | tr -d '\n';
-		SIGN_COMMAND_OSCAM += printf '$(SIGN_MARKER)' | cat - $(SIGN_DIGEST) >> $@;
-		SIGN_COMMAND_OSCAM += printf ' <- DIGEST('; stat -c %s $(SIGN_DIGEST) | tr -d '\n'; printf ')\n';
+		SIGN_COMMAND_NCAM += sha1sum $@ | awk '{ print $$1 }' | tr -d '\n' > $(SIGN_HASH);
+		SIGN_COMMAND_NCAM += printf 'SIGN	SHA1('; stat -c %s $(SIGN_HASH) | tr -d '\n'; printf '): '; cat $(SIGN_HASH); printf ' -> ';
+		SIGN_COMMAND_NCAM += openssl x509 -pubkey -noout -in $(SIGN_CERT)         -out $(SIGN_PUBKEY);
+		SIGN_COMMAND_NCAM += openssl dgst -sha256      -sign $(SIGN_PRIVKEY)      -out $(SIGN_DIGEST) $(SIGN_HASH);
+		SIGN_COMMAND_NCAM += openssl dgst -sha256    -verify $(SIGN_PUBKEY) -signature $(SIGN_DIGEST) $(SIGN_HASH) | tr -d '\n';
+		SIGN_COMMAND_NCAM += printf '$(SIGN_MARKER)' | cat - $(SIGN_DIGEST) >> $@;
+		SIGN_COMMAND_NCAM += printf ' <- DIGEST('; stat -c %s $(SIGN_DIGEST) | tr -d '\n'; printf ')\n';
 	endif
 endif
 
@@ -555,14 +555,14 @@ endif
 $(NCAM_BIN).debug: $(OBJ)
 	$(SAY) "LINK	$@"
 	$(Q)$(CC) $(LDFLAGS) $(OBJ) $(LIBS) -o $@
-	$(Q)$(SIGN_COMMAND_OSCAM)
+	$(Q)$(SIGN_COMMAND_NCAM)
 
 $(NCAM_BIN): $(NCAM_BIN).debug
 	$(SAY) "STRIP	$@"
 	$(Q)cp $(NCAM_BIN).debug $(NCAM_BIN)
 	$(Q)$(STRIP) $(NCAM_BIN)
 	$(Q)$(UPX_COMMAND_NCAM)
-	$(Q)$(SIGN_COMMAND_OSCAM)
+	$(Q)$(SIGN_COMMAND_NCAM)
 
 $(LIST_SMARGO_BIN): utils/list_smargo.c
 	$(SAY) "BUILD	$@"
@@ -646,7 +646,7 @@ NCam build system documentation\n\
    process. Setting the variables lets you enable additional features, request\n\
    extra libraries and more. Currently recognized build variables are:\n\
 \n\
-   CROSS=prefix    - Set tools prefix. This variable is used when OScam is being\n\
+   CROSS=prefix    - Set tools prefix. This variable is used when NCAM is being\n\
                      cross compiled. For example if you want to cross compile\n\
                      for SH4 architecture you can run: 'make CROSS=sh4-linux-'\n\
                      If you don't have the directory where cross compilers are\n\
@@ -660,7 +660,7 @@ NCam build system documentation\n\
                      'make sh4 CROSS_DIR=/opt/STM/STLinux-2.3/devkit/sh4/bin/'\n\
                      'make dm500 CROSS_DIR=/opt/cross/dm500/cdk/bin/'\n\
 \n\
-   CONF_DIR=/dir   - Set OSCam config directory. For example to change config\n\
+   CONF_DIR=/dir   - Set NCAM config directory. For example to change config\n\
                      directory to /etc run: 'make CONF_DIR=/etc'\n\
                      The default config directory is: '$(CONF_DIR)'\n\
 \n\
@@ -685,7 +685,6 @@ NCam build system documentation\n\
                      you can run: 'make USE_COMPRESS=1 COMP_LEVEL=--brute'\n\
                      To get a list of available compression levels run: 'upx --help'\n\
                      The default upx compression level is: '$(COMP_LEVEL)'\n\
-
 \n\
  Extra build variables:\n\
    These variables add text to build variables. They are useful if you want\n\

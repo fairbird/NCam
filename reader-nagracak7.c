@@ -148,10 +148,10 @@ static int32_t ParseDataType(struct s_reader *reader, uint8_t dt, uint8_t *cta_r
 
 		case TIERS: // case 0x0C
 		{
-			uint16_t chid;
 			if(cta_lr >= 0x30)
 			{
 				uint16_t chid = b2i(0x02, cta_res + 23);
+				uint32_t id = b2i(0x02, cta_res + 19);
 				uint32_t start_date = 0;
 				uint32_t expire_date1;
 				uint32_t expire_date2;
@@ -159,10 +159,13 @@ static int32_t ParseDataType(struct s_reader *reader, uint8_t dt, uint8_t *cta_r
 
 				switch(reader->caid)
 				{
+					case 0x1830: // Max TV
+					case 0x1843: // HD02
 					case 0x1860: // HD03
+					case 0x1861: // Polsat, Vodafone D08
 						start_date = b2i(0x04, cta_res + 42);
 						expire_date1 = b2i(0x04, cta_res + 28);
-						expire_date2 = b2i(0x04, cta_res + 46);
+						expire_date2 = (reader->caid != 0x1861) ? b2i(0x04, cta_res + 46) : expire_date1;
 						expire_date = expire_date1 <= expire_date2 ? expire_date1 : expire_date2;
 						break;
 
@@ -190,17 +193,9 @@ static int32_t ParseDataType(struct s_reader *reader, uint8_t dt, uint8_t *cta_r
 						expire_date = 0x569EFB7F;
 				}
 
-				cs_add_entitlement(reader,
-					reader->caid,
-					id,
-					chid,
-					0,
-					tier_date(start_date, ds, 11),
-					tier_date(expire_date, de, 11),
-					4,
-					1);
+				cs_add_entitlement(reader, reader->caid, id, chid, 0, tier_date(start_date, ds, 11), tier_date(expire_date, de, 11), 4, 1);
 				rdr_log(reader, "|%04X|%04X    |%s  |%s  |", id, chid, ds, de);
-				addProvider(reader, cta_res);
+				addProvider(reader, cta_res + 19);
 			}
 			return OK;
 		}
@@ -456,7 +451,7 @@ static int32_t nagra3_card_info(struct s_reader *reader)
 	rdr_log(reader, "REV:    %c %c %c %c %c %c", reader->rom[9], reader->rom[10], reader->rom[11], reader->rom[12], reader->rom[13], reader->rom[14]);
 	rdr_log_sensitive(reader, "SER:    {%s}", cs_hexdump(1, reader->hexserial + 2, 4, tmp, sizeof(tmp)));
 	rdr_log(reader, "ECM CAID:   %04X", reader->caid);
-	rdr_log(reader, "EMM CAID:   %04X", reader->cak7_emm_caid);
+	// rdr_log(reader, "EMM CAID:   %04X", reader->cak7_emm_caid);
 	rdr_log(reader, "Prv.ID: %s(sysid)", cs_hexdump(1, reader->prid[0], 4, tmp, sizeof(tmp)));
 	CAK7GetDataType(reader, IRDINFO);
 	cs_clear_entitlement(reader); // reset the entitlements
