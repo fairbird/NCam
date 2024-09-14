@@ -393,6 +393,9 @@ static void write_versionfile(bool use_stdout)
 	fprintf(fp, "Cache exchange: %s\n", CS_AIO_VERSION);
 #endif
 	fprintf(fp, "Compiler:       %s\n", CS_TARGET);
+#ifdef USE_COMPRESS
+	fprintf(fp, "Compression:    %s, level %s\n", COMP_VERSION, COMP_LEVEL);
+#endif
 	fprintf(fp, "Box Type:       %s (%s)\n", boxtype_get(), boxname_get());
 	fprintf(fp, "PID:            %d\n", getppid());
 	fprintf(fp, "TempDir:        %s\n", cs_tmpdir);

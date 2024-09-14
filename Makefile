@@ -93,6 +93,7 @@ ifdef USE_COMPRESS
 	ifeq ($(UPX_VER),n.a.)
 		override USE_COMPRESS =
 	else
+		override STD_DEFS += -D'USE_COMPRESS="$(USE_COMPRESS)"' -D'COMP_LEVEL="$(COMP_LEVEL)"' -D'COMP_VERSION="$(UPX_VER)"'
 		UPX_INFO = $(shell echo '|  Packer   : $(UPX_VER) (compression level $(COMP_LEVEL))\n')
 		UPX_COMMAND_OSCAM = upx -q $(COMP_LEVEL) $(OSCAM_BIN)
 	endif
@@ -605,38 +606,46 @@ NCam build system documentation\n\
    process. Setting the variables lets you enable additional features, request\n\
    extra libraries and more. Currently recognized build variables are:\n\
 \n\
-   CROSS=prefix   - Set tools prefix. This variable is used when NCam is being\n\
-                    cross compiled. For example if you want to cross compile\n\
-                    for SH4 architecture you can run: 'make CROSS=sh4-linux-'\n\
-                    If you don't have the directory where cross compilers are\n\
-                    in your PATH you can run:\n\
-                    'make CROSS=/opt/STM/STLinux-2.3/devkit/sh4/bin/sh4-linux-'\n\
+   CROSS=prefix    - Set tools prefix. This variable is used when OScam is being\n\
+                     cross compiled. For example if you want to cross compile\n\
+                     for SH4 architecture you can run: 'make CROSS=sh4-linux-'\n\
+                     If you don't have the directory where cross compilers are\n\
+                     in your PATH you can run:\n\
+                     'make CROSS=/opt/STM/STLinux-2.3/devkit/sh4/bin/sh4-linux-'\n\
 \n\
-   CROSS_DIR=dir  - Set tools directory. This variable is added in front of\n\
-                    CROSS variable. CROSS_DIR is useful if you want to use\n\
-                    predefined targets that are setting CROSS, but you don't have\n\
-                    the cross compilers in your PATH. For example:\n\
-                    'make sh4 CROSS_DIR=/opt/STM/STLinux-2.3/devkit/sh4/bin/'\n\
-                    'make dm500 CROSS_DIR=/opt/cross/dm500/cdk/bin/'\n\
+   CROSS_DIR=dir   - Set tools directory. This variable is added in front of\n\
+                     CROSS variable. CROSS_DIR is useful if you want to use\n\
+                     predefined targets that are setting CROSS, but you don't have\n\
+                     the cross compilers in your PATH. For example:\n\
+                     'make sh4 CROSS_DIR=/opt/STM/STLinux-2.3/devkit/sh4/bin/'\n\
+                     'make dm500 CROSS_DIR=/opt/cross/dm500/cdk/bin/'\n\
 \n\
-   CONF_DIR=/dir  - Set NCam config directory. For example to change config\n\
-                    directory to /etc run: 'make CONF_DIR=/etc'\n\
-                    The default config directory is: '$(CONF_DIR)'\n\
+   CONF_DIR=/dir   - Set OSCam config directory. For example to change config\n\
+                     directory to /etc run: 'make CONF_DIR=/etc'\n\
+                     The default config directory is: '$(CONF_DIR)'\n\
 \n\
-   CC_OPTS=text   - This variable holds compiler optimization parameters.\n\
-                    Default CC_OPTS value is:\n\
-                    '$(CC_OPTS)'\n\
-                    To add text to this variable set EXTRA_CC_OPTS=text.\n\
+   CC_OPTS=text    - This variable holds compiler optimization parameters.\n\
+                     Default CC_OPTS value is:\n\
+                     '$(CC_OPTS)'\n\
+                     To add text to this variable set EXTRA_CC_OPTS=text.\n\
 \n\
-   CC_WARN=text   - This variable holds compiler warning parameters.\n\
-                    Default CC_WARN value is:\n\
-                    '$(CC_WARN)'\n\
-                    To add text to this variable set EXTRA_CC_WARN=text.\n\
+   CC_WARN=text    - This variable holds compiler warning parameters.\n\
+                     Default CC_WARN value is:\n\
+                     '$(CC_WARN)'\n\
+                     To add text to this variable set EXTRA_CC_WARN=text.\n\
 \n\
-   V=1            - Request build process to print verbose messages. By\n\
-                    default the only messages that are shown are simple info\n\
-                    what is being compiled. To request verbose build run:\n\
-                    'make V=1'\n\
+   V=1             - Request build process to print verbose messages. By\n\
+                     default the only messages that are shown are simple info\n\
+                     what is being compiled. To request verbose build run:\n\
+                     'make V=1'\n\
+\n\
+   COMP_LEVEL=text - This variable holds the upx compression level and can be\n\
+                     used in combination with USE_COMPRESS=1\n\
+                     For example to change compression level to brute\n\
+                     you can run: 'make USE_COMPRESS=1 COMP_LEVEL=--brute'\n\
+                     To get a list of available compression levels run: 'upx --help'\n\
+                     The default upx compression level is: '$(COMP_LEVEL)'\n\
+
 \n\
  Extra build variables:\n\
    These variables add text to build variables. They are useful if you want\n\
@@ -793,7 +802,7 @@ NCam build system documentation\n\
                          LIBCURL_LDFLAGS='$(DEFAULT_LIBCURL_FLAGS)'\n\
                          LIBCURL_LIB='$(DEFAULT_LIBCURL_LIB)'\n\
 \n\
-   USE_COMPRESS=1    - Request compressing oscam binary with upx.\n\
+   USE_COMPRESS=1    - Request compressing ncam binary with upx.\n\
 \n\
    USE_LIBDVBCSA=1   - Request linking with libdvbcsa. USE_LIBDVBCSA is automatically\n\
                          LIBDVBCSA_FLAGS='$(DEFAULT_LIBDVBCSA_FLAGS)'\n\
