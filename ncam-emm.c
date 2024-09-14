@@ -156,7 +156,8 @@ static void reader_log_emm(struct s_reader *reader, EMM_PACKET *ep, int32_t coun
 
 int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid)
 {
-	int32_t i;
+	int32_t i, j;
+	FTAB *ftab = &reader->ftab;
 
 	// if physical reader a card needs to be inserted
 	if(!is_network_reader(reader) && reader->card_status != CARD_INSERTED)
@@ -165,7 +166,17 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 	if(reader->audisabled)
 		{ return 0; }
 
-	if(reader->caid != caid)
+	uint16_t emmcaid;
+	if(reader->cak7_emm_caid != 0)
+	{
+		emmcaid = reader->cak7_emm_caid;
+	}
+	else
+	{
+		emmcaid = reader->caid;
+	}
+
+	if(emmcaid != caid)
 	{
 		int caid_found = 0;
 		if (!reader->csystem)
@@ -173,13 +184,13 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 		for(i = 0; reader->csystem->caids[i]; i++)
 		{
 			uint16_t cs_caid = reader->csystem->caids[i];
-			if (reader->caid && cs_caid == caid)
+			if (emmcaid && cs_caid == caid)
 			{
 				caid_found = 1;
 				break;
 			}
 
-			if ((reader->caid == 0) && chk_ctab_ex(caid, &reader->ctab))
+			if ((emmcaid == 0) && chk_ctab_ex(caid, &reader->ctab))
 			{
 				caid_found = 1;
 				break;
@@ -188,7 +199,7 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 		}
 		if(!caid_found)
 		{
-			rdr_log_dbg(reader, D_EMM, "reader_caid %04X != emmpid caid %04X -> SKIP!", reader->caid, caid);
+			rdr_log_dbg(reader, D_EMM, "reader_caid %04X != emmpid caid %04X -> SKIP!", emmcaid, caid);
 			return 0;
 		}
 	}
@@ -260,6 +271,20 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 		}
 
 		rdr_log_dbg(reader, D_EMM, "reader provid %06X no match with emm provid %06X -> SKIP!", prid, provid);
+	}
+
+	if(ftab->nfilts)
+	{
+		for(j = 0; j < ftab->filts[0].nprids; j++)
+		{
+			prid = ftab->filts[0].prids[j];
+
+			if(prid == provid)
+			{
+				rdr_log_dbg(reader, D_EMM, "reader provid %06X matching with emm provid %06X -> SEND!", prid, provid);
+				return 1;
+			}
+		}
 	}
 	return 0;
 }

@@ -1733,6 +1733,7 @@ struct s_reader
 	int8_t          ecmending;                      // viaccess
 	uint8_t         maturity;                       // viaccess & seca maturity level
 	uint16_t        caid;
+	uint16_t	cak7_emm_caid;
 	uint16_t        b_nano;
 	uint16_t        s_nano;
 	int8_t          ecmcommand;                     // used for filtering nagra bad ecm commands
