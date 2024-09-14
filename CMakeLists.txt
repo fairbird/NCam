@@ -774,6 +774,9 @@ add_library (${csreaders} STATIC ${csreaders_srcs} ${csreaders_hdrs})
 #----------------------- other ncam files ------------------------------
 
 set (csncam "csncam")
+if (NOT WITH_SIGNING EQUAL 1)
+	list(FILTER csoscam_srcs EXCLUDE REGEX ".*ncam-signing\\..*$")
+endif (NOT WITH_SIGNING EQUAL 1)
 add_library (${csncam} STATIC ${csncam_srcs} ${csncam_hdrs})
 
 #----------------------- the executable ------------------------------
