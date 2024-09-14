@@ -946,6 +946,7 @@ static const struct config_list streamrelay_opts[] =
 	DEF_OPT_INT32("stream_relay_port"         , OFS(stream_relay_port),           17999),
 	DEF_OPT_INT8("stream_relay_enabled"       , OFS(stream_relay_enabled),        0),
 	DEF_OPT_UINT32("stream_relay_buffer_time" , OFS(stream_relay_buffer_time),    0),
+	DEF_OPT_UINT8("stream_relay_reconnect_count" , OFS(stream_relay_reconnect_count), 0),
 	DEF_OPT_FUNC("stream_relay_ctab"          , OFS(stream_relay_ctab),           check_caidtab_fn),
 #ifdef WITH_EMU
 	DEF_OPT_INT8("stream_emm_enabled"         , OFS(emu_stream_emm_enabled),      0),
