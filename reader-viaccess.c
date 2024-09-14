@@ -1341,7 +1341,7 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 
 			if(ecm88Data[0] == 0x9F && ecm88Data[1] == 0x04)
 			{
-				rdr_log_dbg(reader, D_READER, "[viaccess-reader] nano 9F/04 ECM detected");
+				rdr_log_dbg(reader, D_READER, "[viaccess-reader] nano 9F/04 ECM detected!");
 				ecm88Data += 6;
 			}
 
@@ -2249,12 +2249,45 @@ static int32_t viaccess_card_info(struct s_reader *reader)
 			write_cmd(insb8, NULL); // read PVV
 			if((cta_res[cta_lr - 2] == 0x90) && (cta_res[cta_lr - 1] == 0))
 			{
-				l = cta_res[1];
+				insb8[4] = 0x02;
+				write_cmd(insb8, NULL); // read PPV
+				if((cta_res[cta_lr - 2] == 0x90) && (cta_res[cta_lr - 1] == 0))
+				{
+					l = cta_res[1];
+				insb8[4] = l;
 				write_cmd(insb8, NULL); // read PPV
 				if((cta_res[cta_lr - 2] == 0x90) && (cta_res[cta_lr - 1] == 0x00 || cta_res[cta_lr - 1] == 0x08))
 				{
-					cs_add_entitlement(reader, reader->caid, l_provid, b2i(3, cta_res + 2), 0, 0, 0, 2, 1);
-					cs_add_entitlement(reader, reader->caid, l_provid, b2i(3, cta_res + 5), 0, 0, 0, 2, 1);
+					time_t start_t, end_t;
+					struct tm tm;
+					memset(&tm, 0, sizeof(tm));
+
+					tm.tm_year = (cta_res[2] >> 4) + 116;
+					tm.tm_mon = (cta_res[2] & 0xF) - 1;
+					tm.tm_mday = 1;
+					start_t = cs_timegm(&tm);
+
+					tm.tm_year = (cta_res[5] >> 4) + 116;
+					tm.tm_mon = (cta_res[5] & 0xF) - 1;
+					if ((tm.tm_mon == 0) || (tm.tm_mon == 2) || (tm.tm_mon == 4) || (tm.tm_mon == 6) || (tm.tm_mon == 7) || (tm.tm_mon == 9) || (tm.tm_mon == 11))
+					{
+						tm.tm_mday = 31;
+					}
+					else if ((tm.tm_mon == 3) || (tm.tm_mon == 5) || (tm.tm_mon == 8) || (tm.tm_mon == 10))
+					{
+						tm.tm_mday = 30;
+					}
+					else if ((tm.tm_mon == 1) && (((cta_res[5] >> 4) % 4) == 0))
+					{
+						tm.tm_mday = 29;
+					}
+					else
+					{
+						tm.tm_mday = 28;
+					}
+					end_t = cs_timegm(&tm);
+
+					cs_add_entitlement(reader, reader->caid, l_provid, cta_res[1], 0, start_t, end_t, 2, 1);
 				}
 			}
 		}
