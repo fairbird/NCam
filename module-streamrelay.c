@@ -1685,9 +1685,9 @@ static void *stream_client_handler(void *arg)
 				if ((errno == EWOULDBLOCK) | (errno == EAGAIN))
 				{
 					cs_log("WARNING: stream client %i no data from stream source", conndata->connid);
-					streamDataErrorCount++; // 2 sec timeout * 15 = 30 seconds no data -> close
+					clientStatus = -1;
 					cs_sleepms(100);
-					continue;
+					break;
 				}
 				cs_log("WARNING: stream client %i error receiving data from stream source", conndata->connid);
 				streamConnectErrorCount++;
