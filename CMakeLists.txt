@@ -685,7 +685,7 @@ GENERATE_NCAM_CONFIG("${CMAKE_CURRENT_SOURCE_DIR}/config.h")
 # Build config.mak and related files
 # FIXME: Create USE_FLAGS and pass them to config.sh using --use-flags
 execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --objdir ${CMAKE_CURRENT_BINARY_DIR} --use-flags  "${USE_STAPI} ${USE_STAPI5} /
-${USE_COOLAPI} ${USE_SU980} ${USE_WETEK} ${USE_AZBOX} ${USE_GXAPI} ${USE_MCA} ${USE_SSL} ${USE_LIBCRYPTO} ${USE_LIBUSB} ${USE_PCSC}  ${USE_COMPRESS_FLAG}" ${USE_LIBCURL}" --make-config.mak)
+${USE_COOLAPI} ${USE_SU980} ${USE_WETEK} ${USE_AZBOX} ${USE_GXAPI} ${USE_MCA} ${USE_SSL} ${USE_LIBCRYPTO} ${USE_LIBUSB} ${USE_PCSC}  ${USE_COMPRESS_FLAG} ${USE_LIBCURL}" --make-config.mak)
 # Generate webif/pages.c
 execute_process (COMMAND make --no-print-directory --quiet -C ${CMAKE_CURRENT_SOURCE_DIR}/webif)
 
