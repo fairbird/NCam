@@ -787,7 +787,22 @@ int32_t hostResolve(struct s_reader *rdr)
 
 	IN_ADDR_T last_ip;
 	IP_ASSIGN(last_ip, cl->ip);
-	cs_resolve(rdr->device, &cl->ip, &cl->udp_sa, &cl->udp_sa_len);
+/*
+	force v4/v6 hostResolve
+*/
+#ifdef IPV6SUPPORT
+	if (rdr->ipv4force || rdr->ipv6_connect_failed)
+	{
+		cs_resolve_v4(rdr->device, &cl->ip, &cl->udp_sa, &cl->udp_sa_len);
+		rdr->ipv6_connect_failed = 0; // reset ipv6 connection fail to retry on next connect cycle
+	}
+	else
+	{
+#endif
+		cs_resolve(rdr->device, &cl->ip, &cl->udp_sa, &cl->udp_sa_len);
+#ifdef IPV6SUPPORT
+	}
+#endif
 	IP_ASSIGN(SIN_GET_ADDR(cl->udp_sa), cl->ip);
 
 	if(!IP_EQUAL(cl->ip, last_ip))
@@ -990,7 +1005,19 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 		if(r != 0)
 		{
 			rdr_log(rdr, "connect failed: %s", strerror(errno));
-			block_connect(rdr); // connect has failed. Block connect for a while
+#ifdef IPV6SUPPORT
+			if (!IN6_IS_ADDR_V4MAPPED(&rdr->client->ip) && !IN6_IS_ADDR_V4COMPAT(&rdr->client->ip) && !rdr->ipv6_connect_failed)
+			{
+				rdr->ipv6_connect_failed = 1;
+				rdr_log(rdr, "connect via IPv6(%s) failed - try IPv4 fallback", cs_inet_ntoa(rdr->client->ip));
+			}
+			else
+			{
+#endif
+				block_connect(rdr); // connect has failed. Block connect for a while
+#ifdef IPV6SUPPORT
+			}
+#endif
 			close(client->udp_fd);
 			client->udp_fd = 0;
 			return -1;

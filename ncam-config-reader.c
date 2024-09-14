@@ -1227,6 +1227,7 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_INT8("use_for_demux"                  , OFS(for_demux),                       -1),
 	DEF_OPT_FUNC("protocol"                       , 0,                                    protocol_fn),
 	DEF_OPT_FUNC("device"                         , 0,                                    device_fn),
+	DEF_OPT_UINT8("ipv4force"                     , OFS(ipv4force),                       0),
 	DEF_OPT_HEX("key"                             , OFS(ncd_key),                         SIZEOF(ncd_key)),
 	DEF_OPT_SSTR("user"                           , OFS(r_usr),                           "", SIZEOF(r_usr)),
 	DEF_OPT_SSTR("password"                       , OFS(r_pwd),                           "", SIZEOF(r_pwd)),

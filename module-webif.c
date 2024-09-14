@@ -2509,6 +2509,16 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 	}
 #endif
 
+	// IPv4 force
+	if (!apicall)
+	{
+		tpl_addVar(vars, TPLADD, "IPV4FORCE", (rdr->ipv4force == 1) ? "checked" : "");
+	}
+	else
+	{
+		tpl_addVar(vars, TPLADD, "IPV4FORCE", (rdr->ipv4force == 1) ? "1" : "0");
+	}
+
 	// Fallback
 	if(!apicall)
 	{
@@ -9737,9 +9747,27 @@ static void *http_server(void *UNUSED(d))
 			cs_log("HTTP Server: Falling back to IPv4.");
 			do_ipv6 = false;
 		}
+		else if (IP_ISSET(cfg.http_srvip) && (IN6_IS_ADDR_V4MAPPED(&cfg.http_srvip) || IN6_IS_ADDR_V4COMPAT(&cfg.http_srvip))) // ipv4 set as http_srvip
+		{
+			do_ipv6 = false;
+		}
 		else
 		{
 			struct sockaddr_in6 *ia = (struct sockaddr_in6 *)&sin;
+
+			if (IP_ISSET(cfg.http_srvip))
+			{
+				IP_ASSIGN(SIN_GET_ADDR(sin), cfg.http_srvip);
+			}
+			else if (IP_ISSET(cfg.srvip))
+			{
+				IP_ASSIGN(SIN_GET_ADDR(sin), cfg.srvip);
+			}
+			else
+			{
+				ia->sin6_addr = in6addr_any;
+			}
+
 			ia->sin6_family = AF_INET6;
 			ia->sin6_addr = in6addr_any;
 			ia->sin6_port = htons(cfg.http_port);

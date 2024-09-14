@@ -14,7 +14,7 @@ extern int32_t cs_in6addr_isnull(struct in6_addr *addr);
 extern int32_t cs_in6addr_lt(struct in6_addr *a, struct in6_addr *b);
 extern void cs_in6addr_copy(struct in6_addr *dst, struct in6_addr *src);
 extern void cs_in6addr_ipv4map(struct in6_addr *dst, in_addr_t src);
-extern void cs_getIPv6fromHost(const char *hostname, struct in6_addr *addr, struct sockaddr_storage *sa, socklen_t *sa_len);
+extern void cs_getIPv6fromHost(const char *hostname, struct in6_addr *addr, struct sockaddr_storage *sa, socklen_t *sa_len, uint8_t forceV4);
 #else
 #define GET_IP() *(in_addr_t *)pthread_getspecific(getip)
 #define IP_ISSET(a) (a)
@@ -28,6 +28,9 @@ extern void cs_getIPv6fromHost(const char *hostname, struct in6_addr *addr, stru
 char *cs_inet_ntoa(IN_ADDR_T addr);
 void cs_inet_addr(char *txt, IN_ADDR_T *out);
 void cs_resolve(const char *hostname, IN_ADDR_T *ip, struct SOCKADDR *sock, socklen_t *sa_len);
+#ifdef IPV6SUPPORT
+void cs_resolve_v4(const char *hostname, IN_ADDR_T *ip, struct SOCKADDR *sock, socklen_t *sa_len);
+#endif
 IN_ADDR_T get_null_ip(void);
 void set_null_ip(IN_ADDR_T *ip);
 void set_localhost_ip(IN_ADDR_T *ip);

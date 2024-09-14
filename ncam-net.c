@@ -74,13 +74,20 @@ void cs_inet_addr(char *txt, IN_ADDR_T *out)
 void cs_resolve(const char *hostname, IN_ADDR_T *ip, struct SOCKADDR *sock, socklen_t *sa_len)
 {
 #ifdef IPV6SUPPORT
-	cs_getIPv6fromHost(hostname, ip, sock, sa_len);
+	cs_getIPv6fromHost(hostname, ip, sock, sa_len, 0);
 #else
 	*ip = cs_getIPfromHost(hostname);
 	if(sa_len)
 		{ *sa_len = sizeof(*sock); }
 #endif
 }
+
+#ifdef IPV6SUPPORT
+void cs_resolve_v4(const char *hostname, IN_ADDR_T *ip, struct SOCKADDR *sock, socklen_t *sa_len)
+{
+	cs_getIPv6fromHost(hostname, ip, sock, sa_len, 1);
+}
+#endif
 
 #ifdef IPV6SUPPORT
 int32_t cs_in6addr_equal(struct in6_addr *a1, struct in6_addr *a2)
@@ -215,13 +222,23 @@ uint32_t cs_getIPfromHost(const char *hostname)
 }
 
 #ifdef IPV6SUPPORT
-void cs_getIPv6fromHost(const char *hostname, struct in6_addr *addr, struct sockaddr_storage *sa, socklen_t *sa_len)
+void cs_getIPv6fromHost(const char *hostname, struct in6_addr *addr, struct sockaddr_storage *sa, socklen_t *sa_len, uint8_t forceV4)
 {
 	uint32_t ipv4addr = 0;
+	uint8_t ipv6_found = 0;
 	struct addrinfo hints, *res = NULL;
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_family = AF_UNSPEC;
+
+	if (forceV4)
+	{
+		hints.ai_family = AF_INET;
+	}
+	else
+	{
+		hints.ai_family = AF_UNSPEC;
+	}
+
 	hints.ai_protocol = IPPROTO_TCP;
 	int32_t err = getaddrinfo(hostname, NULL, &hints, &res);
 	if(err != 0 || !res || !res->ai_addr)
@@ -230,16 +247,32 @@ void cs_getIPv6fromHost(const char *hostname, struct in6_addr *addr, struct sock
 	}
 	else
 	{
-		ipv4addr = ((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr;
-		if(res->ai_family == AF_INET)
-			{ cs_in6addr_ipv4map(addr, ipv4addr); }
-		else
-			{ IP_ASSIGN(*addr, SIN_GET_ADDR(*res->ai_addr)); }
-		if(sa)
-			{ memcpy(sa, res->ai_addr, res->ai_addrlen); }
-		if(sa_len)
-			{ *sa_len = res->ai_addrlen; }
+		while (res)
+		{
+			if ((!forceV4 && !ipv6_found) || (forceV4))
+			{
+				ipv4addr = ((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr;
+				if(res->ai_family == AF_INET)
+					{ cs_in6addr_ipv4map(addr, ipv4addr); }
+				else
+				{
+					IP_ASSIGN(*addr, SIN_GET_ADDR(*res->ai_addr));
+					ipv6_found = 1;
+				}
+				if(sa)
+					{ memcpy(sa, res->ai_addr, res->ai_addrlen); }
+				if(sa_len)
+					{ *sa_len = res->ai_addrlen; }
+
+				res = res->ai_next;
+			}
+			else
+			{
+				res = res->ai_next;
+			}
+		}
 	}
+
 	if(res)
 		{ freeaddrinfo(res); }
 }
@@ -357,24 +390,33 @@ int set_socket_priority(int fd, int priority)
 			break;
 	}
 
-#ifdef IP_TOS
-	if (setsockopt(fd, IPPROTO_IP, IP_TOS, (void *)&tos, sizeof(tos)) < 0)
-	{
+# ifdef IP_TOS
+	if (setsockopt(fd, IPPROTO_IP, IP_TOS, (void *)&tos, sizeof(tos)) < 0) {
 		cs_log("Setting IP_TOS failed, errno=%d, %s", errno, strerror(errno));
-	}
-	else
-	{
+	} else {
 		ret = ret ^ 0x01;
 	}
-
-#if defined(IPV6SUPPORT) && defined(IPV6_TCLASS)
-	if (setsockopt(fd, IPPROTO_IPV6, IPV6_TCLASS, (void *)&tos, sizeof(tos)) < 0)
+#  if  defined(IPV6SUPPORT) && defined(IPV6_TCLASS)
+	int32_t family = 0;
+	uint32_t length = sizeof(int);
+#ifndef SO_DOMAIN
+#define SO_DOMAIN 39
+#endif
+	if (getsockopt(fd, SOL_SOCKET, SO_DOMAIN, &family, &length) <0)
 	{
-		cs_log("Setting IPV6_TCLASS failed, errno=%d, %s", errno, strerror(errno));
-	}
-	else
-	{
-		ret = ret ^ 0x02;
+		cs_log("getsockopt err - set_socket_priority()");
+	} else {
+		if (family == AF_INET6)
+		{
+			if (setsockopt(fd, IPPROTO_IPV6, IPV6_TCLASS, (void *)&tos, sizeof(tos)) < 0)
+			{
+				cs_log("Setting IPV6_TCLASS failed, errno=%d, %s", errno, strerror(errno));
+			}
+			else
+			{
+				ret = ret ^ 0x02;
+			}
+		}
 	}
 #endif
 #endif
@@ -733,29 +775,33 @@ int32_t start_listener(struct s_module *module, struct s_port *port)
 
 	if((port->fd = socket(DEFAULT_AF, s_type, s_proto)) < 0)
 	{
-		cs_log("%s: Cannot create socket (errno=%d: %s)", module->desc, errno, strerror(errno));
+		cs_log("%s: Cannot create IPv6 socket (errno=%d: %s)", module->desc, errno, strerror(errno));
 #ifdef IPV6SUPPORT
+		SIN_GET_FAMILY(sad) = AF_INET;
+		sad_len = sizeof(struct sockaddr_in);
 		cs_log("%s: Trying fallback to IPv4", module->desc);
 		if((port->fd = socket(AF_INET, s_type, s_proto)) < 0)
 		{
-			cs_log("%s: Cannot create socket (errno=%d: %s)", module->desc, errno, strerror(errno));
+			cs_log("%s: Cannot create IPv4 socket (errno=%d: %s)", module->desc, errno, strerror(errno));
 			return 0;
 		}
 #else
 		return 0;
 #endif
 	}
-
 #ifdef IPV6SUPPORT
 	// azbox toolchain do not have this define
 #ifndef IPV6_V6ONLY
 #define IPV6_V6ONLY 26
 #endif
-	// set the server socket option to listen on IPv4 and IPv6 simultaneously
-	int val = 0;
-	if(setsockopt(port->fd, IPPROTO_IPV6, IPV6_V6ONLY, (void *)&val, sizeof(val)) < 0)
+	else
 	{
-		cs_log("%s: setsockopt(IPV6_V6ONLY) failed (errno=%d: %s)", module->desc, errno, strerror(errno));
+		// set the server socket option to listen on IPv4 and IPv6 simultaneously
+		int val = 0;
+		if(setsockopt(port->fd, IPPROTO_IPV6, IPV6_V6ONLY, (void *)&val, sizeof(val)) < 0)
+		{
+			cs_log("%s: setsockopt(IPV6_V6ONLY) failed (errno=%d: %s)", module->desc, errno, strerror(errno));
+		}
 	}
 #endif
 

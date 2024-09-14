@@ -203,14 +203,28 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, IN_
 
 /* Resolves the ip of the hostname of the specified account and saves it in account->dynip.
    If the hostname is not configured, the ip is set to 0. */
-static void cs_user_resolve(struct s_auth *account)
+static void cs_user_resolve(struct s_auth *account
+#ifdef IPV6SUPPORT
+, uint8_t ipv4force
+#endif
+)
 {
 	if(account->dyndns)
 	{
 		IN_ADDR_T lastip;
 		IP_ASSIGN(lastip, account->dynip);
-		cs_resolve(account->dyndns, &account->dynip, NULL, NULL);
-
+#ifdef IPV6SUPPORT
+		if (ipv4force)
+		{
+			cs_resolve_v4(account->dyndns, &account->dynip, NULL, NULL);
+		}
+		else
+		{
+#endif
+			cs_resolve(account->dyndns, &account->dynip, NULL, NULL);
+#ifdef IPV6SUPPORT
+		}
+#endif
 		if(!IP_EQUAL(lastip, account->dynip))
 		{
 			cs_log("%s: resolved ip=%s", account->dyndns, cs_inet_ntoa(account->dynip));
@@ -426,7 +440,14 @@ int32_t cs_auth_client(struct s_client *client, struct s_auth *account, const ch
 			if(IP_ISSET(client->ip) && account->dyndns)
 			{
 				if(!IP_EQUAL(client->ip, account->dynip))
+#ifndef IPV6SUPPORT
 					{ cs_user_resolve(account); }
+#else
+					{ cs_user_resolve(account, 0); }
+				// fallback to ipv4 if ipv6 not matching
+				if (!IP_EQUAL(client->ip, account->dynip))
+					{ cs_user_resolve(account, 1); }
+#endif
 				if(!IP_EQUAL(client->ip, account->dynip))
 				{
 					cs_add_violation(client, account->usr);

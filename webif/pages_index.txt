@@ -205,6 +205,7 @@ LOGDEBUGMENU                  logpage/logpage_debugmenu.html                    
 LOGSIZEMENU                   logpage/logpage_sizemenu.html                               WEBIF_LIVELOG
 
 READERCONFIG                  readerconfig/readerconfig.html
+READERCONFIGIPV6BIT           readerconfig/readerconfig_ipv6bit.html                      IPV6SUPPORT
 READEREDITCACHEEXBIT          readerconfig/readerconfig_cacheexbit.html                   CS_CACHEEX
 READERCONFIGCAMD35BIT         readerconfig/readerconfig_camd35bit.html                    MODULE_CAMD35
 READERCONFIGCCCAMBIT          readerconfig/readerconfig_cccambit.html                     MODULE_CCCAM

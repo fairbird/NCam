@@ -1784,7 +1784,8 @@ struct s_reader
 	int32_t         tcp_ito;                        // inactivity timeout
 	int32_t         tcp_rto;                        // reconnect timeout
 	int8_t          reconnect_attempts;
-
+	uint8_t		ipv4force;
+	uint8_t		ipv6_connect_failed;
 	struct timeb    tcp_block_connect_till;         // time tcp connect ist blocked
 	int32_t         tcp_block_delay;                // incrementing block time
 	time_t          last_g;                         // get (if last_s-last_g>tcp_rto - reconnect )
