@@ -956,8 +956,8 @@ static int32_t irdeto_get_emm_filter(struct s_reader *rdr, struct s_csystem_emm_
 		filters[idx].enabled = 1;
 		filters[idx].filter[0] = 0x82;
 		filters[idx].mask[0] = 0xFF;
-		filters[idx].filter[1] = 0xF8;
-		filters[idx].mask[1] = 0x07;
+		filters[idx].filter[1] = rdr->hexserial[3] << 3;
+		filters[idx].mask[1] = 0xFF;
 		idx++;
 
 		filters[idx].type = EMM_UNIQUE;
