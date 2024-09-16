@@ -5452,8 +5452,7 @@ void event_handler(int32_t UNUSED(signal))
 	struct stat pmt_info;
 	char dest[1024];
 	struct dirent **entries;
-	int32_t i, n;
-	int32_t i, pmt_fd;
+	int32_t i, pmt_fd, n;
 	uint8_t mbuf[2048]; // dirty fix: larger buffer needed for CA PMT mode 6 with many parallel channels to decode
 
 	if(dvbapi_client != cur_client())

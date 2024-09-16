@@ -661,6 +661,7 @@ void tpl_checkDiskRevisions(void)
 {
 	char subdir[255];
 	char dirpath[255];
+	int n;
 	if(cfg.http_tpl)
 	{
 		tpl_checkOneDirDiskRevisions("");
@@ -688,7 +689,6 @@ void tpl_checkDiskRevisions(void)
 #endif
 							 , entries[n]->d_name);
 					tpl_checkOneDirDiskRevisions(subdir);
-					}
 				}
 			}
 		}
