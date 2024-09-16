@@ -661,39 +661,38 @@ void tpl_checkDiskRevisions(void)
 {
 	char subdir[255];
 	char dirpath[255];
+	int n;
 	if(cfg.http_tpl)
 	{
 		tpl_checkOneDirDiskRevisions("");
-		DIR *hdir;
-		struct dirent entry;
-		struct dirent *result;
 		struct stat s;
-		if((hdir = opendir(cfg.http_tpl)) != NULL)
+		struct dirent **entries;
+		n = scandir(cfg.http_tpl, &entries, NULL, NULL);
+		if(n==-1)
+			return;
+		while(n--)
 		{
-			while(cs_readdir_r(hdir, &entry, &result) == 0 && result != NULL)
+			if(strcmp(".", entries[n]->d_name) == 0 || strcmp("..", entries[n]->d_name) == 0)
 			{
-				if(strcmp(".", entry.d_name) == 0 || strcmp("..", entry.d_name) == 0)
+				continue;
+			}
+			snprintf(dirpath, 255, "%.31s%.31s", cfg.http_tpl, entries[n]->d_name);
+			if(stat(dirpath, &s) == 0)
+			{
+				if(s.st_mode & S_IFDIR)
 				{
-					continue;
-				}
-				snprintf(dirpath, 255, "%.31s%.31s", cfg.http_tpl, entry.d_name);
-				if(stat(dirpath, &s) == 0)
-				{
-					if(s.st_mode & S_IFDIR)
-					{
-						snprintf(subdir, 255,
+					snprintf(subdir, 255,
 #ifdef WIN32
-								 "%s\\"
+							 "%s\\"
 #else
-								 "%.253s/"
+							 "%.253s/"
 #endif
-								 , entry.d_name);
-						tpl_checkOneDirDiskRevisions(subdir);
+								 , entries[n]->d_name);
+					tpl_checkOneDirDiskRevisions(subdir);
 					}
 				}
 			}
-			closedir(hdir);
-		}
+			free(entries);
 	}
 }
 

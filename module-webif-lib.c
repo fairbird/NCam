@@ -699,16 +699,14 @@ int8_t get_stats_linux(const pid_t pid, struct pstat* result)
 
 	// read processes from /proc
 	uint info_procs = 0;
-	DIR *hdir;
-	if((hdir = opendir("/proc")) != NULL){
-		struct dirent entry;
-		struct dirent *dirresult;
-		while(cs_readdir_r(hdir, &entry, &dirresult) == 0 && dirresult != NULL)
-		{
-			if (entry.d_name[0] > '0' && entry.d_name[0] <= '9') { info_procs++; }
-		}
-		closedir(hdir);
+	struct dirent **entries;
+	int n = scandir("/proc", &entries, NULL, NULL);
+	n = MAX(n, 0);
+	while(n--)
+	{
+		if (entries[n]->d_name[0] > '0' && entries[n]->d_name[0] <= '9') { info_procs++; }
 	}
+	free(entries);
 
 	// read cpu/meminfo from sysinfo()
 	struct sysinfo info;

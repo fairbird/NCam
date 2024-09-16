@@ -63,29 +63,6 @@ char *get_tmp_dir_filename(char *dest, size_t destlen, const char *filename)
 	return dest;
 }
 
-/* Drop-in replacement for readdir_r as some plattforms strip the function from their libc.
-   Furthermore, there are some security issues, see http://womble.decadent.org.uk/readdir_r-advisory.html */
-
-int32_t cs_readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result)
-{
-	/* According to POSIX the buffer readdir uses is not shared between directory streams.
-	   However readdir is not guaranteed to be thread-safe and some implementations may use global state.
-	   Thus we use a lock as we have many plattforms... */
-
-	int32_t rc;
-	cs_writelock(__func__, &readdir_lock);
-	errno = 0;
-	*result = readdir(dirp);
-	rc = errno;
-	if(errno == 0 && *result != NULL)
-	{
-		memcpy(entry, *result, sizeof(struct dirent));
-		*result = entry;
-	}
-	cs_writeunlock(__func__, &readdir_lock);
-	return rc;
-}
-
 /* Return 1 if the file exists, else 0 */
 bool file_exists(const char *filename)
 {

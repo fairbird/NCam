@@ -114,7 +114,6 @@ CS_MUTEX_LOCK gethostbyname_lock;
 CS_MUTEX_LOCK clientlist_lock;
 CS_MUTEX_LOCK readerlist_lock;
 CS_MUTEX_LOCK fakeuser_lock;
-CS_MUTEX_LOCK readdir_lock;
 CS_MUTEX_LOCK cwcycle_lock;
 pthread_key_t getclient;
 static int32_t bg;
@@ -1895,7 +1894,6 @@ int32_t main(int32_t argc, char *argv[])
 	cs_lock_create(__func__, &fakeuser_lock, "fakeuser_lock", 5000);
 	cs_lock_create(__func__, &ecmcache_lock, "ecmcache_lock", 5000);
 	cs_lock_create(__func__, &ecm_pushed_deleted_lock, "ecm_pushed_deleted_lock", 5000);
-	cs_lock_create(__func__, &readdir_lock, "readdir_lock", 5000);
 	cs_lock_create(__func__, &cwcycle_lock, "cwcycle_lock", 5000);
 	init_cache();
 	cacheex_init_hitcache();

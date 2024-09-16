@@ -5451,9 +5451,9 @@ void event_handler(int32_t UNUSED(signal))
 {
 	struct stat pmt_info;
 	char dest[1024];
-	DIR *dirp;
-	struct dirent entry, *dp = NULL;
-	int32_t i, pmt_fd;
+	struct dirent **entries;
+	int32_t i, n;
+	int32_t pmt_fd = -1;
 	uint8_t mbuf[2048]; // dirty fix: larger buffer needed for CA PMT mode 6 with many parallel channels to decode
 
 	if(dvbapi_client != cur_client())
@@ -5530,27 +5530,22 @@ void event_handler(int32_t UNUSED(signal))
 		return;
 	}
 
-	dirp = opendir(TMPDIR);
-	if(!dirp)
+	n = scandir(TMPDIR, &entries, NULL, NULL);
+	if (n==-1)
 	{
-		cs_log_dbg(D_DVBAPI, "opendir failed (errno=%d %s)", errno, strerror(errno));
+		cs_log_dbg(D_DVBAPI, "scandir failed (errno=%d %s)", errno, strerror(errno));
 		SAFE_MUTEX_UNLOCK(&event_handler_lock);
 		return;
 	}
 
-	while(!cs_readdir_r(dirp, &entry, &dp))
+	while(n--)
 	{
-		if(!dp)
-		{
-			break;
-		}
-
-		if(cs_strlen(dp->d_name) < 7)
+		if(cs_strlen(entries[n]->d_name) < 7)
 		{
 			continue;
 		}
 
-		if(strncmp(dp->d_name, "pmt", 3) != 0 || strncmp(dp->d_name + cs_strlen(dp->d_name) - 4, ".tmp", 4) != 0)
+		if(strncmp(entries[n]->d_name, "pmt", 3) != 0 || strncmp(entries[n]->d_name + cs_strlen(entries[n]->d_name) - 4, ".tmp", 4) != 0)
 		{
 			continue;
 		}
@@ -5560,19 +5555,43 @@ void event_handler(int32_t UNUSED(signal))
 		for(p = dvbapi_priority; p != NULL; p = p->next) // stapi: check if there is a device connected to this pmt file!
 		{
 			if(p->type != 's') { continue; } // stapi rule?
-			if(strcmp(dp->d_name, p->pmtfile) != 0) { continue; } // same file?
+			if(strcmp(entries[n]->d_name, p->pmtfile) != 0) { continue; } // same file?
 			break; // found match!
 		}
 
 		if(p == NULL)
 		{
-			cs_log_dbg(D_DVBAPI, "No matching S: line in ncam.dvbapi for pmtfile %s -> skip!", dp->d_name);
+			cs_log_dbg(D_DVBAPI, "No matching S: line in ncam.dvbapi for pmtfile %s -> skip!", entries[n]->d_name);
 			continue;
 		}
 #endif
-		cs_strncpy(dest, TMPDIR, sizeof(TMPDIR));
-		cs_strncpy(dest + cs_strlen(dest), dp->d_name, cs_strlen(dp->d_name) + 1);
-		pmt_fd = open(dest, O_RDONLY);
+		#endif
+
+		if (!cs_strlen(TMPDIR))
+		{
+			cs_log_dbg(D_DVBAPI, "BUG! cs_strlen(TMPDIR)!!!\n");
+			continue;
+		}
+
+		if (!cs_strlen(entries[n]->d_name))
+		{
+			cs_log_dbg(D_DVBAPI, "BUG! cs_strlen(entries[n]->d_name)!!!\n");
+			continue;
+		}
+
+		if((cs_strlen(entries[n]->d_name) + cs_strlen(TMPDIR) - 1) > sizeof(dest))
+		{
+			cs_log_dbg(D_DVBAPI, "BUG! Sum of the (d_name + TMPDIR) = %u > sizeof(dest) !!!\n", (unsigned int)(cs_strlen(entries[n]->d_name) + cs_strlen(TMPDIR) - 1));
+			continue;
+		}
+		else
+		{
+			memcpy(dest, TMPDIR, cs_strlen(TMPDIR));
+			memcpy(dest + cs_strlen(TMPDIR), entries[n]->d_name, cs_strlen(entries[n]->d_name));
+			dest[cs_strlen(TMPDIR) + cs_strlen(entries[n]->d_name)] = '\0';
+			pmt_fd = open(dest, O_RDONLY);
+		}
+
 		if(pmt_fd < 0)
 		{
 			continue;
@@ -5592,7 +5611,7 @@ void event_handler(int32_t UNUSED(signal))
 
 		for(i = 0; i < MAX_DEMUX; i++)
 		{
-			if(strcmp(demux[i].pmt_file, dp->d_name) == 0)
+			if(strcmp(demux[i].pmt_file, entries[n]->d_name) == 0)
 			{
 				if((time_t)pmt_info.st_mtime == demux[i].pmt_time)
 				{
@@ -5656,7 +5675,7 @@ void event_handler(int32_t UNUSED(signal))
 		}
 
 		cs_log_dump_dbg(D_DVBAPI, (uint8_t *)dest, len / 2, "QboxHD pmt.tmp:");
-		demux_id = dvbapi_parse_capmt((uint8_t *)dest + 4, (len / 2) - 4, -1, dp->d_name, 0, 0);
+		demux_id = dvbapi_parse_capmt((uint8_t *)dest + 4, (len / 2) - 4, -1, entries[n]->d_name, 0, 0);
 #else
 		if(len > sizeof(dest))
 		{
@@ -5681,12 +5700,12 @@ void event_handler(int32_t UNUSED(signal))
 		memcpy(dest + 7, mbuf + 12, len - 12 - 4);
 
 		cs_log_dump_dbg(D_DVBAPI, (uint8_t *)dest, 7 + len - 12 - 4, "CA PMT:"); // Actual CA PMT message
-		demux_id = dvbapi_parse_capmt((uint8_t *)dest, 7 + len - 12 - 4, -1, dp->d_name, 0, 0);
+		demux_id = dvbapi_parse_capmt((uint8_t *)dest, 7 + len - 12 - 4, -1, entries[n]->d_name, 0, 0);
 #endif
 
 		if(demux_id >= 0)
 		{
-			cs_strncpy(demux[demux_id].pmt_file, dp->d_name, sizeof(demux[demux_id].pmt_file));
+			cs_strncpy(demux[demux_id].pmt_file, entries[n]->d_name, sizeof(demux[demux_id].pmt_file));
 			demux[demux_id].pmt_time = (time_t)pmt_info.st_mtime;
 		}
 
@@ -5696,7 +5715,7 @@ void event_handler(int32_t UNUSED(signal))
 			break;
 		}
 	}
-	closedir(dirp);
+	free(entries);
 	SAFE_MUTEX_UNLOCK(&event_handler_lock);
 }
 
