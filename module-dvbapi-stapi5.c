@@ -144,13 +144,6 @@ int32_t stapi_open(void)
 	stapi_on = 1;
 	int32_t stapi_priority = 0;
 
-	dirp = opendir(PROCDIR);
-	if(!dirp)
-	{
-		cs_log("opendir failed (errno=%d %s)", errno, strerror(errno));
-		return 0;
-	}
-
 	memset(dev_list, 0, sizeof(struct STDEVICE)*PTINUM);
 
 	if(dvbapi_priority)
@@ -175,18 +168,21 @@ int32_t stapi_open(void)
 	oscam_stapi5_GetRevision();
 	oscam_sttkd_GetRevision();
 
-	i = 0;
-	while(!cs_readdir_r(dirp, &entry, &dp))
+	n = scandir(PROCDIR, &entries, NULL, NULL);
+	if (n==-1)
 	{
-		if(!dp) { break; }
-
+		ics_log("scandir failed (errno=%d %s)", errno, strerror(errno));
+		return 0;
+	}
+	while(n--)
+	{
 		char pfad[cs_strlen(PROCDIR) + cs_strlen(dp->d_name) + 1];
 		cs_strncpy(pfad, PROCDIR, cs_strlen(PROCDIR) + 1);
 		cs_strncpy(pfad + cs_strlen(pfad), dp->d_name, cs_strlen(dp->d_name) + 1);
 		if(stat(pfad, &buf) != 0)
 			{ continue; }
 
-		if(!(buf.st_mode & S_IFDIR && strncmp(dp->d_name, ".", 1) != 0))
+		if(!(buf.st_mode & S_IFDIR && strncmp(entries[n]->d_name, ".", 1) != 0))
 			{ continue; }
 
 		int32_t do_open = 0;
@@ -195,7 +191,7 @@ int32_t stapi_open(void)
 		for(p = dvbapi_priority; p != NULL; p = p->next)
 		{
 			if(p->type != 's') { continue; }
-			if(strcmp(dp->d_name, p->devname) == 0)
+			if(strcmp(entries[n]->d_name, entries[n]->devname) == 0)
 			{
 				do_open = 1;
 				break;
@@ -204,11 +200,11 @@ int32_t stapi_open(void)
 
 		if(!do_open)
 		{
-			cs_log("PTI: %s skipped", dp->d_name);
+			cs_log("PTI: %s skipped", entries[n]->d_name);
 			continue;
 		}
 
-		ErrorCode = oscam_stapi5_Open(dp->d_name, &dev_list[i].SessionHandle);
+		ErrorCode = oscam_stapi5_Open(entries[n]->d_name, &dev_list[i].SessionHandle);
 		if(ErrorCode != 0)
 		{
 			cs_log("STPTI_Open ErrorCode: %d", ErrorCode);
@@ -216,10 +212,10 @@ int32_t stapi_open(void)
 		}
 
 		//debug
-		//oscam_stapi_Capability(dp->d_name);
+		//oscam_stapi_Capability(entries[n]->d_name);
 
-		cs_strncpy(dev_list[i].name, dp->d_name, sizeof(dev_list[i].name));
-		cs_log("PTI: %s open %d", dp->d_name, i);
+		cs_strncpy(dev_list[i].name, entries[n]->d_name, sizeof(dev_list[i].name));
+		cs_log("PTI: %s open %d", entries[n]->d_name, i);
 
 		ErrorCode = oscam_stapi5_SignalAllocate(dev_list[i].SessionHandle, &dev_list[i].SignalHandle);
 		if(ErrorCode != 0)
@@ -228,7 +224,7 @@ int32_t stapi_open(void)
 		i++;
 		if(i >= PTINUM) { break; }
 	}
-	closedir(dirp);
+	free(entries);
 
 	if(i == 0) { return 0; }
 
