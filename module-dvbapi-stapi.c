@@ -128,24 +128,24 @@ static void stapi_off(void)
 
 int32_t stapi_open(void)
 {
-	stapi_on = 1;
-	int32_t i;
+    stapi_on = 1;
+    int32_t i = 0;
 #ifdef WITH_WI
 #ifndef WI_OLD
 	WiWrapper_Init(cfg.dvbapi_wi_sosket_id);
 	cs_log("Wi socket id: %d", cfg.dvbapi_wi_sosket_id);
 #endif
-	WiDemux_Init();
-	cs_log_dbg(D_DVBAPI, "[%s] dvbapi_priority(%p)", __func__, dvbapi_priority);
+    WiDemux_Init();
+    cs_log_dbg(D_DVBAPI, "[%s] dvbapi_priority(%p)", __func__, dvbapi_priority);
 #else
-	uint32_t ErrorCode;
-
-	struct dirent **entries;
-	struct stat buf;
-	int32_t i = 0, n;
-	int32_t stapi_priority = 0;
+    uint32_t ErrorCode;
+    struct dirent **entries = NULL;
+    struct stat buf;
+    int32_t n;
+    int32_t stapi_priority = 0;
+	char pfad[PATH_MAX]; // Define pfad with a suitable size
 #endif
-	memset(dev_list, 0, sizeof(struct STDEVICE)*PTINUM);
+    memset(dev_list, 0, sizeof(struct STDEVICE) * PTINUM);
 #ifdef WITH_WI
 	// ST_DeviceName_t  PTI_DeviceName[]={"PTI","PTI1","SWTS0","PTI2","SWTS1","SWTS2","PTI6","PTI7"};
 	oscam_stapi_Open("PTI", &dev_list[0].SessionHandle);
@@ -153,20 +153,20 @@ int32_t stapi_open(void)
 	oscam_stapi_Open("PTI1", &dev_list[1].SessionHandle);
 	cs_strncpy(dev_list[1].name, "stapi1", sizeof(dev_list[1].name)); // pmt2_x.tmp
 #else
-	if(dvbapi_priority)
-	{
-		struct s_dvbapi_priority *p;
-		for(p = dvbapi_priority; p != NULL; p = p->next)
-		{
-			if(p->type == 's')
-			{
-				stapi_priority = 1;
-				break;
-			}
-		}
-	}
+    if (dvbapi_priority)
+    {
+        struct s_dvbapi_priority *p;
+        for (p = dvbapi_priority; p != NULL; p = p->next)
+        {
+            if (p->type == 's')
+            {
+                stapi_priority = 1;
+                break;
+            }
+        }
+    }
 
-	if(!stapi_priority)
+    if(!stapi_priority)
 	{
 		cs_log("WARNING: no PTI devices defined, stapi disabled");
 		return 0;
@@ -174,66 +174,74 @@ int32_t stapi_open(void)
 
 	oscam_stapi_CheckVersion();
 
-	n = scandir(PROCDIR, &entries, NULL, NULL);
-	if (n==-1)
-	{
-		cs_log("scandir failed (errno=%d %s)", errno, strerror(errno));
-		return 0;
-	}
-	while(n--)
-	{
-		snprintf(pfad, sizeof(pfad), "%s%s", PROCDIR, entries[n]->d_name);
-		char pfad[cs_strlen(PROCDIR) + cs_strlen(dp->d_name) + 1];
-		cs_strncpy(pfad, PROCDIR, cs_strlen(PROCDIR) + 1);
-		cs_strncpy(pfad + cs_strlen(pfad), dp->d_name, cs_strlen(dp->d_name) + 1);
-		if(stat(pfad, &buf) != 0)
-			{ continue; }
+    n = scandir(PROCDIR, &entries, NULL, NULL);
+    if (n == -1)
+    {
+        cs_log("scandir failed (errno=%d %s)", errno, strerror(errno));
+        return 0;
+    }
+    
+    while (n--)
+    {
+        snprintf(pfad, sizeof(pfad), "%s%s", PROCDIR, entries[n]->d_name);
+        if (stat(pfad, &buf) != 0)
+        {
+            continue;
+        }
 
-		if(!(buf.st_mode & S_IFDIR && strncmp(entries[n]->d_name, ".", 1) != 0))
-			{ continue; }
+        if (!(buf.st_mode & S_IFDIR && strncmp(entries[n]->d_name, ".", 1) != 0))
+        {
+            continue;
+        }
 
-		int32_t do_open = 0;
-		struct s_dvbapi_priority *p;
+        int32_t do_open = 0;
+        struct s_dvbapi_priority *p;
 
-		for(p = dvbapi_priority; p != NULL; p = p->next)
-		{
-			if(p->type != 's') { continue; }
-			if(strcmp(entries[n]->d_name, p->devname) == 0)
-			{
-				do_open = 1;
-				break;
-			}
-		}
+        for (p = dvbapi_priority; p != NULL; p = p->next)
+        {
+            if (p->type != 's') { continue; }
+            if (strcmp(entries[n]->d_name, p->devname) == 0)
+            {
+                do_open = 1;
+                break;
+            }
+        }
 
-		if(!do_open)
-		{
-			cs_log("PTI: %s skipped", entries[n]->d_name);
-			continue;
-		}
+        if (!do_open)
+        {
+            cs_log("PTI: %s skipped", entries[n]->d_name);
+            continue;
+        }
 
-		ErrorCode = oscam_stapi_Open(entries[n]->d_name, &dev_list[i].SessionHandle);
-		if(ErrorCode != 0)
-		{
-			cs_log("STPTI_Open ErrorCode: %d", ErrorCode);
-			continue;
-		}
+        ErrorCode = oscam_stapi_Open(entries[n]->d_name, &dev_list[i].SessionHandle);
+        if (ErrorCode != 0)
+        {
+            cs_log("STPTI_Open ErrorCode: %d", ErrorCode);
+            continue;
+        }
 
-		//debug
-		//oscam_stapi_Capability(entries[n]->d_name);
+        //debug
+        //oscam_stapi_Capability(entries[n]->d_name);
 
-		cs_strncpy(dev_list[i].name, entries[n]->d_name, sizeof(dev_list[i].name));
-		cs_log("PTI: %s open %d", entries[n]->d_name, i);
+        cs_strncpy(dev_list[i].name, entries[n]->d_name, sizeof(dev_list[i].name));
+        cs_log("PTI: %s open %d", entries[n]->d_name, i);
 
-		ErrorCode = oscam_stapi_SignalAllocate(dev_list[i].SessionHandle, &dev_list[i].SignalHandle);
-		if(ErrorCode != 0)
-			{ cs_log("SignalAllocate: ErrorCode: %d SignalHandle: %x", ErrorCode, dev_list[i].SignalHandle); }
+        ErrorCode = oscam_stapi_SignalAllocate(dev_list[i].SessionHandle, &dev_list[i].SignalHandle);
+        if (ErrorCode != 0)
+        {
+            cs_log("SignalAllocate: ErrorCode: %d SignalHandle: %x", ErrorCode, dev_list[i].SignalHandle);
+        }
 
-		i++;
-		if(i >= PTINUM) { break; }
-	}
-	free(entries);
+        i++;
+        if (i >= PTINUM) { break; }
+    }
 
-	if(i == 0) { return 0; }
+    // Free the allocated entries array
+    if (entries) {
+        free(entries);
+    }
+
+    if (i == 0) { return 0; }
 #endif
 	SAFE_MUTEX_INIT(&filter_lock, NULL);
 #ifdef WITH_WI
