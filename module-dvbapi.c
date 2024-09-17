@@ -5560,7 +5560,7 @@ void event_handler(int32_t UNUSED(signal))
 
 		if(p == NULL)
 		{
-			cs_log_dbg(D_DVBAPI, "No matching S: line in oscam.dvbapi for pmtfile %s -> skip!", entries[n]->d_name);
+			cs_log_dbg(D_DVBAPI, "No matching S: line in ncam.dvbapi for pmtfile %s -> skip!", entries[n]->d_name);
 			continue;
 		}
 #endif
