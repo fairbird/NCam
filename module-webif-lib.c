@@ -705,6 +705,7 @@ int8_t get_stats_linux(const pid_t pid, struct pstat* result)
 	while(n--)
 	{
 		if (entries[n]->d_name[0] > '0' && entries[n]->d_name[0] <= '9') { info_procs++; }
+		free(entries[n]);
 	}
 	free(entries);
 
