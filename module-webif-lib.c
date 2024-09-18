@@ -882,7 +882,7 @@ SSL_CTX *SSL_Webif_Init(void)
 
 	if(cfg.https_force_secure_mode)
 	{
-#ifdef SSL_CTX_clear_options
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L || defined SSL_CTX_clear_options // makro removed in OpenSSL 1.1.0+
 		SSL_CTX_clear_options(ctx, SSL_OP_ALL); //we CLEAR all bug workarounds! This is for security reason
 #else
 		cs_log("WARNING: You enabled to force secure HTTPS but your system does not support to clear the ssl workarounds! SSL security will be reduced!");
