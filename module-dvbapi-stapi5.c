@@ -137,7 +137,7 @@ int32_t stapi_open(void)
 {
 	uint32_t ErrorCode;
 	struct dirent **entries = NULL;
-	int n, i;
+	int i = 0, n;
 
 	stapi_on = 1;
 	int32_t stapi_priority = 0;
@@ -194,7 +194,7 @@ int32_t stapi_open(void)
 		for(p = dvbapi_priority; p != NULL; p = p->next)
 		{
 			if(p->type != 's') { continue; }
-			if(strcmp(entries[n]->d_name, entries[n]->devname) == 0)
+			if(strcmp(entries[n]->d_name, p->devname) == 0)
 			{
 				do_open = 1;
 				break;
