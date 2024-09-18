@@ -129,7 +129,7 @@ static void stapi_off(void)
 int32_t stapi_open(void)
 {
 	stapi_on = 1;
-	int32_t i;
+	int32_t i = 0;
 #ifdef WITH_WI
 #ifndef WI_OLD
 	WiWrapper_Init(cfg.dvbapi_wi_sosket_id);
@@ -139,11 +139,11 @@ int32_t stapi_open(void)
 	cs_log_dbg(D_DVBAPI, "[%s] dvbapi_priority(%p)", __func__, dvbapi_priority);
 #else
 	uint32_t ErrorCode;
-
-	struct dirent **entries;
+	struct dirent **entries = NULL;
 	struct stat buf;
-	int32_t i = 0, n;
+	int32_t n;
 	int32_t stapi_priority = 0;
+	char pfad[PATH_MAX]; // Define pfad with a suitable size
 #endif
 	memset(dev_list, 0, sizeof(struct STDEVICE)*PTINUM);
 #ifdef WITH_WI
@@ -180,23 +180,17 @@ int32_t stapi_open(void)
 		cs_log("scandir failed (errno=%d %s)", errno, strerror(errno));
 		return 0;
 	}
+	
 	while(n--)
 	{
 		snprintf(pfad, sizeof(pfad), "%s%s", PROCDIR, entries[n]->d_name);
-		char pfad[cs_strlen(PROCDIR) + cs_strlen(dp->d_name) + 1];
-		cs_strncpy(pfad, PROCDIR, cs_strlen(PROCDIR) + 1);
-		cs_strncpy(pfad + cs_strlen(pfad), dp->d_name, cs_strlen(dp->d_name) + 1);
 		if(stat(pfad, &buf) != 0)
-		{
 			free(entries[n]);
-			continue;
-		}
+			{ continue; }
 
 		if(!(buf.st_mode & S_IFDIR && strncmp(entries[n]->d_name, ".", 1) != 0))
-		{
 			free(entries[n]);
-			continue;
-		}
+			{ continue; }
 
 		int32_t do_open = 0;
 		struct s_dvbapi_priority *p;

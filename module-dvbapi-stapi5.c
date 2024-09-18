@@ -136,14 +136,11 @@ static void stapi_off(void)
 int32_t stapi_open(void)
 {
 	uint32_t ErrorCode;
+	struct dirent **entries = NULL;
+	int n, i;
 
-	DIR *dirp;
-	struct dirent entry, *dp = NULL;
-	struct stat buf;
-	int32_t i;
 	stapi_on = 1;
 	int32_t stapi_priority = 0;
-
 	memset(dev_list, 0, sizeof(struct STDEVICE)*PTINUM);
 
 	if(dvbapi_priority)
@@ -171,47 +168,45 @@ int32_t stapi_open(void)
 	n = scandir(PROCDIR, &entries, NULL, NULL);
 	if (n==-1)
 	{
-		ics_log("scandir failed (errno=%d %s)", errno, strerror(errno));
+		cs_log("scandir failed (errno=%d %s)", errno, strerror(errno));
 		return 0;
 	}
-	while(n--)
-	{
-		char pfad[cs_strlen(PROCDIR) + cs_strlen(dp->d_name) + 1];
-		cs_strncpy(pfad, PROCDIR, cs_strlen(PROCDIR) + 1);
-		cs_strncpy(pfad + cs_strlen(pfad), dp->d_name, cs_strlen(dp->d_name) + 1);
-		if(stat(pfad, &buf) != 0)
-		{
-			free(entries[n]);
-			continue;
-		}
 
-		if(!(buf.st_mode & S_IFDIR && strncmp(entries[n]->d_name, ".", 1) != 0))
-		{
+	for (i = 0; i < n; i++)
+	{
+		char pfad[cs_strlen(PROCDIR) + cs_strlen(entries[i]->d_name) + 1];
+		snprintf(pfad, sizeof(pfad), "%s%s", PROCDIR, entries[i]->d_name);
+
+		struct stat buf;
+		if (stat(pfad, &buf) != 0)
 			free(entries[n]);
-			continue;
-		}
+			{ continue; }
+
+		if (!(buf.st_mode & S_IFDIR && strncmp(entries[i]->d_name, ".", 1) != 0))
+			free(entries[n]);
+			{ continue; }
 
 		int32_t do_open = 0;
 		struct s_dvbapi_priority *p;
-
 		for(p = dvbapi_priority; p != NULL; p = p->next)
 		{
 			if(p->type != 's') { continue; }
-			if(strcmp(entries[n]->d_name, entries[n]->devname) == 0)
+			if (strcmp(entries[i]->d_name, p->devname) == 0)
 			{
 				do_open = 1;
 				break;
+
 			}
 		}
 
 		if(!do_open)
 		{
-			cs_log("PTI: %s skipped", entries[n]->d_name);
+			cs_log("PTI: %s skipped", entries[i]->d_name);
 			free(entries[n]);
 			continue;
 		}
 
-		ErrorCode = oscam_stapi5_Open(entries[n]->d_name, &dev_list[i].SessionHandle);
+		ErrorCode = oscam_stapi5_Open(entries[i]->d_name, &dev_list[i].SessionHandle);
 		if(ErrorCode != 0)
 		{
 			cs_log("STPTI_Open ErrorCode: %d", ErrorCode);
@@ -219,36 +214,38 @@ int32_t stapi_open(void)
 			continue;
 		}
 
-		//debug
-		//oscam_stapi_Capability(entries[n]->d_name);
-
-		cs_strncpy(dev_list[i].name, entries[n]->d_name, sizeof(dev_list[i].name));
-		cs_log("PTI: %s open %d", entries[n]->d_name, i);
+		cs_strncpy(dev_list[i].name, entries[i]->d_name, sizeof(dev_list[i].name));
+		cs_log("PTI: %s open %d", entries[i]->d_name, i);
 		free(entries[n]);
 
 		ErrorCode = oscam_stapi5_SignalAllocate(dev_list[i].SessionHandle, &dev_list[i].SignalHandle);
 		if(ErrorCode != 0)
-			{ cs_log("SignalAllocate: ErrorCode: %d SignalHandle: %x", ErrorCode, dev_list[i].SignalHandle); }
+		{
+			     cs_log("SignalAllocate: ErrorCode: %d SignalHandle: %x", ErrorCode, dev_list[i].SignalHandle);
+	    }
+	}
 
-		i++;
-		if(i >= PTINUM) { break; }
+	for (i = 0; i < n; i++)
+	{
+        free(entries[i]);
 	}
 	free(entries);
 
 	if(i == 0) { return 0; }
 
+	// Initialize TKD devices
 	uint8_t TKD_InstanceID = 0;
 	memset(&tkd_desc_info, 0, sizeof(tkd_desc_info[0]) * MAX_DESCRAMBLER);
-
 	for(TKD_InstanceID = 0; TKD_InstanceID < TKD_MAX_NUMBER; TKD_InstanceID++)
 	{
 			/* Generate the device name dynamically based upon the Instance ID */
 			snprintf(TKD_DeviceName[TKD_InstanceID], sizeof(TKD_DeviceName), "TKD_%02d", TKD_InstanceID);
-
 			ErrorCode = oscam_sttkd_Open(TKD_DeviceName[TKD_InstanceID], &TKDHandle[TKD_InstanceID]);
 			if(ErrorCode != 0)
+		{
 				cs_log("oscam_sttkd_Open: DeviceName: %s, TKDHandle: 0x%08X, ErrorCode: %d", TKD_DeviceName[TKD_InstanceID], TKDHandle[TKD_InstanceID], ErrorCode);
-	}
+		}
+    }
 
 	SAFE_MUTEX_INIT(&filter_lock, NULL);
 
@@ -257,8 +254,8 @@ int32_t stapi_open(void)
 		if(dev_list[i].SessionHandle == 0)
 			{ continue; }
 
-		struct read_thread_param *para;
-		if(!cs_malloc(&para, sizeof(struct read_thread_param)))
+		struct read_thread_param *para = malloc(sizeof(struct read_thread_param));
+		if (!para)
 			{ return 0; }
 		para->id = i;
 		para->cli = cur_client();
@@ -266,6 +263,7 @@ int32_t stapi_open(void)
 		int32_t ret = start_thread("stapi read", stapi_read_thread, (void *)para, &dev_list[i].thread, 1, 0);
 		if(ret)
 		{
+			free(para);
 			return 0;
 		}
 	}
