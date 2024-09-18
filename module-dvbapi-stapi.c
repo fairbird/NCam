@@ -185,12 +185,16 @@ int32_t stapi_open(void)
 	{
 		snprintf(pfad, sizeof(pfad), "%s%s", PROCDIR, entries[n]->d_name);
 		if(stat(pfad, &buf) != 0)
+		{
 			free(entries[n]);
-			{ continue; }
+			continue;
+		}
 
 		if(!(buf.st_mode & S_IFDIR && strncmp(entries[n]->d_name, ".", 1) != 0))
+		{
 			free(entries[n]);
-			{ continue; }
+			continue;
+		}
 
 		int32_t do_open = 0;
 		struct s_dvbapi_priority *p;
