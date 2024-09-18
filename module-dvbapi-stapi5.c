@@ -173,8 +173,8 @@ int32_t stapi_open(void)
 	}
 	while(n--)
 	{
-		char pfad[cs_strlen(PROCDIR) + cs_strlen(entries[n]->d_name) + 1];
-		snprintf(pfad, sizeof(pfad), "%s%s", PROCDIR, entries[n]->d_name);
+		char pfad[cs_strlen(PROCDIR) + cs_strlen(entries[i]->d_name) + 1];
+		snprintf(pfad, sizeof(pfad), "%s%s", PROCDIR, entries[i]->d_name);
 
 		struct stat buf;
 		if (stat(pfad, &buf) != 0)
@@ -183,7 +183,7 @@ int32_t stapi_open(void)
 			continue;
 		}
 
-		if (!(buf.st_mode & S_IFDIR && strncmp(entries[n]->d_name, ".", 1) != 0))
+		if (!(buf.st_mode & S_IFDIR && strncmp(entries[i]->d_name, ".", 1) != 0))
 		{
 			free(entries[n]);
 			continue;
