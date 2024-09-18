@@ -137,7 +137,7 @@ int32_t stapi_open(void)
 {
 	uint32_t ErrorCode;
 	struct dirent **entries = NULL;
-	int n, i;
+	int i = 0, n;
 
 	stapi_on = 1;
 	int32_t stapi_priority = 0;
@@ -173,8 +173,8 @@ int32_t stapi_open(void)
 	}
 	while(n--)
 	{
-		char pfad[cs_strlen(PROCDIR) + cs_strlen(entries[i]->d_name) + 1];
-		snprintf(pfad, sizeof(pfad), "%s%s", PROCDIR, entries[i]->d_name);
+		char pfad[cs_strlen(PROCDIR) + cs_strlen(entries[n]->d_name) + 1];
+		snprintf(pfad, sizeof(pfad), "%s%s", PROCDIR, entries[n]->d_name);
 
 		struct stat buf;
 		if (stat(pfad, &buf) != 0)
@@ -183,7 +183,7 @@ int32_t stapi_open(void)
 			continue;
 		}
 
-		if (!(buf.st_mode & S_IFDIR && strncmp(entries[i]->d_name, ".", 1) != 0))
+		if (!(buf.st_mode & S_IFDIR && strncmp(entries[n]->d_name, ".", 1) != 0))
 		{
 			free(entries[n]);
 			continue;
@@ -194,7 +194,7 @@ int32_t stapi_open(void)
 		for(p = dvbapi_priority; p != NULL; p = p->next)
 		{
 			if(p->type != 's') { continue; }
-			if(strcmp(entries[n]->d_name, entries[n]->devname) == 0)
+			if(strcmp(entries[n]->d_name, p->devname) == 0)
 			{
 				do_open = 1;
 				break;
