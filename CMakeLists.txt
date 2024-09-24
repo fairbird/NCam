@@ -289,6 +289,7 @@ if ((CONFIG_WITH_SIGNING MATCHES "Y" AND NOT WITH_SIGNING EQUAL 0) OR WITH_SIGNI
 		set (WITH_SIGNING "1")
 		execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --cert-file privkey ERROR_QUIET                 OUTPUT_VARIABLE SIGN_PRIVKEY OUTPUT_STRIP_TRAILING_WHITESPACE)
 		execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --sign-marker                                   OUTPUT_VARIABLE SIGN_MARKER OUTPUT_STRIP_TRAILING_WHITESPACE)
+		execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --upx-marker                                    OUTPUT_VARIABLE SIGN_UPXMARKER OUTPUT_STRIP_TRAILING_WHITESPACE)
 		execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --cert-info COMMAND head -n 1                   OUTPUT_VARIABLE SIGN_SUBJECT OUTPUT_STRIP_TRAILING_WHITESPACE)
 		execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --cert-info COMMAND tail -n 1                   OUTPUT_VARIABLE SIGN_SIGALGO OUTPUT_STRIP_TRAILING_WHITESPACE)
 		execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --cert-info COMMAND head -n 4 COMMAND tail -n 1 OUTPUT_VARIABLE SIGN_VALID OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -302,6 +303,20 @@ if ((CONFIG_WITH_SIGNING MATCHES "Y" AND NOT WITH_SIGNING EQUAL 0) OR WITH_SIGNI
 elseif (CONFIG_WITH_SIGNING MATCHES "Y" AND WITH_SIGNING EQUAL 0)
 	message (STATUS  " The config file has signing enabled, but You disabled it by you cmake command COMPILING WHITOUT SIGNING")
 endif ((CONFIG_WITH_SIGNING MATCHES "Y" AND NOT WITH_SIGNING EQUAL 0) OR WITH_SIGNING EQUAL 1)
+
+function(SIGN_COMMAND_NCAM)
+	file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/signing)
+	add_custom_command(TARGET ${exe_name} POST_BUILD COMMAND sha256sum ${exe_name} | awk '{ print $$1 }' | tr -d '\\n' > ${SIGN_HASH}
+	                                                 COMMAND openssl x509 -pubkey -noout -in ${SIGN_CERT}         -out ${SIGN_PUBKEY}
+	                                                 COMMAND openssl dgst -sha256      -sign ${SIGN_PRIVKEY}      -out ${SIGN_DIGEST} ${SIGN_HASH}
+	                                                 COMMAND printf '[SIGN] SHA256\('\; stat -c %s ${SIGN_HASH} | tr -d '\\n'\; printf '\): '\; cat ${SIGN_HASH}\; printf ' -> '
+	                                                 COMMAND openssl dgst -sha256    -verify ${SIGN_PUBKEY} -signature ${SIGN_DIGEST} ${SIGN_HASH} | tr -d '\\n'
+	                                                 COMMAND test -f ${CMAKE_CURRENT_BINARY_DIR}/signing/upx.aa && cat ${CMAKE_CURRENT_BINARY_DIR}/signing/upx.aa > $@ || true
+	                                                 COMMAND printf '${SIGN_MARKER}' | cat - ${SIGN_DIGEST} >> ${exe_name}
+	                                                 COMMAND test -f ${CMAKE_CURRENT_BINARY_DIR}/signing/upx.ab && cat ${CMAKE_CURRENT_BINARY_DIR}/signing/upx.ab >> $@ || true
+	                                                 COMMAND printf ' <- DIGEST\('\; stat -c %s ${SIGN_DIGEST} | tr -d '\\n'\; printf '\)\\n'
+	)
+endfunction()
 
 if (dl_link)
 	add_definitions("-DWITH_DL")
@@ -792,19 +807,16 @@ else (NOT USE_COMPRESS EQUAL 1)
 endif (NOT USE_COMPRESS EQUAL 1)
 add_executable (${exe_name} ${exe_srcs} ${exe_hdrs} ${softcamkey_data})
 target_link_libraries (${exe_name} ${csncam} ${csmodules} ${csreaders} csctapi cscrypt minilzo)
+if (WITH_SIGNING EQUAL 1)
+	SIGN_COMMAND_NCAM()
+endif (WITH_SIGNING EQUAL 1)
 if (USE_COMPRESS EQUAL 1)
 	add_custom_command(TARGET ${exe_name} POST_BUILD COMMAND upx -q ${COMP_LEVEL} ${exe_name} | grep '^[[:space:]]*[[:digit:]]* ->' | xargs | cat | xargs -0 printf '[ UPX] %s')
+	if (WITH_SIGNING EQUAL 1)
+		add_custom_command(TARGET ${exe_name} POST_BUILD COMMAND split --bytes=`grep -oba '${SIGN_UPXMARKER}' ${exe_name} | tail -1 | awk -F':' '{ print $$1 }'` ${exe_name} ${CMAKE_CURRENT_BINARY_DIR}/signing/upx.)
+		SIGN_COMMAND_NCAM()
+	endif (WITH_SIGNING EQUAL 1)
 endif (USE_COMPRESS EQUAL 1)
-if (WITH_SIGNING EQUAL 1)
-	file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/signing)
-	add_custom_command(TARGET ${exe_name} POST_BUILD COMMAND sha1sum ${exe_name} | awk '{ print $$1 }' | tr -d '\\n' > ${SIGN_HASH})
-	add_custom_command(TARGET ${exe_name} POST_BUILD COMMAND openssl x509 -pubkey -noout -in ${SIGN_CERT}         -out ${SIGN_PUBKEY})
-	add_custom_command(TARGET ${exe_name} POST_BUILD COMMAND openssl dgst -sha256      -sign ${SIGN_PRIVKEY}      -out ${SIGN_DIGEST} ${SIGN_HASH})
-	add_custom_command(TARGET ${exe_name} POST_BUILD COMMAND printf '[SIGN] SHA1\('\; stat -c %s ${SIGN_HASH} | tr -d '\\n'\; printf '\): '\; cat ${SIGN_HASH}\; printf ' -> ')
-	add_custom_command(TARGET ${exe_name} POST_BUILD COMMAND openssl dgst -sha256    -verify ${SIGN_PUBKEY} -signature ${SIGN_DIGEST} ${SIGN_HASH} | tr -d '\\n')
-	add_custom_command(TARGET ${exe_name} POST_BUILD COMMAND printf '${SIGN_MARKER}' | cat - ${SIGN_DIGEST} >> ${exe_name})
-	add_custom_command(TARGET ${exe_name} POST_BUILD COMMAND printf ' <- DIGEST\('\; stat -c %s ${SIGN_DIGEST} | tr -d '\\n'\; printf '\)\\n')
-endif (WITH_SIGNING EQUAL 1)
 
 if(HAVE_LIBRT AND HAVE_LIBUSB)
    if (LIBUSBDIR)

@@ -120,7 +120,8 @@ Usage: `basename $0` [parameters]
       certificate filename - relative/absolute path to certificate file
       private key filename - relative/absolute path to private key file
 
- -sm, --sign-marker           Get Ncam binary signature marker.
+ -sm, --sign-marker          Get Ncam binary signature marker.
+ -um, --upx-marker           Get Oscam binary upx marker.
  -v, --ncam-version          Display Ncam version.
  -r, --ncam-revision         Display Ncam SVN revision. //DEPRECATED, will be removed in later versions
  -c, --ncam-commit           Display Ncam GIT short commit sha 8-digits.
@@ -909,6 +910,11 @@ do
 	'-sm'|'--sign-marker')
 		obsm=`grep '^#define OBSM' ncam-signing.h | cut -d\" -f2`
 		echo $obsm
+		break
+	;;
+	'-um'|'--upx-marker')
+		upxm=`grep '^#define UPXM' ncam-signing.h | cut -d\" -f2`
+		echo $upxm
 		break
 	;;
 	'-v'|'--ncam-version')
