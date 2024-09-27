@@ -2,7 +2,7 @@
 
 #include "globals.h"
 #include "ncam-signing.h"
-#include "cscrypt/sha1.h"
+#include "cscrypt/sha256.h"
 #include "ncam-string.h"
 #include "ncam-time.h"
 #include "ncam-files.h"
@@ -10,7 +10,7 @@
 extern char *config_cert;
 struct o_sign_info osi;
 
-static char* _X509_NAME_oneline_utf8(const X509_NAME *name)
+static char* _X509_NAME_oneline_utf8(X509_NAME *name)
 {
 	BIO *bio_out = BIO_new(BIO_s_mem());
 	X509_NAME_print_ex(bio_out, name, 0, (ASN1_STRFLGS_RFC2253 | XN_FLAG_SEP_COMMA_PLUS | XN_FLAG_FN_SN | XN_FLAG_DUMP_UNKNOWN_FIELDS) & ~ASN1_STRFLGS_ESC_MSB);
@@ -362,8 +362,9 @@ static DIGEST hashBinary(const char *binfile, DIGEST *sign)
 			// Read binary into memory
 			int fd = open(binfile, O_RDONLY);
 			data = mmap(0, file_size, PROT_READ, MAP_PRIVATE, fd, 0);
+			end = file_size;
 
-			// Get last occurance of signature marker
+			// Determine occurrence of last signature marker
 			p = data;
 			while ((p = memmem(p, (file_size - offset), OBSM, cs_strlen(OBSM))))
 			{

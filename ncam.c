@@ -424,7 +424,6 @@ static void write_versionfile(bool use_stdout)
 #ifdef WITH_SIGNING
 	fprintf(fp, "\n");
 	fprintf(fp, "Signature:      %s\n", (osi.is_verified ? "Valid - successfully verified using built-in Public Key" : "Invalid - wrong signature or internal error occured!"));
-	fprintf(fp, "  SHA1:         %s\n", osi.hash_sha1);
 	fprintf(fp, "Certificate:    %s %s Certificate\n", ((osi.cert_is_valid_self || osi.cert_is_valid_system) ? "Trusted" : "Untrusted"), (osi.cert_is_cacert ? "CA" : "self signed"));
 	fprintf(fp, "  Subject:      %s\n", osi.cert_subject);
 	fprintf(fp, "  Issuer:       %s\n", osi.cert_issuer);

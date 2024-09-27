@@ -1,12 +1,12 @@
-#ifndef Ncam_SIGNING_H_
-#define Ncam_SIGNING_H_
+#ifndef NCAM_SIGNING_H_
+#define NCAM_SIGNING_H_
 
 #ifdef WITH_SSL
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 #endif
 
-#define OBSM "!OBSM!" //Ncam Binary Signature Marker
+#define OBSM "!OBSM!" //ncam Binary Signature Marker
 #define UPXM "UPX!" //UPX Marker
 #define CA_FILE_NAME "ca-certificates.crt" //System Certificate Trust Store Filename
 #define CA_SYSTEM_LOCATION "/etc/ssl/certs" //System Certificate Trust Store Location
@@ -32,9 +32,9 @@ struct o_sign_info
 	bool	cert_is_valid_system;
 	char	*system_ca_file;
 	char	*pkey_type;
-	int	sign_digest_size;
-	int	hash_digest_size;
-	int	hash_size;
+	int		sign_digest_size;
+	int		hash_digest_size;
+	int		hash_size;
 	char	*hash_sha256;
 };
 
