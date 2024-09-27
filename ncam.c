@@ -78,6 +78,7 @@ static void ssl_done(void) { }
 #include "ncam-signing.h"
 #endif
 
+extern char *config_ssl;
 extern char *config_mak;
 
 /*****************************************************************************
@@ -424,12 +425,14 @@ static void write_versionfile(bool use_stdout)
 #ifdef WITH_SIGNING
 	fprintf(fp, "\n");
 	fprintf(fp, "Signature:      %s\n", (osi.is_verified ? "Valid - successfully verified using built-in Public Key" : "Invalid - wrong signature or internal error occured!"));
+	fprintf(fp, "  Signer:       %s\n", config_ssl);
+	fprintf(fp, "  SHA256:       %s\n", osi.hash_sha256);
 	fprintf(fp, "Certificate:    %s %s Certificate\n", ((osi.cert_is_valid_self || osi.cert_is_valid_system) ? "Trusted" : "Untrusted"), (osi.cert_is_cacert ? "CA" : "self signed"));
 	fprintf(fp, "  Subject:      %s\n", osi.cert_subject);
 	fprintf(fp, "  Issuer:       %s\n", osi.cert_issuer);
 	fprintf(fp, "  Version:      %d\n", osi.cert_version);
 	fprintf(fp, "  Serial:       %s\n", osi.cert_serial);
-	fprintf(fp, "  Fingerpr.:    %s\n", osi.cert_fingerprint);
+	fprintf(fp, "  Fingerprint.: %s\n", osi.cert_fingerprint);
 	fprintf(fp, "  Valid from:   %s\n", osi.cert_valid_from);
 	fprintf(fp, "  Valid to:     %s\n", osi.cert_valid_to);
 	fprintf(fp, "  Status:       %s\n", (osi.cert_is_expired ? "Expired" : "Valid"));

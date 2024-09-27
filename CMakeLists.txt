@@ -297,7 +297,8 @@ if ((CONFIG_WITH_SIGNING MATCHES "Y" AND NOT WITH_SIGNING EQUAL 0) OR WITH_SIGNI
 		execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --cert-info COMMAND head -n 5 COMMAND tail -n 1 OUTPUT_VARIABLE SIGN_PUBALGO OUTPUT_STRIP_TRAILING_WHITESPACE)
 		execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --cert-info COMMAND head -n 6 COMMAND tail -n 1 OUTPUT_VARIABLE SIGN_PUBBIT OUTPUT_STRIP_TRAILING_WHITESPACE)
 		set (SIGN_PUBKEY "${CMAKE_CURRENT_BINARY_DIR}/signing/pkey")
-		set (SIGN_DIGEST "${CMAKE_CURRENT_BINARY_DIR}/signing/sha256")
+		set (SIGN_HASH "${CMAKE_CURRENT_BINARY_DIR}/signing/sha256")
+		set (SIGN_DIGEST "${CMAKE_CURRENT_BINARY_DIR}/signing/digest")
 	endif (NOT CONFIG_RET EQUAL 0)
 elseif (CONFIG_WITH_SIGNING MATCHES "Y" AND WITH_SIGNING EQUAL 0)
 	message (STATUS  " The config file has signing enabled, but You disabled it by you cmake command COMPILING WHITOUT SIGNING")
@@ -310,9 +311,9 @@ function(SIGN_COMMAND_NCAM)
 	                                                 COMMAND openssl dgst -sha256      -sign ${SIGN_PRIVKEY}      -out ${SIGN_DIGEST} ${SIGN_HASH}
 	                                                 COMMAND printf '[SIGN] SHA256\('\; stat -c %s ${SIGN_HASH} | tr -d '\\n'\; printf '\): '\; cat ${SIGN_HASH}\; printf ' -> '
 	                                                 COMMAND openssl dgst -sha256    -verify ${SIGN_PUBKEY} -signature ${SIGN_DIGEST} ${SIGN_HASH} | tr -d '\\n'
-	                                                 COMMAND test -f ${CMAKE_CURRENT_BINARY_DIR}/signing/upx.aa && cat ${CMAKE_CURRENT_BINARY_DIR}/signing/upx.aa > $@ || true
+	                                                 COMMAND test -f ${UPX_SPLIT_PREFIX}aa && cat ${UPX_SPLIT_PREFIX}aa > $@ || true
 	                                                 COMMAND printf '${SIGN_MARKER}' | cat - ${SIGN_DIGEST} >> ${exe_name}
-	                                                 COMMAND test -f ${CMAKE_CURRENT_BINARY_DIR}/signing/upx.ab && cat ${CMAKE_CURRENT_BINARY_DIR}/signing/upx.ab >> $@ || true
+	                                                 COMMAND test -f ${UPX_SPLIT_PREFIX}ab && cat ${UPX_SPLIT_PREFIX}ab >> $@ || true
 	                                                 COMMAND printf ' <- DIGEST\('\; stat -c %s ${SIGN_DIGEST} | tr -d '\\n'\; printf '\)\\n'
 	)
 endfunction()
