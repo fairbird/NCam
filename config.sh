@@ -121,7 +121,7 @@ Usage: `basename $0` [parameters]
       private key filename - relative/absolute path to private key file
 
  -sm, --sign-marker          Get Ncam binary signature marker.
- -um, --upx-marker           Get Oscam binary upx marker.
+ -um, --upx-marker           Get Ncam binary upx marker.
  -v, --ncam-version          Display Ncam version.
  -r, --ncam-revision         Display Ncam SVN revision. //DEPRECATED, will be removed in later versions
  -c, --ncam-commit           Display Ncam GIT short commit sha 8-digits.
