@@ -234,6 +234,7 @@ READERCONFIGVIACCESS          readerconfig/readerconfig_hwreader_viaccess.html  
 READERCONFIGDRE               readerconfig/readerconfig_hwreader_dre.html                 READER_DRE
 READERCONFIGBOXID             readerconfig/readerconfig_hwreader_boxid.html               READER_VIDEOGUARD,READER_STREAMGUARD,READER_TONGFANG
 READERCONFIGVIDEOGUARD        readerconfig/readerconfig_hwreader_videoguard.html          READER_VIDEOGUARD
+READERCONFIGTONGFANG          readerconfig/readerconfig_hwreader_tongfang.html            READER_TONGFANG
 READERCONFIGCASVERSION        readerconfig/readerconfig_hwreader_casversion.html          READER_JET,READER_STREAMGUARD,READER_TONGFANG
 READERCONFIGTONGFANG          readerconfig/readerconfig_hwreader_tongfang.html            READER_TONGFANG
 READERCONFIGJET               readerconfig/readerconfig_hwreader_jet.html                 READER_JET

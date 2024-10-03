@@ -3128,6 +3128,24 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 	if(rdr->tongfang3_calibsn)
 		{ tpl_printf(vars, TPLADD, "TONGFANGCALIBSN", "%08X", rdr->tongfang3_calibsn); }
 
+	if(rdr->tongfang_boxid)
+		{ tpl_printf(vars, TPLADD, "TONGFANGBOXID", "%08X", rdr->tongfang_boxid); }
+
+	if(rdr->tongfang3_deskey_length > 0)
+	{
+		for(i = 0; i < rdr->tongfang3_deskey_length ; i++)
+		{
+			tpl_printf(vars, TPLAPPEND, "TONGFANGDESKEY", "%02X", rdr->tongfang3_deskey[i]);
+		}
+	}
+
+	if(rdr->stbid_length > 0)
+	{
+		for(i = 0; i < rdr->stbid_length ; i++)
+		{
+			tpl_printf(vars, TPLAPPEND, "STBID", "%02X", rdr->stbid[i]);
+		}
+	}
 #endif
 #ifdef READER_JET
 	for(i = 0; (size_t)i < sizeof(rdr->jet_authorize_id) && rdr->jet_authorize_id[i] == 0; i++);

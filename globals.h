@@ -1692,8 +1692,14 @@ struct s_reader
 	CAIDTAB         ctab;
 	uint32_t        boxid;
 #ifdef READER_TONGFANG
-	uint32_t        tongfang3_calibsn;
-	uint8_t           tongfang3_commkey[8];
+	uint32_t	tongfang_version;
+	uint8_t         tongfang3_commkey[8];
+	uint32_t	tongfang3_calibsn;
+	uint32_t	tongfang_boxid;
+	uint8_t		tongfang3_deskey[8];
+	uint8_t		tongfang3_deskey_length;
+	uint8_t		stbid[8];
+	uint8_t		stbid_length;
 #endif
 #ifdef READER_JET
 	uint8_t         jet_vendor_key[32];
