@@ -311,9 +311,9 @@ function(SIGN_COMMAND_NCAM)
 	                                                 COMMAND openssl dgst -sha256      -sign ${SIGN_PRIVKEY}      -out ${SIGN_DIGEST} ${SIGN_HASH}
 	                                                 COMMAND printf '[SIGN] SHA256\('\; stat -c %s ${SIGN_HASH} | tr -d '\\n'\; printf '\): '\; cat ${SIGN_HASH}\; printf ' -> '
 	                                                 COMMAND openssl dgst -sha256    -verify ${SIGN_PUBKEY} -signature ${SIGN_DIGEST} ${SIGN_HASH} | tr -d '\\n'
-	                                                 COMMAND test -f ${UPX_SPLIT_PREFIX}aa && cat ${UPX_SPLIT_PREFIX}aa > $@ || true
+	                                                 COMMAND test -f ${UPX_SPLIT_PREFIX}aa && cat ${UPX_SPLIT_PREFIX}aa > ${exe_name} || true
 	                                                 COMMAND printf '${SIGN_MARKER}' | cat - ${SIGN_DIGEST} >> ${exe_name}
-	                                                 COMMAND test -f ${UPX_SPLIT_PREFIX}ab && cat ${UPX_SPLIT_PREFIX}ab >> $@ || true
+	                                                 COMMAND test -f ${UPX_SPLIT_PREFIX}ab && cat ${UPX_SPLIT_PREFIX}ab >> ${exe_name} || true
 	                                                 COMMAND printf ' <- DIGEST\('\; stat -c %s ${SIGN_DIGEST} | tr -d '\\n'\; printf '\)\\n'
 	)
 endfunction()
@@ -741,6 +741,7 @@ GENERATE_NCAM_CONFIG("${CMAKE_CURRENT_SOURCE_DIR}/config.h")
 execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --objdir ${CMAKE_CURRENT_BINARY_DIR} --use-flags  "${USE_STAPI} ${USE_STAPI5} /
 ${USE_COOLAPI} ${USE_SU980} ${USE_WETEK} ${USE_AZBOX} ${USE_GXAPI} ${USE_MCA} ${USE_SSL} ${USE_LIBCRYPTO} ${USE_LIBUSB} ${USE_PCSC}  ${USE_COMPRESS_FLAG} ${USE_LIBCURL}" --make-config.mak)
 # Generate webif/pages.c
+execute_process (COMMAND make --no-print-directory --quiet -C ${CMAKE_CURRENT_SOURCE_DIR}/webif clean)
 execute_process (COMMAND make --no-print-directory --quiet -C ${CMAKE_CURRENT_SOURCE_DIR}/webif)
 
 #----------------------- subdirectories ------------------------------

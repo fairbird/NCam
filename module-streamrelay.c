@@ -1684,22 +1684,23 @@ static void *stream_client_handler(void *arg)
 			{
 				if ((errno == EWOULDBLOCK) | (errno == EAGAIN))
 				{
-					streamReconnectCount++; // 2 sec timeout * cfg.stream_relay_reconnect_count = seconds no data -> close
-					(cfg.stream_relay_reconnect_count > 0) ?
-						cs_log("WARNING: stream client %i no data from stream source. Trying to reconnect (%i/%i)", conndata->connid, streamReconnectCount, cfg.stream_relay_reconnect_count) :
-						cs_log("WARNING: stream client %i no data from stream source", conndata->connid);
-
-					if (streamReconnectCount >= cfg.stream_relay_reconnect_count)
+					if(cfg.stream_relay_reconnect_count > 0)
 					{
-						clientStatus = -1;
-						break;
+						streamReconnectCount++; // 2 sec timeout * cfg.stream_relay_reconnect_count = seconds no data -> close
+						cs_log("WARNING: stream client %i no data from stream source. Trying to reconnect (%i/%i)", conndata->connid, streamReconnectCount, cfg.stream_relay_reconnect_count);
+						if(streamReconnectCount >= cfg.stream_relay_reconnect_count)
+						{
+							clientStatus = -1;
+							break;
+						}
 					}
 					else
 					{
-						streamDataErrorCount++; // 2 sec timeout * 15 = seconds no data -> close
-						cs_sleepms(100);
-						continue;
+						cs_log("WARNING: stream client %i no data from stream source", conndata->connid);
 					}
+					streamDataErrorCount++; // 2 sec timeout * 15 = seconds no data -> close
+					cs_sleepms(100);
+					continue;
 				}
 				cs_log("WARNING: stream client %i error receiving data from stream source", conndata->connid);
 				streamConnectErrorCount++;
