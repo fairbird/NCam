@@ -24,7 +24,7 @@
 /* The amount of hash buckets (based on opaque string) for better performance. */
 #define AUTHNONCEHASHBUCKETS 4
 /* The maximum amount of GET parameters the webserver will parse. */
-#define MAXGETPARAMS 150
+#define MAXGETPARAMS 300
 /* The refresh delay (in seconds) when stopping NCam via http. */
 #define SHUTDOWNREFRESH 30
 
