@@ -1612,6 +1612,7 @@ static int add_reader_from_line(char s[510], int type, bool fs)
 	rdr->from_cccam_cfg = 1;
 	if(!fs && cfg.cccam_cfg_save) { rdr->cccam_cfg_save = 0; }
 	else { rdr->cccam_cfg_save = 1; }
+	rdr->fallback = cfg.cccam_cfg_fallback;
 	switch(type)
 	{
 	case 1:

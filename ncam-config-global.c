@@ -410,6 +410,7 @@ static const struct config_list global_opts[] =
 	DEF_OPT_INT8("cccam_cfg_reconnect_attempts"    , OFS(cccam_cfg_reconnect_attempts)  , 0),
 	DEF_OPT_INT8("cccam_cfg_inactivity"            , OFS(cccam_cfg_inactivity)          , 0),
 #endif
+	DEF_OPT_INT8("cccam_cfg_fallback"              , OFS(cccam_cfg_fallback)            , 0),
 	DEF_LAST_OPT
 };
 

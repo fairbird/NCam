@@ -754,6 +754,7 @@ static char *send_ncam_config_global(struct templatevars *vars, struct uriparams
 	tpl_addVar(vars, TPLADD, "CCCAM_CFG_PATH", cfg.cccam_cfg_path);
 	tpl_addVar(vars, TPLADD, "CCCAM_CFG_SAVE", (cfg.cccam_cfg_save == 1) ? "checked" : "");
 	tpl_addVar(vars, TPLADD, "CCCAM_CFG_REPETITIONS_FORCED", (cfg.cccam_cfg_repetitions_forced == 1) ? "checked" : "");
+	tpl_addVar(vars, TPLADD, "CCCAM_CFG_FALLBACKCHECKED", (cfg.cccam_cfg_fallback == 1) ? "checked" : "");
 
 #ifdef MODULE_CCCAM
 	if(cfg.cccam_cfg_reconnect_delay)
