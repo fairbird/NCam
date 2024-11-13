@@ -1,167 +1,536 @@
-#
-# reader configuration
-#
+################# Enable Reader ##############
+# To enable Reader Using : enable       = 1
+# To Disable Reader Using : enable      = 0
 
-# serial reader
-
-[reader]
-label    = reader1
-protocol = mouse
-detect   = CD
-device   = /dev/ttyS0
-group    = 1
-emmcache = 1,3,2
-services = services1
-caid     = 0100
-
-# USB serial reader
+####################### SoftCams #############
 
 [reader]
-label    = reader2
-protocol = mouse
-detect   = CD
-device   = /dev/ttyUSB0
-aeskey   = 000102030405060708090A0B0C0D0E0F
-group    = 2
-emmcache = 1,3,2
-services = services2
-caid     = 0200
-
-# remote newcamd reader with fallback for group 1
+label                         = constant.cw
+enable                        = 1
+protocol                      = constcw
+device                        = /etc/tuxbox/config/constant.cw
+caid                          = 2600,0B00,0500,0963,06AD,0940
+group                         = 1
+audisabled                    = 0
 
 [reader]
-label    = remote1
-protocol = newcamd
-key      = 0102030405060708091011121314
-device   = 192.168.0.2,66666
-user     = user1
-password = password1
-group    = 1
-fallback = 1
-
-# remote camd 3.78x reader with fallback for group 2
-
-[reader]
-label    = remote2
-protocol = cs378x
-device   = 192.168.0.3,23456
-user     = user2
-password = password2
-group    = 2
-fallback = 1
-
-# remote gbox reader
+label                         = Device_SoftCam
+protocol                      = emu
+device                        = emulator
+#device                        = /etc/tuxbox/config/SoftCam.key  (if you want to set your personal path)
+#/storage/.kodi/userdata/addon_data/service.softcam.ncam/config/SoftCam.Key (change with your system location)
+disablecrccws_only_for        = 0E00:000000
+caid                          = 0500,0604,0D00,0E00,1010,1801,2600,2602,2610
+detect                        = cd
+ident                         = 0500:020A00,021110;0604:000000;0D00:0000C0;0E00:000000;1010:000000;1801:000000,001101,002111,007301;2600:000000;2602:000000;2610:000000
+group                         = 1
+emmcache                      = 2,1,2,1
+emu_auproviders               = 0604:010200;0E00:000000;1010:000000;2610:000000
+group                         = 1
+emmcache                      = 2,1,2,1
+emu_auproviders               = 0604:010200;0E00:000000;1010:000000;4AE1:000011,000014,0000FE
 
 [reader]
-label        = remote3
-protocol     = gbox
-mg-encrypted = D: { 192.168.0.4 { 12345 34567 { ABCD1234 { 9 9 }}}}
-group        = 3
-caid         = 0300
-
-# remote CCcam reader
-
-[reader]
-label      = remote4
-protocol   = cccam
-device     = 192.168.0.5,45678
-user       = user4
-password   = password4
-group      = 4
-caid       = 0400
-cccversion = 1.2.34
-cccbuild   = 5678
-
-# remote radegast reader
+label                         = Internet_SoftCam
+protocol                      = emu
+device                        = https://raw.githubusercontent.com/fairbird/MyImagesFeeds/master/SoftCam-Files/SoftCam.Key
+disablecrccws_only_for        = 0E00:000000
+caid                          = 0500,0604,0D00,0E00,1010,1801,2600,2602,2610
+detect                        = cd
+ident                         = 0500:020A00,021110;0604:000000;0D00:0000C0;0E00:000000;1010:000000;1801:000000,001101,002111,007301;2600:000000;2602:000000;2610:000000
+group                         = 1
+emmcache                      = 2,1,2,1
+emu_auproviders               = 0604:010200;0E00:000000;1010:000000;4AE1:000011,000014,0000FE
 
 [reader]
-label    = remote5
-protocol = radegast
-device   = 192.168.0.6,56789
-group    = 5
-caid     = 0500
+### This reader automatically downloads afn keys into memory if label = github:"and path" and if the keys are invalid or missing from the SoftCam.Key file. If you want to find the keys, use debug 2 or 4.
+### If the downloaded keys are invalid or expired, the reader will automatically download them again after 5 minutes, no need to restart ncam or use external scripts.
 
-# PCSC reader
+#label                        = github:"and path" Example github:fairbird/MyImagesFeeds/master/SoftCam-Files/SoftCam.Key
+enable                        = 1
+protocol                      = emu
+#device                       = emulator
+disablecrccws_only_for        = 0E00:000000
+caid                          = 0500,0604,090F,0E00,1010,1801,2600,2602,2610,4AE1
+detect                        = cd
+ident                         = 0500:000000,007400,007800,021110,023800;0604:000000;090F:000000;0E00:000000;1010:000000;1801:000000,001101,002111,007301;2600:000000;2602:000000;2610:000000;4AE1:000011,000014,0000FE
+group                         = 1
+emmcache                      = 2,1,2,1
+emu_auproviders               = 0604:010200;0E00:000000;1010:000000;2610:000000;4AE1:000011,000014,0000FE
+
+############ This is prive reader don't change it or remove it ############
+[reader]
+label                         = linuxsat-support.com
+enable                        = 1
+protocol                      = emu
+device                        = emulator
+#device                        = http...
+disablecrccws_only_for        = 0E00:000000
+caid                          = 0500,0604,090F,0E00,1010,1801,2600,2602,2610,4AE1
+detect                        = cd
+ident                         = 0500:000000,007400,007800,021110,023800;0604:000000;090F:000000;0E00:000000;1010:000000;1801:000000,001101,002111,007301;2600:000000;2602:000000;2610:000000;4AE1:000011,000014,0000FE
+group                         = 1
+emmcache                      = 2,1,2,1
+emu_auproviders               = 0604:010200;0E00:000000;1010:000000;2610:000000;4AE1:000011,000014,0000FE
+
+####################### Card ############################
 
 [reader]
-label    = mypcscreader
-protocol = pcsc
-device   = 0
-aeskey   = 0102030405060708090a0b0c0d0e0f10
-group    = 6
-caid     = 0600
-
-# Smargo Smartreader+ (Tripple Reader as well) using kernel drivers (recommended)
-
-[reader]
-label    = mysmargo
-protocol = smargo
-device   = /dev/ttyUSB1
-aeskey   = 0102030405060708090a0b0c0d0e0f10
-group    = 7
-caid     = 0700
-
-# Smargo Smartreader+ using libusb
-
-[reader]
-label    = mysmartreader
-protocol = smartreader
-device   = 001:002
-group    = 8
-caid     = 0800
-
-# internal reader
+label                         = upper_card
+enable                        = 1
+protocol                      = internal
+device                        = /dev/sci1
+#ecmwhitelist                  = 0100@00006A:64
+#ecmheaderwhitelist            = 800061006A00075C00,800061006A01075C00,803061006A00075C00,803061006A01075C00,810061006A00075C00,810061006A01075C00,813061006A00075C00,813061006A01075C00
+detect                        = cd
+group                         = 1
+emmcache                      = 1,3,15
+audisabled                    = 0
+mhz                           = 357
+cardmhz                       = 2700
+ratelimitecm                  = 4
+ratelimittime                 = 10000
+ecmunique                     = 1
+srvidholdtime                 = 2000
+cooldown                      = 30,600
 
 [reader]
-label    = myinternalreader
-protocol = internal
-device   = /dev/sci0
-group    = 9
-caid     = 0900
+label                         = lower_card
+enable                        = 1
+protocol                      = internal
+device                        = /dev/sci0
+#ecmwhitelist                  = 0100@00006A:64
+#ecmheaderwhitelist            = 800061006A00075C00,800061006A01075C00,803061006A00075C00,803061006A01075C00,810061006A00075C00,810061006A01075C00,813061006A00075C00,813061006A01075C00
+detect                        = cd
+group                         = 1
+emmcache                      = 1,3,15
+audisabled                    = 0
+mhz                           = 357
+cardmhz                       = 2700
+ratelimitecm                  = 4
+ratelimittime                 = 10000
+ecmunique                     = 1
+srvidholdtime                 = 2000
+cooldown                      = 30,600
 
-# AD-Teknik AB Multiprogrammer 3.5 serial
+#[reader]
+#label                         = Card_Blanca
+#enable                        = 0
+#protocol                      = internal
+#device                        = /dev/sci0
+#services                      = canal+ esp
+#caid                          = 1810
+#ecmwhitelist                  = 1810@1F1F1F:89
+#detect                        = cd
+#nagra_read                    = 2
+#mhz                           = 500
+#cardmhz                       = 368
+#ident                         = 1810:000000,004001,004101
+#group                         = 3
+#emmcache                      = 1,3,2,0
 
-[reader]
-label    = reader9
-protocol = mp35
-detect   = CD
-device   = /dev/ttyS1
-group    = 10
-emmcache = 1,3,2
-services = services9
-caid     = 1000
-
-# AD-Teknik AB Multiprogrammer 3.6 USB
-
-[reader]
-label    = reader10
-protocol = mp35
-detect   = CD
-device   = /dev/ttyUSB1
-group    = 11
-emmcache = 1,3,2
-services = services10
-caid     = 1100
-
-# AD-Teknik AB USB Phoenix at 6.00 mhz
-
-[reader]
-label    = reader12
-protocol = mp35
-detect   = CD
-device   = /dev/ttyUSB2
-mhz      = 600
-group    = 12
-emmcache = 1,3,2
-services = services11
-caid     = 1200
-
-# sc8in1 reader
+####################### CCcam ############################
 
 [reader]
-label    = reader12
-protocol = sc8in1
-device   = /dev/ttyUSB3:1
-group    = 13
-emmcache = 1,3,2
-caid     = 1300
+label                         = Server_1
+enable                        = 1
+protocol                      = cccam
+device                        = host,port
+user                          = user
+password                      = pass
+group                         = 1,2,3,4,5,6,7,8,9,10,64
+emmcache                      = 2,1,2,1
+cccversion                    = 2.0.11
+ccckeepalive                  = 1
+cccmaxhops                    = 2 # dont use higher than 3 !!!
+disablecrccws                 = 1
+cccwantemu                    = 1
+blockemm-unknown              = 1
+blockemm-u                    = 1
+blockemm-s                    = 1
+blockemm-g                    = 1
+audisabled                    = 1
+services                      = !powervu_fake,!tandberg_fake,!biss_fake,!afn_fake,1708:000000
+disablecrccws_only_for        = 1709:000000;1708:000000;1811:003311,003315;09C4:000000;0500:030B00,042820;0604:000000;1819:00006D;0100:00006D;1810:000000;1884:000000;0E00:000000
+
+####################### MgCamd ############################
+
+[reader]
+label                         = mgcamd_server
+enable                        = 1
+protocol                      = mgcamd
+device                        = host,port
+key                           = 0102030405060708091011121314
+user                          = user
+password                      = pass
+services                      = !powervu_fake,!tandberg_fake,!biss_fake,!afn_fake,1708:000000
+inactivitytimeout             = -1
+group                         = 1,2,3,4,5,6,7,8,9,10,64
+fallback                      = 1
+disablecrccws                 = 1
+audisabled                    = 1
+disablecrccws_only_for        = 1709:000000;1708:000000;1811:003311,003315;09C4:000000;0500:030B00,042820;0604:000000;1819:00006D;0100:00006D;1810:000000;1884:000000;0E00:000000
+
+####################### Newcamd ############################
+
+[reader]
+label                         = newcamd_server
+enable                        = 1
+protocol                      = newcamd
+device                        = host,port
+key                           = 0102030405060708091011121314
+user                          = user
+password                      = pass
+services                      = !powervu_fake,!tandberg_fake,!biss_fake,!afn_fake,1708:000000
+fallback                      = 1
+group                         = 1,2,3,4,5,6,7,8,9,10,64
+disablecrccws                 = 1
+audisabled                    = 1
+disablecrccws_only_for        = 1709:000000;1708:000000;1811:003311,003315;09C4:000000;0500:030B00,042820;0604:000000;1819:00006D;0100:00006D;1810:000000;1884:000000;0E00:000000
+
+####################### Scam ############################
+
+[reader]
+label                         = newcamd_server
+enable                        = 1
+protocol                      = newcamd
+device                        = host,port
+key                           = 0102030405060708091011121314
+user                          = user
+password                      = pass
+services                      = !powervu_fake,!tandberg_fake,!biss_fake,!afn_fake,1708:000000
+fallback                      = 1
+group                         = 1,2,3,4,5,6,7,8,9,10,64
+disablecrccws                 = 1
+audisabled                    = 1
+disablecrccws_only_for        = 1709:000000;1708:000000;1811:003311,003315;09C4:000000;0500:030B00,042820;0604:000000;1819:00006D;0100:00006D;1810:000000;1884:000000;0E00:000000
+
+####################### Gbox ############################
+
+#[reader]
+#label                         = gbox_server
+#enable                        = 1
+#protocol                      = gbox
+#group                         = 3
+#caid                          = 0300
+
+####################### Others ############################
+
+[reader]
+label                  	= conax
+protocol               	= internal
+device                 	= /dev/sci0
+pincode                	= 1234
+caid                   	= 0B00
+boxid                 		= 12345678
+detect                 	= cd
+mhz                   	 	= 450
+cardmhz               	 	= 2700
+ident                  	= 0B00:000000
+group                  	= 1
+emmcache               	= 1,3,2,0
+blockemm-unknown       	= 1
+
+[reader]
+label                         = reader0_sky_v13
+enable                        = 0
+protocol                      = internal
+device                        = /dev/sci0
+caid                          = 09C4
+boxid                         = 596C3056
+detect                        = cd
+group                         = 1,2,3,4,5,6,7,8,9,10,64
+emmcache                      = 1,3,2
+blockemm-unknown              = 1
+blockemm-u                    = 1
+blockemm-s                    = 1
+blockemm-g                    = 1
+saveemm-u                     = 1
+disablecrccws                 = 1
+
+[reader]
+label                         = reader0_sky_v14
+enable                        = 0
+protocol                      = internal
+device                        = /dev/sci0
+caid                          = 098C
+boxid                         = 12345678
+detect                        = cd
+group                         = 1,2,3,4,5,6,7,8,9,10,64
+emmcache                      = 1,3,2
+blockemm-unknown              = 1
+blockemm-u                    = 1
+blockemm-s                    = 1
+blockemm-g                    = 1
+saveemm-u                     = 1
+disablecrccws                 = 1
+
+[reader]
+label                         = reader0_sky_v15
+enable                        = 0
+protocol                      = internal
+device                        = /dev/sci0
+caid                          = 098D
+boxid 		              = 12345678
+ins7e11                       = 14
+detect                        = cd
+group                         = 1,2,3,4,5,6,7,8,9,10,64
+emmcache                      = 1,3,2
+blockemm-unknown              = 1
+blockemm-u                    = 1
+blockemm-s                    = 1
+blockemm-g                    = 1
+saveemm-u                     = 1
+disablecrccws                 = 1
+
+[reader]
+label                         = reader0_hd+_hd01
+enable                        = 0
+protocol                      = internal
+device                        = /dev/sci0
+caid                          = 1830
+boxkey                        = A7642F57BC96D37C
+rsakey                        = BF358B5461863130686FC933FB541FFCED682F3680F09DBC1A23829FB3B2F766B9DD1BF3B3ECC9AD6661B753DCC3A9624156F9EB64E8168EF09E4D9C5CCA4DD5
+detect                        = cd
+mhz                           = 368
+cardmhz                       = 368
+group                         = 1,2,3,4,5,6,7,8,9,10,64
+emmcache                      = 1,3,2
+
+[reader]
+label                         = reader0_hd+_hd02
+enable                        = 0
+protocol                      = internal
+device                        = /dev/sci0
+caid                          = 1843
+boxkey                        = A7642F57BC96D37C
+rsakey                        = BF358B5461863130686FC933FB541FFCED682F3680F09DBC1A23829FB3B2F766B9DD1BF3B3ECC9AD6661B753DCC3A9624156F9EB64E8168EF09E4D9C5CCA4DD5
+detect                        = cd
+mhz                           = 368
+cardmhz                       = 368
+group                         = 1,2,3,4,5,6,7,8,9,10,64
+emmcache                      = 1,3,2
+
+[reader]
+label                         = reader0_hd+_hd03
+protocol                      = internal
+device                        = /dev/sci0
+caid                          = 1860
+boxkey                        = A7642F57BC96D37C
+rsakey                        = 901E595152E67DFD5B134E1D195C4141B3BB1394A8AF4D6BF1D1085DCC4D9CBA5C73A06ED21FC3556B685498030BB1185766117565E39995EFBF72135C2817B7
+mod1                          = 9DF5D60B66A6F839CDA448C9AC59E5AFE9FFA6BFB2AB141003FADD94D47F2EB047764FCE1A62F32B51F1E892171894558B63F55C0096FA36D4210B634358A3C11323A322DC3BC6040E09E579466CF384598C357945FE32C7711D1F59EBA9C44194EC02DF561C1782B14A6F043BA81E63
+data50                        = B6711C868C3EE72533A4E08C1364B83AEEFDEBE9FB54156A8776D872CBC41FF2E5EA2CBAF4F26A58C521EC53E310FC494354E49ECE6CD0F9631B724FAB0C8BAEC1F66C346AD2DB1CB3871AF44C1E1592
+mod50                         = DB9E1F1BD23C6153444E444D8E6C471E162EC63C599D44F476E0D40C3840E0FDB7B63D174DD73B575543983F2F2DFB94E3644958AE642C91636A6BE55528478EB7A422479598C68E6F1FC9D647BBC4D5
+key60                         = 99E9252B4079E3459FD42FCC177FCC9A5B52E1AB1595EF83953FF2866C3A90B7F5868BD32AB27C5AB765A728D24D765CD0B133CF16F32C1E223D1E78DF22E3D6BAB81FF1B8071E44A55773109ADEC08A149E6BC12CE35B23ACF6D043825825EB
+exp60                         = 26A6A008EE962D76EC9E52AA843439E3818F9CD06409552ECC2A54F360F68C254669556FE047166789AAE381A2DE851C8155713C79A9CA7293EF7A21B82631145A1588876EC574D40DD057996511B8E9ECFA44087385A46EC49AB7180D1B1421
+nuid                          = 843E941E
+cwekey                        = 1BCAE16F9F8CE642FCF4F31DE4DEA9C6
+detect                        = cd
+nagra_read                    = 2
+detect_seca_nagra_tunneled_card= 0
+mhz                           = 500
+group                         = 1,2,3,4,5,6,7,8,9,10,64
+emmcache                      = 1,3,15,0
+
+[reader]
+label                         = reader0_hd+_hd04
+protocol                      = internal
+device                        = /dev/sci0
+caid                          = 186A
+mod1                          = 9DF5D60B66A6F839CDA448C9AC59E5AFE9FFA6BFB2AB141003FADD94D47F2EB047764FCE1A62F32B51F1E892171894558B63F55C0096FA36D4210B634358A3C11323A322DC3BC6040E09E579466CF384598C357945FE32C7711D1F59EBA9C44194EC02DF561C1782B14A6F043BA81E63
+data50                        = B6711C868C3EE72533A4E08C1364B83AEEFDEBE9FB54156A8776D872CBC41FF2E5EA2CBAF4F26A58C521EC53E310FC494354E49ECE6CD0F9631B724FAB0C8BAEC1F66C346AD2DB1CB3871AF44C1E1592
+mod50                         = DB9E1F1BD23C6153444E444D8E6C471E162EC63C599D44F476E0D40C3840E0FDB7B63D174DD73B575543983F2F2DFB94E3644958AE642C91636A6BE55528478EB7A422479598C68E6F1FC9D647BBC4D5
+key60                         = 99E9252B4079E3459FD42FCC177FCC9A5B52E1AB1595EF83953FF2866C3A90B7F5868BD32AB27C5AB765A728D24D765CD0B133CF16F32C1E223D1E78DF22E3D6BAB81FF1B8071E44A55773109ADEC08A149E6BC12CE35B23ACF6D043825825EB
+exp60                         = 26A6A008EE962D76EC9E52AA843439E3818F9CD06409552ECC2A54F360F68C254669556FE047166789AAE381A2DE851C8155713C79A9CA7293EF7A21B82631145A1588876EC574D40DD057996511B8E9ECFA44087385A46EC49AB7180D1B1421
+nuid                          = 843E941E
+cwekey                        = 1BCAE16F9F8CE642FCF4F31DE4DEA9C6
+detect                        = cd
+nagra_read                    = 2
+detect_seca_nagra_tunneled_card= 0
+mhz                           = 500
+group                         = 1,2,3,4,5,6,7,8,9,10,64
+emmcache                      = 1,3,15,0
+
+[reader]
+label                         = reader0_srg_via
+enable                        = 0
+protocol                      = internal
+device                        = /dev/sci0
+caid                          = 0500
+detect                        = cd
+group                         = 1,2,3,4,5,6,7,8,9,10,64
+emmcache                      = 1,3,2
+
+[reader]
+label                         = reader0_orf_0d95
+enable                        = 0
+protocol                      = internal
+device                        = /dev/sci0
+caid                          = 0D95
+detect                        = cd
+group                         = 1,2,3,4,5,6,7,8,9,10,64
+emmcache                      = 1,3,2
+
+[reader]
+label                         = reader0_orf_0d98
+enable                        = 0
+protocol                      = internal
+device                        = /dev/sci0
+caid                          = 0D98
+detect                        = cd
+group                         = 1,2,3,4,5,6,7,8,9,10,64
+emmcache                      = 1,3,2
+blockemm-g                    = 1
+needsglobalfirst              = 1
+
+[reader]
+label                         = reader1_sky_v13
+enable                        = 0
+protocol                      = internal
+device                        = /dev/sci1
+caid                          = 09C4
+boxid                         = 596C3056
+detect                        = cd
+group                         = 1,2,3,4,5,6,7,8,9,10,64
+emmcache                      = 1,3,2
+blockemm-unknown              = 1
+blockemm-u                    = 1
+blockemm-s                    = 1
+blockemm-g                    = 1
+saveemm-u                     = 1
+disablecrccws                 = 1
+
+[reader]
+label                         = reader1_sky_v14
+enable                        = 0
+protocol                      = internal
+device                        = /dev/sci1
+caid                          = 098C
+boxid                         = 12345678
+detect                        = cd
+group                         = 1,2,3,4,5,6,7,8,9,10,64
+emmcache                      = 1,3,2
+blockemm-unknown              = 1
+blockemm-u                    = 1
+blockemm-s                    = 1
+blockemm-g                    = 1
+saveemm-u                     = 1
+disablecrccws                 = 1
+
+[reader]
+label                         = reader1_sky_v15
+enable                        = 0
+protocol                      = internal
+device                        = /dev/sci1
+caid                          = 098D
+boxid 		              = 12345678
+ins7e11                       = 14
+detect                        = cd
+group                         = 1,2,3,4,5,6,7,8,9,10,64
+emmcache                      = 1,3,2
+blockemm-unknown              = 1
+blockemm-u                    = 1
+blockemm-s                    = 1
+blockemm-g                    = 1
+saveemm-u                     = 1
+disablecrccws                 = 1
+
+[reader]
+label                         = reader1_hd+_hd01
+enable                        = 0
+protocol                      = internal
+device                        = /dev/sci1
+caid                          = 1830
+boxkey                        = A7642F57BC96D37C
+rsakey                        = BF358B5461863130686FC933FB541FFCED682F3680F09DBC1A23829FB3B2F766B9DD1BF3B3ECC9AD6661B753DCC3A9624156F9EB64E8168EF09E4D9C5CCA4DD5
+detect                        = cd
+mhz                           = 368
+cardmhz                       = 368
+group                         = 1,2,3,4,5,6,7,8,9,10,64
+emmcache                      = 1,3,2
+
+[reader]
+label                         = reader1_hd+_hd02
+enable                        = 0
+protocol                      = internal
+device                        = /dev/sci1
+caid                          = 1843
+boxkey                        = A7642F57BC96D37C
+rsakey                        = BF358B5461863130686FC933FB541FFCED682F3680F09DBC1A23829FB3B2F766B9DD1BF3B3ECC9AD6661B753DCC3A9624156F9EB64E8168EF09E4D9C5CCA4DD5
+detect                        = cd
+mhz                           = 368
+cardmhz                       = 368
+group                         = 1,2,3,4,5,6,7,8,9,10,64
+emmcache                      = 1,3,2
+
+[reader]
+label                         = reader1_hd+_hd03
+protocol                      = internal
+device                        = /dev/sci1
+caid                          = 1860
+boxkey                        = A7642F57BC96D37C
+rsakey                        = 901E595152E67DFD5B134E1D195C4141B3BB1394A8AF4D6BF1D1085DCC4D9CBA5C73A06ED21FC3556B685498030BB1185766117565E39995EFBF72135C2817B7
+mod1                          = 9DF5D60B66A6F839CDA448C9AC59E5AFE9FFA6BFB2AB141003FADD94D47F2EB047764FCE1A62F32B51F1E892171894558B63F55C0096FA36D4210B634358A3C11323A322DC3BC6040E09E579466CF384598C357945FE32C7711D1F59EBA9C44194EC02DF561C1782B14A6F043BA81E63
+data50                        = B6711C868C3EE72533A4E08C1364B83AEEFDEBE9FB54156A8776D872CBC41FF2E5EA2CBAF4F26A58C521EC53E310FC494354E49ECE6CD0F9631B724FAB0C8BAEC1F66C346AD2DB1CB3871AF44C1E1592
+mod50                         = DB9E1F1BD23C6153444E444D8E6C471E162EC63C599D44F476E0D40C3840E0FDB7B63D174DD73B575543983F2F2DFB94E3644958AE642C91636A6BE55528478EB7A422479598C68E6F1FC9D647BBC4D5
+key60                         = 99E9252B4079E3459FD42FCC177FCC9A5B52E1AB1595EF83953FF2866C3A90B7F5868BD32AB27C5AB765A728D24D765CD0B133CF16F32C1E223D1E78DF22E3D6BAB81FF1B8071E44A55773109ADEC08A149E6BC12CE35B23ACF6D043825825EB
+exp60                         = 26A6A008EE962D76EC9E52AA843439E3818F9CD06409552ECC2A54F360F68C254669556FE047166789AAE381A2DE851C8155713C79A9CA7293EF7A21B82631145A1588876EC574D40DD057996511B8E9ECFA44087385A46EC49AB7180D1B1421
+nuid                          = 843E941E
+cwekey                        = 1BCAE16F9F8CE642FCF4F31DE4DEA9C6
+detect                        = cd
+nagra_read                    = 2
+detect_seca_nagra_tunneled_card= 0
+mhz                           = 500
+group                         = 1,2,3,4,5,6,7,8,9,10,64
+emmcache                      = 1,3,15,0
+
+[reader]
+label                         = reader1_hd+_hd04
+protocol                      = internal
+device                        = /dev/sci1
+caid                          = 186A
+mod1                          = 9DF5D60B66A6F839CDA448C9AC59E5AFE9FFA6BFB2AB141003FADD94D47F2EB047764FCE1A62F32B51F1E892171894558B63F55C0096FA36D4210B634358A3C11323A322DC3BC6040E09E579466CF384598C357945FE32C7711D1F59EBA9C44194EC02DF561C1782B14A6F043BA81E63
+data50                        = B6711C868C3EE72533A4E08C1364B83AEEFDEBE9FB54156A8776D872CBC41FF2E5EA2CBAF4F26A58C521EC53E310FC494354E49ECE6CD0F9631B724FAB0C8BAEC1F66C346AD2DB1CB3871AF44C1E1592
+mod50                         = DB9E1F1BD23C6153444E444D8E6C471E162EC63C599D44F476E0D40C3840E0FDB7B63D174DD73B575543983F2F2DFB94E3644958AE642C91636A6BE55528478EB7A422479598C68E6F1FC9D647BBC4D5
+key60                         = 99E9252B4079E3459FD42FCC177FCC9A5B52E1AB1595EF83953FF2866C3A90B7F5868BD32AB27C5AB765A728D24D765CD0B133CF16F32C1E223D1E78DF22E3D6BAB81FF1B8071E44A55773109ADEC08A149E6BC12CE35B23ACF6D043825825EB
+exp60                         = 26A6A008EE962D76EC9E52AA843439E3818F9CD06409552ECC2A54F360F68C254669556FE047166789AAE381A2DE851C8155713C79A9CA7293EF7A21B82631145A1588876EC574D40DD057996511B8E9ECFA44087385A46EC49AB7180D1B1421
+nuid                          = 843E941E
+cwekey                        = 1BCAE16F9F8CE642FCF4F31DE4DEA9C6
+detect                        = cd
+nagra_read                    = 2
+detect_seca_nagra_tunneled_card= 0
+mhz                           = 500
+group                         = 1,2,3,4,5,6,7,8,9,10,64
+emmcache                      = 1,3,15,0
+
+[reader]
+label                         = reader1_srg_via
+enable                        = 0
+protocol                      = internal
+device                        = /dev/sci1
+caid                          = 0500
+detect                        = cd
+group                         = 1,2,3,4,5,6,7,8,9,10,64
+emmcache                      = 1,3,2
+
+[reader]
+label                         = reader1_orf_0d95
+enable                        = 0
+protocol                      = internal
+device                        = /dev/sci1
+caid                          = 0D95
+detect                        = cd
+group                         = 1,2,3,4,5,6,7,8,9,10,64
+emmcache                      = 1,3,2
+
+[reader]
+label                         = reader1_orf_0d98
+enable                        = 0
+protocol                      = internal
+device                        = /dev/sci1
+caid                          = 0D98
+detect                        = cd
+group                         = 1,2,3,4,5,6,7,8,9,10,64
+emmcache                      = 1,3,2
+blockemm-g                    = 1
+needsglobalfirst              = 1
