@@ -515,7 +515,7 @@ static int32_t irdeto_card_init(struct s_reader *reader, ATR *newatr)
 	else if(((reader->caid == 0x0604) || (reader->caid == 0x1722)) && (csystem_data->t0 == 0) && (reader->typ == R_SMART) && (reader->smart_type >= 2))
 	{
 		// Quick and dirty containment for the SmargoV2, Triple and Ziggo irdeto caid: 0604 using smartreader protocol
-		// dirty hack ziggo nl card smartreder v2 and triple will be removed after findings optimum T14 values for v2 and triple
+		// dirty hack ziggo nl card smartreader v2 and triple will be removed after findings optimum T14 values for v2 and triple
 		// For some reason only 4 to 5 bytes are received, while 8 bytes are expected.
 		int32_t rc;
 		if(reader->caid == 0x1722)
@@ -611,13 +611,13 @@ int32_t irdeto_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, struct s_e
 					case 0x26: // valid for V6 and V7 cards *26 rare case card gets locked if bad EMM being written
 					{
 						snprintf(ea->msglog, MSGLOGSIZE, "%.19s cardstatus: LOCKED", reader->label);
-						return E_CORRUPT;
+						return ERROR;
 					}
 
 					case 0x27: // valid for V6 and V7 cards Time sync EMMs
 					{
 						snprintf(ea->msglog, MSGLOGSIZE, "%.23s need global EMMs first", reader->label);
-						return E_CORRUPT;
+						return ERROR;
 					}
 
 					case 0x33: // valid for all cards *33 comes in 2 cases Either Card Requires to be init with Dynamic RSA AKA cmd28/A0 or Pairing Enabled
@@ -629,7 +629,7 @@ int32_t irdeto_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, struct s_e
 					case 0x35: // valid for V6 and V7 cards Time sync EMMs
 					{
 						snprintf(ea->msglog, MSGLOGSIZE, "%.23s need global EMMs first", reader->label);
-						return E_CORRUPT;
+						return ERROR;
 					}
 
 					case 0x90: // valid for all cards
@@ -654,14 +654,14 @@ int32_t irdeto_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, struct s_e
 						else
 						{
 							snprintf(ea->msglog, MSGLOGSIZE,"%.11s needs EMMs", reader->label);
-							return E_CORRUPT;
+							return ERROR;
 						}
 					}
 
 					case 0xA0: // valid for all cards
 					{
 						snprintf(ea->msglog, MSGLOGSIZE,"%.17s surflock enabled", reader->label);
-						return E_CORRUPT;
+						return ERROR;
 					}
 
 					default: // all other error status
@@ -704,13 +704,13 @@ int32_t irdeto_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, struct s_e
 					case 0x26: // valid for V6 and V7 cards *26 rare case card gets locked if bad EMM being written
 					{
 						snprintf(ea->msglog, MSGLOGSIZE, "%.19s cardstatus: LOCKED", reader->label);
-						return E_CORRUPT;
+						return ERROR;
 					}
 
 					case 0x27: // valid for V6 and V7 cards Time sync EMMs
 					{
 						snprintf(ea->msglog, MSGLOGSIZE, "%.23s need global EMMs first", reader->label);
-						return E_CORRUPT;
+						return ERROR;
 					}
 
 					case 0x33: // valid for all cards *33 comes in 2 cases Either Card Requires to be init with Dynamic RSA AKA cmd28/A0 or Pairing Enabled
@@ -722,7 +722,7 @@ int32_t irdeto_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, struct s_e
 					case 0x35: // valid for V6 and V7 cards Time sync EMMs
 					{
 						snprintf(ea->msglog, MSGLOGSIZE, "%.23s need global EMMs first", reader->label);
-						return E_CORRUPT;
+						return ERROR;
 					}
 
 					case 0x90: // valid for all cards
@@ -747,14 +747,14 @@ int32_t irdeto_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, struct s_e
 						else
 						{
 							snprintf(ea->msglog, MSGLOGSIZE,"%.11s needs EMMs", reader->label);
-							return E_CORRUPT;
+							return ERROR;
 						}
 					}
 
 					case 0xA0: // valid for all cards
 					{
 						snprintf(ea->msglog, MSGLOGSIZE,"%.17s surflock enabled", reader->label);
-						return E_CORRUPT;
+						return ERROR;
 					}
 
 					default: // all other error status
