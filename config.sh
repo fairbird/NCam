@@ -694,8 +694,11 @@ create_cert() {
 	if [ -z "$4" ]; then
 		CERT_SUBJECT="$CERT_SUBJECT_DEFAULT"
 	else
-		CERT_SUBJECT="${*:4}"
-		CERT_SUBJECT="/CN=${CERT_SUBJECT/\/CN=/}"
+		for param in $*; do
+			i=$(( i + 1 ))
+			[ $i -ge 4 ] && CERT_SUBJECT="$CERT_SUBJECT$param "
+		done
+		CERT_SUBJECT="/CN=$(echo "$CERT_SUBJECT" | sed 's/[[:space:]]*$//' | sed 's/CN=//g')"
 	fi
 
 	if [ ! -f "$CERT_DIR/$CERT_PRIVATE_KEY" ] || [ ! -f "$CERT_DIR/$CERT_X509" ]; then
@@ -768,6 +771,7 @@ cert_file() {
 
 cert_info() {
 	if [ -f "$CERT_DIR/$CERT_X509" ]; then
+		DATE=$(hash gdate 2>/dev/null && printf 'gdate' || printf 'date')
 		for attrib in 'Subject' 'Issuer' 'Not Before' 'Not After' 'Public Key Algorithm'\
 					'Public-Key' 'ASN1 OID' 'NIST CURVE' 'Exponent' 'Signature Algorithm'; do
 			if [ "$attrib" = 'Not Before' ]; then
@@ -775,7 +779,7 @@ cert_info() {
 			elif [ "$attrib" = 'Not After' ]; then
 				openssl x509 -in "$CERT_DIR/$CERT_X509" -noout -nameopt oneline,-esc_msb -enddate | awk -F '=' '{print $2}' | date +"%d.%m.%Y %H:%M:%S" -f - | xargs -0 printf "$attrib: %s" 2>/dev/null
 			else
-				openssl x509 -in "$CERT_DIR/$CERT_X509" -text -noout -nameopt oneline,-esc_msb | grep -m1 "$attrib" | xargs -r | cat
+				openssl x509 -in "$CERT_DIR/$CERT_X509" -text -noout -nameopt oneline,-esc_msb | grep -m1 "$attrib" | xargs -0 printf "%s" | awk '{$1=$1};1'
 			fi
 		done
 		return 0

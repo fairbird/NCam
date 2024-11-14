@@ -267,6 +267,10 @@ else (NOT USE_COMPRESS OR USE_COMPRESS EQUAL 0)
 endif (NOT USE_COMPRESS OR USE_COMPRESS EQUAL 0)
 
 # binary signing
+find_program(STAT NAMES gnustat)
+find_program(STAT NAMES stat)
+find_program(SPLIT NAMES gsplit)
+find_program(SPLIT NAMES split)
 execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --enabled WITH_SIGNING OUTPUT_VARIABLE CONFIG_WITH_SIGNING OUTPUT_STRIP_TRAILING_WHITESPACE)
 if (CONFIG_WITH_SIGNING MATCHES "N" AND WITH_SIGNING EQUAL 1)
 	message (STATUS "SIGNING is added by You compiling with signing included")
@@ -315,12 +319,12 @@ function(SIGN_COMMAND_NCAM)
 	add_custom_command(TARGET ${exe_name} POST_BUILD COMMAND sha256sum ${exe_name} | awk '{ print $$1 }' | tr -d '\\n' > ${SIGN_HASH}
 	                                                 COMMAND openssl x509 -pubkey -noout -in ${SIGN_CERT}         -out ${SIGN_PUBKEY}
 	                                                 COMMAND openssl dgst -sha256      -sign ${SIGN_PRIVKEY}      -out ${SIGN_DIGEST} ${SIGN_HASH}
-	                                                 COMMAND printf '[SIGN] SHA256\('\; stat -c %s ${SIGN_HASH} | tr -d '\\n'\; printf '\): '\; cat ${SIGN_HASH}\; printf ' -> '
+	                                                 COMMAND printf '[SIGN] SHA256\('\; ${STAT} -c %s ${SIGN_HASH} | tr -d '\\n'\; printf '\): '\; cat ${SIGN_HASH}\; printf ' -> '
 	                                                 COMMAND openssl dgst -sha256    -verify ${SIGN_PUBKEY} -signature ${SIGN_DIGEST} ${SIGN_HASH} | tr -d '\\n'
 	                                                 COMMAND test -f ${UPX_SPLIT_PREFIX}aa && cat ${UPX_SPLIT_PREFIX}aa > ${exe_name} || true
 	                                                 COMMAND printf '${SIGN_MARKER}' | cat - ${SIGN_DIGEST} >> ${exe_name}
 	                                                 COMMAND test -f ${UPX_SPLIT_PREFIX}ab && cat ${UPX_SPLIT_PREFIX}ab >> ${exe_name} || true
-	                                                 COMMAND printf ' <- DIGEST\('\; stat -c %s ${SIGN_DIGEST} | tr -d '\\n'\; printf '\)\\n'
+	                                                 COMMAND printf ' <- DIGEST\('\; ${STAT} -c %s ${SIGN_DIGEST} | tr -d '\\n'\; printf '\)\\n'
 	)
 endfunction()
 
@@ -821,7 +825,7 @@ if (USE_COMPRESS EQUAL 1)
 	add_custom_command(TARGET ${exe_name} POST_BUILD COMMAND upx -q ${COMP_LEVEL} ${exe_name} | grep '^[[:space:]]*[[:digit:]]* ->' | xargs | cat | xargs -0 printf '[ UPX] %s')
 	if (WITH_SIGNING EQUAL 1)
 		set_property(TARGET ${exe_name} APPEND PROPERTY ADDITIONAL_CLEAN_FILES ${UPX_SPLIT_PREFIX}aa ${UPX_SPLIT_PREFIX}ab)
-		add_custom_command(TARGET ${exe_name} POST_BUILD COMMAND split --bytes=`grep -oba '${SIGN_UPXMARKER}' ${exe_name} | tail -1 | awk -F':' '{ print $$1 }'` ${exe_name} ${UPX_SPLIT_PREFIX})
+		add_custom_command(TARGET ${exe_name} POST_BUILD COMMAND ${SPLIT} --bytes=`grep -oba '${SIGN_UPXMARKER}' ${exe_name} | tail -1 | awk -F':' '{ print $$1 }'` ${exe_name} ${UPX_SPLIT_PREFIX})
 		SIGN_COMMAND_NCAM()
 	endif (WITH_SIGNING EQUAL 1)
 endif (USE_COMPRESS EQUAL 1)

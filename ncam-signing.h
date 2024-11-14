@@ -8,8 +8,18 @@
 
 #define OBSM "!OBSM!" //ncam Binary Signature Marker
 #define UPXM "UPX!" //UPX Marker
-#define CA_FILE_NAME "ca-certificates.crt" //System Certificate Trust Store Filename
-#define CA_SYSTEM_LOCATION "/etc/ssl/certs" //System Certificate Trust Store Location
+
+//System Certificates Trust Store location and filename
+#if defined(__APPLE__)
+#define CA_SYSTEM_LOCATION "/usr/local/share/ca-certificates"
+#define CA_FILE_NAME "cacert.pem"
+#elif defined(__FreeBSD__) || defined(__OpenBSD__)
+#define CA_SYSTEM_LOCATION "/usr/local/share/certs"
+#define CA_FILE_NAME "ca-root-nss.crt"
+#else
+#define CA_SYSTEM_LOCATION "/etc/ssl/certs"
+#define CA_FILE_NAME "ca-certificates.crt"
+#endif
 
 typedef struct {
 	unsigned char *data;

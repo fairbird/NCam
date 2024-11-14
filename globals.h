@@ -37,7 +37,7 @@
 #include <termios.h>
 #include <inttypes.h>
 #include <sys/utsname.h>
-#if !defined(__APPLE__)
+#if !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(__OpenBSD__)
 #include <sys/sysmacros.h>
 #endif
 #include <sys/sysinfo.h>
