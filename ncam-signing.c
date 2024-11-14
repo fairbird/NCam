@@ -7,6 +7,13 @@
 #include "ncam-time.h"
 #include "ncam-files.h"
 
+#ifndef CERT_ALGO_RSAENCRYPTION // warning about using OpenSSL versions before 1.0.0 with non RSA public key algorithm
+#if OPENSSL_VERSION_NUMBER < 0x10000000L
+#pragma message "WARNING: Due to lack of full support for elliptic curve signature algorithms in OpenSSL versions before 1.0.0, \
+make sure using RSA public key algorithm. Otherwise binary signature validation at runtime will not work!"
+#endif
+#endif
+
 extern char *config_cert;
 struct o_sign_info osi;
 

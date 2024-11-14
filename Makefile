@@ -130,6 +130,7 @@ ifeq "$(shell ./config.sh --enabled WITH_SIGNING)" "Y"
 		SIGN_VER       = ${shell ($(SSL) version 2>/dev/null || echo "n.a.") | head -n 1 | awk -F'(' '{ print $$1 }' | xargs}
 		SIGN_INFO      = $(shell echo '|  Signing  : $(SIGN_VER)\n|             $(SIGN_PUBALGO), $(SIGN_PUBBIT), $(SIGN_SIGALGO),\n|             Valid $(SIGN_VALID), $(SIGN_SUBJECT)\n')
 		SIGN_INFO_TOOL = $(shell echo '|  SSL      = $(SSL)\n')
+		override STD_DEFS += -DCERT_ALGO_$(shell ./config.sh --cert-info | head -n 5 | tail -n 1 | awk -F':|-' '{ print toupper($$2) }' | xargs)
 		SIGN_COMMAND_NCAM += sha256sum $@ | awk '{ print $$1 }' | tr -d '\n' > $(SIGN_HASH);
 		SIGN_COMMAND_NCAM += printf 'SIGN	SHA256('; stat -c %s $(SIGN_HASH) | tr -d '\n'; printf '): '; cat $(SIGN_HASH); printf ' -> ';
 		SIGN_COMMAND_NCAM += $(SSL) x509 -pubkey -noout -in $(SIGN_CERT)         -out $(SIGN_PUBKEY);
