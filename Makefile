@@ -100,8 +100,8 @@ ifdef USE_COMPRESS
 		UPX_COMMAND_NCAM = $(SAY) "UPX	Disabled due to missing upx binary in PATH!";
 	else
 		UPX_SPLIT_PREFIX   = $(OBJDIR)/signing/upx.
-		UPX_INFO_TOOL      = $(shell echo "|  UPX      = $(UPX)\n")
-		UPX_INFO           = $(shell echo "|  Packer   : $(UPX_VER) (compression level $(COMP_LEVEL))\n")
+		UPX_INFO_TOOL      = $(shell echo '|  UPX      = $(UPX)\n')
+		UPX_INFO           = $(shell echo '|  Packer   : $(UPX_VER) (compression level $(COMP_LEVEL))\n')
 		UPX_COMMAND_NCAM  = $(UPX) -q $(COMP_LEVEL) $@ | grep '^[[:space:]]*[[:digit:]]* ->' | xargs | cat | xargs -0 printf 'UPX \t%s';
 	endif
 endif
@@ -124,14 +124,14 @@ ifeq "$(shell ./config.sh --enabled WITH_SIGNING)" "Y"
 		SIGN_PUBKEY    = $(OBJDIR)/signing/pkey
 		SIGN_HASH      = $(OBJDIR)/signing/sha256
 		SIGN_DIGEST    = $(OBJDIR)/signing/digest
-		SIGN_SUBJECT   = $(shell ./config.sh --cert-info | head -n 1)
+		SIGN_SUBJECT   = $(subst $\',$\'$\"$\'$\"$\',$(shell ./config.sh --cert-info | head -n 1))
 		SIGN_SIGALGO   = $(shell ./config.sh --cert-info | tail -n 1)
 		SIGN_VALID     = $(shell ./config.sh --cert-info | head -n 4 | tail -n 1)
 		SIGN_PUBALGO   = $(shell ./config.sh --cert-info | head -n 5 | tail -n 1)
 		SIGN_PUBBIT    = $(shell ./config.sh --cert-info | head -n 6 | tail -n 1)
 		SIGN_VER       = ${shell ($(SSL) version 2>/dev/null || echo "n.a.") | head -n 1 | awk -F'(' '{ print $$1 }' | xargs}
-		SIGN_INFO      = $(shell echo "|  Signing  : $(SIGN_VER)\n|             $(SIGN_PUBALGO), $(SIGN_PUBBIT), $(SIGN_SIGALGO),\n|             Valid $(SIGN_VALID), $(SIGN_SUBJECT)\n")
-		SIGN_INFO_TOOL = $(shell echo "|  SSL      = $(SSL)\n")
+		SIGN_INFO      = $(shell echo '|  Signing  : $(SIGN_VER)\n|             $(SIGN_PUBALGO), $(SIGN_PUBBIT), $(SIGN_SIGALGO),\n|             Valid $(SIGN_VALID), $(SIGN_SUBJECT)\n')
+		SIGN_INFO_TOOL = $(shell echo '|  SSL      = $(SSL)\n')
 		override STD_DEFS += -DCERT_ALGO_$(shell ./config.sh --cert-info | head -n 5 | tail -n 1 | awk -F':|-' '{ print toupper($$2) }' | xargs)
 		SIGN_COMMAND_NCAM += sha256sum $@ | awk '{ print $$1 }' | tr -d '\n' > $(SIGN_HASH);
 		SIGN_COMMAND_NCAM += printf 'SIGN	SHA256('; $(STAT) -c %s $(SIGN_HASH) | tr -d '\n'; printf '): '; cat $(SIGN_HASH); printf ' -> ';
