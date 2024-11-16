@@ -167,9 +167,13 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 		{ return 0; }
 
 	uint16_t emmcaid;
-	if(reader->cak7_emm_caid != 0)
+	if(reader->caid == 0x186D)
 	{
-		emmcaid = reader->cak7_emm_caid;
+		emmcaid = reader->caid - 0x03;
+	}
+	else if (reader->caid == 0x1856)
+	{
+		emmcaid = reader->caid + 0x28;
 	}
 	else
 	{
