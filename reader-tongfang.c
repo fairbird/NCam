@@ -454,12 +454,6 @@ static int32_t tongfang_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 	return OK;
 }
 
-static int32_t tongfang_get_emm_type(EMM_PACKET *ep, struct s_reader *UNUSED(reader))
-{
-	ep->type = UNKNOWN;
-	return 1;
-}
-
 static int32_t tongfang_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 {
 	uint8_t emm_cmd[200];
@@ -588,15 +582,61 @@ static int32_t tongfang_card_info(struct s_reader *reader)
 	return OK;
 }
 
+static int32_t tongfang_get_emm_type(EMM_PACKET *ep, struct s_reader *rdr)
+{
+	switch(ep->emm[0])
+	{
+		case 0x82:
+			ep->type = SHARED;
+			memset(ep->hexserial, 0, 8);
+			memcpy(ep->hexserial, ep->emm + 5, 3);
+			return (!memcmp(rdr->hexserial + 2, ep->hexserial, 3));
+
+		default:
+			ep->type = UNKNOWN;
+			return 1;
+	}
+}
+
+static int32_t tongfang_get_emm_filter(struct s_reader *rdr, struct s_csystem_emm_filter **emm_filters, unsigned int *filter_count)
+{
+	if(*emm_filters == NULL)
+	{
+		const unsigned int max_filter_count = 1;
+		if(!cs_malloc(emm_filters, max_filter_count * sizeof(struct s_csystem_emm_filter)))
+		{
+			return ERROR;
+		}
+
+		struct s_csystem_emm_filter *filters = *emm_filters;
+		*filter_count = 0;
+
+		int32_t idx = 0;
+
+		filters[idx].type = EMM_SHARED;
+		filters[idx].enabled = 1;
+		filters[idx].filter[0] = 0x82;
+		filters[idx].mask[0] = 0xFF;
+		memcpy(&filters[idx].filter[3], rdr->hexserial + 2, 3);
+		memset(&filters[idx].mask[3], 0xFF, 3);
+		idx++;
+
+		*filter_count = idx;
+	}
+
+	return OK;
+}
+
 const struct s_cardsystem reader_tongfang =
 {
-	.desc         = "tongfang",
-	.caids        = (uint16_t[]){ 0x4A02, 0 },
-	.do_emm       = tongfang_do_emm,
-	.do_ecm       = tongfang_do_ecm,
-	.card_info    = tongfang_card_info,
-	.card_init    = tongfang_card_init,
-	.get_emm_type = tongfang_get_emm_type,
+	.desc           = "tongfang",
+	.caids          = (uint16_t[]){ 0x4A02, 0 },
+	.do_emm         = tongfang_do_emm,
+	.do_ecm         = tongfang_do_ecm,
+	.card_info      = tongfang_card_info,
+	.card_init      = tongfang_card_init,
+	.get_emm_type   = tongfang_get_emm_type,
+	.get_emm_filter = tongfang_get_emm_filter,
 };
 
 #endif
