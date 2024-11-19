@@ -61,6 +61,8 @@ ifeq "$(shell ./config.sh --enabled MODULE_STREAMRELAY)" "Y"
 	override USE_LIBDVBCSA=1
 	ifeq "$(notdir ${LIBDVBCSA_LIB})" "libdvbcsa.a"
 		override CFLAGS += -DSTATIC_LIBDVBCSA=1
+	else
+		override CFLAGS += -DSTATIC_LIBDVBCSA=0
 	endif
 endif
 
