@@ -4,7 +4,12 @@
 #ifdef WITH_SSL
 #include <openssl/crypto.h>
 #include <openssl/ssl.h>
+#include <openssl/x509v3.h>
 #include <openssl/err.h>
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#define X509_getm_notBefore X509_get_notBefore
+#define X509_getm_notAfter X509_get_notAfter
+#endif
 #endif
 
 #include "cscrypt/md5.h"
@@ -27,6 +32,8 @@
 #define MAXGETPARAMS 300
 /* The refresh delay (in seconds) when stopping NCam via http. */
 #define SHUTDOWNREFRESH 30
+/* The expiry of the certificate; 365 days */
+#define CERT_EXPIRY_TIME (60*60*24*365)
 
 #define TOUCH_SUBDIR "touch/"
 

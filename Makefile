@@ -34,6 +34,9 @@ ifeq "$(shell ./config.sh --enabled WITH_SSL)" "Y"
 endif
 ifdef USE_SSL
 	override USE_LIBCRYPTO=1
+	SSL_HEADER = $(shell find $(TOOLCHAIN_INC_DIR)/.. -name opensslv.h -print | tail -n 1)
+	SSL_VER    = ${shell (grep 'OpenSSL [[:digit:]][^ ]*' $(SSL_HEADER) 2>/dev/null || echo '"n.a."') | tail -n 1 | awk -F'"' '{ print $$2 }' | xargs}
+	SSL_INFO   = $(shell echo ', $(SSL_VER)')
 endif
 
 ifdef USE_LIBCURL
@@ -211,6 +214,7 @@ ifeq ($(uname_S),FreeBSD)
 	DEFAULT_LIBUSB_LIB = -lusb
 endif
 ifeq ($(uname_S),Darwin)
+	TOOLCHAIN_INC_DIR := /usr/local/opt/openssl/include
 	FIX_OPENSSL_FLAGS_DIR := $(shell ln -sf /usr/local/opt/openssl@1.1/include/openssl /usr/local/include)
 	FIX_OPENSSL_LIB_DIR := $(shell ln -sf /usr/local/opt/openssl@1.1/lib/libssl.1.1.dylib /usr/local/lib)
 	FIX_OPENSSL_LIBCRYPTO_DIR := $(shell ln -sf /usr/local/opt/openssl@1.1/lib/libcrypto.1.1.dylib /usr/local/lib)
@@ -232,7 +236,7 @@ else
 	#
 	# We can't just use -I/usr/include/PCSC because it won't work in
 	# case of cross compilation.
-	TOOLCHAIN_INC_DIR := $(strip $(shell echo | $(CC) -Wp,-v -xc - -fsyntax-only 2>&1 | grep include$ | tail -n 1))
+	TOOLCHAIN_INC_DIR := $(strip $(shell echo | $(CC) -Wp,-v -xc - -fsyntax-only 2>&1 | grep include$$ | tail -n 1))
 	DEFAULT_PCSC_FLAGS = -I$(TOOLCHAIN_INC_DIR)/PCSC -I$(TOOLCHAIN_INC_DIR)/../local/include/PCSC
 	DEFAULT_PCSC_LIB = -lpcsclite
 endif
@@ -560,7 +564,7 @@ $(SIGN_INFO_TOOL)\
 |  Protocols: $(shell ./config.sh --use-flags "$(USE_FLAGS)" --show-enabled protocols | sed -e 's|MODULE_||g')\n\
 |  Readers  : $(shell ./config.sh --use-flags "$(USE_FLAGS)" --show-enabled readers | sed -e 's|READER_||g')\n\
 |  CardRdrs : $(shell ./config.sh --use-flags "$(USE_FLAGS)" --show-enabled card_readers | sed -e 's|CARDREADER_||g')\n\
-|  Compiler : $(shell $(CC) --version 2>/dev/null | head -n 1)\n\
+|  Compiler : $(shell $(CC) --version $(SSL_INFO) 2>/dev/null | head -n 1)\n\
 $(UPX_INFO)\
 $(SIGN_INFO)\
 |  Config   : $(OBJDIR)/config.mak\n\

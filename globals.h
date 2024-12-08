@@ -2273,6 +2273,7 @@ struct s_config
 	uint8_t           http_dyndns[MAX_HTTP_DYNDNS][64];
 	int8_t          http_use_ssl;
 	int8_t          https_force_secure_mode;
+	int8_t		https_auto_create_cert;
 	char            *http_cert;
 	char            *http_help_lang;
 	char            *http_locale;

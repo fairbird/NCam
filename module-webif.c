@@ -1571,6 +1571,7 @@ static char *send_ncam_config_webif(struct templatevars *vars, struct uriparams 
 #ifdef WITH_SSL
 	if(cfg.http_cert != NULL) { tpl_addVar(vars, TPLADD, "HTTPCERT", cfg.http_cert); }
 	tpl_addVar(vars, TPLADD, "HTTPFORCESECUREMODESELECT", (cfg.https_force_secure_mode == 1) ? "checked" : "");
+	tpl_addVar(vars, TPLADD, "HTTPAUTOCREATECERTSELECT", (cfg.https_auto_create_cert == 1) ? "checked" : "");
 #endif
 
 #ifndef WEBIF_JQUERY
@@ -9844,7 +9845,7 @@ static void *http_server(void *UNUSED(d))
 		else { ssl_active = 1; }
 	}
 	else { ssl_active = 0; }
-	cs_log("HTTP Server running. ip=%s port=%d%s", cs_inet_ntoa(SIN_GET_ADDR(sin)), cfg.http_port, ssl_active ? " (SSL)" : "");
+	cs_log("HTTP%s Server running. ip=%s port=%d (%s)", ssl_active ? "S" : "", cs_inet_ntoa(SIN_GET_ADDR(sin)), cfg.http_port, ssl_active ? OPENSSL_VERSION_TEXT : "no SSL");
 #else
 	cs_log("HTTP Server running. ip=%s port=%d", cs_inet_ntoa(SIN_GET_ADDR(sin)), cfg.http_port);
 #endif
