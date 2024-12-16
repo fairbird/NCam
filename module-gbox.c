@@ -2477,7 +2477,7 @@ void gbox_send_init_hello(void)
 		}
 		cs_readunlock(__func__, &clientlist_lock);
 	}
-	else
+	else if(cfg.gbox_port[0] || cfg.gbox_hostname)
 		{ cs_log("local gbox failed init"); }
 }
 
