@@ -844,6 +844,14 @@ void SSL_dyn_destroy_function(struct CRYPTO_dynlock_value *l, const char *file, 
 	if(file || line) { return; }
 }
 
+#if defined(OPENSSL_NO_EC)
+#pragma message "WARNING: OpenSSL was built without support for elliptic curve cryptography (no-ec). Webserver certificate generation at runtime will not work!"
+static bool create_certificate(const char *path)
+{
+	cs_log("generating webserver ssl certificate file %s (%s)", path, "SKIPPED");
+	return false;
+}
+#else
 /* add X.509 V3 extensions */
 static bool add_ext(X509 *cert, int nid, char *value)
 {
@@ -1044,6 +1052,7 @@ err:
 
 	return ret;
 }
+#endif
 
 /* Init necessary structures for SSL in WebIf*/
 SSL_CTX *SSL_Webif_Init(void)
