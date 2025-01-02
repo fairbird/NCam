@@ -30,6 +30,10 @@
 #include "cscrypt/md5.h"
 #include <dvbcsa/dvbcsa.h>
 
+#ifndef STATIC_LIBDVBCSA
+#define STATIC_LIBDVBCSA 0
+#endif
+
 #define EVEN 0
 #define ODD 1
 

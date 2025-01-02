@@ -1988,7 +1988,11 @@ static void *stream_client_handler(void *arg)
 
 static void *stream_server(void)
 {
+#ifdef IPV6SUPPORT
+	struct sockaddr_in6 servaddr, cliaddr;
+#else
 	struct sockaddr_in servaddr, cliaddr;
+#endif
 	socklen_t clilen;
 	int32_t connfd, reuse = 1, i;
 	int8_t connaccepted;
@@ -2030,6 +2034,19 @@ static void *stream_server(void)
 		gconnfd[i] = -1;
 	}
 
+#ifdef IPV6SUPPORT
+	glistenfd = socket(AF_INET6, SOCK_STREAM, 0);
+	if (glistenfd == -1)
+	{
+		cs_log("ERROR: cannot create stream server socket! (errno=%d %s)", errno, strerror(errno));
+		return NULL;
+	}
+
+	bzero(&servaddr,sizeof(servaddr));
+	servaddr.sin6_family = AF_INET6;
+	servaddr.sin6_addr = in6addr_any;
+	servaddr.sin6_port = htons(cfg.stream_relay_port);
+#else
 	glistenfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (glistenfd == -1)
 	{
@@ -2041,6 +2058,7 @@ static void *stream_server(void)
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	servaddr.sin_port = htons(cfg.stream_relay_port);
+#endif
 	setsockopt(glistenfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
 
 	if (bind(glistenfd,(struct sockaddr *)&servaddr, sizeof(servaddr)) == -1)

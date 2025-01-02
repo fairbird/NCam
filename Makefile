@@ -219,6 +219,7 @@ ifeq ($(uname_S),Darwin)
 	FIX_OPENSSL_LIB_DIR := $(shell ln -sf /usr/local/opt/openssl@1.1/lib/libssl.1.1.dylib /usr/local/lib)
 	FIX_OPENSSL_LIBCRYPTO_DIR := $(shell ln -sf /usr/local/opt/openssl@1.1/lib/libcrypto.1.1.dylib /usr/local/lib)
 	DEFAULT_LIBCRYPTO_LIB = -L/usr/local/opt/openssl@1.1/lib -lcrypto
+	DEFAULT_LIBDVBCSA_FLAGS = -I/usr/local/opt/libdvbcsa/include
 	DEFAULT_SSL_LIB = -L/usr/local/opt/openssl@1.1/lib -lssl
 	DEFAULT_LIBUSB_FLAGS = -I/usr/local/opt/libusb/include
 	DEFAULT_LIBUSB_LIB = -L/usr/local/opt/libusb/lib -lusb-1.0 -framework IOKit -framework CoreFoundation -framework Security
