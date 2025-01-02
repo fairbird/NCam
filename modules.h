@@ -16,5 +16,6 @@ void module_gbox(struct s_module *);
 void module_constcw(struct s_module *);
 void module_csp(struct s_module *);
 void module_dvbapi(struct s_module *);
+void module_streamrelay(struct s_module *);
 
 #endif

@@ -98,7 +98,6 @@ CONFIGMENUNEWCAMD             config/menu_newcamd.html                          
 CONFIGMENURADEGAST            config/menu_radegast.html                                   MODULE_RADEGAST
 CONFIGMENUSCAM                config/menu_scam.html                                       MODULE_SCAM
 CONFIGMENUSTREAMRELAY         config/menu_streamrelay.html                                MODULE_STREAMRELAY
-STREAMCLIENTSOURCEHOST        config/streamrelay_streamclientsourcehost.html              MODULE_RADEGAST
 CONFIGSTREAMRELAYEMUBIT       config/streamrelay_emubit.html                              WITH_EMU
 CONFIGMENUSERIAL              config/menu_serial.html                                     MODULE_SERIAL
 CONFIGMONITOR                 config/monitor.html                                         MODULE_MONITOR

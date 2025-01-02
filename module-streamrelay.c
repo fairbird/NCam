@@ -43,16 +43,20 @@ typedef struct
 {
 	int32_t connfd;
 	int32_t connid;
+	char stream_host[256];
 } stream_client_conn_data;
 
-static char stream_source_host[256];
 static char *stream_source_auth = NULL;
 static uint32_t cluster_size = 50;
 static bool has_dvbcsa_ecm = 0;
 
 static uint8_t stream_server_mutex_init = 0;
 static pthread_mutex_t stream_server_mutex;
-static int32_t glistenfd, gconncount = 0, gconnfd[STREAM_SERVER_MAX_CONNECTIONS];
+static int32_t glistenfd, mod_idx, gconncount = 0, gconnfd[STREAM_SERVER_MAX_CONNECTIONS], stream_resptime[STREAM_SERVER_MAX_CONNECTIONS];
+static char ecm_src[STREAM_SERVER_MAX_CONNECTIONS][9];
+static IN_ADDR_T client_ip[STREAM_SERVER_MAX_CONNECTIONS], stream_host_ip[STREAM_SERVER_MAX_CONNECTIONS];
+static in_port_t client_port[STREAM_SERVER_MAX_CONNECTIONS];
+struct s_client *streamrelay_client[STREAM_SERVER_MAX_CONNECTIONS];
 #ifdef WITH_EMU
 #define STATIC /* none */
 #else
@@ -114,7 +118,7 @@ static bool send_to_radegast(uint8_t* data, int len)
 {
 	if (send(gRadegastFd, data, len, 0) < 0)
 	{
-		cs_log("send_to_radegast: Send failure");
+		cs_log("send_to_radegast: Send failure! (errno=%d %s)", errno, strerror(errno));
 		return false;
 	}
 	return true;
@@ -134,7 +138,10 @@ static void radegast_client_ecm(stream_client_data *cdata)
 	static uint8_t payload_static_len = 12;
 
 	if (gRadegastFd <= 0)
-		{ connect_to_radegast(); }
+	{
+		cs_log("HTTP stream including ECM header. Connecting radegast server to parse ECM data");
+		connect_to_radegast();
+	}
 
 	packet_len = header_len + payload_static_len + section_length;
 	uint8_t outgoing_data[packet_len];
@@ -188,6 +195,7 @@ void ParseEcmData(stream_client_data *cdata)
 #ifdef MODULE_RADEGAST
 	else
 	{
+		cs_strncpy(ecm_src[cdata->connid], "radegast", sizeof(ecm_src[cdata->connid]));
 		radegast_client_ecm(cdata);
 	}
 #endif
@@ -245,6 +253,31 @@ static void write_cw(ECM_REQUEST *er, int32_t connid)
 #endif
 }
 
+static void update_client_info(ECM_REQUEST *er, int32_t connid)
+{
+	time_t now;
+	time(&now);
+	if(cfg.stream_display_client)
+	{
+		streamrelay_client[connid]->ip = stream_host_ip[connid];
+		streamrelay_client[connid]->port = cfg.stream_source_port;
+	}
+	else
+	{
+		streamrelay_client[connid]->ip = client_ip[connid];
+		streamrelay_client[connid]->port = client_port[connid];
+	}
+	streamrelay_client[connid]->last_srvid = er->srvid;
+	streamrelay_client[connid]->last_provid = er->prid;
+	streamrelay_client[connid]->last_caid = er->caid;
+#ifdef WEBIF
+	snprintf(streamrelay_client[connid]->lastreader, sizeof(streamrelay_client[connid]->lastreader), "⇆ %.*s", 11, ecm_src[connid]);
+#endif
+	streamrelay_client[connid]->cwlastresptime = stream_resptime[connid];
+	streamrelay_client[connid]->lastecm = now;
+	streamrelay_client[connid]->lastswitch = streamrelay_client[connid]->last = time((time_t *)0); // reset idle-Time & last switch
+}
+
 bool stream_write_cw(ECM_REQUEST *er)
 {
 	int32_t i;
@@ -255,6 +288,7 @@ bool stream_write_cw(ECM_REQUEST *er)
 		if (stream_cur_srvid[i] == er->srvid)
 		{
 			write_cw(er, i);
+			update_client_info(er, i);
 			cw_written = true;
 			// don't return as there might be more connections for the same channel (e.g. recordings)
 		}
@@ -805,7 +839,7 @@ static void decrypt_csa(struct dvbcsa_bs_batch_s *tsbbatch, uint16_t fill[2], co
 #else
 		tsbbatch[fill[oddeven]].data = NULL;
 #endif
-		//cs_log_dbg(D_READER, "dvbcsa (%s), batch=%d", oddeven == ODD ? "odd" : "even", fill[oddeven]);
+		cs_log_dbg(D_READER, "dvbcsa (%s), batch=%d", oddeven == ODD ? "odd" : "even", fill[oddeven]);
 
 		fill[oddeven] = 0;
 
@@ -1414,12 +1448,12 @@ static void DescrambleTsPackets(stream_client_data *data, uint8_t *stream_buf, u
 	decrypt(oddeven);
 }
 
-static int32_t connect_to_stream(char *http_buf, int32_t http_buf_len, char *stream_path)
+static int32_t connect_to_stream(char *http_buf, int32_t http_buf_len, char *stream_path, char *stream_source_host, IN_ADDR_T *in_addr)
 {
 	struct SOCKADDR cservaddr;
-	IN_ADDR_T in_addr;
+	struct utsname buffer; uname(&buffer);
 
-	int32_t streamfd = socket(DEFAULT_AF, SOCK_STREAM, 0);
+	int32_t streamfd = socket(DEFAULT_AF, SOCK_STREAM, 0), status;
 	if (streamfd == -1) { return -1; }
 
 	struct timeval tv;
@@ -1427,41 +1461,44 @@ static int32_t connect_to_stream(char *http_buf, int32_t http_buf_len, char *str
 	tv.tv_usec = 0;
 	if (setsockopt(streamfd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof tv))
 	{
-		cs_log("ERROR: setsockopt() failed for SO_RCVTIMEO");
+		cs_log("ERROR: setsockopt() failed for SO_RCVTIMEO!");
 		return -1;
 	}
 
 	bzero(&cservaddr, sizeof(cservaddr));
 	SIN_GET_FAMILY(cservaddr) = DEFAULT_AF;
 	SIN_GET_PORT(cservaddr) = htons(cfg.stream_source_port);
-	cs_resolve(stream_source_host, &in_addr, NULL, NULL);
-	SIN_GET_ADDR(cservaddr) = in_addr;
+	cs_resolve(stream_source_host, in_addr, NULL, NULL);
+	SIN_GET_ADDR(cservaddr) = *in_addr;
 
 	if (connect(streamfd, (struct sockaddr *)&cservaddr, sizeof(cservaddr)) == -1)
 	{
-		cs_log("WARNING: Connect to stream source port %d failed", cfg.stream_source_port);
+		cs_log("WARNING: Connect to stream source port %d failed.", cfg.stream_source_port);
 		return -1;
 	}
 
-	if (stream_source_auth)
-	{
-		snprintf(http_buf, http_buf_len, "GET %s HTTP/1.1\nHost: %s:%u\n"
-				"User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:38.0) Gecko/20100101 Firefox/38.0\n"
-				"Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\n"
-				"Accept-Language: en-US\n"
-				"Authorization: Basic %s\n"
-				"Connection: keep-alive\n\n", stream_path, stream_source_host, cfg.stream_source_port, stream_source_auth);
-	}
-	else
-	{
-		snprintf(http_buf, http_buf_len, "GET %s HTTP/1.1\nHost: %s:%u\n"
-				"User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:38.0) Gecko/20100101 Firefox/38.0\n"
-				"Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\n"
-				"Accept-Language: en-US\n"
-				"Connection: keep-alive\n\n", stream_path, stream_source_host, cfg.stream_source_port);
-	}
+	snprintf(http_buf, http_buf_len,
+			"GET %s HTTP/1.1\nHost: %s:%u\n"
+			"User-Agent: Mozilla/5.0 (%s %s %s; rv:133.0) Gecko/20100101 Firefox/133.0\n"
+			"Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\n"
+			"Accept-Language: en-US"
+			"%s%s\n"
+			"Connection: keep-alive\n\n",
+			stream_path,
+			cs_inet_ntoa(*in_addr),
+			cfg.stream_source_port,
+#if defined(__linux__)
+			"X11;", buffer.sysname, buffer.machine,
+#else
+			"Windows NT 10.0;", "Win64;", "x64",
+#endif
+			(stream_source_auth) ? "\nAuthorization: Basic " : "",
+			(stream_source_auth) ? stream_source_auth : "");
 
-	if (send(streamfd, http_buf, cs_strlen(http_buf), 0) == -1) { return -1; }
+	status = send(streamfd, http_buf, cs_strlen(http_buf), 0);
+	cs_log_dbg(D_CLIENT, "HTTP (send) (%i): %s", status, remove_newline_chars(http_buf));
+	if ( status == -1) { return -1; }
+
 	return streamfd;
 }
 
@@ -1490,9 +1527,64 @@ static void stream_client_disconnect(stream_client_conn_data *conndata)
 	shutdown(conndata->connfd, 2);
 	close(conndata->connfd);
 
-	cs_log("Stream client %i disconnected",conndata->connid);
+	cs_log("Stream client %i disconnected. ip=%s port=%d", conndata->connid, cs_inet_ntoa(client_ip[conndata->connid]), client_port[conndata->connid]);
+
+	if(streamrelay_client[conndata->connid] && !cfg.stream_reuse_client && !streamrelay_client[conndata->connid]->kill_started)
+	{
+		cs_disconnect_client(streamrelay_client[conndata->connid]);
+		free_client(streamrelay_client[conndata->connid]);
+	}
 
 	NULLFREE(conndata);
+}
+
+static void streamrelay_auth_client(struct s_client *cl)
+{
+	int32_t ok = 0;
+	struct s_auth *account;
+
+	for(account = cfg.account; cfg.stream_relay_user && account; account = account->next)
+	{
+		if((ok = streq(cfg.stream_relay_user, account->usr)))
+		{
+			break;
+		}
+	}
+
+	cs_auth_client(cl, ok ? account : (struct s_auth *)(-1), "streamrelay");
+}
+
+static void create_streamrelay_client(stream_client_conn_data *conndata)
+{
+	int32_t i, exists = 0;
+
+	if (cfg.stream_reuse_client)
+	{
+		for (i = 0; i < STREAM_SERVER_MAX_CONNECTIONS; i++)
+		{
+			if (streamrelay_client[i])
+			{
+				if (!streamrelay_client[i]->kill)
+				{
+					streamrelay_client[conndata->connid] = streamrelay_client[i];
+					exists = 1;
+					break;
+				}
+			}
+		}
+	}
+
+	if (!exists)
+		{ streamrelay_client[conndata->connid] = create_client(client_ip[conndata->connid]); }
+
+	streamrelay_client[conndata->connid]->typ = 'c';
+	streamrelay_client[conndata->connid]->module_idx = mod_idx;
+	streamrelay_client[conndata->connid]->thread = pthread_self();
+	streamrelay_client[conndata->connid]->ip = client_ip[conndata->connid];
+	streamrelay_client[conndata->connid]->port = client_port[conndata->connid];
+#ifdef WEBIF
+	streamrelay_client[conndata->connid]->wihidden = cfg.stream_hide_client;
+#endif
 }
 
 static void *stream_client_handler(void *arg)
@@ -1501,16 +1593,18 @@ static void *stream_client_handler(void *arg)
 	stream_client_data *data;
 
 	char *http_buf, stream_path[255], stream_path_copy[255];
-	char *saveptr, *token, http_version[4];
+	char *saveptr, *token, http_version[4], http_host[256];
 
 	int8_t streamConnectErrorCount = 0, streamDataErrorCount = 0, streamReconnectCount = 0;
 	int32_t bytesRead = 0, http_status_code = 0;
-	int32_t i, clientStatus, streamStatus, streamfd;
+	int32_t i, clientStatus, streamStatus, streamfd, last_streamfd = 0;
 
 	uint8_t *stream_buf;
 	uint16_t packetCount = 0, packetSize = 0, startOffset = 0;
 	uint32_t remainingDataPos, remainingDataLength, tmp_pids[4];
 	uint8_t descrambling = 0;
+
+	struct timeb start, end;
 #ifdef WITH_EMU
 	int32_t cur_dvb_buffer_size, cur_dvb_buffer_wait;
 #else
@@ -1519,16 +1613,17 @@ static void *stream_client_handler(void *arg)
 #endif
 	struct dvbcsa_bs_batch_s *tsbbatch;
 
-	struct s_client *cl = create_client(get_null_ip());
-	if(cl)
-	{
-		SAFE_SETSPECIFIC(getclient, cl);
-		cl->typ = 'c';
-		free_client(cl);
-	}
+	create_streamrelay_client(conndata);
+	SAFE_SETSPECIFIC(getclient, streamrelay_client[conndata->connid]);
 	set_thread_name(__func__);
 
-	cs_log("Stream client %i connected", conndata->connid);
+	if(!streamrelay_client[conndata->connid]->init_done)
+	{
+		streamrelay_auth_client(streamrelay_client[conndata->connid]);
+		streamrelay_client[conndata->connid]->init_done = 1;
+	}
+
+	cs_log("Stream client %i connected. ip=%s port=%d", conndata->connid, cs_inet_ntoa(client_ip[conndata->connid]), client_port[conndata->connid]);
 
 	if (!cs_malloc(&http_buf, 1024))
 	{
@@ -1551,7 +1646,8 @@ static void *stream_client_handler(void *arg)
 		return NULL;
 	}
 
-	clientStatus = recv(conndata->connfd, http_buf, 1024, 0);
+	cs_log_dbg(D_CLIENT, "HTTP (recv) (%i): %s", clientStatus, remove_newline_chars(http_buf));
+
 	if (clientStatus < 1)
 	{
 		NULLFREE(http_buf);
@@ -1562,13 +1658,32 @@ static void *stream_client_handler(void *arg)
 	}
 
 	http_buf[1023] = '\0';
-	if (sscanf(http_buf, "GET %254s ", stream_path) < 1)
+	if (sscanf(http_buf, "GET %254s HTTP/%3s Host: %255s ", stream_path, http_version, http_host) < 1)
 	{
 		NULLFREE(http_buf);
 		NULLFREE(stream_buf);
 		NULLFREE(data);
 		stream_client_disconnect(conndata);
 		return NULL;
+	}
+	else
+	{
+		//use stream_source_host variable from config as stream source host
+		if(!cfg.stream_client_source_host)
+		{
+			cs_strncpy(conndata->stream_host, cfg.stream_source_host, sizeof(conndata->stream_host));
+		}
+		//use host from stream client http request as stream source host, if 'Host: host:port' header was send
+		else if(strchr(http_host,':'))
+		{
+			char *hostline = cs_strdup((const char *)&http_host);
+			cs_strncpy(conndata->stream_host, strsep(&hostline, ":"), sizeof(conndata->stream_host));
+		}
+		//use the IP address of the stream client itself as host for the stream source
+		else
+		{
+			cs_strncpy(conndata->stream_host, cs_inet_ntoa(client_ip[conndata->connid]), sizeof(conndata->stream_host));
+		}
 	}
 
 	cs_strncpy(stream_path_copy, stream_path, sizeof(stream_path));
@@ -1631,13 +1746,18 @@ static void *stream_client_handler(void *arg)
 #endif
 	SAFE_MUTEX_UNLOCK(&fixed_key_srvid_mutex);
 
-	cs_log("Stream client %i request %s", conndata->connid, stream_path);
+	cs_log("Stream client %i request. host=%s port=%d path=%s (%s)", conndata->connid, conndata->stream_host, cfg.stream_source_port, stream_path, !cfg.stream_client_source_host ? "config" : strchr(http_host,':') ? "http header" : "client ip");
 
 	cs_log_dbg(D_READER, "Stream client %i received srvid: %04X tsid: %04X onid: %04X ens: %08X",
 				conndata->connid, data->srvid, data->tsid, data->onid, data->ens);
 
-	snprintf(http_buf, 1024, "HTTP/1.0 200 OK\nConnection: Close\nContent-Type: video/mpeg\nServer: stream_enigma2\n\n");
+	snprintf(http_buf, 1024,
+			"HTTP/1.0 200 OK\n"
+			"Connection: Close\n"
+			"Content-Type: video/mpeg\n"
+			"Server: stream_enigma2\n\n");
 	clientStatus = send(conndata->connfd, http_buf, cs_strlen(http_buf), 0);
+	cs_log_dbg(D_CLIENT, "HTTP (send) (%i): %s", clientStatus, remove_newline_chars(http_buf));
 
 	data->connid = conndata->connid;
 	data->caid = NO_CAID_VALUE;
@@ -1653,10 +1773,10 @@ static void *stream_client_handler(void *arg)
 	while (!exit_oscam && clientStatus != -1 && streamConnectErrorCount < 3
 			&& streamDataErrorCount < 15)
 	{
-		streamfd = connect_to_stream(http_buf, 1024, stream_path);
+		streamfd = connect_to_stream(http_buf, 1024, stream_path, conndata->stream_host, &stream_host_ip[conndata->connid]);
 		if (streamfd == -1)
 		{
-			cs_log("WARNING: stream client %i cannot connect to stream source", conndata->connid);
+			cs_log("WARNING: stream client %i - cannot connect to stream source host. ip=%s port=%d path=%s", conndata->connid, cs_inet_ntoa(stream_host_ip[conndata->connid]), cfg.stream_source_port, stream_path);
 			streamConnectErrorCount++;
 			cs_sleepms(500);
 			continue;
@@ -1670,6 +1790,13 @@ static void *stream_client_handler(void *arg)
 				&& (streamConnectErrorCount < 3 || streamDataErrorCount < 15))
 #endif
 		{
+			if(!streamrelay_client[conndata->connid] || streamrelay_client[conndata->connid]->kill)
+			{
+				clientStatus = -1;
+				break;
+			}
+
+			cs_ftime(&start);
 #ifdef WITH_EMU
 			if (data->key.csa_used)
 			{
@@ -1685,13 +1812,25 @@ static void *stream_client_handler(void *arg)
 			streamStatus = recv(streamfd, stream_buf + bytesRead, cur_dvb_buffer_size - bytesRead, MSG_WAITALL);
 			if (streamStatus == 0) // socket closed
 			{
-				cs_log("WARNING: stream client %i - stream source closed connection", conndata->connid);
+				cs_log_dbg(D_CLIENT, "STATUS: streamStatus=%i, streamfd=%i, last_streamfd=%i, streamConnectErrorCount=%i, streamDataErrorCount=%i, bytesRead=%i",
+						streamStatus, streamfd, last_streamfd, streamConnectErrorCount, streamDataErrorCount, bytesRead);
+				if(streamfd == last_streamfd)
+				{
+					cs_log("WARNING: stream client %i - stream source closed connection.", conndata->connid);
+					if(cfg.stream_client_source_host && conndata->stream_host != cfg.stream_source_host && streamDataErrorCount > 0)
+					{
+						cs_strncpy(conndata->stream_host, cfg.stream_source_host, sizeof(conndata->stream_host));
+						cs_log("FALLBACK: stream client %i - try using stream source host from config. host=%s", conndata->connid, conndata->stream_host);
+					}
+				}
+				cs_log_dbg(D_CLIENT, "HTTP (recv) (%i): %s", streamStatus, remove_newline_chars((const char*)stream_buf));
 				streamConnectErrorCount++;
 				cs_sleepms(100);
 				break;
 			}
 			if (streamStatus < 0) // error
 			{
+				cs_log_dbg(D_CLIENT, "HTTP (recv) (%i): %s", streamStatus, remove_newline_chars((const char*)stream_buf));
 				if ((errno == EWOULDBLOCK) | (errno == EAGAIN))
 				{
 					if(cfg.stream_relay_reconnect_count > 0)
@@ -1706,13 +1845,13 @@ static void *stream_client_handler(void *arg)
 					}
 					else
 					{
-						cs_log("WARNING: stream client %i no data from stream source", conndata->connid);
+						cs_log("WARNING: stream client %i no data from stream source.", conndata->connid);
 					}
 					streamDataErrorCount++; // 2 sec timeout * 15 = seconds no data -> close
 					cs_sleepms(100);
 					continue;
 				}
-				cs_log("WARNING: stream client %i error receiving data from stream source", conndata->connid);
+				cs_log("WARNING: stream client %i error receiving data from stream source.", conndata->connid);
 				streamConnectErrorCount++;
 				cs_sleepms(100);
 				break;
@@ -1723,14 +1862,15 @@ static void *stream_client_handler(void *arg)
 					sscanf((const char*)stream_buf, "HTTP/%3s %d ", http_version , &http_status_code) == 2 &&
 					http_status_code != 200)
 				{
-					cs_log("ERROR: stream client %i got %d response from stream source", conndata->connid, http_status_code);
+					cs_log_dbg(D_CLIENT, "HTTP (recv) (%i): %s", streamStatus, remove_newline_chars((const char*)stream_buf));
+					cs_log("ERROR: stream client %i got %d response from stream source!", conndata->connid, http_status_code);
 					streamConnectErrorCount++;
 					cs_sleepms(100);
 					break;
 				}
 				else
 				{
-					cs_log_dbg(0, "WARNING: stream client %i non-full buffer from stream source", conndata->connid);
+					cs_log_dbg(0, "WARNING: stream client %i non-full buffer from stream source.", conndata->connid);
 					streamDataErrorCount++;
 					cs_sleepms(100);
 				}
@@ -1791,7 +1931,7 @@ static void *stream_client_handler(void *arg)
 						}
 						else
 						{
-							cs_log_dbg(D_READER, "Stream client %i caid %04X not enabled in stream relay config",
+							cs_log_dbg("Stream client %i caid %04X not enabled in stream relay config",
 										conndata->connid, data->caid);
 						}
 					}
@@ -1817,8 +1957,11 @@ static void *stream_client_handler(void *arg)
 					bytesRead = remainingDataLength;
 				}
 			}
+			cs_ftime(&end);
+			stream_resptime[conndata->connid] = comp_timeb(&end, &start);
 		}
 
+		last_streamfd = streamfd;
 		close(streamfd);
 	}
 
@@ -1842,7 +1985,7 @@ static void *stream_client_handler(void *arg)
 	return NULL;
 }
 
-static void *stream_server(void *cl)
+static void *stream_server(void)
 {
 	struct sockaddr_in servaddr, cliaddr;
 	socklen_t clilen;
@@ -1850,7 +1993,9 @@ static void *stream_server(void *cl)
 	int8_t connaccepted;
 	stream_client_conn_data *conndata;
 
-	SAFE_SETSPECIFIC(getclient, cl);
+	struct s_client *client = first_client;
+	client->thread = pthread_self();
+	SAFE_SETSPECIFIC(getclient, client);
 	set_thread_name(__func__);
 
 	cluster_size = dvbcsa_bs_batch_size();
@@ -1887,7 +2032,7 @@ static void *stream_server(void *cl)
 	glistenfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (glistenfd == -1)
 	{
-		cs_log("ERROR: cannot create stream server socket");
+		cs_log("ERROR: cannot create stream server socket! (errno=%d %s)", errno, strerror(errno));
 		return NULL;
 	}
 
@@ -1899,17 +2044,19 @@ static void *stream_server(void *cl)
 
 	if (bind(glistenfd,(struct sockaddr *)&servaddr, sizeof(servaddr)) == -1)
 	{
-		cs_log("ERROR: cannot bind to stream server socket");
+		cs_log("ERROR: cannot bind to stream server socket! (errno=%d %s)", errno, strerror(errno));
 		close(glistenfd);
 		return NULL;
 	}
 
 	if (listen(glistenfd, 3) == -1)
 	{
-		cs_log("ERROR: cannot listen to stream server socket");
+		cs_log("ERROR: cannot listen to stream server socket! (errno=%d %s)", errno, strerror(errno));
 		close(glistenfd);
 		return NULL;
 	}
+
+	cs_log("Stream Relay server initialized. ip=%s port=%d", cs_inet_ntoa(SIN_GET_ADDR(servaddr)), ntohs(SIN_GET_PORT(servaddr)));
 
 	while (!exit_oscam)
 	{
@@ -1918,23 +2065,11 @@ static void *stream_server(void *cl)
 
 		if (connfd == -1)
 		{
-			cs_log("ERROR: accept() failed");
+			cs_log("ERROR: Calling accept() failed! (errno=%d %s)", errno, strerror(errno));
 			break;
 		}
 
 		connaccepted = 0;
-
-#ifdef MODULE_RADEGAST
-		if(cfg.stream_client_source_host)
-		{
-			// Read ip of client who wants to play the stream
-			unsigned char *ip = (unsigned char *)&cliaddr.sin_addr.s_addr;
-			cs_log("Stream Client ip is: %d.%d.%d.%d, will fetch stream there\n", ip[0], ip[1], ip[2], ip[3]);
-
-			// Store ip of client in stream_source_host variable
-			snprintf(stream_source_host, sizeof(stream_source_host), "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
-		}
-#endif
 
 		if (cs_malloc(&conndata, sizeof(stream_client_conn_data)))
 		{
@@ -1945,13 +2080,15 @@ static void *stream_server(void *cl)
 				{
 					if (gconnfd[i] == -1)
 					{
+						cs_strncpy(ecm_src[i], "dvbapi", sizeof(ecm_src[i]));
 						gconnfd[i] = connfd;
 						gconncount++;
 						connaccepted = 1;
 
 						conndata->connfd = connfd;
 						conndata->connid = i;
-
+						client_ip[i] = SIN_GET_ADDR(cliaddr);
+						client_port[i] = ntohs(SIN_GET_PORT(cliaddr));
 						break;
 					}
 				}
@@ -1964,7 +2101,7 @@ static void *stream_server(void *cl)
 			int on = 1;
 			if (setsockopt(connfd, IPPROTO_TCP, TCP_NODELAY, &on, sizeof(on)) < 0)
 			{
-				cs_log("ERROR: stream client %i setsockopt() failed for TCP_NODELAY", conndata->connid);
+				cs_log("ERROR: stream client %i setsockopt() failed for TCP_NODELAY!", conndata->connid);
 			}
 
 			start_thread("stream client", stream_client_handler, (void*)conndata, NULL, 1, 0);
@@ -1973,7 +2110,7 @@ static void *stream_server(void *cl)
 		{
 			shutdown(connfd, 2);
 			close(connfd);
-			cs_log("ERROR: stream server client dropped because of too many connections (%i)", STREAM_SERVER_MAX_CONNECTIONS);
+			cs_log("ERROR: stream server client dropped because of too many connections (%i)!", STREAM_SERVER_MAX_CONNECTIONS);
 		}
 
 		cs_sleepms(20);
@@ -1984,13 +2121,12 @@ static void *stream_server(void *cl)
 	return NULL;
 }
 
-void init_stream_server(void)
+void *streamrelay_handler(struct s_client *UNUSED(cl), uint8_t *UNUSED(mbuf), int32_t module_idx)
 {
 	char authtmp[128];
 
 	if (cfg.stream_relay_enabled)
 	{
-		cs_strncpy(stream_source_host, cfg.stream_source_host, sizeof(stream_source_host));
 
 		if (cfg.stream_source_auth_user && cfg.stream_source_auth_password)
 		{
@@ -2000,13 +2136,10 @@ void init_stream_server(void)
 #ifdef WITH_EMU
 		emu_stream_emm_enabled = cfg.emu_stream_emm_enabled;
 #endif
-		struct s_client *cl = cur_client();
-		if (start_thread("stream_server", stream_server, (void *)cl, NULL, 1, 1) == 0)
-		{
-			cs_log("Stream Relay server initialized");
-		}
-
+		mod_idx = module_idx;
+		start_thread("stream_server", stream_server, NULL, NULL, 1, 1);
 	}
+	return NULL;
 }
 
 #if WITH_EMU
@@ -2103,6 +2236,17 @@ void stop_stream_server(void)
 
 	shutdown(glistenfd, 2);
 	close(glistenfd);
+
+	NULLFREE(stream_source_auth);
 }
 
+/*
+ * protocol structure
+ */
+void module_streamrelay(struct s_module *ph)
+{
+	ph->desc = "streamrelay";
+	ph->type = MOD_CONN_SERIAL;
+	ph->s_handler = streamrelay_handler;
+}
 #endif // MODULE_STREAMRELAY

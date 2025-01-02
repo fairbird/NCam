@@ -169,6 +169,29 @@ char *remove_white_chars(char *txt)
 	return txt;
 }
 
+/* Allocates a new empty string and copies txt into it,
+   then replace all newline occurances with whitspace.
+   You need to free() the result. */
+char *remove_newline_chars(const char *txt)
+{
+	char *result;
+	if(!txt)
+		{ return NULL; }
+
+	if(cs_malloc(&result, cs_strlen(txt) + 1))
+	{
+		cs_strncpy(result, txt, cs_strlen(txt) + 1);
+		char *ptr = strstr(result, "\n");
+		while(ptr != NULL)
+		{
+			memcpy(ptr, " ", 1);
+			ptr = strstr(result, "\n");
+		}
+		return result;
+	}
+	return NULL;
+}
+
 bool streq(const char *s1, const char *s2)
 {
 	if(!s1 && s2) { return 0; }

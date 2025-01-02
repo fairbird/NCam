@@ -10,12 +10,35 @@
 				</TD>
 			</TR>
 ##TPLCONFIGSTREAMRELAYEMUBIT##
-			<TR><TD><A>Caid:</A></TD><TD><input name="stream_relay_ctab" type="text" maxlength="160" value="##STREAM_RELAY_CTAB##"></TD></TR>
-			<TR><TD><A>Source Stream Host:</A></TD><TD><input name="stream_source_host" type="text" maxlength="15" value="##STREAM_SOURCE_HOST##"></TD></TR>
+			<TR><TD><A>Relay Port:</A></TD><TD><input name="stream_relay_port" class="short" type="text" maxlength="5" value="##STREAM_RELAY_PORT##"></TD></TR>
+			<TR><TD><A>Relay User:</A></TD><TD><input name="stream_relay_user" class="medium" type="text" value="##STREAM_RELAY_USER##"></TD></TR>
+			<TR><TD><A>CAID:</A></TD><TD><input name="stream_relay_ctab" type="text" maxlength="160" value="##STREAM_RELAY_CTAB##"></TD></TR>
+			<TR><TD><A>Source Stream Host:</A></TD>
+				<TD CLASS="invisible">
+					<TABLE>
+						<TR>
+							<TD COLSPAN="2"><input name="stream_source_host" class="medium" type="text" value="##STREAM_SOURCE_HOST##"><label></label></TD>
+							<TD><A>Automatic host discovery:</A></TD><TD><input name="stream_client_source_host" value="0" type="hidden"><input name="stream_client_source_host" value="1" type="checkbox" ##STREAM_CLIENT_SOURCE_HOST##><label></label></TD>
+						</TR>
+					</TABLE>
+				</TD>
+			</TR>
 			<TR><TD><A>Source Stream Port:</A></TD><TD><input name="stream_source_port" class="short" type="text" maxlength="5" value="##STREAM_SOURCE_PORT##"></TD></TR>
 			<TR><TD><A>Source Stream User:</A></TD><TD><input name="stream_source_auth_user" type="text" value="##STREAM_SOURCE_AUTH_USER##"></TD></TR>
 			<TR><TD><A>Source Stream Password:</A></TD><TD><input name="stream_source_auth_password" type="text" value="##STREAM_SOURCE_AUTH_PASSWORD##"></TD></TR>
-			<TR><TD><A>Relay Port:</A></TD><TD><input name="stream_relay_port" class="short" type="text" maxlength="5" value="##STREAM_RELAY_PORT##"></TD></TR>
 			<TR><TD><A>Relay Buffer Time:</A></TD><TD><input name="stream_relay_buffer_time" class="short" type="text" maxlength="5" value="##STREAM_RELAY_BUFFER_TIME##"><label> ms (delay for stream processing)</label></TD></TR>
 			<TR><TD><A>Relay Reconnect Count:</A></TD><TD><input name="stream_relay_reconnect_count" class="short" type="text" maxlength="2" value="##STREAM_RELAY_RECONNECT_COUNT##"><label> attempts until an interrupted stream is disconnected (0 = disabled)</label></TD></TR>
-##TPLSTREAMCLIENTSOURCEHOST##
+			<TR><TD><A>Relay Client Display Options:</A></TD>
+				<TD CLASS="invisible">
+					<TABLE>
+						<TR>
+							<TD COLSPAN="2"><select name="stream_display_client">
+								<option value="0" ##STREAMCONFIGCLIENTSELECTED0##>0 - stream client address</option>
+								<option value="1" ##STREAMCONFIGCLIENTSELECTED1##>1 - stream source host address</option>
+							</select></TD>
+							<TD><A>Reuse existing client:</A></TD><TD><input name="stream_reuse_client" value="0" type="hidden"><input name="stream_reuse_client" type="checkbox" value="1" ##STREAM_REUSE_CLIENT##><label></label></TD>
+							<TD><A>Hide in WebIf:</A></TD><TD><input name="stream_hide_client" value="0" type="hidden"><input name="stream_hide_client" type="checkbox" value="1" ##STREAM_HIDE_CLIENT##><label></label></TD>
+						</TR>
+					</TABLE>
+				</TD>
+			</TR>
