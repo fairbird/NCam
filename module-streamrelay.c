@@ -456,8 +456,8 @@ static void ParsePatData(stream_client_data *cdata)
 		if (cdata->srvid == srvid)
 		{
 			cdata->pmt_pid = b2i(2, cdata->pat_data + i + 2) & 0x1FFF;
-			cs_log_dbg(D_READER, "Stream client %i found pmt pid: 0x%04X (%i)",
-						cdata->connid, cdata->pmt_pid, cdata->pmt_pid);
+			cs_log_dbg(D_READER, "Stream client %i found ecm pid: 0x%04X (%i)",
+							cdata->connid, cdata->ecm_pid, cdata->ecm_pid);
 			break;
 		}
 	}
@@ -1646,6 +1646,7 @@ static void *stream_client_handler(void *arg)
 		return NULL;
 	}
 
+	clientStatus = recv(conndata->connfd, http_buf, 1024, 0);
 	cs_log_dbg(D_CLIENT, "HTTP (recv) (%i): %s", clientStatus, remove_newline_chars(http_buf));
 
 	if (clientStatus < 1)
@@ -1931,7 +1932,7 @@ static void *stream_client_handler(void *arg)
 						}
 						else
 						{
-							cs_log_dbg("Stream client %i caid %04X not enabled in stream relay config",
+							cs_log("Stream client %i caid %04X not enabled in stream relay config",
 										conndata->connid, data->caid);
 						}
 					}
