@@ -34,9 +34,6 @@ ifeq "$(shell ./config.sh --enabled WITH_SSL)" "Y"
 endif
 ifdef USE_SSL
 	override USE_LIBCRYPTO=1
-	SSL_HEADER = $(shell find $(TOOLCHAIN_INC_DIR)/.. -name opensslv.h -print | tail -n 1)
-	SSL_VER    = ${shell (grep 'OpenSSL [[:digit:]][^ ]*' $(SSL_HEADER) 2>/dev/null || echo '"n.a."') | tail -n 1 | awk -F'"' '{ print $$2 }' | xargs}
-	SSL_INFO   = $(shell echo ', $(SSL_VER)')
 endif
 
 ifdef USE_LIBCURL
@@ -88,6 +85,7 @@ UPX = $(shell which upx 2>/dev/null || true)
 SSL = $(shell which openssl 2>/dev/null || true)
 STAT = $(shell which gnustat 2>/dev/null || which stat 2>/dev/null)
 SPLIT = $(shell which gsplit 2>/dev/null || which split 2>/dev/null)
+GREP = $(shell which ggrep 2>/dev/null || which grep 2>/dev/null)
 
 ifeq "$(shell $(CC) -dumpmachine | cut -d'-' -f1 2>/dev/null)" "aarch64"
 LD = $(CROSS_DIR)$(CROSS)ld
@@ -107,7 +105,7 @@ ifdef USE_COMPRESS
 		UPX_SPLIT_PREFIX   = $(OBJDIR)/signing/upx.
 		UPX_INFO_TOOL      = $(shell echo '|  UPX      = $(UPX)\n')
 		UPX_INFO           = $(shell echo '|  Packer   : $(UPX_VER) (compression level $(COMP_LEVEL))\n')
-		UPX_COMMAND_NCAM  = $(UPX) -q $(COMP_LEVEL) $@ | grep '^[[:space:]]*[[:digit:]]* ->' | xargs | cat | xargs -0 printf 'UPX \t%s';
+		UPX_COMMAND_NCAM  = $(UPX) -q $(COMP_LEVEL) $@ | $(GREP) '^[[:space:]]*[[:digit:]]* ->' | xargs | cat | xargs -0 printf 'UPX \t%s';
 	endif
 endif
 
@@ -149,7 +147,7 @@ ifeq "$(shell ./config.sh --enabled WITH_SIGNING)" "Y"
 		SIGN_COMMAND_NCAM += printf ' <- DIGEST('; $(STAT) -c %s $(SIGN_DIGEST) | tr -d '\n'; printf ')\n';
 		ifdef USE_COMPRESS
 			ifneq ($(UPX_VER),n.a.)
-				SIGN_COMMAND_NCAM  += $(SPLIT) --bytes=$$(grep -oba '$(SIGN_UPXMARKER)' $@ | tail -1 | awk -F':' '{ print $$1 }') $@ $(UPX_SPLIT_PREFIX);
+				SIGN_COMMAND_NCAM  += $(SPLIT) --bytes=$$($(GREP) -oba '$(SIGN_UPXMARKER)' $@ | tail -1 | awk -F':' '{ print $$1 }') $@ $(UPX_SPLIT_PREFIX);
 				SIGN_COMMAND_NCAM  += $(SIGN_COMMAND_NCAM)
 			endif
 		endif
@@ -214,7 +212,7 @@ ifeq ($(uname_S),FreeBSD)
 	DEFAULT_LIBUSB_LIB = -lusb
 endif
 ifeq ($(uname_S),Darwin)
-	TOOLCHAIN_INC_DIR := /usr/local/opt/openssl/include
+	DEFAULT_SSL_FLAGS = -I/usr/local/opt/openssl/include
 	FIX_OPENSSL_FLAGS_DIR := $(shell ln -sf /usr/local/opt/openssl@1.1/include/openssl /usr/local/include)
 	FIX_OPENSSL_LIB_DIR := $(shell ln -sf /usr/local/opt/openssl@1.1/lib/libssl.1.1.dylib /usr/local/lib)
 	FIX_OPENSSL_LIBCRYPTO_DIR := $(shell ln -sf /usr/local/opt/openssl@1.1/lib/libcrypto.1.1.dylib /usr/local/lib)
@@ -237,8 +235,9 @@ else
 	#
 	# We can't just use -I/usr/include/PCSC because it won't work in
 	# case of cross compilation.
-	TOOLCHAIN_INC_DIR := $(strip $(shell echo | $(CC) -Wp,-v -xc - -fsyntax-only 2>&1 | grep include$$ | tail -n 1))
-	DEFAULT_PCSC_FLAGS = -I$(TOOLCHAIN_INC_DIR)/PCSC -I$(TOOLCHAIN_INC_DIR)/../local/include/PCSC
+	TOOLCHAIN_INC_DIR := $(strip $(shell echo | $(CC) -Wp,-v -xc - -fsyntax-only 2>&1 | $(GREP) include$ | tail -n 1))
+	DEFAULT_SSL_FLAGS = -I$(TOOLCHAIN_INC_DIR) -I$(TOOLCHAIN_INC_DIR)/../../include -I$(TOOLCHAIN_INC_DIR)/../local/include
+	DEFAULT_PCSC_FLAGS = -I$(TOOLCHAIN_INC_DIR)/PCSC -I$(TOOLCHAIN_INC_DIR)/../../include/PCSC -I$(TOOLCHAIN_INC_DIR)/../local/include/PCSC
 	DEFAULT_PCSC_LIB = -lpcsclite
 endif
 
@@ -290,9 +289,14 @@ $(eval $(call prepare_use_flags,LIBCURL,libcurl))
 $(eval $(call prepare_use_flags,LIBUSB,libusb))
 $(eval $(call prepare_use_flags,PCSC,pcsc))
 $(eval $(call prepare_use_flags,UTF8))
-$(eval $(call prepare_use_flags,COMPRESS,upx))
 $(eval $(call prepare_use_flags,LIBDVBCSA,libdvbcsa))
 $(eval $(call prepare_use_flags,COMPRESS,upx))
+
+ifdef USE_SSL
+	SSL_HEADER = $(shell find $(dir $(subst -I,,$(SSL_FLAGS))) -name opensslv.h -print 2>/dev/null | tail -n 1)
+	SSL_VER    = ${shell ($(GREP) 'OpenSSL [[:digit:]][^ ]*' $(SSL_HEADER) /dev/null 2>/dev/null || echo '"n.a."') | tail -n 1 | awk -F'"' '{ print $$2 }' | xargs}
+	SSL_INFO   = $(shell echo ', $(SSL_VER)')
+endif
 
 # Add PLUS_TARGET and EXTRA_TARGET to TARGET
 ifdef NO_PLUS_TARGET
