@@ -293,7 +293,7 @@ $(eval $(call prepare_use_flags,LIBDVBCSA,libdvbcsa))
 $(eval $(call prepare_use_flags,COMPRESS,upx))
 
 ifdef USE_SSL
-	SSL_HEADER = $(shell find $(dir $(subst -I,,$(SSL_FLAGS))) -name opensslv.h -print 2>/dev/null | tail -n 1)
+	SSL_HEADER = $(shell find $(subst -DWITH_SSL=1,,$(subst -I,,$(SSL_FLAGS))) -name opensslv.h -print 2>/dev/null | tail -n 1)
 	SSL_VER    = ${shell ($(GREP) 'OpenSSL [[:digit:]][^ ]*' $(SSL_HEADER) /dev/null 2>/dev/null || echo '"n.a."') | tail -n 1 | awk -F'"' '{ print $$2 }' | xargs}
 	SSL_INFO   = $(shell echo ', $(SSL_VER)')
 endif
