@@ -35,6 +35,40 @@
 	 	// do something after poll
 	}
 	
+	document.addEventListener('DOMContentLoaded', function(){
+		// Get checkboxes
+		const showExpiredCheckbox = document.getElementById('show_expired');
+		const showDisabledCheckbox = document.getElementById('show_disabled');
+
+		// Hide expired and disabled rows initially
+		const expiredRows = document.querySelectorAll('tr.expired');
+		const disabledRows = document.querySelectorAll('tr.disabled');
+    
+		expiredRows.forEach(row => {
+			row.style.display = 'none';
+		});
+    
+		disabledRows.forEach(row => {
+			row.style.display = 'none';
+		});
+
+		// Function to toggle expired users
+		showExpiredCheckbox.addEventListener('change', function() {
+			const expiredRows = document.querySelectorAll('tr.expired');
+			expiredRows.forEach(row => {
+				row.style.display = this.checked ? 'table-row' : 'none';
+			});
+		});
+
+		// Function to toggle disabled users
+		showDisabledCheckbox.addEventListener('change', function() {
+			const disabledRows = document.querySelectorAll('tr.disabled');
+			disabledRows.forEach(row => {
+			row.style.display = this.checked ? 'table-row' : 'none';
+			});
+		});
+	});
+
 	</script>
 ##TPLBODY##
 ##TPLMENU##
@@ -44,6 +78,8 @@
 			<LI CLASS="configmenu"><A HREF="userconfig.html?action=reinit">Reinit User DB</A></LI>
 			<LI CLASS="configmenu"><A HREF="userconfig.html?action=resetalluserstats" onclick="return confirm('Reset Userstats ?')">Reset Userstats</A></LI>
 			<LI CLASS="configmenu"><A TARGET="_blank" HREF="graph.svg?type=users&amp;hidelabels=1">Show Graphs</A></LI>
+			<LI CLASS="configmenu"><A href="#"><input type="checkbox" id="show_expired"> Show Expired</A></LI>
+			<LI CLASS="configmenu"><A href="#"><input type="checkbox" id="show_disabled"> Show Disabled</A></LI>
 ##TPLPOLLINGSET##
 		</UL>
 	</DIV>
