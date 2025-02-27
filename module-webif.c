@@ -1574,6 +1574,9 @@ static char *send_ncam_config_webif(struct templatevars *vars, struct uriparams 
 	tpl_addVar(vars, TPLADD, "HTTPSAVEFULLSELECT", (cfg.http_full_cfg == 1) ? "checked" : "");
 	tpl_addVar(vars, TPLADD, "HTTPOVERWRITEBAKFILE", (cfg.http_overwrite_bak_file == 1) ? "checked" : "");
 	tpl_addVar(vars, TPLADD, "HTTPREADONLY", (cfg.http_readonly == 1) ? "checked" : "");
+	tpl_addVar(vars, TPLADD, "HTTPHIDEUSERSDISABLED", (cfg.http_hide_users_disabled == 1) ? "checked" : "");
+	tpl_addVar(vars, TPLADD, "HTTPHIDEUSERSEXPIRED", (cfg.http_hide_users_expired == 1) ? "checked" : "");
+	tpl_addVar(vars, TPLADD, "HTTPBLURUSERSNAME", (cfg.http_blur_users_name == 1) ? "checked" : "");
 
 
 #ifdef WITH_SSL
@@ -4975,6 +4978,9 @@ static char *send_ncam_user_config(struct templatevars *vars, struct uriparams *
 		}
 	}
 
+	tpl_addVar(vars, TPLADD, "HTTPHIDEUSERSDISABLED", (cfg.http_hide_users_disabled == 1) ? "1" : "0"); 
+	tpl_addVar(vars, TPLADD, "HTTPHIDEUSERSEXPIRED", (cfg.http_hide_users_expired == 1) ? "1" : "0"); 
+	tpl_addVar(vars, TPLADD, "HTTPBLURUSERSNAME", (cfg.http_blur_users_name == 1) ? "1" : "0");
 	tpl_printf(vars, TPLADD, "TOTAL_USERS", "%d", total_users);
 	tpl_printf(vars, TPLADD, "TOTAL_DISABLED", "%d", disabled_users);
 	tpl_printf(vars, TPLADD, "TOTAL_EXPIRED", "%d", expired_users);

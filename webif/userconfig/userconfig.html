@@ -36,38 +36,53 @@
 	}
 
 	document.addEventListener('DOMContentLoaded', function(){
-		// Get checkboxes
-		const showExpiredCheckbox = document.getElementById('show_expired');
-		const showDisabledCheckbox = document.getElementById('show_disabled');
-
-		// blur Users Checkbox
+		// Handle user display options (hide expired, hide disabled, blur usernames)
+		const hideExpiredCheckbox = document.getElementById('hide_expired');
+		const hideDisabledCheckbox = document.getElementById('hide_disabled');
 		const blurUsersCheckbox = document.getElementById('blur_users');
 
-		// Hide expired and disabled rows initially
+		// Use values from webif settings
+		const hideDisabledSetting = '##HTTPHIDEUSERSDISABLED##' === '1';
+		const hideExpiredSetting = '##HTTPHIDEUSERSEXPIRED##' === '1';
+		const blurUsersSetting = '##HTTPBLURUSERSNAME##' === '1';
+
+		// Initialize checkboxes based on settings
+		hideExpiredCheckbox.checked = hideExpiredSetting;
+		hideDisabledCheckbox.checked = hideDisabledSetting;
+		blurUsersCheckbox.checked = blurUsersSetting;
+
+		// Apply settings to elements
 		const expiredRows = document.querySelectorAll('tr.expired');
 		const disabledRows = document.querySelectorAll('tr.disabled');
+		const usernameCells = document.querySelectorAll('tbody.content tr td:nth-child(2)');
 
+		// Apply hide settings
 		expiredRows.forEach(row => {
-			row.style.display = 'none';
+			row.style.display = hideExpiredSetting ? 'none' : 'table-row';
 		});
-
+        
 		disabledRows.forEach(row => {
-			row.style.display = 'none';
+			row.style.display = hideDisabledSetting ? 'none' : 'table-row';
 		});
 
-		// Function to toggle expired users
-		showExpiredCheckbox.addEventListener('change', function() {
+		// Apply blur settings
+		const blurStyle = blurUsersSetting ? 'blur(3px)' : 'none';
+		usernameCells.forEach(cell => {
+			cell.style.filter = blurStyle;
+		});
+
+		// Add event handlers (without AJAX)
+		hideExpiredCheckbox.addEventListener('change', function() {
 			const expiredRows = document.querySelectorAll('tr.expired');
 			expiredRows.forEach(row => {
-				row.style.display = this.checked ? 'table-row' : 'none';
+				row.style.display = this.checked ? 'none' : 'table-row';
 			});
 		});
 
-		// Function to toggle disabled users
-		showDisabledCheckbox.addEventListener('change', function() {
+		hideDisabledCheckbox.addEventListener('change', function() {
 			const disabledRows = document.querySelectorAll('tr.disabled');
 			disabledRows.forEach(row => {
-			row.style.display = this.checked ? 'table-row' : 'none';
+				row.style.display = this.checked ? 'none' : 'table-row';
 			});
 		});
 
@@ -95,9 +110,9 @@
 			<LI CLASS="configmenu"><A HREF="userconfig.html?action=reinit">Reinit User DB</A></LI>
 			<LI CLASS="configmenu"><A HREF="userconfig.html?action=resetalluserstats" onclick="return confirm('Reset Userstats ?')">Reset Userstats</A></LI>
 			<LI CLASS="configmenu"><A TARGET="_blank" HREF="graph.svg?type=users&amp;hidelabels=1">Show Graphs</A></LI>
-			<LI CLASS="configmenu"><A href="#"><input type="checkbox" id="show_expired"> Show Expired</A></LI>
-			<LI CLASS="configmenu"><A href="#"><input type="checkbox" id="show_disabled"> Show Disabled</A></LI>
-			<LI CLASS="configmenu"><A href="#"><input type="checkbox" id="blur_users"> Blur Users</A></LI>
+			<LI CLASS="configmenu"><A href="#"><input type="checkbox" id="hide_expired" ##HIDEEXPIREDCHECKED##> Hide Expired</A></LI>
+			<LI CLASS="configmenu"><A href="#"><input type="checkbox" id="hide_disabled" ##HIDEDISABLEDCHECKED##> Hide Disabled</A></LI>
+			<LI CLASS="configmenu"><A href="#"><input type="checkbox" id="blur_users" ##BLURUSERSCHECKED##> Blur Users</A></LI>
 ##TPLPOLLINGSET##
 		</UL>
 	</DIV>

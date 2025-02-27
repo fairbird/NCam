@@ -2281,6 +2281,9 @@ struct s_config
 	int32_t         http_emmu_clean;
 	int32_t         http_emms_clean;
 	int32_t         http_emmg_clean;
+	int8_t          http_hide_users_disabled;
+	int8_t          http_hide_users_expired;
+	int8_t          http_blur_users_name;
 #endif
 	int8_t          http_full_cfg;
 	int8_t          http_overwrite_bak_file;
