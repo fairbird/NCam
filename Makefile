@@ -209,9 +209,11 @@ DEFAULT_LIBDVBCSA_LIB = -ldvbcsa
 # Since FreeBSD 8 (released in 2010) they are using their own
 # libusb that is API compatible to libusb but with different soname
 ifeq ($(uname_S),FreeBSD)
+	DEFAULT_SSL_FLAGS = -I/usr/include
 	DEFAULT_LIBUSB_LIB = -lusb
-endif
-ifeq ($(uname_S),Darwin)
+	DEFAULT_PCSC_FLAGS = -I/usr/local/include/PCSC
+	DEFAULT_PCSC_LIB = -L/usr/local/lib -lpcsclite
+else ifeq ($(uname_S),Darwin)
 	DEFAULT_SSL_FLAGS = -I/usr/local/opt/openssl/include
 	FIX_OPENSSL_FLAGS_DIR := $(shell ln -sf /usr/local/opt/openssl@1.1/include/openssl /usr/local/include)
 	FIX_OPENSSL_LIB_DIR := $(shell ln -sf /usr/local/opt/openssl@1.1/lib/libssl.1.1.dylib /usr/local/lib)

@@ -15,16 +15,14 @@
 #include <WinSCard.h>
 #endif
 
-#if !defined(__CYGWIN__)
-#if !defined(__APPLE__)
+#if !defined(__CYGWIN__) && !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(__OpenBSD__)
 #include <PCSC/pcsclite.h>
 #include <PCSC/winscard.h>
 #include <PCSC/wintypes.h>
 #include <PCSC/reader.h>
 #endif
-#endif
 
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 #include "pcsclite.h"
 #include "winscard.h"
 #include "wintypes.h"
