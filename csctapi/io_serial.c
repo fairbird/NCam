@@ -205,15 +205,16 @@ bool IO_Serial_SetBitrate(struct s_reader *reader, uint32_t bitrate, struct term
 #if defined(__APPLE__)
 	if(IO_Serial_Bitrate(bitrate) == B0)
 	{
-		if(ioctl(reader->handle, IOSSIOSPEED, &bitrate) < 0)
+		int32_t custom_baud_rate = bitrate * reader->mhz / reader->cardmhz;
+		if(ioctl(reader->handle, IOSSIOSPEED, &custom_baud_rate) < 0)
 		{
-			rdr_log(reader, "Baudrate %u not supported", bitrate);
+			rdr_log(reader, "Baudrate %u not supported", custom_baud_rate);
 			return ERROR;
 		}
 		else
 		{
 			rdr_log_dbg(reader, D_DEVICE, "custom baudrate: cardmhz=%d mhz=%d -> effective baudrate %u",
-						   reader->cardmhz, reader->mhz, bitrate);
+						   reader->cardmhz, reader->mhz, custom_baud_rate);
 		}
 	}
 	else
