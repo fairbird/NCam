@@ -1704,6 +1704,72 @@ void update_chid(ECM_REQUEST *er)
 	er->chid = get_subid(er);
 }
 
+#define CW_LENGTH          16
+#define MAX_FILENAME_LEN   512
+#define MAX_BUFFER_SIZE    1024
+
+/**
+ * Log ECM and CW to a file named by caid@srvid with no file extension
+ * @param er ECM request structure
+ * @param cw Control Word (16 bytes)
+ */
+static void logECMCWtoFile(ECM_REQUEST *er, uint8_t *cw) {
+	if (!er || !cw || !cfg.ecmcwlogdir) {
+		cs_log("Invalid parameters or configuration for ECM/CW logging");
+		return;
+	}
+
+	char srvname[CS_SERVICENAME_SIZE];
+	char filename[MAX_FILENAME_LEN];
+
+	// Get the service name (for logging purposes only)
+	if (get_servicename(cur_client(), er->srvid, er->prid, er->caid, srvname, sizeof(srvname))) {
+		// Sanitize service name for logging
+		for (size_t i = 0; i < sizeof(srvname) && srvname[i]; i++) {
+			if (srvname[i] == ' ') srvname[i] = '_';
+			if (srvname[i] == '/' || srvname[i] == '\\' || srvname[i] == '.') {
+			srvname[i] = '_';
+			}
+		}
+	}
+
+	// Create filename using caid@srvid format with no extension
+	if (snprintf(filename, sizeof(filename), "%s/%04X@%04X",
+			cfg.ecmcwlogdir, er->caid, er->srvid) < 0) {
+		cs_log("Error creating filename for ECM/CW logging");
+		return;
+	}
+
+	FILE *pfCWL = fopen(filename, "a+");
+	if (!pfCWL) {
+		cs_log("Error opening ECM/CW file (%s): %s", filename, strerror(errno));
+		return;
+	}
+
+	// Lock file for writing
+	flockfile(pfCWL);
+
+	// Write ECM data in hex format without labels
+	for (size_t i = cfg.record_ecm_start_byte; i < cfg.record_ecm_end_byte; i++) {
+		fprintf(pfCWL, "%02X", er->ecm[i]);
+	}
+
+	// Write CW in hex format on the same line without labels
+	for (int i = 0; i < CW_LENGTH; i++) {
+		fprintf(pfCWL, "%02X", cw[i]);
+	}
+
+	// Add newline at the end
+	fprintf(pfCWL, "\n");
+
+	// Ensure data is written
+	fflush(pfCWL);
+
+	// Clean up
+	funlockfile(pfCWL);
+	fclose(pfCWL);
+}
+
 /*
  * This function writes the current CW from ECM struct to a cwl file.
  * The filename is re-calculated and file re-opened every time.
@@ -2078,6 +2144,8 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 		{
 			if(cfg.cwlogdir != NULL)
 				{ logCWtoFile(er, ea->cw); } // CWL logging only if cwlogdir is set in config
+			if(cfg.ecmcwlogdir != NULL)
+				{ logECMCWtoFile(er, ea->cw); }
 
 			reader->ecmsok++;
 #ifdef CS_CACHEEX_AIO

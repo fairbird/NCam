@@ -45,6 +45,9 @@
 #ifdef WITH_EMU
 	void add_emu_reader(void);
 #endif
+#ifdef WITH_ECMBIN
+	void add_ecmbin_reader(void);
+#endif
 
 #ifdef WITH_SSL
 #include <openssl/crypto.h>
@@ -492,6 +495,7 @@ static void write_versionfile(bool use_stdout)
 	write_conf(WITH_LIBCURL, "Curl to access URLs");
 	write_conf(WITH_EMU, "Emulator support");
 	write_conf(WITH_SOFTCAM, "Built-in SoftCam.Key");
+	write_conf(WITH_ECMBIN, "ECM Emulator support");
 #ifdef WITH_SIGNING
 	write_conf(WITH_SIGNING, "Binary signing support");
 #endif
@@ -1744,6 +1748,9 @@ const struct s_cardreader *cardreaders[] =
 #ifdef WITH_EMU
 	&cardreader_emu,
 #endif
+#ifdef WITH_ECMBIN
+	&cardreader_ecmbin,
+#endif
 
 	NULL
 };
@@ -1935,6 +1942,9 @@ int32_t main(int32_t argc, char *argv[])
 	init_readerdb();
 #ifdef WITH_EMU
 	add_emu_reader();
+#endif
+#ifdef WITH_ECMBIN
+	add_ecmbin_reader();
 #endif
 	cfg.account = init_userdb();
 	init_signal();

@@ -120,6 +120,7 @@ static void protocol_fn(const char *token, char *value, void *setting, FILE *f)
 			{ "newcamd524", R_NEWCAMD },
 			{ "drecas",     R_DRECAS },
 			{ "emu",        R_EMU },
+			{ "ecmbin",     R_ECMBIN },
 			{ NULL,         0 }
 		}, *p;
 		int i;
