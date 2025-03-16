@@ -407,6 +407,9 @@ static const struct config_list global_opts[] =
 	DEF_OPT_INT8("double_check"                    , OFS(double_check)                  , 0),
 	DEF_OPT_INT8("disablecrccws"                   , OFS(disablecrccws)                 , 0),
 	DEF_OPT_FUNC("disablecrccws_only_for"          , OFS(disablecrccws_only_for)        , chk_ftab_fn),
+#ifdef CS_CACHEEX_AIO
+	DEF_OPT_INT8("cacheex_srcname_webif"           , OFS(cacheex_srcname_webif)         , 0),
+#endif
 	DEF_OPT_INT8("cccam_cfg_enabled"               , OFS(cccam_cfg_enabled)             , 1),
 	DEF_OPT_STR("cccam_cfg_path"                   , OFS(cccam_cfg_path)                , NULL),
 	DEF_OPT_INT8("cccam_cfg_save"                  , OFS(cccam_cfg_save)                , 0),

@@ -2217,6 +2217,9 @@ struct s_config
 	char            *mailfile;
 	int8_t          disablecrccws;                  // 1=disable cw checksum test. 0=enable checksum check
 	FTAB            disablecrccws_only_for;         // ignore checksum for selected caid provid
+#ifdef CS_CACHEEX_AIO
+	uint8_t		cacheex_srcname_webif;		// show cacheex-srcname not cache3 in log
+#endif
 	uint8_t         logtostdout;
 	uint8_t         logtosyslog;
 	int8_t          logduplicatelines;
