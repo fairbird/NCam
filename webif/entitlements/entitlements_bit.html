@@ -1,21 +1,30 @@
 	<script>
-	function showSerial() {
-		document.getElementById('serialDiv').style.display = "block";
-		document.getElementById('serialButton').style.display = "none";
+	function showInfo(div_id, button_id) {
+		document.getElementById(div_id).style.display = "block";
+		document.getElementById(button_id).style.display = "none";
+	}
+	function unblurProv() {
+		const elements = document.querySelectorAll('.e_expired, .e_valid');
+		elements.forEach(element => {
+				let elementsChild = element.querySelectorAll('td:nth-child(3), td:nth-child(8)');
+				elementsChild.forEach(elementChild => {
+						elementChild.style.filter = 'none';
+				});
+		});
 	}
 ##SHOWIRDID##
 ##SHOWPROVID##
-	</script> 
-	
+	</script>
+
 	<TABLE CLASS="stats">
-		<TR><TH COLSPAN="3">Cardsystem</TH><TH COLSPAN="2">Valid To</TH><TH>IRD ID (nagra)</TH><TH COLSPAN="1">Maturity</TH><TH COLSPAN="1">Provider</TH></TR>
-		<TR CLASS="e_header"><TD COLSPAN="3">##READERCSYSTEM##</TD><TD COLSPAN="2">##READERCARDVALIDTO##</TD><TD>##READERIRDID##</TD><TD COLSPAN="1">##READERMATURITY##</TD><TD COLSPAN="1">##READERPROVIDS##</TD></TR>
-		<TR><TH COLSPAN="2">Serial</TH><TH COLSPAN="2">Rom</TH><TH COLSPAN="4">ATR</TH></TR>
+		<TR><TH COLSPAN="3">Cardsystem</TH><TH COLSPAN="2">Valid To</TH><TH>IRD ID (NAGRA)</TH><TH COLSPAN="1">Maturity</TH><TH COLSPAN="1">Provider</TH></TR>
+		<TR CLASS="e_header"><TD COLSPAN="3">##READERCSYSTEM##</TD><TD COLSPAN="2">##READERCARDVALIDTO##</TD><TD COLSPAN="1"><div id="irdidDiv" style="display:none;">##READERIRDID##</div><input type="button" name="irdid" id="irdidButton" value="Show" onclick="showInfo('irdidDiv','irdidButton')" /></TD><TD COLSPAN="1">##READERMATURITY##</TD><TD COLSPAN="1"><div id="providsDiv" style="display:none;">##READERPROVIDS##</div><input type="button" name="provids" id="providsButton" value="Show" onclick="showInfo('providsDiv','providsButton'); unblurProv()" /></TD></TR>
+		<TR><TH COLSPAN="2">Serial</TH><TH COLSPAN="2">ROM</TH><TH COLSPAN="4">ATR</TH></TR>
 		<TR CLASS="e_header">
-			<TD COLSPAN="2"><div id="serialDiv" style="display:none;">##READERSERIAL##</div><input type="button" name="serial" id="serialButton" value="Show" onclick="showSerial()" /></TD>
+			<TD COLSPAN="2"><div id="serialDiv" style="display:none;">##READERSERIAL##</div><input type="button" name="serial" id="serialButton" value="Show" onclick="showInfo('serialDiv','serialButton')" /></TD>
 			<TD COLSPAN="2">##READERROM##</TD><TD COLSPAN="4">##READERATR##</TD>
 		</TR>
 ##ENTITLEMENTCONTENTNDS##
-		<TR><TH>Type</TH><TH>Caid</TH><TH>Provid</TH><TH>ID</TH><TH>Class</TH><TH>Start Date</TH><TH>Expire Date</TH><TH>Name</TH></TR>
+		<TR><TH>Type</TH><TH>CAID</TH><TH>Provid</TH><TH>ID</TH><TH>Class</TH><TH>Start Date</TH><TH>Expire Date</TH><TH>Name</TH></TR>
 ##READERENTENTRY##
 	</TABLE>
