@@ -71,6 +71,7 @@ DEMUXERFIX                    config/dvbapi_demuxerfix.html                     
 CCCAMRESHAREBIT               config/cccreshare.html                                      MODULE_GBOX
 CONFIGGBOX                    config/gbox.html                                            MODULE_GBOX
 CONFIGGLOBAL                  config/global.html
+CACHEEXAIOLOGGING             config/global_cacheex_aio_logging.html                      CS_CACHEEX_AIO
 ENABLELEDBIT                  config/global_enableledbit.html                             LEDSUPPORT
 LOCALCARDS                    config/global_localcards.html                               WITH_CARDREADER
 GETHOSTBYNAME                 config/global_gethostbyname.html
