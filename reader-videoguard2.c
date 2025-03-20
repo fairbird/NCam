@@ -290,7 +290,7 @@ static void vg2_read_tiers(struct s_reader *reader)
 					memset(&timeinfo, 0, sizeof(struct tm));
 					time_t start_t = 0, end_t;
 
-					if(cta_res[1] > 0x23)
+					if(cta_res[1] > 0x24)
 					{
 						rev_date_calc_tm(&cta_res[38], &timeinfo, csystem_data->card_baseyear);
 						start_t = mktime(&timeinfo);
