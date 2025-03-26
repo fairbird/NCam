@@ -210,24 +210,12 @@ static void makeK(uint8_t *left, uint8_t *right, uint8_t *K)
 	}
 }
 
-static void rightRot(uint8_t key[])
-{
-	uint8_t *p = key;
-	uint8_t i = 3;
-	uint8_t carry = 0;
-
-	carry = 0;
-
-	if(*p & 1) { carry = 0x08; }
-
-	do
-	{
-		*p = (*p >> 1) | ((p[1] & 1) ? 0x80 : 0);
-		p++;
-	}
-	while(--i);
-
-	*p = (*p >> 1) | carry;
+static void rightRot(uint8_t key[]) {
+	uint8_t carry = (key[0] & 1) ? 0x08 : 0;
+	key[0] = (key[0] >> 1) | ((key[1] & 1) ? 0x80 : 0);
+	key[1] = (key[1] >> 1) | ((key[2] & 1) ? 0x80 : 0);
+	key[2] = (key[2] >> 1) | ((key[3] & 1) ? 0x80 : 0);
+	key[3] = (key[3] >> 1) | carry;
 }
 
 static void rightRotKeys(uint8_t left[], uint8_t right[])
@@ -238,13 +226,11 @@ static void rightRotKeys(uint8_t left[], uint8_t right[])
 
 static void leftRot(uint8_t key[])
 {
-	uint8_t i = 27;
-
-	do
-	{
-		rightRot(key);
-	}
-	while(--i);
+	uint8_t carry = key[3] >> 3;
+	key[3] = 0x0F & ((key[3] << 1) | !!(key[2] & 0x80));
+	key[2] = (key[2] << 1) | !!(key[1] & 0x80);
+	key[1] = (key[1] << 1) | !!(key[0] & 0x80);
+	key[0] = (key[0] << 1) | carry;
 }
 
 static void leftRotKeys(uint8_t left[], uint8_t right[])
@@ -489,7 +475,7 @@ static void v2mask(uint8_t *cw, uint8_t *mask)
 			{ cw[i] ^= getmask(cw, mask, i, j); }
 }
 
-static void EuroDes(uint8_t key1[], uint8_t key2[], uint8_t desMode, uint8_t operatingMode, uint8_t data[])
+static void EuroDes(uint8_t key1[], uint8_t key2[], uint8_t operatingMode, uint8_t data[])
 {
 	uint8_t mode;
 
@@ -503,7 +489,7 @@ static void EuroDes(uint8_t key1[], uint8_t key2[], uint8_t desMode, uint8_t ope
 		if(key2 != NULL)
 			{ v2mask(data, key2); }
 	}
-	else if(TestBit(desMode, F_TRIPLE_DES))
+	else
 	{
 		/* Eurocrypt 3-DES */
 		mode = (operatingMode == HASH) ? 0 : DES_RIGHT;
@@ -514,20 +500,6 @@ static void EuroDes(uint8_t key1[], uint8_t key2[], uint8_t desMode, uint8_t ope
 
 		mode ^= DES_RIGHT;
 		nc_des(key1, (uint8_t)(mode | DES_IP_1), data);
-	}
-	else
-	{
-		if(TestBit(desMode, F_EURO_S2))
-		{
-			/* Eurocrypt S2 */
-			mode = (operatingMode == HASH) ? DES_ECS2_CRYPT : DES_ECS2_DECRYPT;
-		}
-		else
-		{
-			/* Eurocrypt M */
-			mode = (operatingMode == HASH) ? DES_ECM_HASH : DES_ECM_CRYPT;
-		}
-		nc_des(key1, mode, data);
 	}
 }
 
@@ -551,9 +523,8 @@ int nc_des_encrypt(uint8_t *buffer, int len, uint8_t *deskey)
 	for(i = 2; i < len; i += 8)
 	{
 		uint8_t j;
-		const uint8_t flags = (1 << F_EURO_S2) | (1 << F_TRIPLE_DES);
 		for(j = 0; j < 8; j++) { buffer[i + j] ^= ivec[j]; }
-		EuroDes(deskey, deskey + 8, flags, HASH, buffer + i);
+		EuroDes(deskey, deskey + 8, HASH, buffer + i);
 		memcpy(ivec, buffer + i, 8);
 	}
 	len += 8;
@@ -574,11 +545,10 @@ int nc_des_decrypt(uint8_t *buffer, int len, uint8_t *deskey)
 	for(i = 2; i < len; i += 8)
 	{
 		uint8_t j;
-		const uint8_t flags = (1 << F_EURO_S2) | (1 << F_TRIPLE_DES);
 
 		memcpy(ivec, nextIvec, 8);
 		memcpy(nextIvec, buffer + i, 8);
-		EuroDes(deskey, deskey + 8, flags, CRYPT, buffer + i);
+		EuroDes(deskey, deskey + 8, CRYPT, buffer + i);
 		for(j = 0; j < 8; j++)
 			{ buffer[i + j] ^= ivec[j]; }
 	}
