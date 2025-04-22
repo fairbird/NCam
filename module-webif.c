@@ -8027,7 +8027,7 @@ static char *send_ncam_EMM(struct templatevars * vars, struct uriparams * params
 				}
 				tpl_addVar(vars, TPLADD, "EMM_TMP", "");
 
-				tpl_printf(vars, TPLAPPEND, emm_txt, ": %'d different EMM's from a total off %'d Entrys", emmrs,emms);
+				tpl_printf(vars, TPLAPPEND, emm_txt, ": %'d different EMM's from a total off %'d Entries", emmrs,emms);
 				for(emm_d=emmrs;emm_d>0;--emm_d)
 				{
 					snprintf(tmpstr, sizeof(tmpstr), "LINE_%d", emm_d);

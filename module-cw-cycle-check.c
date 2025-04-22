@@ -156,7 +156,7 @@ void cleanupcwcycle(void)
 
 	// write lock
 	cs_writelock(__func__, &cwcycle_lock);
-	for(currentnode = cw_cc_list, prv = NULL; currentnode; prv = currentnode, currentnode = currentnode->next, count++)   // First Remove old Entrys
+	for(currentnode = cw_cc_list, prv = NULL; currentnode; prv = currentnode, currentnode = currentnode->next, count++)   // First Remove old Entries
 	{
 		if((now - currentnode->time) <= kct) // delete Entry which old to hold list small
 		{
@@ -206,7 +206,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uin
 	int32_t mcl = cfg.maxcyclelist;
 	struct s_cw_cycle_check *currentnode = NULL, *cwc = NULL;
 
-	/*for(list = cw_cc_list; list; list = list->next) { // List all Entrys in Log for DEBUG
+	/*for(list = cw_cc_list; list; list = list->next) { // List all Entries in Log for DEBUG
 	    cs_log_dbg(D_CWC, "cyclecheck: [LIST] %04X@%06X:%04X OLD: %i Time: %ld DifftoNow: %ld Stage: %i cw: %s", list->caid, list->provid, list->sid, list->old, list->time, now - list->time, list->stage, cs_hexdump(0, list->cw, 16, cwstr, sizeof(cwstr)));
 
 	}*/
@@ -292,7 +292,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uin
 				}
 			}
 //
-			if(cwc->stage == 3 && cwc->nextcyclecw < 2 && now - cwc->time < cwc->cycletime * 2 - cwc->dyncycletime - 1)    // Check for Cycle no need to check Entrys others like stage 3
+			if(cwc->stage == 3 && cwc->nextcyclecw < 2 && now - cwc->time < cwc->cycletime * 2 - cwc->dyncycletime - 1)    // Check for Cycle no need to check Entries others like stage 3
 			{
 				/*for (k=0; k<15; k++) { // debug md5
 				            cs_log_dbg(D_CWC, "cyclecheck [checksumlist[%i]]: ecm_md5: %s csp-hash: %d Entry: %i", k, cs_hexdump(0, cwc->ecm_md5[k].md5, 16, ecm_md5, sizeof(ecm_md5)), cwc->ecm_md5[k].csp_hash, cwc->cwc_hist_entry);
