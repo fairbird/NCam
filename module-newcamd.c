@@ -1741,7 +1741,11 @@ void newcamd_idle(void)
 
 int32_t newcamd_client_init(struct s_client *client)
 {
-	char ptxt[1] = { "\0" };
+	char ptxt[1]
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L //gcc-15+
+	__attribute__((nonstring))
+#endif
+	= { "\0" };
 
 	client->ncd_proto = client->reader->ncd_proto;
 

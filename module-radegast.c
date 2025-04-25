@@ -207,7 +207,11 @@ static void *radegast_server(struct s_client *client, uint8_t *mbuf, int32_t n)
 static int32_t radegast_send_ecm(struct s_client *client, ECM_REQUEST *er)
 {
 	uint8_t provid_buf[8];
-	uint8_t header[22] = "\x02\x01\x00\x06\x08\x30\x30\x30\x30\x30\x30\x30\x30\x07\x04\x30\x30\x30\x38\x08\x01\x02";
+	uint8_t header[22]
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L //gcc-15+
+	__attribute__((nonstring))
+#endif
+	= "\x02\x01\x00\x06\x08\x30\x30\x30\x30\x30\x30\x30\x30\x07\x04\x30\x30\x30\x38\x08\x01\x02";
 	uint8_t *ecmbuf;
 
 	uint8_t *SubECMp;

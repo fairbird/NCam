@@ -835,7 +835,12 @@ static inline uint8_t to_uchar(char ch)
 
 void base64_encode(const char *in, size_t inlen, char *out, size_t outlen)
 {
-	static const char b64str[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+	static const char b64str[64]
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L //gcc-15+
+	__attribute__((nonstring))
+#endif
+	= "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
 	while(inlen && outlen)
 	{
 		*out++ = b64str[(to_uchar(in[0]) >> 2) & 0x3f];
@@ -873,7 +878,11 @@ static int8_t b64decoder[256];
 /* Prepares the base64 decoding array */
 void b64prepare(void)
 {
-	const uint8_t alphabet[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+	const uint8_t alphabet[64]
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L //gcc-15+
+	__attribute__((nonstring))
+#endif
+	= "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 	int32_t i;
 
 	for(i = sizeof(b64decoder) - 1; i >= 0; --i)
