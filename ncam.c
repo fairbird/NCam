@@ -161,7 +161,7 @@ static void show_usage(void)
 	}
 	printf("\n");
 	printf("Copyright (C) 2012-2018 developed by Javilonas.\n");
-	printf("Copyright (C) 2016-2024 developed by RAED.\n");
+	printf("Copyright (C) 2016-2025 developed by RAED.\n");
 	printf("Visit https://www.tunisia-sat.com/ for more details.\n\n");
 
 	printf(" ConfigDir  : %s\n", CS_CONFDIR);

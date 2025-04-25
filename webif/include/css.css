@@ -185,7 +185,7 @@ form table a {
 li.menu a,li.menu a:hover,
 li.menu_selected a,li.menu_selected a:hover {
 	color:#000
-	}
+}
 li.menu:hover, li.menu_selected, 
 li.configmenu:hover, li.configmenu_selected {
 	background-color:#e8e8e8;
