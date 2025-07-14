@@ -494,13 +494,13 @@ static int32_t tongfang_card_info(struct s_reader *reader)
 
 	for(i = 0; i < 4; i++)
 	{
-		if((cta_res[i * 2] != 0xFF) || (cta_res[i * 2 + 1] != 0xFF))
+		if(((cta_res[i * 2] != 0xFF) || (cta_res[i * 2 + 1] != 0xFF)) && ((cta_res[i * 2] != 0x00) || (cta_res[i * 2 + 1] != 0x00)))
 		{
 			int j;
 			int found = 0;
 			for(j = 0; j < reader->nprov; j++)
 			{
-				if(reader->nprov > 0 && reader->prid[j][2] == cta_res[i * 2] && reader->prid[j][3] == cta_res[i *2 + 1])
+				if(reader->nprov > 0 && reader->prid[j][2] == cta_res[i * 2] && reader->prid[j][3] == cta_res[i * 2 + 1])
 				{
 					found = 1;
 					break;
@@ -538,12 +538,15 @@ static int32_t tongfang_card_info(struct s_reader *reader)
 		int j;
 		for(j = 0; j < count; j++)
 		{
-			//if(!data[j * 13 + 4]) continue;
+			if(!data[j * 13 + 4])
+			{
+				continue;
+			}
 
 			time_t start_t, end_t;
 			//946656000L = 2000-01-01 00:00:00
-			start_t = 946656000L + (b2i(2, data + j * 13 + 8) - 1) * 24 * 3600L;
-			end_t = 946656000L + (b2i(2, data + j * 13 + 12) - 1) * 24 * 3600L;
+			start_t = 946656000L + b2i(2, data + j * 13 + 8) * 24 * 3600L;
+			end_t = 946656000L + b2i(2, data + j * 13 + 12) * 24 * 3600L;
 			uint64_t product_id = b2i(2, data + j * 13 + 5);
 
 			struct tm tm_start, tm_end;
@@ -561,7 +564,7 @@ static int32_t tongfang_card_info(struct s_reader *reader)
 
 			rdr_log(reader, "    chid: %04"PRIX64"  date: %s - %s", product_id, start_day, end_day);
 
-			cs_add_entitlement(reader, reader->caid, b2i(2, &reader->prid[i][2]), product_id, 0, start_t, end_t, 0, 1);
+			cs_add_entitlement(reader, reader->caid, b2i(2, &reader->prid[i][2]), product_id, 0, start_t, end_t, 4, 1);
 		}
 	}
 
