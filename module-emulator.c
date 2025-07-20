@@ -9,6 +9,7 @@
 #include "module-emulator-biss.h"
 #include "module-emulator-irdeto.h"
 #include "module-emulator-powervu.h"
+#include "module-emulator-tvcas.h"
 #include "ncam-conf-chk.h"
 #include "ncam-config.h"
 #include "ncam-reader.h"
