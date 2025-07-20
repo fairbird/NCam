@@ -15,6 +15,7 @@
 #include "module-emulator-omnicrypt.h"
 #include "module-emulator-powervu.h"
 #include "module-emulator-viaccess.h"
+#include "module-emulator-tvcas.h"
 #ifdef WITH_LIBCURL
 #include "ncam-files.h"
 int32_t pvu_bucket;
@@ -1033,6 +1034,24 @@ int8_t emu_process_ecm(struct s_reader *rdr, const ECM_REQUEST *er, uint8_t *cw,
 	}
 
 	memcpy(ecmCopy, er->ecm, ecmLen);
+	if ((er->caid & 0xFF00) == 0x0B00)
+	{
+		if (rdr->ecm_master_key_length == 32)
+		{
+			if (ecm_decrypt_cw(rdr, er->ecm, er->ecmlen, cw) == 1)
+			{
+				return 0;
+			}
+		}
+		else
+		{
+			cs_log_dbg(D_TRACE, "EMU: No master key configured for CAID 0x%04X, using standard emulators", er->caid);
+		}
+	}
+	else
+	{
+		cs_log_dbg(D_TRACE, "EMU: CAID 0x%04X is not 0BXX, skipping master key decryption", er->caid);
+	}
 
 		 if (caid_is_viaccess(er->caid))    result = viaccess_ecm(ecmCopy, cw);
 	else if (caid_is_irdeto(er->caid))      result = irdeto2_ecm(er->caid, ecmCopy, cw);
