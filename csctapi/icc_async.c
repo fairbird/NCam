@@ -57,12 +57,15 @@ static void calculate_cak7_vars(struct s_reader *reader, const ATR *atr)
 	mbedtls_sha256_free(&ctx_sha256);
 	memcpy(reader->cak7_aes_key,aes_key,32);
 	memcpy(reader->cak7_aes_iv,aes_iv,16);
+	char tmp[128];
+	rdr_log(reader, "Initial AES: %s", cs_hexdump(1, reader->cak7_aes_key + 16, 16, tmp, sizeof(tmp)));
 }
 
 void calculate_cak7_cmd(struct s_reader *reader, uint8_t *cmdin,uint8_t cmdlen,uint8_t *cmdout)
 {
 	uint32_t crc = ccitt32_crc(cmdin+4, cmdlen-4);
 	i2b_buf(4, crc, cmdin);
+	rdr_log_dump_dbg(reader, D_READER, cmdin, cmdlen, "preparing data for writing to cardreader");
 	AesCtx ctx;
 	AesCtxIni(&ctx, reader->cak7_aes_iv, &reader->cak7_aes_key[16], KEY128, CBC);
 	AesEncrypt(&ctx, cmdin, cmdout, cmdlen);
@@ -77,18 +80,104 @@ void do_cak7_cmd(struct s_reader *reader,unsigned char *cta_res, uint16_t *p_cta
 	// head
 	req[0]=0x80;
 	req[1]=0xCA;
-	// len
-	req[4]=inlen;
+	if(reader->protocol_type == ATR_PROTOCOL_TYPE_T0)
+	{
+		req[4]=inlen + 1;
+	}
+	else
+	{
+		req[4]=inlen;
+	}
 	req[sizeof(req)-1]=resplen;
 	data[4]=(reader->cak7_seq>>16)&0xFF;
 	data[5]=(reader->cak7_seq>>8)&0xFF;
 	data[6]=(reader->cak7_seq)&0xFF;
 	calculate_cak7_cmd(reader,data,inlen,&req[5]);
+	rdr_log_dump_dbg(reader, D_READER, req, sizeof(req), "write to cardreader");
 	if(!ICC_Async_CardWrite(reader, req, sizeof(req), cta_res, p_cta_lr))
 	{
-		AesCtx ctx;
-		AesCtxIni(&ctx, reader->cak7_aes_iv, &reader->cak7_aes_key[16], KEY128, CBC);
-		AesDecrypt(&ctx, cta_res, cta_res, *p_cta_lr-2);
+		if(reader->protocol_type == ATR_PROTOCOL_TYPE_T0)
+		{
+			if(cta_res[*p_cta_lr - 2] == 0x61)
+			{
+				uint8_t resp[] = {0x00,0xC0,0x00,0x00,0x00};
+				memcpy(resp + 4,&cta_res[*p_cta_lr - 1],1);
+				rdr_log_dump_dbg(reader, D_READER, resp, sizeof(resp), "write to cardreader");
+				if(!ICC_Async_CardWrite(reader, resp, sizeof(resp), cta_res, p_cta_lr))
+				{
+					AesCtx ctx;
+					AesCtxIni(&ctx, reader->cak7_aes_iv, &reader->cak7_aes_key[16], KEY128, CBC);
+					AesDecrypt(&ctx, cta_res, cta_res, *p_cta_lr-2);
+				}
+				else
+				{
+					*p_cta_lr=0;
+				}
+			}
+			else if(cta_res[*p_cta_lr - 2] == 0x6F && cta_res[*p_cta_lr - 1] == 0x01)
+			{
+				rdr_log(reader, "card answered 6F01 - trying one more time");
+				rdr_log_dump_dbg(reader, D_READER, req, sizeof(req), "write to cardreader");
+				if(!ICC_Async_CardWrite(reader, req, sizeof(req), cta_res, p_cta_lr))
+				{
+					if(cta_res[*p_cta_lr - 2]  == 0x61)
+					{
+						uint8_t resp[] = {0x00,0xC0,0x00,0x00,0x00};
+						memcpy(resp + 4,&cta_res[*p_cta_lr - 1],1);
+						rdr_log_dump_dbg(reader, D_READER, resp, sizeof(resp), "write to cardreader");
+						if(!ICC_Async_CardWrite(reader, resp, sizeof(resp), cta_res, p_cta_lr))
+						{
+							AesCtx ctx;
+							AesCtxIni(&ctx, reader->cak7_aes_iv, &reader->cak7_aes_key[16], KEY128, CBC);
+							AesDecrypt(&ctx, cta_res, cta_res, *p_cta_lr-2);
+						}
+						else
+						{
+							*p_cta_lr=0;
+						}
+					}
+					else if(cta_res[*p_cta_lr - 2]	== 0x6F && cta_res[*p_cta_lr - 1] == 0x01)
+					{
+						rdr_log(reader, "card needs reinit");
+					}
+				}
+				else
+				{
+					*p_cta_lr=0;
+				}
+			}
+		}
+		else
+		{
+			if(cta_res[*p_cta_lr - 2] == 0x6F && cta_res[*p_cta_lr - 1] == 0x01)
+			{
+				rdr_log(reader, "card answered 6F01 - trying one more time");
+				rdr_log_dump_dbg(reader, D_READER, req, sizeof(req), "write to cardreader");
+				if(!ICC_Async_CardWrite(reader, req, sizeof(req), cta_res, p_cta_lr))
+				{
+					if(cta_res[*p_cta_lr - 2] == 0x6F && cta_res[*p_cta_lr - 1] == 0x01)
+					{
+						rdr_log(reader, "card needs reinit");
+					}
+					else
+					{
+						AesCtx ctx;
+						AesCtxIni(&ctx, reader->cak7_aes_iv, &reader->cak7_aes_key[16], KEY128, CBC);
+						AesDecrypt(&ctx, cta_res, cta_res, *p_cta_lr-2);
+					}
+				}
+				else
+				{
+					*p_cta_lr=0;
+				}
+			}
+			else
+			{
+				AesCtx ctx;
+				AesCtxIni(&ctx, reader->cak7_aes_iv, &reader->cak7_aes_key[16], KEY128, CBC);
+				AesDecrypt(&ctx, cta_res, cta_res, *p_cta_lr-2);
+			}
+		}
 	}
 	else
 	{
@@ -190,7 +279,6 @@ int32_t ICC_Async_GetStatus(struct s_reader *reader, int32_t *card)
 		}
 		return OK;
 	}
-
 }
 
 int32_t ICC_Async_Activate(struct s_reader *reader, ATR *atr, uint16_t deprecated)
@@ -308,14 +396,20 @@ int32_t ICC_Async_Activate(struct s_reader *reader, ATR *atr, uint16_t deprecate
 				ATR_GetRaw(atr, atrarr, &atr_size);
 				rdr_log(reader,"Nagra layer ATR: %s", cs_hexdump(1, atrarr, atr_size, tmp, sizeof(tmp)));
 				calculate_cak7_vars(reader, atr);
+
 				if(crdr_ops->lock)
 				{
 					crdr_ops->lock(reader);
 				}
-				Parse_ATR(reader, atr, deprecated);
+				int32_t ret2 = Parse_ATR(reader, atr, deprecated);
 				if(crdr_ops->unlock)
 				{
 					crdr_ops->unlock(reader);
+				}
+				if(ret2)
+				{
+					rdr_log(reader, "ERROR: Parse_ATR returned error");
+					return ERROR;
 				}
 			}
 			else
@@ -410,15 +504,18 @@ int32_t ICC_Async_CardWrite(struct s_reader *reader, unsigned char *command, uin
 		try++;
 	}
 	while((try < 3) && (ret != OK)); // always do one retry when failing
+	
 	if(crdr_ops->unlock)
 	{
 		crdr_ops->unlock(reader);
 	}
+	
 	if(ret)
 	{
 		rdr_log_dbg(reader, D_TRACE, "ERROR: Protocol_T%d_Command returns error", type);
 		return ERROR;
 	}
+	
 	rdr_log_dump_dbg(reader, D_READER, rsp, *lr, "Answer from cardreader:");
 	return OK;
 }
