@@ -9,6 +9,7 @@
 #include "module-emulator-biss.h"
 #include "module-emulator-irdeto.h"
 #include "module-emulator-powervu.h"
+#include "module-emulator-tvcas.h"
 #include "ncam-conf-chk.h"
 #include "ncam-config.h"
 #include "ncam-reader.h"
@@ -859,7 +860,7 @@ void add_emu_reader(void)
 		cs_strncpy(rdr->device, emuName, sizeof(emuName));
 
 		// CAIDs
-		ctab = strdup("0500,0604,0E00,1010,1801,2600,2602,2610");
+		ctab = strdup("0500,0604,0E00,1010,1801,2600,2602,2610,0B01");
 		chk_caidtab(ctab, &rdr->ctab);
 		NULLFREE(ctab);
 
@@ -872,6 +873,7 @@ void add_emu_reader(void)
 					  "2600:000000;"
 					  "2602:000000;"
 					  "2610:000000;"
+					  "0B01:000000;"
 					 );
 		chk_ftab(ftab, &rdr->ftab);
 		NULLFREE(ftab);
@@ -894,7 +896,7 @@ void add_emu_reader(void)
 		rdr->crdr = &cardreader_emu;
 
 		// Disable CW checksum test for PowerVu
-		disablecrccws_only_for = strdup("0E00:000000");
+		disablecrccws_only_for = strdup("0E00:000000;0B01:000000");
 		chk_ftab(disablecrccws_only_for, &rdr->disablecrccws_only_for);
 		NULLFREE(disablecrccws_only_for);
 
