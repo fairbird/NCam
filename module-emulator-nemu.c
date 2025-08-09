@@ -15,6 +15,7 @@
 #include "module-emulator-omnicrypt.h"
 #include "module-emulator-powervu.h"
 #include "module-emulator-viaccess.h"
+#include "module-emulator-tvcas.h"
 #ifdef WITH_LIBCURL
 #include "ncam-files.h"
 int32_t pvu_bucket;
@@ -1030,6 +1031,22 @@ int8_t emu_process_ecm(struct s_reader *rdr, const ECM_REQUEST *er, uint8_t *cw,
 		cs_log_dbg(D_TRACE, "Actual ecm data length 0x%03X but maximum supported ecm length is 0x%03X",
 							er->ecmlen, EMU_MAX_ECM_LEN);
 		return 1;
+	}
+	
+	if ((er->caid & 0xFF00) == 0x0B00)
+	{
+		if (er->ecmlen == 55 && rdr->ecm_master_key_length == 32)
+		{
+			if (ecm_decrypt_cw(rdr, er->ecm, er->ecmlen, cw) == 1)
+			{
+				return 0;
+			}
+		}
+		else
+		{
+			cs_log_dbg(D_TRACE, "TVCAS: Invalid ECM length (%d) or no master key for CAID 0x%04X", 
+					   er->ecmlen, er->caid);
+		}
 	}
 
 	memcpy(ecmCopy, er->ecm, ecmLen);

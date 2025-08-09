@@ -665,20 +665,6 @@ static char *send_ncam_config_global(struct templatevars *vars, struct uriparams
 	tpl_printf(vars, TPLADD, "INITIALDEBUGLEVEL", "%u", cfg.initial_debuglevel);
 
 	if(cfg.cwlogdir != NULL) { tpl_addVar(vars, TPLADD, "CWLOGDIR", cfg.cwlogdir); }
-	if(cfg.ecmcwlogdir != NULL) { tpl_addVar(vars, TPLADD, "ECMCWLOGDIR", cfg.ecmcwlogdir); }
-	if(cfg.bin_folder != NULL) { tpl_addVar(vars, TPLADD, "BIN_FOLDER", cfg.bin_folder); }
-	char buf[4];
-	snprintf(buf, sizeof(buf), "%d", cfg.record_ecm_start_byte);
-	tpl_addVar(vars, TPLADD, "RECORD_ECM_START_BYTE", buf);
-
-	snprintf(buf, sizeof(buf), "%d", cfg.record_ecm_end_byte);
-	tpl_addVar(vars, TPLADD, "RECORD_ECM_END_BYTE", buf);
-
-	snprintf(buf, sizeof(buf), "%d", cfg.ecmbin_ecm_start_byte);
-	tpl_addVar(vars, TPLADD, "ECMBIN_ECM_START_BYTE", buf);
-
-	snprintf(buf, sizeof(buf), "%d", cfg.ecmbin_ecm_end_byte);
-	tpl_addVar(vars, TPLADD, "ECMBIN_ECM_END_BYTE", buf);
 	if(cfg.emmlogdir != NULL) { tpl_addVar(vars, TPLADD, "EMMLOGDIR", cfg.emmlogdir); }
 	tpl_addVar(vars, TPLADD, "ECMFMT", cfg.ecmfmt);
 	tpl_printf(vars, TPLADD, "LOGHISTORYLINES", "%u", cfg.loghistorylines);
@@ -2421,7 +2407,7 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 		chk_reader("lb_whitelist_services", servicelabelslb, rdr);
 		chk_reader("lb_priority_services", servicelabelslbprio, rdr);
 
-		if(is_network_reader(rdr) || rdr->typ == R_EMU || rdr->typ == R_ECMBIN)    //physical readers make trouble if re-started
+		if(is_network_reader(rdr) || rdr->typ == R_EMU)    //physical readers make trouble if re-started
 		{
 			if(rdr)
 				{
@@ -3250,6 +3236,9 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 	{
 		tpl_addVar(vars, TPLADD, "EMUDATECODEDENABLED", (rdr->emu_datecodedenabled == 1) ? "1" : "0");
 	}
+	// Tvcas ecm keys
+	for(i = 0; i < rdr->ecm_master_key_length; i++)
+		{ tpl_printf(vars, TPLAPPEND, "ECMMASTERKEY", "%02X", rdr->ecm_master_key[i]); }
 #endif
 
 	tpl_addVar(vars, TPLADD, "PROTOCOL", reader_get_type_desc(rdr, 0));
@@ -3274,9 +3263,6 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 		tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGCAMD35BIT"));
 		break;
 	case R_EMU :
-		tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGEMUBIT"));
-		break;
-	case R_ECMBIN :
 		tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGEMUBIT"));
 		break;
 	case R_CS378X :

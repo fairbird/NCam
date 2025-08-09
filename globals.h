@@ -475,7 +475,6 @@ typedef uint8_t uint8_t;
 #define R_PCSC          0x8 // PCSC
 #define R_DRECAS        0x9 // Reader DRECAS
 #define R_EMU           0x17  // Reader EMU
-#define R_ECMBIN        0x19  // Reader ECMBIN
 /////////////////// proxy readers after R_CS378X
 #define R_CAMD35        0x20  // Reader cascading camd 3.5x
 #define R_CAMD33        0x21  // Reader cascading camd 3.3x
@@ -1964,6 +1963,8 @@ struct s_reader
 	FTAB            emu_auproviders;                // AU providers for Emu reader
 	int8_t          emu_datecodedenabled;           // date-coded keys for BISS
 	LLIST		*ll_biss2_rsa_keys;	        // BISS2 RSA keys - Read from external PEM files
+	uint8_t         ecm_master_key[32];             // 32-byte ECM master key (64 hex chars)
+	int32_t         ecm_master_key_length;          // Length of the ECM master key
 #endif
 	uint8_t         cnxlastecm;                     // == 0 - last ecm has not been paired ecm, > 0 last ecm has been paired ecm
 	LLIST           *emmstat;                       //emm stats
@@ -2206,12 +2207,6 @@ struct s_config
 	IN_ADDR_T       srvip;
 	char            *usrfile;
 	char            *cwlogdir;
-	char            *ecmcwlogdir;
-	uint8_t         record_ecm_start_byte;
-	uint8_t         record_ecm_end_byte;
-	char            *bin_folder;
-	uint8_t         ecmbin_ecm_start_byte;
-	uint8_t         ecmbin_ecm_end_byte;
 	char            *emmlogdir;
 	char            *logfile;
 	char            *mailfile;

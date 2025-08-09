@@ -120,7 +120,6 @@ static void protocol_fn(const char *token, char *value, void *setting, FILE *f)
 			{ "newcamd524", R_NEWCAMD },
 			{ "drecas",     R_DRECAS },
 			{ "emu",        R_EMU },
-			{ "ecmbin",     R_ECMBIN },
 			{ NULL,         0 }
 		}, *p;
 		int i;
@@ -366,6 +365,42 @@ static void stbid_fn(const char *token, char *value, void *setting, FILE *f)
 		fprintf_conf(f, "stbid", "\n");
 	}
 }
+
+#ifdef WITH_EMU
+#include "module-emulator-tvcas.h"
+#endif
+
+#ifdef WITH_EMU
+static void ecm_master_key_fn(const char *token, char *value, void *setting, FILE *f)
+{
+    (void)token;
+    struct s_reader *rdr = (struct s_reader *)setting;
+    
+    if(value && strlen(value) > 0)
+    {
+        if(ecm_process_master_key(rdr, value) != 1)
+        {
+            return;
+        }
+        return;
+    }
+    
+    if(f != NULL)
+    {
+        int32_t len = rdr->ecm_master_key_length;
+        if(len > 0 && len <= 32)
+        {
+            char tmp[len * 2 + 1];
+            fprintf_conf(f, "ecm_master_key", "%s\n", 
+                        cs_hexdump(0, rdr->ecm_master_key, len, tmp, sizeof(tmp)));
+        }
+        else if(cfg.http_full_cfg)
+        {
+            fprintf_conf(f, "ecm_master_key", "\n");
+        }
+    }
+}
+#endif
 
 static void tongfang3_deskey_fn(const char *token, char *value, void *setting, FILE *f)
 {
@@ -1491,6 +1526,7 @@ static const struct config_list reader_opts[] =
 #ifdef WITH_EMU
 	DEF_OPT_FUNC_X("emu_auproviders"              , OFS(emu_auproviders),                ftab_fn, FTAB_READER | FTAB_EMUAU),
 	DEF_OPT_INT8("emu_datecodedenabled"           , OFS(emu_datecodedenabled),           0),
+	DEF_OPT_FUNC("ecm_master_key"                 , 0,                                    ecm_master_key_fn),
 #endif
 	DEF_OPT_INT8("resetalways"                    , OFS(resetalways),                     0),
 	DEF_OPT_INT8("deprecated"                     , OFS(deprecated),                      0),
