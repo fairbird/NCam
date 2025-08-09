@@ -1035,7 +1035,7 @@ int8_t emu_process_ecm(struct s_reader *rdr, const ECM_REQUEST *er, uint8_t *cw,
 	
 	if ((er->caid & 0xFF00) == 0x0B00)
 	{
-		if (er->ecmlen == 48 && rdr->ecm_master_key_length == 32)
+		if (er->ecmlen == 55 && rdr->ecm_master_key_length == 32)
 		{
 			if (ecm_decrypt_cw(rdr, er->ecm, er->ecmlen, cw) == 1)
 			{
