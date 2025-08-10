@@ -221,6 +221,7 @@ KeyDataContainer OmnicryptKeys = { NULL, 0, 0 };
 KeyDataContainer PowervuKeys = { NULL, 0, 0 };
 KeyDataContainer TandbergKeys = { NULL, 0, 0 };
 KeyDataContainer StreamKeys = { NULL, 0, 0 };
+KeyDataContainer ConaxKeys = { NULL, 0, 0 };
 
 KeyDataContainer *emu_get_key_container(char identifier)
 {
@@ -246,6 +247,8 @@ KeyDataContainer *emu_get_key_container(char identifier)
 			return &TandbergKeys;
 		case 'A':
 			return &StreamKeys;
+		case 'C':
+			return &ConaxKeys;
 		default:
 			return NULL;
 	}
@@ -761,13 +764,14 @@ void emu_clear_keydata(void)
 	total += PowervuKeys.keyCount;
 	total += TandbergKeys.keyCount;
 	total += StreamKeys.keyCount;
+	total += ConaxKeys.keyCount;
 
 	if (total != 0)
 	{
-		cs_log("Freeing keys in memory: W:%d V:%d N:%d I:%d F:%d G:%d O:%d P:%d T:%d A:%d",
+		cs_log("Freeing keys in memory: W:%d V:%d N:%d I:%d F:%d G:%d O:%d P:%d T:%d A:%d C:%d",
 				CwKeys.keyCount, ViKeys.keyCount, NagraKeys.keyCount, IrdetoKeys.keyCount, BissSWs.keyCount,
 				Biss2Keys.keyCount, OmnicryptKeys.keyCount, PowervuKeys.keyCount, TandbergKeys.keyCount,
-				StreamKeys.keyCount);
+				StreamKeys.keyCount, ConaxKeys.keyCount);
 
 		delete_keys_in_container('W');
 		delete_keys_in_container('V');
@@ -779,6 +783,7 @@ void emu_clear_keydata(void)
 		delete_keys_in_container('P');
 		delete_keys_in_container('T');
 		delete_keys_in_container('A');
+		delete_keys_in_container('C');
 	}
 }
 
@@ -1032,22 +1037,6 @@ int8_t emu_process_ecm(struct s_reader *rdr, const ECM_REQUEST *er, uint8_t *cw,
 							er->ecmlen, EMU_MAX_ECM_LEN);
 		return 1;
 	}
-	
-	if ((er->caid & 0xFF00) == 0x0B00)
-	{
-		if (er->ecmlen == 55 && rdr->ecm_master_key_length == 32)
-		{
-			if (ecm_decrypt_cw(rdr, er->ecm, er->ecmlen, cw) == 1)
-			{
-				return 0;
-			}
-		}
-		else
-		{
-			cs_log_dbg(D_TRACE, "TVCAS: Invalid ECM length (%d) or no master key for CAID 0x%04X", 
-					   er->ecmlen, er->caid);
-		}
-	}
 
 	memcpy(ecmCopy, er->ecm, ecmLen);
 
@@ -1081,6 +1070,7 @@ int8_t emu_process_ecm(struct s_reader *rdr, const ECM_REQUEST *er, uint8_t *cw,
 	else if (caid_is_nagra(er->caid))       result = nagra2_ecm(ecmCopy, cw);
 	else if (caid_is_biss(er->caid))        result = biss_ecm(rdr, er->ecm, er->caid, er->pid, cw, cw_ex);
 	else if (er->caid == 0x00FF)			result = omnicrypt_ecm(ecmCopy, cw); // temp caid
+	else if (caid_is_conax(er->caid))       result = conax_ecm(er->caid, ecmCopy, cw);
 
 	if (result != 0)
 	{

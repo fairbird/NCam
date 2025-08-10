@@ -62,6 +62,7 @@ extern KeyDataContainer OmnicryptKeys;
 extern KeyDataContainer PowervuKeys;
 extern KeyDataContainer TandbergKeys;
 extern KeyDataContainer StreamKeys;
+extern KeyDataContainer ConaxKeys;
 extern uint8_t viasat_const[];
 extern char *emu_keyfile_path;
 extern pthread_mutex_t emu_key_data_mutex;

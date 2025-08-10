@@ -3236,9 +3236,6 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 	{
 		tpl_addVar(vars, TPLADD, "EMUDATECODEDENABLED", (rdr->emu_datecodedenabled == 1) ? "1" : "0");
 	}
-	// Tvcas ecm keys
-	for(i = 0; i < rdr->ecm_master_key_length; i++)
-		{ tpl_printf(vars, TPLAPPEND, "ECMMASTERKEY", "%02X", rdr->ecm_master_key[i]); }
 #endif
 
 	tpl_addVar(vars, TPLADD, "PROTOCOL", reader_get_type_desc(rdr, 0));

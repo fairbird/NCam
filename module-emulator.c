@@ -9,7 +9,6 @@
 #include "module-emulator-biss.h"
 #include "module-emulator-irdeto.h"
 #include "module-emulator-powervu.h"
-#include "module-emulator-tvcas.h"
 #include "ncam-conf-chk.h"
 #include "ncam-config.h"
 #include "ncam-reader.h"
@@ -178,6 +177,12 @@ static void refresh_entitlements(struct s_reader *rdr)
 							Biss2Keys.EmuKeys[i].keyName, Biss2Keys.EmuKeys[i].keyLength, 0);
 	}
 
+	for (i = 0; i < ConaxKeys.keyCount; i++)
+	{
+		emu_add_entitlement(rdr, ConaxKeys.EmuKeys[i].provider, 0,
+							ConaxKeys.EmuKeys[i].key, ConaxKeys.EmuKeys[i].keyName, ConaxKeys.EmuKeys[i].keyLength, 0);
+	}
+
 #ifdef WITH_LIBCRYPTO
 	// RSA keys (EMM keys) for BISS2 mode CA
 	itr = ll_iter_create(rdr->ll_biss2_rsa_keys);
@@ -278,10 +283,10 @@ static int32_t emu_card_info(struct s_reader *rdr)
 	// Read BISS2 mode CA RSA keys from PEM files
 	biss_read_pem(rdr, BISS2_MAX_RSA_KEYS);
 #endif
-	cs_log("Total keys in memory: W:%d V:%d N:%d I:%d F:%d G:%d O:%d P:%d T:%d A:%d",
+	cs_log("Total keys in memory: W:%d V:%d N:%d I:%d F:%d G:%d O:%d P:%d T:%d A:%d C:%d",
 			CwKeys.keyCount, ViKeys.keyCount, NagraKeys.keyCount, IrdetoKeys.keyCount, BissSWs.keyCount,
 			Biss2Keys.keyCount, OmnicryptKeys.keyCount, PowervuKeys.keyCount, TandbergKeys.keyCount,
-			StreamKeys.keyCount);
+			StreamKeys.keyCount, ConaxKeys.keyCount);
 
 	// Inform NCam about all available keys.
 	// This is used for listing the "entitlements" in the webif's reader page.

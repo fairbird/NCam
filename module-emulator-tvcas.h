@@ -1,12 +1,10 @@
-#ifndef MODULE_EMULATOR_TVCAS_H
-#define MODULE_EMULATOR_TVCAS_H
+#ifndef MODULE_EMULATOR_CONAX_H
+#define MODULE_EMULATOR_CONAX_H
 
 #ifdef WITH_EMU
 
-#include "globals.h"
+int8_t conax_ecm(uint16_t caid, uint8_t *ecm, uint8_t *dw);
 
-int32_t ecm_decrypt_cw(struct s_reader *rdr, const uint8_t *ecm_data, int32_t ecm_len, uint8_t *cw);
-int32_t ecm_process_master_key(struct s_reader *rdr, const char *key_string);
+#endif // WITH_EMU
 
-#endif
-#endif
+#endif // MODULE_EMULATOR_CONAX_H

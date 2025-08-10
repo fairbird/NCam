@@ -1963,8 +1963,6 @@ struct s_reader
 	FTAB            emu_auproviders;                // AU providers for Emu reader
 	int8_t          emu_datecodedenabled;           // date-coded keys for BISS
 	LLIST		*ll_biss2_rsa_keys;	        // BISS2 RSA keys - Read from external PEM files
-	uint8_t         ecm_master_key[32];             // 32-byte ECM master key (64 hex chars)
-	int32_t         ecm_master_key_length;          // Length of the ECM master key
 #endif
 	uint8_t         cnxlastecm;                     // == 0 - last ecm has not been paired ecm, > 0 last ecm has been paired ecm
 	LLIST           *emmstat;                       //emm stats
