@@ -901,7 +901,7 @@ void add_emu_reader(void)
 		rdr->crdr = &cardreader_emu;
 
 		// Disable CW checksum test for PowerVu
-		disablecrccws_only_for = strdup("0E00:000000;0B01:000000");
+		disablecrccws_only_for = strdup("0E00:000000");
 		chk_ftab(disablecrccws_only_for, &rdr->disablecrccws_only_for);
 		NULLFREE(disablecrccws_only_for);
 
