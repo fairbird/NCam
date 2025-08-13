@@ -2092,10 +2092,6 @@ static char *send_ncam_reader(struct templatevars *vars, struct uriparams *param
 			{
 				active_readers += 1;
 				tpl_addVar(vars, TPLADD, "RSTATUS", "enabled");
-				if(is_network_reader(rdr))
-				{
-					tpl_addVar(vars, TPLADD, "READERIP", cs_inet_ntoa(rdr->client->ip));
-				}
 			}
 			else
 			{
@@ -2125,6 +2121,8 @@ static char *send_ncam_reader(struct templatevars *vars, struct uriparams *param
 					tpl_addVar(vars, TPLADDONCE, "RSTATUS", "online");
 					tpl_addVar(vars, TPLADDONCE, "READERCLASS", "connected");
 				}
+
+				tpl_addVar(vars, TPLADD, "READERIP", cs_inet_ntoa(rdr->client->ip));
 			}
 			else
 			{
