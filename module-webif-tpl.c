@@ -466,6 +466,7 @@ char *tpl_getUnparsedTpl(const char *name, int8_t removeHeader, const char *subd
 											check_conf(WITH_CARDLIST, ptr2);
 											check_conf(WITH_EMU, ptr2);
 											check_conf(WITH_SOFTCAM, ptr2);
+											check_conf(WITH_ECMBIN, ptr2);
 										} // for
 										if(ok == 0)
 										{
