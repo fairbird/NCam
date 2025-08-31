@@ -475,6 +475,7 @@ typedef uint8_t uint8_t;
 #define R_PCSC          0x8 // PCSC
 #define R_DRECAS        0x9 // Reader DRECAS
 #define R_EMU           0x17  // Reader EMU
+#define R_ECMBIN        0x19  // Reader ECMBIN
 /////////////////// proxy readers after R_CS378X
 #define R_CAMD35        0x20  // Reader cascading camd 3.5x
 #define R_CAMD33        0x21  // Reader cascading camd 3.3x
@@ -2205,6 +2206,12 @@ struct s_config
 	IN_ADDR_T       srvip;
 	char            *usrfile;
 	char            *cwlogdir;
+	char            *ecmcwlogdir;
+	uint8_t         record_ecm_start_byte;
+	uint8_t         record_ecm_end_byte;
+	char            *bin_folder;
+	uint8_t         ecmbin_ecm_start_byte;
+	uint8_t         ecmbin_ecm_end_byte;
 	char            *emmlogdir;
 	char            *logfile;
 	char            *mailfile;

@@ -1702,8 +1702,69 @@ uint32_t chk_provid(uint8_t *ecm, uint16_t caid)
 void update_chid(ECM_REQUEST *er)
 {
 	er->chid = get_subid(er);
+
 }
 
+#define CW_LENGTH          16
+#define MAX_FILENAME_LEN   512
+#define MAX_BUFFER_SIZE    1024
+
+/**
+ * Log ECM and CW to a file named by caid@srvid with no file extension
+ * @param er ECM request structure
+ * @param cw Control Word (16 bytes)
+ */
+static void logECMCWtoFile(ECM_REQUEST *er, uint8_t *cw)
+{
+    char srvname[CS_SERVICENAME_SIZE];
+    char filename[MAX_FILENAME_LEN];
+    FILE *pfCWL;
+    size_t i;
+    int j;
+
+    if (!er || !cw || !cfg.ecmcwlogdir) {
+        cs_log("Invalid parameters or configuration for ECM/CW logging");
+        return;
+    }
+
+    if (get_servicename(cur_client(), er->srvid, er->prid, er->caid, srvname, sizeof(srvname))) {
+        for (i = 0; i < sizeof(srvname) && srvname[i]; i++) {
+            if (srvname[i] == ' ') srvname[i] = '_';
+            if (srvname[i] == '/' || srvname[i] == '\\' || srvname[i] == '.') {
+                srvname[i] = '_';
+            }
+        }
+    }
+
+    if (snprintf(filename, sizeof(filename), "%s/%04X@%04X",
+                cfg.ecmcwlogdir, er->caid, er->srvid) < 0) {
+        cs_log("Error creating filename for ECM/CW logging");
+        return;
+    }
+
+    pfCWL = fopen(filename, "a+");
+    if (!pfCWL) {
+        cs_log("Error opening ECM/CW file (%s): %s", filename, strerror(errno));
+        return;
+    }
+
+    flockfile(pfCWL);
+
+    for (i = cfg.record_ecm_start_byte; i < cfg.record_ecm_end_byte; i++) {
+        fprintf(pfCWL, "%02X", er->ecm[i]);
+    }
+
+    for (j = 0; j < CW_LENGTH; j++) {
+        fprintf(pfCWL, "%02X", cw[j]);
+    }
+
+    fprintf(pfCWL, "\n");
+
+    fflush(pfCWL);
+
+    funlockfile(pfCWL);
+    fclose(pfCWL);
+}
 
 /*
  * This function writes the current CW from ECM struct to a cwl file.
@@ -2079,6 +2140,8 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 		{
 			if(cfg.cwlogdir != NULL)
 				{ logCWtoFile(er, ea->cw); } // CWL logging only if cwlogdir is set in config
+			if(cfg.ecmcwlogdir != NULL)
+				{ logECMCWtoFile(er, ea->cw); }
 
 			reader->ecmsok++;
 #ifdef CS_CACHEEX_AIO
