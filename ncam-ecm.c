@@ -1720,7 +1720,9 @@ static void logECMCWtoFileByReader(struct s_reader *reader, ECM_REQUEST *er, uin
     char filename[MAX_FILENAME_LEN];
     
     // Create reader-specific directory path with bounds check
-    int ret = snprintf(reader_dir, sizeof(reader_dir), "%s/%s", reader->ecmcwlogdir, reader->label);
+    int ret = snprintf(reader_dir, sizeof(reader_dir), "%s/%s(%d->%d)", 
+                  reader->ecmcwlogdir, reader->label, 
+                  reader->record_ecm_start_byte, reader->record_ecm_end_byte);
     if (ret >= (int)sizeof(reader_dir)) {
         cs_log_dbg(D_TRACE, "Directory path too long");
         return;
@@ -1759,7 +1761,8 @@ static void logECMCWtoFileByReader(struct s_reader *reader, ECM_REQUEST *er, uin
     for (size_t i = start; i < end; i++) {
         fprintf(pfCWL, "%02X", er->ecm[i]);
     }
-    
+    // Add separator between ECM and CW
+    fprintf(pfCWL, " #CW ");
     // Write CW data (hex format)
     for (int i = 0; i < CW_LENGTH; i++) {
         fprintf(pfCWL, "%02X", cw[i]);
