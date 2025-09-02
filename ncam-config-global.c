@@ -366,12 +366,6 @@ static const struct config_list global_opts[] =
 	DEF_OPT_STR("usrfile"                          , OFS(usrfile)                       , NULL),
 	DEF_OPT_STR("mailfile"                         , OFS(mailfile)                      , NULL),
 	DEF_OPT_STR("cwlogdir"                         , OFS(cwlogdir)                      , NULL),
-	DEF_OPT_STR("ecmcwlogdir"                      , OFS(ecmcwlogdir)                   , NULL),
-	DEF_OPT_UINT8("record_ecm_start_byte"          , OFS(record_ecm_start_byte)         , 0),
-	DEF_OPT_UINT8("record_ecm_end_byte"            , OFS(record_ecm_end_byte)           , 0),
-	DEF_OPT_STR("bin_folder"                       , OFS(bin_folder)                    , "NULL"),
-	DEF_OPT_UINT8("ecmbin_ecm_start_byte"          , OFS(ecmbin_ecm_start_byte)         , 0),
-	DEF_OPT_UINT8("ecmbin_ecm_end_byte"            , OFS(ecmbin_ecm_end_byte)           , 0),
 	DEF_OPT_STR("emmlogdir"                        , OFS(emmlogdir)                     , NULL),
 #ifdef WITH_LB
 	DEF_OPT_INT32("lb_mode"                        , OFS(lb_mode)                       , DEFAULT_LB_MODE),

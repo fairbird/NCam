@@ -1706,60 +1706,66 @@ void update_chid(ECM_REQUEST *er)
 }
 
 #define CW_LENGTH          16
-#define MAX_FILENAME_LEN   512
-#define MAX_BUFFER_SIZE    1024
+#define MAX_FILENAME_LEN   1024
 
 /**
- * Log ECM and CW to a file named by caid@srvid with no file extension
- * @param er ECM request structure
- * @param cw Control Word (16 bytes)
+ * Log ECM and CW to reader-specific directory structure
  */
-static void logECMCWtoFile(ECM_REQUEST *er, uint8_t *cw)
-{
-    char srvname[CS_SERVICENAME_SIZE];
-    char filename[MAX_FILENAME_LEN];
-    FILE *pfCWL;
-    size_t i;
-    int j;
-
-    if (!er || !cw || !cfg.ecmcwlogdir) {
-        cs_log("Invalid parameters or configuration for ECM/CW logging");
+static void logECMCWtoFileByReader(struct s_reader *reader, ECM_REQUEST *er, uint8_t *cw) {
+    if (!reader || !er || !cw || !reader->ecmcwlogdir || !reader->enable_ecmcw_logging) {
         return;
     }
 
-    if (get_servicename(cur_client(), er->srvid, er->prid, er->caid, srvname, sizeof(srvname))) {
-        for (i = 0; i < sizeof(srvname) && srvname[i]; i++) {
-            if (srvname[i] == ' ') srvname[i] = '_';
-            if (srvname[i] == '/' || srvname[i] == '\\' || srvname[i] == '.') {
-                srvname[i] = '_';
-            }
+    char reader_dir[MAX_FILENAME_LEN];
+    char filename[MAX_FILENAME_LEN];
+    
+    // Create reader-specific directory path with bounds check
+    int ret = snprintf(reader_dir, sizeof(reader_dir), "%s/%s", reader->ecmcwlogdir, reader->label);
+    if (ret >= (int)sizeof(reader_dir)) {
+        cs_log_dbg(D_TRACE, "Directory path too long");
+        return;
+    }
+    
+    // Create directory if it doesn't exist
+    struct stat st;
+    if (stat(reader_dir, &st) != 0) {
+        if (mkdir(reader_dir, 0755) != 0) {
+            cs_log_dbg(D_TRACE, "Failed to create directory: %s", reader_dir);
+            return;
         }
     }
-
-    if (snprintf(filename, sizeof(filename), "%s/%04X@%04X",
-                cfg.ecmcwlogdir, er->caid, er->srvid) < 0) {
-        cs_log("Error creating filename for ECM/CW logging");
+    
+    // Create filename with bounds check
+    ret = snprintf(filename, sizeof(filename), "%s/%04X@%04X", reader_dir, er->caid, er->srvid);
+    if (ret >= (int)sizeof(filename)) {
+        cs_log_dbg(D_TRACE, "Filename path too long");
         return;
     }
 
-    pfCWL = fopen(filename, "a+");
-    if (!pfCWL) {
-        cs_log("Error opening ECM/CW file (%s): %s", filename, strerror(errno));
+	FILE *pfCWL = fopen(filename, "a+");
+	if (!pfCWL) {
         return;
     }
 
     flockfile(pfCWL);
-
-    for (i = cfg.record_ecm_start_byte; i < cfg.record_ecm_end_byte; i++) {
+    
+    // Write ECM data (hex format)
+    uint8_t start = reader->record_ecm_start_byte;
+    uint8_t end = reader->record_ecm_end_byte;
+    
+    if (end > er->ecmlen) end = er->ecmlen;
+    if (start >= end) start = 0;
+    
+    for (size_t i = start; i < end; i++) {
         fprintf(pfCWL, "%02X", er->ecm[i]);
     }
-
-    for (j = 0; j < CW_LENGTH; j++) {
-        fprintf(pfCWL, "%02X", cw[j]);
+    
+    // Write CW data (hex format)
+    for (int i = 0; i < CW_LENGTH; i++) {
+        fprintf(pfCWL, "%02X", cw[i]);
     }
 
     fprintf(pfCWL, "\n");
-
     fflush(pfCWL);
 
     funlockfile(pfCWL);
@@ -2136,12 +2142,16 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 	}
 #endif
 		// Update reader stats:
-		if(ea->rc == E_FOUND)
-		{
-			if(cfg.cwlogdir != NULL)
-				{ logCWtoFile(er, ea->cw); } // CWL logging only if cwlogdir is set in config
-			if(cfg.ecmcwlogdir != NULL)
-				{ logECMCWtoFile(er, ea->cw); }
+		if(rc == E_FOUND && cw != NULL) {
+        // Existing CW logging
+        if(cfg.cwlogdir != NULL) {
+            logCWtoFile(er, ea->cw);
+        }
+        
+        // Reader-specific ECM/CW logging
+        if(reader && reader->enable_ecmcw_logging) {
+            logECMCWtoFileByReader(reader, er, ea->cw);
+        }
 
 			reader->ecmsok++;
 #ifdef CS_CACHEEX_AIO

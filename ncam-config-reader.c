@@ -1428,6 +1428,10 @@ static const struct config_list reader_opts[] =
 #ifdef READER_CRYPTOWORKS
 	DEF_OPT_INT8("needsglobalfirst"               , OFS(needsglobalfirst),                0),
 #endif
+	DEF_OPT_STR("ecmcwlogdir"                     , OFS(ecmcwlogdir),                     NULL),
+	DEF_OPT_UINT8("record_ecm_start_byte"         , OFS(record_ecm_start_byte),           0),
+	DEF_OPT_UINT8("record_ecm_end_byte"           , OFS(record_ecm_end_byte),             0),
+	DEF_OPT_UINT8("enable_ecmcw_logging"          , OFS(enable_ecmcw_logging),            0),
 	DEF_OPT_UINT32("ecmnotfoundlimit"             , OFS(ecmnotfoundlimit),                0),
 	DEF_OPT_UINT32("ecmtimeoutlimit"              , OFS(ecmtimeoutlimit),                 0),
 	DEF_OPT_FUNC("ecmwhitelist"                   , 0,                                    ecmwhitelist_fn),
@@ -1491,6 +1495,11 @@ static const struct config_list reader_opts[] =
 #ifdef WITH_EMU
 	DEF_OPT_FUNC_X("emu_auproviders"              , OFS(emu_auproviders),                ftab_fn, FTAB_READER | FTAB_EMUAU),
 	DEF_OPT_INT8("emu_datecodedenabled"           , OFS(emu_datecodedenabled),           0),
+#endif
+#ifdef WITH_ECMBIN
+	DEF_OPT_UINT8("ecm_start"                     ,OFS(ecm_start),                        0),
+	DEF_OPT_UINT8("ecm_end"                       ,OFS(ecm_end),                          55),
+	DEF_OPT_STR("ecm_path"                        ,OFS(ecm_path),                         NULL),
 #endif
 	DEF_OPT_INT8("resetalways"                    , OFS(resetalways),                     0),
 	DEF_OPT_INT8("deprecated"                     , OFS(deprecated),                      0),

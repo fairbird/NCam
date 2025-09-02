@@ -81,6 +81,14 @@
 					</TABLE>
 				</TD>
 			<TR><TD><A>Block EMM by Len:</A></TD><TD><input name="blockemm-bylen" type="text" maxlength="256" value="##BLOCKEMMBYLEN##"></TD></TR>
+##TPLREADERECMCWLOGGING##
+			<TR><TH COLSPAN="2">ECM/CW Logging Settings</TH></TR><TR><TD><A>Enable ECM/CW Logging:</A></TD><TD>
+			<input name="enable_ecmcw_logging" type="hidden" value="0">
+			<input name="enable_ecmcw_logging" type="checkbox" value="1" ##ENABLE_ECMCW_LOGGING_CHECKED##>
+			<label></label></TD></TR>
+			<TR><TD><A>ECM/CW Log Directory:</A></TD><TD><input name="ecmcwlogdir" type="text" maxlength="255" value="##READER_ECMCWLOGDIR##" placeholder="/var/ncam/ecmcw"></TD></TR><TR>
+			<TD><A>Record ECM Start Byte:</A></TD><TD><input name="record_ecm_start_byte" class="short" type="text" maxlength="3" value="##READER_RECORD_ECM_START_BYTE##"> (0-255)</TD></TR>
+			<TR><TD><A>Record ECM End Byte:</A></TD><TD><input name="record_ecm_end_byte" class="short" type="text" maxlength="3" value="##READER_RECORD_ECM_END_BYTE##"> (0-255)</TD></TR>
 ##READERCONFIGSIDINS##
 			<TR><TH COLSPAN="2">Reader specific settings for protocol ##PROTOCOL##</TH></TR>
 ##READERDEPENDINGCONFIG##
