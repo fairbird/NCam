@@ -1720,7 +1720,7 @@ static void logECMCWtoFileByReader(struct s_reader *reader, ECM_REQUEST *er, uin
     char filename[MAX_FILENAME_LEN];
     
     // Create reader-specific directory path with bounds check
-    int ret = snprintf(reader_dir, sizeof(reader_dir), "%s/%s(%d->%d)", 
+    int ret = snprintf(reader_dir, sizeof(reader_dir), "%s/%s[%d#%d]", 
                   reader->ecmcwlogdir, reader->label, 
                   reader->record_ecm_start_byte, reader->record_ecm_end_byte);
     if (ret >= (int)sizeof(reader_dir)) {
