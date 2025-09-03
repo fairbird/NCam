@@ -1617,6 +1617,10 @@ struct s_reader
 	FTAB            fallback_percaid;
 	FTAB            localcards;
 	FTAB            disablecrccws_only_for;         // ignore checksum for selected caid provid
+	char            *ecmcwlogdir;
+	uint8_t         record_ecm_start_byte;
+	uint8_t         record_ecm_end_byte;
+	uint8_t         enable_ecmcw_logging;
 #ifdef READER_CRYPTOWORKS
 	int8_t          needsglobalfirst;               // 0:Write one Global EMM for SHARED EMM disabled 1:Write one Global EMM for SHARED EMM enabled
 #endif
@@ -1965,6 +1969,11 @@ struct s_reader
 	int8_t          emu_datecodedenabled;           // date-coded keys for BISS
 	LLIST		*ll_biss2_rsa_keys;	        // BISS2 RSA keys - Read from external PEM files
 #endif
+#ifdef WITH_ECMBIN
+	uint8_t		ecm_start;
+	uint8_t		ecm_end;
+	char		*ecm_path;
+#endif
 	uint8_t         cnxlastecm;                     // == 0 - last ecm has not been paired ecm, > 0 last ecm has been paired ecm
 	LLIST           *emmstat;                       //emm stats
 	CS_MUTEX_LOCK   emmstat_lock;
@@ -2206,12 +2215,6 @@ struct s_config
 	IN_ADDR_T       srvip;
 	char            *usrfile;
 	char            *cwlogdir;
-	char            *ecmcwlogdir;
-	uint8_t         record_ecm_start_byte;
-	uint8_t         record_ecm_end_byte;
-	char            *bin_folder;
-	uint8_t         ecmbin_ecm_start_byte;
-	uint8_t         ecmbin_ecm_end_byte;
 	char            *emmlogdir;
 	char            *logfile;
 	char            *mailfile;

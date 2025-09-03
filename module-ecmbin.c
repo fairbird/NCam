@@ -2,459 +2,327 @@
 #include "globals.h"
 
 #ifdef WITH_ECMBIN
-
-#include "ncam-conf-chk.h"
+#include "ncam-client.h"
 #include "ncam-config.h"
 #include "ncam-reader.h"
 #include "ncam-string.h"
-#include <fcntl.h>
-#include <unistd.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
-#include <dirent.h>
-#include <pthread.h>
-#include <time.h>
-#include <stdio.h>
 
 #define CW_SIZE 16
-#define FILENAME_SIZE 256
-#define MAX_CHANNEL_FILES 1
-#define MAX_CHANNELS 300
-#define HASH_SIZE 64
+#define HASH_SIZE 8192
+#define MAX_FILES 1024
 #define CS_OK    1
 #define CS_ERROR 0
 #define CR_OK    0
 #define CR_ERROR 1
-#define PARTITION_SIZE 32
+#ifndef MAP_POPULATE
+#define MAP_POPULATE 0
+#endif
 
-struct ECMEntry {
-	uint8_t *ecm;
-	uint8_t cw[CW_SIZE];
-	uint32_t next_likely_index;  // For cache optimization
+
+// Optimized hash function - faster than djb2
+static inline uint32_t fnv1a_hash(const uint8_t *data, size_t len) {
+    uint32_t hash = 0x811c9dc5;
+    for (size_t i = 0; i < len; i++) {
+        hash ^= data[i];
+        hash *= 0x01000193;
+    }
+    return hash;
+}
+
+struct ecm_entry {
+    uint8_t *ecm_data;
+    uint8_t cw[CW_SIZE];
+    uint32_t hash;
+    struct ecm_entry *next;
 } __attribute__((packed));
 
-struct BinFile {
-	char filename[FILENAME_SIZE];
-	struct ECMEntry *entries;
-	size_t count;
-	uint16_t caid;
-	uint16_t srvid;
+struct ecm_file {
+    struct ecm_entry *hash_table[HASH_SIZE];
+    uint8_t *mmap_data;
+    size_t file_size;
+    uint16_t caid, srvid;
+    pthread_rwlock_t lock;
 };
 
-struct FileIndex {
-	uint16_t caid;
-	uint16_t srvid;
-	size_t file_index;
+struct ecmbin_data {
+    struct ecm_file *files;
+    uint64_t *keys;
+    size_t count, capacity;
+    uint8_t ecm_size;
+    pthread_rwlock_t lock;
 };
 
-struct FilePartition {
-	struct BinFile files[PARTITION_SIZE];
-	int file_count;
-	pthread_rwlock_t lock;
-};
-
-static struct PreloadedData {
-	struct FilePartition partitions[MAX_CHANNELS * MAX_CHANNEL_FILES / PARTITION_SIZE];
-	struct FileIndex *indices;
-	int total_files;
-	int partition_count;
-	time_t last_update;
-} g_preloaded = {
-	.total_files = 0,
-	.partition_count = 0,
-	.indices = NULL,
-	.last_update = 0
-};
-
-static int compare_file_indices(const void *a, const void *b) {
-	const struct FileIndex *fa = (const struct FileIndex *)a;
-	const struct FileIndex *fb = (const struct FileIndex *)b;
-
-	if (fa->caid != fb->caid)
-		return fa->caid - fb->caid;
-	return fa->srvid - fb->srvid;
+static inline uint64_t make_key(uint16_t caid, uint16_t srvid) {
+    return ((uint64_t)caid << 16) | srvid;
 }
 
-static int compare_ecm(const void *a, const void *b) {
-	size_t ecm_size = cfg.ecmbin_ecm_end_byte - cfg.ecmbin_ecm_start_byte;
-	const struct ECMEntry *entry_a = (const struct ECMEntry *)a;
-	const struct ECMEntry *entry_b = (const struct ECMEntry *)b;
-	return memcmp(entry_a->ecm, entry_b->ecm, ecm_size);
+static int key_compare(const void *a, const void *b) {
+    uint64_t ka = *(const uint64_t*)a;
+    uint64_t kb = *(const uint64_t*)b;
+    return (ka > kb) - (ka < kb);
 }
 
-static struct ECMEntry *load_and_sort_entries(const char *filename, size_t *count) {
-	struct stat sb;
-	size_t ecm_size = cfg.ecmbin_ecm_end_byte - cfg.ecmbin_ecm_start_byte;
-	size_t entry_size = ecm_size + CW_SIZE;
-	size_t i, j;
-	int fd;
-	struct ECMEntry *entries = NULL;
-	uint8_t *temp_buffer = NULL;
-
-	if ((fd = open(filename, O_RDONLY)) == -1) {
-		cs_log("Error opening %s: %s", filename, strerror(errno));
-		return NULL;
-	}
-
-	if (fstat(fd, &sb) == -1) {
-		cs_log("Error getting size of %s: %s", filename, strerror(errno));
-		close(fd);
-		return NULL;
-	}
-
-	if (sb.st_size == 0 || sb.st_size % entry_size != 0) {
-		cs_log("Invalid file size or format: %s", filename);
-		close(fd);
-		return NULL;
-	}
-
-	*count = sb.st_size / entry_size;
-	if (!(entries = malloc(*count * sizeof(struct ECMEntry)))) {
-		close(fd);
-		return NULL;
-	}
-
-	if (!(temp_buffer = malloc(entry_size))) {
-		free(entries);
-		close(fd);
-		return NULL;
-	}
-
-	for (i = 0; i < *count; i++) {
-		if (read(fd, temp_buffer, entry_size) != (ssize_t)entry_size) {
-			for (j = 0; j < i; j++)
-				free(entries[j].ecm);
-			free(entries);
-			free(temp_buffer);
-			close(fd);
-			return NULL;
-		}
-
-		if (!(entries[i].ecm = malloc(ecm_size))) {
-			for (j = 0; j < i; j++)
-				free(entries[j].ecm);
-			free(entries);
-			free(temp_buffer);
-			close(fd);
-			return NULL;
-		}
-
-		memcpy(entries[i].ecm, temp_buffer, ecm_size);
-		memcpy(entries[i].cw, temp_buffer + ecm_size, CW_SIZE);
-	}
-
-	free(temp_buffer);
-	close(fd);
-
-	qsort(entries, *count, sizeof(struct ECMEntry), compare_ecm);
-
-	// Set next_likely_index for cache optimization
-	for (i = 0; i < *count - 1; i++)
-		entries[i].next_likely_index = i + 1;
-	entries[*count - 1].next_likely_index = 0;
-
-	return entries;
+static struct ecm_file* find_file(struct ecmbin_data *data, uint16_t caid, uint16_t srvid) {
+    uint64_t key = make_key(caid, srvid);
+    uint64_t *found = bsearch(&key, data->keys, data->count, sizeof(uint64_t), key_compare);
+    return found ? &data->files[found - data->keys] : NULL;
 }
 
-static size_t find_file_index(uint16_t caid, uint16_t srvid) {
-	struct FileIndex key = {.caid = caid, .srvid = srvid};
-	struct FileIndex *result = bsearch(&key, g_preloaded.indices, 
-			g_preloaded.total_files, 
-			sizeof(struct FileIndex), 
-			compare_file_indices);
-	return result ? result->file_index : (size_t)-1;
+static inline int parse_filename(const char *name, uint16_t *caid, uint16_t *srvid) {
+    size_t len = strlen(name);
+    if (len < 13 || strcasecmp(name + len - 4, ".bin")) return 0;
+    char base[16];
+    strncpy(base, name, len - 4);
+    base[len - 4] = 0;
+    return sscanf(base, "%04hX@%04hX", caid, srvid) == 2;
 }
 
-static int32_t search_ecm_in_sorted_entries(
-	const struct ECMEntry *entries,
-	size_t count,
-	const uint8_t *ecm,
-	struct s_ecm_answer *ea) {
+static int load_file(struct ecmbin_data *data, const char *path, uint16_t caid, uint16_t srvid) {
+    if (data->count >= data->capacity) {
+        size_t new_cap = data->capacity * 2;
+        struct ecm_file *new_files = realloc(data->files, new_cap * sizeof(struct ecm_file));
+        uint64_t *new_keys = realloc(data->keys, new_cap * sizeof(uint64_t));
+        if (!new_files || !new_keys) {
+            free(new_files);
+            free(new_keys);
+            return 0;
+        }
+        data->files = new_files;
+        data->keys = new_keys;
+        data->capacity = new_cap;
+    }
 
-	size_t ecm_size = cfg.ecmbin_ecm_end_byte - cfg.ecmbin_ecm_start_byte;
-	size_t left = 0, right = count > 0 ? count - 1 : 0;
+    int fd = open(path, O_RDONLY);
+    if (fd == -1) return 0;
 
-	while (left <= right) {
-		size_t mid = left + (right - left) / 2;
+    struct stat st;
+    size_t entry_size = data->ecm_size + CW_SIZE;
+    if (fstat(fd, &st) || st.st_size % entry_size) {
+        close(fd);
+        return 0;
+    }
 
-		// Prefetch next likely entry
-		if (count > 1 && mid < count - 1) {
-			__builtin_prefetch(&entries[entries[mid].next_likely_index]);
-		}
+    uint8_t *mmap_data = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE | MAP_POPULATE, fd, 0);
+    close(fd);
+    if (mmap_data == MAP_FAILED) return 0;
 
-		int cmp = memcmp(ecm, entries[mid].ecm, ecm_size);
-		if (cmp == 0) {
-			memcpy(ea->cw, entries[mid].cw, CW_SIZE);
-			return CS_OK;
-		}
-		if (cmp < 0) {
-			if (mid == 0) break;
-			right = mid - 1;
-		} else {
-			left = mid + 1;
-		}
-	}
-	return CS_ERROR;
+    madvise(mmap_data, st.st_size, MADV_SEQUENTIAL);
+
+    struct ecm_file *file = &data->files[data->count];
+    memset(file, 0, sizeof(*file));
+    file->mmap_data = mmap_data;
+    file->file_size = st.st_size;
+    file->caid = caid;
+    file->srvid = srvid;
+    pthread_rwlock_init(&file->lock, NULL);
+
+    size_t num_entries = st.st_size / entry_size;
+    struct ecm_entry *entries = malloc(num_entries * sizeof(struct ecm_entry));
+    if (!entries) {
+        munmap(mmap_data, st.st_size);
+        return 0;
+    }
+
+    for (size_t i = 0; i < num_entries; i++) {
+        uint8_t *entry_data = mmap_data + (i * entry_size);
+        struct ecm_entry *entry = &entries[i];
+        entry->ecm_data = entry_data;
+        memcpy(entry->cw, entry_data + data->ecm_size, CW_SIZE);
+        entry->hash = fnv1a_hash(entry_data, data->ecm_size);
+        uint32_t idx = entry->hash % HASH_SIZE;
+        entry->next = file->hash_table[idx];
+        file->hash_table[idx] = entry;
+    }
+
+    cs_log("Loaded [%04hX@%04hX.bin] entry %zu", caid, srvid, num_entries);
+
+    data->keys[data->count] = make_key(caid, srvid);
+    data->count++;
+    return 1;
 }
 
-static int parse_filename(const char *filename, uint16_t *caid, uint16_t *srvid) {
-	unsigned int ca, srv;
-	if (sscanf(filename, "%04X@%04X", &ca, &srv) == 2) {
-		*caid = (uint16_t)ca;
-		*srvid = (uint16_t)srv;
-		return 1;
-	}
-	return 0;
+static void load_all_files(struct s_reader *reader) {
+    struct ecmbin_data *data = reader->csystem_data;
+    
+    data->ecm_size = reader->ecm_end - reader->ecm_start;
+    if (data->ecm_size == 0 || data->ecm_size > 200) {
+        cs_log("Invalid ECM range (%d-%d) in %s", reader->ecm_start, reader->ecm_end, reader->label);
+        return;
+    }
+
+    const char *folder = reader->ecm_path ? reader->ecm_path : reader->device;
+    if (!folder || access(folder, R_OK)) {
+        cs_log("Cannot access ECM folder %s", folder ? folder : "NULL");
+        return;
+    }
+
+    data->capacity = 64;
+    data->files = malloc(data->capacity * sizeof(struct ecm_file));
+    data->keys = malloc(data->capacity * sizeof(uint64_t));
+    if (!data->files || !data->keys) return;
+
+    DIR *dir = opendir(folder);
+    if (!dir) {
+        free(data->files);
+        free(data->keys);
+        return;
+    }
+
+    struct dirent *entry;
+    char path[512];
+    while ((entry = readdir(dir)) && data->count < MAX_FILES) {
+        uint16_t caid, srvid;
+        if (entry->d_name[0] == '.' || !parse_filename(entry->d_name, &caid, &srvid))
+            continue;
+
+        snprintf(path, sizeof(path), "%s/%s", folder, entry->d_name);
+        load_file(data, path, caid, srvid);
+    }
+    closedir(dir);
+
+    qsort(data->keys, data->count, sizeof(uint64_t), key_compare);
+    cs_log("Loaded %zu ECM files from %s (range %d-%d)", data->count, folder, reader->ecm_start, reader->ecm_end);
 }
 
-static void preload_all_bin_files(const char *directory)
-{
-	DIR *dir;
-	struct dirent *entry;
-	char fullpath[FILENAME_SIZE * 2];
-	int i, current_file = 0, total_files = 0;
-	struct ECMEntry *entries;
-	size_t count;
-	size_t dir_len;
+static int32_t search_ecm(struct ecm_file *file, const uint8_t *ecm, size_t ecm_size, struct s_ecm_answer *ea) {
+    uint32_t hash = fnv1a_hash(ecm, ecm_size);
+    struct ecm_entry *entry = file->hash_table[hash % HASH_SIZE];
 
-	dir_len = strlen(directory);
-	if (dir_len >= FILENAME_SIZE) {
-		cs_log("Directory path too long: %s", directory);
-		return;
-	}
-
-	// Initialize partitions
-	for (i = 0; i < MAX_CHANNELS * MAX_CHANNEL_FILES / PARTITION_SIZE; i++) {
-		pthread_rwlock_init(&g_preloaded.partitions[i].lock, NULL);
-		g_preloaded.partitions[i].file_count = 0;
-	}
-
-	if (!(dir = opendir(directory))) {
-		cs_log("Cannot open directory %s: %s", directory, strerror(errno));
-		return;
-	}
-
-	// First pass: count files
-	while ((entry = readdir(dir)) != NULL) {
-		if (entry->d_name[0] != '.') total_files++; // Count all non-hidden files
-	}
-
-	// Allocate indices array
-	if (!(g_preloaded.indices = malloc(total_files * sizeof(struct FileIndex)))) {
-		closedir(dir);
-		return;
-	}
-
-	// Reset directory pointer
-	rewinddir(dir);
-
-	// Second pass: load files
-	while ((entry = readdir(dir)) != NULL) {
-		uint16_t caid, srvid;
-		size_t name_len;
-
-		if (entry->d_name[0] == '.') continue;
-
-		name_len = strlen(entry->d_name);
-		if (dir_len + name_len + 2 >= sizeof(fullpath)) {
-			cs_log("Skipping long filename: %s/%s", directory, entry->d_name);
-			continue;
-		}
-
-		if (!parse_filename(entry->d_name, &caid, &srvid)) {
-			cs_log("Skipping invalid file: %s", entry->d_name);
-			continue;
-		}
-
-		if (snprintf(fullpath, sizeof(fullpath), "%s/%s", directory, entry->d_name) < 0) {
-			cs_log("Error creating path for: %s", entry->d_name);
-			continue;
-		}
-
-		int partition_idx = current_file / PARTITION_SIZE;
-		struct FilePartition *partition = &g_preloaded.partitions[partition_idx];
-
-		pthread_rwlock_wrlock(&partition->lock);
-
-		entries = load_and_sort_entries(fullpath, &count);
-		if (entries && count > 0) {
-			struct BinFile *file = &partition->files[partition->file_count];
-
-			strncpy(file->filename, entry->d_name, FILENAME_SIZE);
-			file->entries = entries;
-			file->count = count;
-			file->caid = caid;
-			file->srvid = srvid;
-
-			// Add to indices
-			g_preloaded.indices[current_file].caid = caid;
-			g_preloaded.indices[current_file].srvid = srvid;
-			g_preloaded.indices[current_file].file_index = 
-				partition_idx * PARTITION_SIZE + partition->file_count;
-
-			partition->file_count++;
-			current_file++;
-
-			cs_log("Loaded %s (CAID: %04X, SRVID: %04X) with %zu entries",
-				   entry->d_name, caid, srvid, count);
-		}
-
-		pthread_rwlock_unlock(&partition->lock);
-	}
-
-	closedir(dir);
-
-	g_preloaded.total_files = current_file;
-	g_preloaded.partition_count = (current_file + PARTITION_SIZE - 1) / PARTITION_SIZE;
-	g_preloaded.last_update = time(NULL);
-
-	// Sort indices for binary search
-	qsort(g_preloaded.indices, g_preloaded.total_files, 
-		  sizeof(struct FileIndex), compare_file_indices);
-
-	cs_log("Successfully preloaded %d binary files in %d partitions", 
-		   current_file, g_preloaded.partition_count);
+    while (entry) {
+        if (entry->hash == hash && !memcmp(ecm, entry->ecm_data, ecm_size)) {
+            memcpy(ea->cw, entry->cw, CW_SIZE);
+            return CS_OK;
+        }
+        entry = entry->next;
+    }
+    return CS_ERROR;
 }
 
-static int32_t ecmbin_do_ecm(struct s_reader *UNUSED(rdr), const ECM_REQUEST *er, struct s_ecm_answer *ea) {
-	size_t file_idx = find_file_index(er->caid, er->srvid);
-	if (file_idx == (size_t)-1) {
-		cs_log("No matching bin file for CAID: %04X, SRVID: %04X", er->caid, er->srvid);
-		return CS_ERROR;
-	}
-
-	size_t partition_idx = file_idx / PARTITION_SIZE;
-	size_t local_idx = file_idx % PARTITION_SIZE;
-	struct FilePartition *partition = &g_preloaded.partitions[partition_idx];
-
-	pthread_rwlock_rdlock(&partition->lock);
-
-	const uint8_t *ecm = &er->ecm[cfg.ecmbin_ecm_start_byte];
-	int32_t result = search_ecm_in_sorted_entries(
-		partition->files[local_idx].entries,
-		partition->files[local_idx].count,
-		ecm,
-		ea
-	);
-
-	pthread_rwlock_unlock(&partition->lock);
-
-	return result;
+static void cleanup_data(struct ecmbin_data *data) {
+    if (!data) return;
+    
+    for (size_t i = 0; i < data->count; i++) {
+        struct ecm_file *file = &data->files[i];
+        
+        for (size_t j = 0; j < HASH_SIZE; j++) {
+            if (file->hash_table[j]) {
+                free(file->hash_table[j]);
+                break; // Only one batch allocation per file
+            }
+        }
+        
+        if (file->mmap_data) munmap(file->mmap_data, file->file_size);
+        pthread_rwlock_destroy(&file->lock);
+    }
+    
+    free(data->files);
+    free(data->keys);
+    pthread_rwlock_destroy(&data->lock);
 }
 
-static void cleanup(void) {
-	int i, j;
-	size_t k;
-	// Clean up partitions
-	for (i = 0; i < g_preloaded.partition_count; i++) {
-		struct FilePartition *partition = &g_preloaded.partitions[i];
-		pthread_rwlock_wrlock(&partition->lock);
+static int32_t ecmbin_do_ecm(struct s_reader *rdr, const ECM_REQUEST *er, struct s_ecm_answer *ea) {
+    struct ecmbin_data *data = rdr->csystem_data;
+    if (!data) return CS_ERROR;
+    
+    pthread_rwlock_rdlock(&data->lock);
+    struct ecm_file *file = find_file(data, er->caid, er->srvid);
+    if (!file) {
+        pthread_rwlock_unlock(&data->lock);
+        return CS_ERROR;
+    }
 
-		for (j = 0; j < partition->file_count; j++) {
-			struct BinFile *file = &partition->files[j];
-			if (file->entries) {
-				for (k = 0; k < file->count; k++) {
-					free(file->entries[k].ecm);
-				}
-				free(file->entries);
-			}
-		}
+    pthread_rwlock_rdlock(&file->lock);
+    pthread_rwlock_unlock(&data->lock);
 
-		partition->file_count = 0;
-		pthread_rwlock_unlock(&partition->lock);
-		pthread_rwlock_destroy(&partition->lock);
-	}
-
-	// Clean up indices
-	free(g_preloaded.indices);
-	g_preloaded.indices = NULL;
-
-	g_preloaded.total_files = 0;
-	g_preloaded.partition_count = 0;
-	g_preloaded.last_update = 0;
+    int32_t result = search_ecm(file, &er->ecm[rdr->ecm_start], data->ecm_size, ea);
+    
+    pthread_rwlock_unlock(&file->lock);
+    return result;
 }
 
 static int32_t ecmbin_card_info(struct s_reader *rdr) {
-	rdr->card_status = CARD_INSERTED;
-	return CS_OK;
+    if (!rdr->csystem_data) {
+        rdr->csystem_data = calloc(1, sizeof(struct ecmbin_data));
+        if (!rdr->csystem_data) return CS_ERROR;
+        
+        pthread_rwlock_init(&((struct ecmbin_data*)rdr->csystem_data)->lock, NULL);
+        load_all_files(rdr);
+    }
+    rdr->card_status = CARD_INSERTED;
+    return CS_OK;
+}
+
+static void ecmbin_card_done(struct s_reader *rdr) {
+    if (rdr->csystem_data) {
+        cleanup_data(rdr->csystem_data);
+        free(rdr->csystem_data);
+        rdr->csystem_data = NULL;
+    }
 }
 
 const struct s_cardsystem reader_ecmbin = {
-	.desc = "ecmbin",
-	.caids = (uint16_t[]){ 0x0B, 0 },
-	.do_ecm = ecmbin_do_ecm,
-	.card_info = ecmbin_card_info,
+    .desc = "ecmbin",
+    .caids = (uint16_t[]){ 0x0B, 0 },
+    .do_ecm = ecmbin_do_ecm,
+    .card_info = ecmbin_card_info,
+    .card_done = ecmbin_card_done,
 };
 
-static int32_t ecmbin_reader_init(struct s_reader *UNUSED(reader)) {
-	preload_all_bin_files(cfg.bin_folder);
-	return CR_OK;
+static int32_t ecmbin_reader_init(struct s_reader *reader) {
+    reader->csystem = &reader_ecmbin;
+    return CR_OK;
 }
 
-static int32_t ecmbin_close(struct s_reader *UNUSED(reader)) {
-	cs_log("ECMBin reader shutting down");
-	cleanup();
-	return CR_OK;
+static int32_t ecmbin_close(struct s_reader *reader) {
+    if (reader->csystem_data) {
+        cleanup_data(reader->csystem_data);
+        free(reader->csystem_data);
+        reader->csystem_data = NULL;
+    }
+    return CR_OK;
 }
 
 static int32_t ecmbin_get_status(struct s_reader *UNUSED(reader), int32_t *in) { *in = 1; return CR_OK; }
 static int32_t ecmbin_activate(struct s_reader *UNUSED(reader), struct s_ATR *UNUSED(atr)) { return CR_OK; }
-static int32_t ecmbin_transmit(struct s_reader *UNUSED(reader), uint8_t *UNUSED(buffer),
-	uint32_t UNUSED(size), uint32_t UNUSED(expectedlen), uint32_t UNUSED(delay),
-	uint32_t UNUSED(timeout)) { return CR_OK; }
-static int32_t ecmbin_receive(struct s_reader *UNUSED(reader), uint8_t *UNUSED(buffer),
-	uint32_t UNUSED(size), uint32_t UNUSED(delay), uint32_t UNUSED(timeout)) { return CR_OK; }
-static int32_t ecmbin_write_settings(struct s_reader *UNUSED(reader),
-	struct s_cardreader_settings *UNUSED(s)) { return CR_OK; }
-static int32_t ecmbin_card_write(struct s_reader *UNUSED(pcsc_reader),
-	const uint8_t *UNUSED(buf), uint8_t *UNUSED(cta_res),
-	uint16_t *UNUSED(cta_lr), int32_t UNUSED(l)) { return CR_OK; }
-static int32_t ecmbin_set_protocol(struct s_reader *UNUSED(rdr),
-	uint8_t *UNUSED(params), uint32_t *UNUSED(length),
-	uint32_t UNUSED(len_request)) { return CR_OK; }
+static int32_t ecmbin_transmit(struct s_reader *UNUSED(reader), uint8_t *UNUSED(buffer), uint32_t UNUSED(size), uint32_t UNUSED(expectedlen), uint32_t UNUSED(delay), uint32_t UNUSED(timeout)) { return CR_OK; }
+static int32_t ecmbin_receive(struct s_reader *UNUSED(reader), uint8_t *UNUSED(buffer), uint32_t UNUSED(size), uint32_t UNUSED(delay), uint32_t UNUSED(timeout)) { return CR_OK; }
+static int32_t ecmbin_write_settings(struct s_reader *UNUSED(reader), struct s_cardreader_settings *UNUSED(settings)) { return CR_OK; }
+static int32_t ecmbin_card_write(struct s_reader *UNUSED(reader), const uint8_t *UNUSED(buf), uint8_t *UNUSED(cta_res), uint16_t *UNUSED(cta_lr), int32_t UNUSED(len)) { return CR_OK; }
+static int32_t ecmbin_set_protocol(struct s_reader *UNUSED(reader), uint8_t *UNUSED(params), uint32_t *UNUSED(length), uint32_t UNUSED(len_request)) { return CR_OK; }
 
 const struct s_cardreader cardreader_ecmbin = {
-	.desc		= "ecmbin",
-	.typ		= R_ECMBIN,
-	.reader_init	= ecmbin_reader_init,
-	.get_status	= ecmbin_get_status,
-	.activate	= ecmbin_activate,
-	.transmit	= ecmbin_transmit,
-	.receive	= ecmbin_receive,
-	.close		= ecmbin_close,
-	.write_settings	= ecmbin_write_settings,
-	.card_write	= ecmbin_card_write,
-	.set_protocol	= ecmbin_set_protocol,
+    .desc = "ecmbin",
+    .typ = R_ECMBIN,
+    .reader_init = ecmbin_reader_init,
+    .get_status = ecmbin_get_status,
+    .activate = ecmbin_activate,
+    .transmit = ecmbin_transmit,
+    .receive = ecmbin_receive,
+    .close = ecmbin_close,
+    .write_settings = ecmbin_write_settings,
+    .card_write = ecmbin_card_write,
+    .set_protocol = ecmbin_set_protocol,
 };
 
 void add_ecmbin_reader(void) {
-	LL_ITER itr;
-	struct s_reader *rdr;
-	int8_t haveBinReader = 0;
-	char ecmbinName[] = "ecmemu";
+    LL_ITER itr = ll_iter_create(configured_readers);
+    struct s_reader *rdr;
+    
+    while ((rdr = ll_iter_next(&itr))) {
+        if (rdr->typ == R_ECMBIN) return;
+    }
 
-	itr = ll_iter_create(configured_readers);
-	while ((rdr = ll_iter_next(&itr))) {
-		if (rdr->typ == R_ECMBIN) {
-			haveBinReader = 1;
-			break;
-		}
-	}
-
-	if (!haveBinReader) {
-		if (!cs_malloc(&rdr, sizeof(struct s_reader))) {
-			return;
-		}
-		reader_set_defaults(rdr);
-		rdr->enable = 1;
-		rdr->typ = R_ECMBIN;
-		cs_strncpy(rdr->label, ecmbinName, sizeof(ecmbinName));
-		cs_strncpy(rdr->device, ecmbinName, sizeof(ecmbinName));
-		rdr->grp = 0x2ULL;
-		rdr->crdr = &cardreader_ecmbin;
-		reader_fixups_fn(rdr);
-		ll_append(configured_readers, rdr);
-	}
+    if (cs_malloc(&rdr, sizeof(struct s_reader))) {
+        reader_set_defaults(rdr);
+        rdr->enable = 1;
+        rdr->typ = R_ECMBIN;
+        cs_strncpy(rdr->label, "ecmbin", 8);
+        cs_strncpy(rdr->device, "0", 16);
+        rdr->grp = 0x2ULL;
+        rdr->crdr = &cardreader_ecmbin;
+        reader_fixups_fn(rdr);
+        ll_append(configured_readers, rdr);
+    }
 }
-#endif
+
+#endif // WITH_ECMBIN
