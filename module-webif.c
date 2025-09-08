@@ -3272,6 +3272,7 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 		tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGEMUBIT"));
 		break;
 	case R_ECMBIN :
+#if defined WITH_ECMBIN
 		tpl_printf(vars, TPLADD, "ECMSTART", "%d", rdr->ecm_start);
 		tpl_printf(vars, TPLADD, "ECMEND", "%d", rdr->ecm_end);
 		if (rdr->ecm_path) {
@@ -3279,6 +3280,7 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 		}
 		tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGECMBIN"));
 		tpl_addVar(vars, TPLADD, "ECMCW_LOGGING_TEMPLATE", ""); // Hide ECM/CW Logging
+#endif
 		break;
 	case R_CS378X :
 		tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGCS378XBIT"));
