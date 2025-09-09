@@ -36,69 +36,64 @@
 	}
 
 	document.addEventListener('DOMContentLoaded', function(){
-		// Handle user display options (hide expired, hide disabled, blur usernames)
-		const hideExpiredCheckbox = document.getElementById('hide_expired');
-		const hideDisabledCheckbox = document.getElementById('hide_disabled');
-		const blurUsersCheckbox = document.getElementById('blur_users');
-
-		// Use values from webif settings
 		const hideDisabledSetting = '##HTTPHIDEUSERSDISABLED##' === '1';
 		const hideExpiredSetting = '##HTTPHIDEUSERSEXPIRED##' === '1';
 		const blurUsersSetting = '##HTTPBLURUSERSNAME##' === '1';
 
-		// Initialize checkboxes based on settings
-		hideExpiredCheckbox.checked = hideExpiredSetting;
-		hideDisabledCheckbox.checked = hideDisabledSetting;
-		blurUsersCheckbox.checked = blurUsersSetting;
+		let hideExpired = window.tempHideExpired !== undefined ? window.tempHideExpired : hideExpiredSetting;
+		let hideDisabled = window.tempHideDisabled !== undefined ? window.tempHideDisabled : hideDisabledSetting;
+		let blurUsers = window.tempBlurUsers !== undefined ? window.tempBlurUsers : blurUsersSetting;
 
-		// Apply settings to elements
 		const expiredRows = document.querySelectorAll('tr.expired');
 		const disabledRows = document.querySelectorAll('tr.disabled');
 		const usernameCells = document.querySelectorAll('tbody.content tr td:nth-child(2)');
 
-		// Apply hide settings
-		expiredRows.forEach(row => {
-			row.style.display = hideExpiredSetting ? 'none' : 'table-row';
-		});
+		function applySettings() {
+			expiredRows.forEach(row => row.style.display = hideExpired ? 'none' : 'table-row');
+			disabledRows.forEach(row => row.style.display = hideDisabled ? 'none' : 'table-row');
+			usernameCells.forEach(cell => cell.style.filter = blurUsers ? 'blur(3px)' : 'none');
+		}
 
-		disabledRows.forEach(row => {
-			row.style.display = hideDisabledSetting ? 'none' : 'table-row';
-		});
+		function toggleSetting(type) {
+			switch(type) {
+				case 'expired':
+					hideExpired = !hideExpired;
+					break;
+				case 'disabled':
+					hideDisabled = !hideDisabled;
+					break;
+				case 'blur':
+					blurUsers = !blurUsers;
+					break;
+			}
+			applySettings();
+			updateMenuText();
+		}
 
-		// Apply blur settings
-		const blurStyle = blurUsersSetting ? 'blur(3px)' : 'none';
-		usernameCells.forEach(cell => {
-			cell.style.filter = blurStyle;
-		});
+		function updateMenuText() {
+			document.getElementById('hide_expired').textContent = hideExpired ? 'Show Expired' : 'Hide Expired';
+			document.getElementById('hide_disabled').textContent = hideDisabled ? 'Show Disabled' : 'Hide Disabled';
+			document.getElementById('blur_users').textContent = blurUsers ? 'Unblur Users' : 'Blur Users';
+		}
 
-		// Add event handlers (without AJAX)
-		hideExpiredCheckbox.addEventListener('change', function() {
-			const expiredRows = document.querySelectorAll('tr.expired');
-			expiredRows.forEach(row => {
-				row.style.display = this.checked ? 'none' : 'table-row';
-			});
-		});
+		document.getElementById('hide_expired').onclick = (e) => {
+			e.preventDefault();
+			toggleSetting('expired');
+			return false;
+		};
+		document.getElementById('hide_disabled').onclick = (e) => {
+			e.preventDefault();
+			toggleSetting('disabled');
+			return false;
+		};
+		document.getElementById('blur_users').onclick = (e) => {
+			e.preventDefault();
+			toggleSetting('blur');
+			return false;
+		};
 
-		hideDisabledCheckbox.addEventListener('change', function() {
-			const disabledRows = document.querySelectorAll('tr.disabled');
-			disabledRows.forEach(row => {
-				row.style.display = this.checked ? 'none' : 'table-row';
-			});
-		});
-
-		// Function to toggle blur on sensitive user information
-		blurUsersCheckbox.addEventListener('change', function() {
-			// Target sensitive columns (username and address)
-			const usernameCells = document.querySelectorAll('tbody.content tr td:nth-child(2)');        
-			const blurStyle = this.checked ? 'blur(3px)' : 'none';       
-			usernameCells.forEach(cell => {
-				cell.style.filter = blurStyle;
-			});
-
-			addressCells.forEach(cell => {
-				cell.style.filter = blurStyle;
-			});
-		});
+		applySettings();
+		updateMenuText();
 	});
 
 	</script>
@@ -110,9 +105,9 @@
 			<LI CLASS="configmenu"><A HREF="userconfig.html?action=reinit">Reinit User DB</A></LI>
 			<LI CLASS="configmenu"><A HREF="userconfig.html?action=resetalluserstats" onclick="return confirm('Reset Userstats ?')">Reset Userstats</A></LI>
 			<LI CLASS="configmenu"><A TARGET="_blank" HREF="graph.svg?type=users&amp;hidelabels=1">Show Graphs</A></LI>
-			<LI CLASS="configmenu"><A href="#"><input type="checkbox" id="hide_expired" ##HIDEEXPIREDCHECKED##> Hide Expired</A></LI>
-			<LI CLASS="configmenu"><A href="#"><input type="checkbox" id="hide_disabled" ##HIDEDISABLEDCHECKED##> Hide Disabled</A></LI>
-			<LI CLASS="configmenu"><A href="#"><input type="checkbox" id="blur_users" ##BLURUSERSCHECKED##> Blur Users</A></LI>
+			<LI CLASS="configmenu"><A HREF="#" id="hide_expired">Hide Expired</A></LI>
+			<LI CLASS="configmenu"><A HREF="#" id="hide_disabled">Hide Disabled</A></LI>
+			<LI CLASS="configmenu"><A HREF="#" id="blur_users">Blur Users</A></LI>
 ##TPLPOLLINGSET##
 		</UL>
 	</DIV>

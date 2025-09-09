@@ -2705,30 +2705,6 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 	{
 		tpl_addVar(vars, TPLADD, "NEEDSEMMFIRST", (rdr->needsemmfirst == 1) ? "1" : "0");
 	}
-	
-	if(rdr->ecmcwlogdir) 
-	{
-		tpl_addVar(vars, TPLADD, "READER_ECMCWLOGDIR", rdr->ecmcwlogdir);
-	}
-	else
-	{
-		tpl_addVar(vars, TPLADD, "READER_ECMCWLOGDIR", "");
-	}
-
-	char buf[8];
-	snprintf(buf, sizeof(buf), "%d", rdr->record_ecm_start_byte);
-	tpl_addVar(vars, TPLADD, "READER_RECORD_ECM_START_BYTE", buf);
-	snprintf(buf, sizeof(buf), "%d", rdr->record_ecm_end_byte);
-	tpl_addVar(vars, TPLADD, "READER_RECORD_ECM_END_BYTE", buf);
-	// Checkbox state for enable_ecmcw_logging
-	if(rdr->enable_ecmcw_logging) 
-	{
-		tpl_addVar(vars, TPLADD, "ENABLE_ECMCW_LOGGING_CHECKED", "checked=\"checked\"");
-	}
-	else 
-	{
-		tpl_addVar(vars, TPLADD, "ENABLE_ECMCW_LOGGING_CHECKED", "");
-	}
 
 #ifdef READER_CRYPTOWORKS
 	// needsglobalfirst
@@ -3261,19 +3237,17 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 		tpl_addVar(vars, TPLADD, "EMUDATECODEDENABLED", (rdr->emu_datecodedenabled == 1) ? "1" : "0");
 	}
 #endif
-#ifdef WITH_ECMBIN
-	if (rdr->typ == R_ECMBIN)
-		{
-			tpl_printf(vars, TPLADD, "ECMSTART", "%d", rdr->ecm_start);
-			tpl_printf(vars, TPLADD, "ECMEND", "%d", rdr->ecm_end);
-    if (rdr->ecm_path)
-		{
-			tpl_addVar(vars, TPLADD, "ECMPATH", rdr->ecm_path);
-		}
-	}
-#endif
 
 	tpl_addVar(vars, TPLADD, "PROTOCOL", reader_get_type_desc(rdr, 0));
+	tpl_addVar(vars, TPLADD, "READER_ECMCWLOGDIR", rdr->ecmcwlogdir ? rdr->ecmcwlogdir : "");
+	char buf[8];
+	snprintf(buf, sizeof(buf), "%d", rdr->record_ecm_start_byte);
+	tpl_addVar(vars, TPLADD, "READER_RECORD_ECM_START_BYTE", buf);
+	snprintf(buf, sizeof(buf), "%d", rdr->record_ecm_end_byte);
+	tpl_addVar(vars, TPLADD, "READER_RECORD_ECM_END_BYTE", buf);
+	tpl_addVar(vars, TPLADD, "ENABLE_ECMCW_LOGGING_CHECKED", 
+		(rdr->enable_ecmcw_logging) ? "checked=\"checked\"" : "");
+	tpl_addVar(vars, TPLADD, "ECMCW_LOGGING_TEMPLATE", tpl_getTpl(vars, "READERCONFIGECMCWLOGGING"));
 
 	// Show only parameters which needed for the reader
 	switch(rdr->typ)
@@ -3298,7 +3272,15 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 		tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGEMUBIT"));
 		break;
 	case R_ECMBIN :
+#if defined WITH_ECMBIN
+		tpl_printf(vars, TPLADD, "ECMSTART", "%d", rdr->ecm_start);
+		tpl_printf(vars, TPLADD, "ECMEND", "%d", rdr->ecm_end);
+		if (rdr->ecm_path) {
+			tpl_addVar(vars, TPLADD, "ECMPATH", rdr->ecm_path);
+		}
 		tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGECMBIN"));
+		tpl_addVar(vars, TPLADD, "ECMCW_LOGGING_TEMPLATE", ""); // Hide ECM/CW Logging
+#endif
 		break;
 	case R_CS378X :
 		tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGCS378XBIT"));

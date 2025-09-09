@@ -1705,74 +1705,48 @@ void update_chid(ECM_REQUEST *er)
 
 }
 
-#define CW_LENGTH          16
-#define MAX_FILENAME_LEN   1024
+#define PATH_MAX_LEN 512
+#define CW_LENGTH 16
 
-/**
- * Log ECM and CW to reader-specific directory structure
- */
 static void logECMCWtoFileByReader(struct s_reader *reader, ECM_REQUEST *er, uint8_t *cw) {
-    if (!reader || !er || !cw || !reader->ecmcwlogdir || !reader->enable_ecmcw_logging) {
+    if (!reader || !er || !cw || !reader->ecmcwlogdir || 
+        !reader->enable_ecmcw_logging || reader->typ == R_ECMBIN)
         return;
-    }
 
-    char reader_dir[MAX_FILENAME_LEN];
-    char filename[MAX_FILENAME_LEN];
-    
-    // Create reader-specific directory path with bounds check
-    int ret = snprintf(reader_dir, sizeof(reader_dir), "%s/%s[%d#%d]", 
-                  reader->ecmcwlogdir, reader->label, 
-                  reader->record_ecm_start_byte, reader->record_ecm_end_byte);
-    if (ret >= (int)sizeof(reader_dir)) {
-        cs_log_dbg(D_TRACE, "Directory path too long");
-        return;
-    }
-    
-    // Create directory if it doesn't exist
+    char dir[PATH_MAX_LEN], filepath[PATH_MAX_LEN];
+    int ret = snprintf(dir, sizeof(dir), "%s/%s[%d#%d]",
+                       reader->ecmcwlogdir, reader->label,
+                       reader->record_ecm_start_byte, reader->record_ecm_end_byte);
+    if (ret >= (int)sizeof(dir)) return;
+
     struct stat st;
-    if (stat(reader_dir, &st) != 0) {
-        if (mkdir(reader_dir, 0755) != 0) {
-            cs_log_dbg(D_TRACE, "Failed to create directory: %s", reader_dir);
-            return;
-        }
-    }
-    
-    // Create filename with bounds check
-    ret = snprintf(filename, sizeof(filename), "%s/%04X@%04X", reader_dir, er->caid, er->srvid);
-    if (ret >= (int)sizeof(filename)) {
-        cs_log_dbg(D_TRACE, "Filename path too long");
-        return;
-    }
+    if (stat(dir, &st) != 0 && mkdir(dir, 0755) != 0) return;
 
-	FILE *pfCWL = fopen(filename, "a+");
-	if (!pfCWL) {
-        return;
-    }
+    ret = snprintf(filepath, sizeof(filepath), "%s/%04X@%04X", dir, er->caid, er->srvid);
+    if (ret >= (int)sizeof(filepath)) return;
 
-    flockfile(pfCWL);
-    
-    // Write ECM data (hex format)
+    FILE *file = fopen(filepath, "a");
+    if (!file) return;
+
+    flockfile(file);
+
     uint8_t start = reader->record_ecm_start_byte;
-    uint8_t end = reader->record_ecm_end_byte;
-    
-    if (end > er->ecmlen) end = er->ecmlen;
+    uint8_t end = (reader->record_ecm_end_byte > er->ecmlen) ? er->ecmlen : reader->record_ecm_end_byte;
     if (start >= end) start = 0;
-    
-    for (size_t i = start; i < end; i++) {
-        fprintf(pfCWL, "%02X", er->ecm[i]);
-    }
-    // Add separator between ECM and CW
-    fprintf(pfCWL, " #CW ");
-    // Write CW data (hex format)
-    for (int i = 0; i < CW_LENGTH; i++) {
-        fprintf(pfCWL, "%02X", cw[i]);
-    }
 
-    fprintf(pfCWL, "\n");
-    fflush(pfCWL);
+    for (uint8_t i = start; i < end; i++)
+        fprintf(file, "%02X", er->ecm[i]);
 
-    funlockfile(pfCWL);
-    fclose(pfCWL);
+    fprintf(file, " #CW ");
+
+    for (int i = 0; i < CW_LENGTH; i++)
+        fprintf(file, "%02X", cw[i]);
+
+    fprintf(file, "\n");
+
+    fflush(file);
+    funlockfile(file);
+    fclose(file);
 }
 
 /*
@@ -2144,18 +2118,9 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 		rdr_log_dbg(reader, D_TRACE, "ecm answer for ecm hash %s rc=%d", ecmd5, ea->rc);
 	}
 #endif
-		// Update reader stats:
-		if(rc == E_FOUND && cw != NULL) {
-        // Existing CW logging
-        if(cfg.cwlogdir != NULL) {
-            logCWtoFile(er, ea->cw);
-        }
-        
-        // Reader-specific ECM/CW logging
-        if(reader && reader->enable_ecmcw_logging) {
-            logECMCWtoFileByReader(reader, er, ea->cw);
-        }
-
+		if(rc==E_FOUND && cw){
+		if(cfg.cwlogdir) logCWtoFile(er,cw);
+		if(reader && reader->enable_ecmcw_logging) logECMCWtoFileByReader(reader,er,cw);
 			reader->ecmsok++;
 #ifdef CS_CACHEEX_AIO
 			if(er->localgenerated)
