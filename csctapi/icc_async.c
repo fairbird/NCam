@@ -390,6 +390,30 @@ int32_t ICC_Async_Activate(struct s_reader *reader, ATR *atr, uint16_t deprecate
 		{
 			if(cta_res[cta_lr-2] == cta_res1_ok && cta_res[cta_lr-1] == cta_res2_ok)
 			{
+				if(reader->protocol_type == ATR_PROTOCOL_TYPE_T0)
+				{
+					uint8_t resp[] = {0x00,0xC0,0x00,0x00,0x00};
+					memcpy(resp + 4,&cta_res[cta_lr - 1],1);
+					rdr_log_dump_dbg(reader, D_READER, resp, sizeof(resp), "write to cardreader");
+					if(!ICC_Async_CardWrite(reader, resp, sizeof(resp), cta_res, &cta_lr))
+					{
+						AesCtx ctx;
+						AesCtxIni(&ctx, reader->cak7_aes_iv, &reader->cak7_aes_key[16], KEY128, CBC);
+						AesDecrypt(&ctx, cta_res, cta_res, cta_lr-2);
+						rdr_log_dump_dbg(reader, D_READER, cta_res, cta_lr, "Decrypted Answer:");
+					}
+					else
+					{
+						return ERROR;
+					}
+				}
+				else
+				{
+					AesCtx ctx;
+					AesCtxIni(&ctx, reader->cak7_aes_iv, &reader->cak7_aes_key[16], KEY128, CBC);
+					AesDecrypt(&ctx, cta_res, cta_res, cta_lr-2);
+					rdr_log_dump_dbg(reader, D_READER, cta_res, cta_lr, "Decrypted Answer:");
+				}
 				rdr_log(reader, "switch nagra layer OK");
 				memset(atr, 0, 1);
 				call(crdr_ops->activate(reader, atr)); //try to read the atr of this layer

@@ -1208,10 +1208,14 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 	bool hasD2 = false;
 	bool hasE0 = false;
 	bool has98 = false;
+	int32_t has9635 = 0;
+	int32_t has9632 = 0;
 	int32_t curEcm88len = 0;
 	int32_t nanoLen = 0;
 	uint8_t *nextEcm;
 	uint8_t DE04[MAX_ECM_SIZE];
+	uint8_t nano9635ecm88Data[MAX_ECM_SIZE];
+	uint8_t nano9632ecm88Data[MAX_ECM_SIZE];
 	int32_t D2KeyID = 0;
 	int32_t curnumber_ecm = 0;
 	bool SubECM = false;
@@ -1354,15 +1358,24 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 			ecm88Len -= nanoLen;
 			curEcm88len -= nanoLen;
 
-			if(ecm88Data[0] == 0x9F && ecm88Data[1] == 0x04)
+			if(ecm88Data[0] == 0x96 && ecm88Data[1] == 0x35)
 			{
-				rdr_log_dbg(reader, D_READER, "[viaccess-reader] nano 9F/04 ECM detected");
-				ecm88Data += 6;
+				rdr_log_dbg(reader, D_READER, "[viaccess-reader] nano 96/35 ECM detected!");
+				ecm88Data += 55;
+				has9635 = 1;
+			}
+
+			if(ecm88Data[0] == 0x96 && ecm88Data[1] == 0x32)
+			{
+				rdr_log_dbg(reader, D_READER, "[viaccess-reader] nano 96/32 ECM detected!");
+				ecm88Data += 52;
+				has9632 = 1;
 			}
 
 			// DE04
 			if(ecm88Data[0] == 0xDE && ecm88Data[1] == 0x04)
 			{
+				rdr_log_dbg(reader, D_READER, "[viaccess-reader] nano DE/04 ECM detected!");
 				memcpy(DE04, &ecm88Data[0], 6);
 				ecm88Data += 6;
 			}
@@ -1499,6 +1512,18 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 				}
 				memcpy(DE04 + 6, (uint8_t *)ecm88Data, l);
 				write_cmd(ins88, DE04); // request dcw
+			}
+			else if(has9635)
+			{
+				ins88[4] -= 0x37;
+				memcpy(nano9635ecm88Data, (uint8_t *)ecm88Data, ins88[4]);
+				write_cmd(ins88, nano9635ecm88Data);
+			}
+			else if(has9632)
+			{
+				ins88[4] -= 0x34;
+				memcpy(nano9632ecm88Data, (uint8_t *)ecm88Data, ins88[4]);
+				write_cmd(ins88, nano9632ecm88Data);
 			}
 			else
 			{
