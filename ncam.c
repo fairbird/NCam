@@ -1630,8 +1630,8 @@ static void detect_valgrind(void)
 				break;
 			}
 		}
+		fclose(f);
 	}
-	fclose(f);
 #endif
 }
 
