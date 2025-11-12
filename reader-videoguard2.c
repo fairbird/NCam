@@ -248,7 +248,6 @@ static void do_post_dw_hash(struct s_reader *reader, uint8_t *cw, const uint8_t 
 static void vg2_read_tiers(struct s_reader *reader)
 {
 	uint8_t cta_res[CTA_RES_LEN];
-	struct videoguard_data *csystem_data = reader->csystem_data;
 
 	if(reader->readtiers == 1)
 	{
@@ -292,11 +291,11 @@ static void vg2_read_tiers(struct s_reader *reader)
 
 					if(cta_res[1] > 0x24)
 					{
-						rev_date_calc_tm(&cta_res[38], &timeinfo, csystem_data->card_baseyear);
+						rev_startdate_calc_tm(&cta_res[38], &timeinfo, reader->card_startdate_basemonth, reader->card_startdate_baseyear);
 						start_t = mktime(&timeinfo);
 					}
 
-					rev_date_calc_tm(&cta_res[34], &timeinfo, csystem_data->card_baseyear);
+					rev_expiredate_calc_tm(&cta_res[34], &timeinfo, reader->card_expiredate_basemonth, reader->card_expiredate_baseyear);
 					end_t = mktime(&timeinfo);
 
 					for(word = 0; word < 32; word += 2)
@@ -372,7 +371,11 @@ static void vg2_read_tiers(struct s_reader *reader)
 
 		// some cards start real tiers info in middle of tier info
 		// and have blank tiers between old tiers and real tiers eg 09AC
-		int32_t starttier = csystem_data->card_tierstart;
+		int32_t starttier = 0;
+		if(reader->caid == 0x09AC || reader->caid == 0x0910 || reader->caid == 0x0913 || reader->caid == 0x09C1)
+		{
+			starttier = 50;
+		}
 		bool stopemptytier = 1;
 		if(!starttier)
 		{
@@ -424,7 +427,7 @@ static void vg2_read_tiers(struct s_reader *reader)
 				// add entitlements to list
 				struct tm timeinfo;
 				memset(&timeinfo, 0, sizeof(struct tm));
-				rev_date_calc_tm(&cta_res[4], &timeinfo, csystem_data->card_baseyear);
+				rev_expiredate_calc_tm(&cta_res[4], &timeinfo, reader->card_expiredate_basemonth, reader->card_expiredate_baseyear);
 				cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), tier_id, 0, 0, mktime(&timeinfo), 4, 1);
 
 				if(!stopemptytier)
@@ -646,18 +649,14 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 	}
 	struct videoguard_data *csystem_data = reader->csystem_data;
 
-	// set information on the card stored in reader-videoguard-common.c
-	set_known_card_info(reader, atr, &atr_size);
-
-	if((reader->ndsversion != NDS2) && (((csystem_data->card_system_version != NDS2)
-		&& (csystem_data->card_system_version != NDSUNKNOWN)) || (reader->ndsversion != NDSAUTO)))
+	if((reader->ndsversion != NDS2) && (reader->ndsversion != NDSAUTO))
 	{
 		/* known ATR and not NDS2
 		   or known NDS2 ATR and forced to another NDS version */
 		return ERROR;
 	}
 
-	rdr_log_dbg(reader, D_READER, "type: %s, baseyear: %i", csystem_data->card_desc, csystem_data->card_baseyear);
+	rdr_log_dbg(reader, D_READER, "type: VideoGuard2 Card, startdate baseyear: %i, startdate basemonth: %i, expiredate basemonth: %i, expiredate baseyear: %i", reader->card_startdate_basemonth, reader->card_startdate_baseyear, reader->card_expiredate_basemonth, reader->card_expiredate_baseyear);
 	if(reader->ndsversion == NDS2)
 	{
 		rdr_log_dbg(reader, D_READER, "forced to NDS2");
@@ -1176,8 +1175,8 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 	}
 	AES_set_decrypt_key(dimeno_magic, 128, &(csystem_data->astrokey));
 
-	rdr_log(reader, "type: %s, caid: %04X", csystem_data->card_desc, reader->caid);
-	rdr_log_sensitive(reader, "serial: {%02X%02X%02X%02X}, BoxID: {%02X%02X%02X%02X}, baseyear: %i",
+	rdr_log(reader, "type: VideoGuard2 Card, caid: %04X", reader->caid);
+	rdr_log_sensitive(reader, "serial: {%02X%02X%02X%02X}, BoxID: {%02X%02X%02X%02X}, startdate basemonth: %i, startdate baseyear: %i, expiredate basemonth: %i, expiredate baseyear: %i",
 		reader->hexserial[2],
 		reader->hexserial[3],
 		reader->hexserial[4],
@@ -1186,7 +1185,10 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 		boxID[1],
 		boxID[2],
 		boxID[3],
-		csystem_data->card_baseyear);
+		reader->card_startdate_basemonth,
+		reader->card_startdate_baseyear,
+		reader->card_expiredate_basemonth,
+		reader->card_expiredate_baseyear);
 
 	rdr_log(reader, "ready for requests");
 
@@ -1585,9 +1587,8 @@ static int32_t videoguard2_do_rawcmd(struct s_reader *reader, CMD_PACKET *cp)
 static int32_t videoguard2_card_info(struct s_reader *reader)
 {
 	// info is displayed in init, or when processing info
-	struct videoguard_data *csystem_data = reader->csystem_data;
 	rdr_log(reader, "card detected");
-	rdr_log(reader, "type: %s", csystem_data->card_desc);
+	rdr_log(reader, "type: VideoGuard2 Card");
 
 	if(reader->ins7e11_fast_reset != 1)
 	{

@@ -1868,6 +1868,10 @@ struct s_reader
 	uint8_t   VgCountryC[3];
 	uint8_t	VgRegionC[8];
 	uint8_t   VgLastPayload[6];
+	int32_t   card_startdate_basemonth;
+	int32_t   card_startdate_baseyear;
+	int32_t   card_expiredate_basemonth;
+	int32_t   card_expiredate_baseyear;
 #ifdef WITH_LB
 	int32_t         lb_weight;                      //loadbalance weight factor, if unset, weight=100. The higher the value, the higher the usage-possibility
 	int8_t          lb_force_fallback;              //force this reader as fallback if fallback or fallback_percaid paramters set

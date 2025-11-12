@@ -2800,6 +2800,14 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 	}
 #endif
 
+	tpl_printf(vars, TPLADD, "CARDSTARTDATEBASEMONTH", "%d", rdr->card_startdate_basemonth);
+
+	tpl_printf(vars, TPLADD, "CARDSTARTDATEBASEYEAR", "%d", rdr->card_startdate_baseyear);
+
+	tpl_printf(vars, TPLADD, "CARDEXPIREDATEBASEMONTH", "%d", rdr->card_expiredate_basemonth);
+
+	tpl_printf(vars, TPLADD, "CARDEXPIREDATEBASEYEAR", "%d", rdr->card_expiredate_baseyear);
+
 	// ins7E
 	if(rdr->ins7E[0x1A])
 	{

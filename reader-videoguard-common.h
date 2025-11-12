@@ -3,7 +3,6 @@
 
 #define write_cmd_vg(cmd, data) (card_write(reader, cmd, data, cta_res, &cta_lr) == 0)
 
-#define NDSUNKNOWN 0
 #define NDSAUTO    0
 #define NDS1       1
 #define NDS12     12
@@ -28,10 +27,6 @@ struct s_CmdTab
 
 struct videoguard_data
 {
-	const char      *card_desc;
-	int32_t         card_baseyear;
-	int32_t         card_tierstart;
-	int32_t         card_system_version;
 	time_t          card_valid_to;
 	struct s_CmdTab *cmd_table;
 	uint16_t        cardkeys[3][32];
@@ -39,16 +34,6 @@ struct videoguard_data
 	AES_KEY         ekey;
 	AES_KEY         astrokey;
 };
-
-typedef struct nds_atr
-{
-	uint8_t atr[MAX_ATR_LEN];
-	uint16_t atr_len;
-	int32_t base_year;
-	int32_t tier_start;
-	int32_t nds_version;
-	const char *desc;
-} NDS_ATR_ENTRY;
 
 extern int32_t cw_is_valid(uint8_t *cw);
 extern void cAES_SetKey(struct s_reader *reader, const uint8_t *key);
@@ -69,7 +54,8 @@ extern int32_t do_cmd(struct s_reader *reader, const uint8_t *ins, const uint8_t
 #ifdef WITH_SENDCMD
 int32_t videoguard_do_rawcmd(struct s_reader *reader, CMD_PACKET *cp);
 #endif
-extern void rev_date_calc_tm(const uint8_t *Date, struct tm *timeinfo , int32_t base_year);
+extern void rev_startdate_calc_tm(const uint8_t *Date, struct tm *timeinfo, int32_t startdate_base_month, int32_t startdate_base_year);
+extern void rev_expiredate_calc_tm(const uint8_t *Date, struct tm *timeinfo, int32_t expiredate_base_month, int32_t expiredate_base_year);
 extern void set_known_card_info(struct s_reader *reader, const uint8_t *atr, const uint32_t *atr_size);
 
 int32_t videoguard_get_emm_type(EMM_PACKET *ep, struct s_reader *rdr);
