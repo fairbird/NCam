@@ -69,6 +69,37 @@ bool file_exists(const char *filename)
 	return access(filename, R_OK) == 0;
 }
 
+/* Finds a file in the system PATH.
+   Returns a newly allocated string with the full path, or NULL if not found.
+   Caller must free() the returned string. */
+char *find_in_path(const char *filename)
+{
+	// If filename already has '/', don't search PATH
+	if (strchr(filename, '/')) {
+		return strdup(filename);
+	}
+
+	char *paths; const char *path = getenv("PATH"); if (!path || !(paths = strdup(path))) return NULL;
+
+	char *saveptr = NULL;
+	char *dir = strtok_r(paths, ":", &saveptr);
+	char fullpath[PATH_MAX];
+	char *result = NULL;
+
+	while (dir) {
+		if (*dir == '\0') dir = ".";
+		snprintf(fullpath, sizeof(fullpath), "%s/%s", dir, filename);
+		if (file_exists(fullpath)) {
+			result = strdup(fullpath);
+			break;
+		}
+		dir = strtok_r(NULL, ":", &saveptr);
+	}
+
+	free(paths);
+	return result;
+}
+
 /* Copies a file from srcfile to destfile. If an error occured before writing,
    -1 is returned, else -2. On success, 0 is returned.*/
 

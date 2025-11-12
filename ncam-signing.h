@@ -46,6 +46,8 @@ struct o_sign_info
 	int		hash_digest_size;
 	int		hash_size;
 	char	*hash_sha256;
+	bool	binfile_exists;
+	char	resolved_binfile[512];
 };
 
 extern struct o_sign_info osi;
