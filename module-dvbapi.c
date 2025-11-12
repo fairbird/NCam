@@ -2781,19 +2781,10 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid, int8_t checked,
 #ifdef WITH_STAPI5
 	cs_strncpy(er->dev_name, dev_list[demux[demux_id].dev_index].name, sizeof(dev_list[demux[demux_id].dev_index].name));
 #endif
-	struct timeb now;
-	cs_ftime(&now);
 
 	for(rdr = first_active_reader; rdr != NULL ; rdr = rdr->next)
 	{
 		int8_t match = matching_reader(er, rdr); // check for matching reader
-		int64_t gone = comp_timeb(&now, &rdr->emm_last);
-		if(gone > 3600*1000 && rdr->needsemmfirst && caid_is_irdeto(er->caid))
-		{
-			cs_log("Warning reader %s received no emms for the last %d seconds -> skip, this reader needs emms first!",
-				rdr->label, (int)(gone / 1000));
-			continue; // skip this card needs to process emms first before it can be used for descramble
-		}
 
 		if(p && p->force)
 		{

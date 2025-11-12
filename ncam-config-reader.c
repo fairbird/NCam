@@ -1428,7 +1428,6 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_INT8("fix9993"                        , OFS(fix_9993),                        0),
 	DEF_OPT_INT8("readtiers"                      , OFS(readtiers),                       1),
 	DEF_OPT_INT8("force_irdeto"                   , OFS(force_irdeto),                    0),
-	DEF_OPT_INT8("needsemmfirst"                  , OFS(needsemmfirst),                   0),
 #ifdef READER_CRYPTOWORKS
 	DEF_OPT_INT8("needsglobalfirst"               , OFS(needsglobalfirst),                0),
 #endif
@@ -1540,7 +1539,7 @@ static bool reader_check_setting(const struct config_list *UNUSED(clist), void *
 	static const char *hw_only_settings[] =
 	{
 		"readnano", "resetcycle", "smargopatch", "autospeed", "sc8in1_dtrrts_patch", "boxid","fix07",
-		"fix9993", "rsakey", "deskey", "card_startdate_basemonth", "card_startdate_baseyear", "card_expiredate_basemonth", "card_expiredate_baseyear", "ins7e", "ins42", "ins7e11", "ins2e06", "k1_generic", "k1_unique", "force_irdeto", "needsemmfirst", "boxkey",
+		"fix9993", "rsakey", "deskey", "card_startdate_basemonth", "card_startdate_baseyear", "card_expiredate_basemonth", "card_expiredate_baseyear", "ins7e", "ins42", "ins7e11", "ins2e06", "k1_generic", "k1_unique", "force_irdeto", "boxkey",
 		"atr", "detect", "nagra_read", "mhz", "cardmhz", "readtiers", "read_old_classes", "ecmending", "use_gpio", "needsglobalfirst",
 #ifdef READER_NAGRA_MERLIN
 		"mod1", "data50", "mod50", "key60", "exp60",

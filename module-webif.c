@@ -2697,17 +2697,6 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 		tpl_addVar(vars, TPLADD, "FORCEIRDETOVALUE", (rdr->force_irdeto == 1) ? "1" : "0");
 	}
 
-	// needsemmfirst
-
-	if(!apicall)
-	{
-		tpl_addVar(vars, TPLADD, "NEEDSEMMFIRST", (rdr->needsemmfirst == 1) ? "checked" : "");
-	}
-	else
-	{
-		tpl_addVar(vars, TPLADD, "NEEDSEMMFIRST", (rdr->needsemmfirst == 1) ? "1" : "0");
-	}
-
 #ifdef READER_CRYPTOWORKS
 	// needsglobalfirst
 	if(!apicall)
