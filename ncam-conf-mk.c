@@ -719,7 +719,7 @@ char *mk_t_iprange(struct s_ip *range)
 	struct s_ip *cip;
 	char *value, *dot = "";
 	int32_t needed = 1, pos = 0;
-	for(cip = range; cip; cip = cip->next) { needed += 32; }
+	for(cip = range; cip; cip = cip->next) { needed += 64; }
 
 	char tmp[needed];
 
