@@ -1917,7 +1917,11 @@ static char *send_ncam_reader(struct templatevars *vars, struct uriparams *param
 	if(strcmp(getParam(params, "action"), "reloadreaders") == 0)
 	{
 		if(!cfg.http_readonly)
-			{ refresh_ncam(REFR_READERS); }
+		{
+			refresh_ncam(REFR_READERS);
+			refresh_ncam(REFR_ACCOUNTS);
+		}
+
 	}
 	if((strcmp(getParam(params, "action"), "disable") == 0) || (strcmp(getParam(params, "action"), "enable") == 0))
 	{
