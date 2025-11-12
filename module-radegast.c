@@ -328,7 +328,7 @@ int32_t radegast_cli_init(struct s_client *cl)
 	cl->reader->card_status = CARD_INSERTED;
 	cl->reader->last_g = cl->reader->last_s = time((time_t *)0);
 
-	cs_log_dbg(D_CLIENT, "radegast: last_s=%ld, last_g=%ld", cl->reader->last_s, cl->reader->last_g);
+	cs_log_dbg(D_CLIENT, "radegast: last_s=%lld, last_g=%lld", (long long)cl->reader->last_s, (long long)cl->reader->last_g);
 
 	cl->pfd = cl->udp_fd;
 

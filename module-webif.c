@@ -550,7 +550,7 @@ static char *get_ecm_fullhistorystring(struct s_client *cl)
 			v = cl->cwlastresptimes[k].duration;
 			if(v > 0 && v < (int32_t)cfg.ctimeout * 5)
 			{
-				pos += snprintf(value + pos, needed - pos, "%s%d:%d:%ld", dot, cl->cwlastresptimes[k].duration, cl->cwlastresptimes[k].rc, cl->cwlastresptimes[k].timestamp);
+				pos += snprintf(value + pos, needed - pos, "%s%d:%d:%lld", dot, cl->cwlastresptimes[k].duration, cl->cwlastresptimes[k].rc, (long long)cl->cwlastresptimes[k].timestamp);
 				dot = ",";
 			}
 			k++;
@@ -9466,7 +9466,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 				char tbuffer [30];
 				strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &st);
 				tpl_addVar(vars, TPLADD, "APISTARTTIME", tbuffer);
-				tpl_printf(vars, TPLADD, "APIRUNTIME", "%ld", now - first_client->login);
+				tpl_printf(vars, TPLADD, "APIRUNTIME", "%lld", (long long)now - first_client->login);
 				tpl_printf(vars, TPLADD, "APIREADONLY", "%d", cfg.http_readonly);
 				if(strcmp(getParam(&params, "callback"), ""))
 				{

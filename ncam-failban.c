@@ -104,8 +104,8 @@ static int32_t cs_check_v(IN_ADDR_T ip, int32_t port, int32_t add, char *info, i
 				{ v_ban_entry->info = cs_strdup(info); }
 
 			ll_iter_insert(&itr, v_ban_entry);
-			cs_log_dbg(D_TRACE, "failban: ban ip %s:%d with timestamp %ld%s%s",
-						cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_port, v_ban_entry->v_time.time,
+			cs_log_dbg(D_TRACE, "failban: ban ip %s:%d with timestamp %lld%s%s",
+						cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_port, (long long)v_ban_entry->v_time.time,
 						info ? ", info: " : "", info ? info : "");
 		}
 	}

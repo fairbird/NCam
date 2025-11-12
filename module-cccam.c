@@ -4823,7 +4823,7 @@ int32_t cc_cli_connect(struct s_client *cl)
 		cs_log_dbg(D_READER, "%s login succeeded", getprefix());
 	}
 
-	cs_log_dbg(D_READER, "cccam: last_s=%ld, last_g=%ld", rdr->last_s, rdr->last_g);
+	cs_log_dbg(D_READER, "cccam: last_s=%lld, last_g=%lld", (long long)rdr->last_s, (long long)rdr->last_g);
 
 	cl->pfd = cl->udp_fd;
 	cs_log_dbg(D_READER, "cccam: pfd=%d", cl->pfd);

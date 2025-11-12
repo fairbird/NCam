@@ -162,7 +162,7 @@ void cleanupcwcycle(void)
 		{
 			continue;
 		}
-		cs_log_dbg(D_CWC, "cyclecheck [Cleanup] diff: %ld kct: %i", now - currentnode->time, kct);
+		cs_log_dbg(D_CWC, "cyclecheck [Cleanup] diff: %lld kct: %i", (long long)now - currentnode->time, kct);
 		if(prv != NULL)
 		{
 			prv->next  = NULL;
@@ -275,11 +275,11 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uin
 					ret = 8;
 					if(memcmp(cwc->cw, cw, 16) == 0) //check if the store cw the same like the current
 					{
-						cs_log_dbg(D_CWC, "cyclecheck [Dump Stored CW] Client: %s EA: %s CW: %s Time: %ld", user, cwc_ecmf, cwc_cw, cwc->time);
-						cs_log_dbg(D_CWC, "cyclecheck [Dump CheckedCW] Client: %s EA: %s CW: %s Time: %ld Timediff: %ld", user, er_ecmf, cwstr, now, now - cwc->time);
+						cs_log_dbg(D_CWC, "cyclecheck [Dump Stored CW] Client: %s EA: %s CW: %s Time: %lld", user, cwc_ecmf, cwc_cw, (long long)cwc->time);
+						cs_log_dbg(D_CWC, "cyclecheck [Dump CheckedCW] Client: %s EA: %s CW: %s Time: %lld Timediff: %lld", user, er_ecmf, cwstr, (long long)now, (long long)now - cwc->time);
 						if(now - cwc->time >= cwc->cycletime - cwc->dyncycletime)
 						{
-							cs_log_dbg(D_CWC, "cyclecheck [Same CW but much too late] Client: %s EA: %s CW: %s Time: %ld Timediff: %ld", user, er_ecmf, cwstr, now, now - cwc->time);
+							cs_log_dbg(D_CWC, "cyclecheck [Same CW but much too late] Client: %s EA: %s CW: %s Time: %lld Timediff: %lld", user, er_ecmf, cwstr, (long long)now, (long long)now - cwc->time);
 							ret = cfg.cwcycle_dropold ? 2 : 4;
 						}
 						else
@@ -301,11 +301,11 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uin
 					// first we check if the store cw the same like the current
 					if(memcmp(cwc->cw, cw, 16) == 0)
 					{
-						cs_log_dbg(D_CWC, "cyclecheck [Dump Stored CW] Client: %s EA: %s CW: %s Time: %ld", user, cwc_ecmf, cwc_cw, cwc->time);
-						cs_log_dbg(D_CWC, "cyclecheck [Dump CheckedCW] Client: %s EA: %s CW: %s Time: %ld Timediff: %ld", user, er_ecmf, cwstr, now, now - cwc->time);
+						cs_log_dbg(D_CWC, "cyclecheck [Dump Stored CW] Client: %s EA: %s CW: %s Time: %lld", user, cwc_ecmf, cwc_cw, (long long)cwc->time);
+						cs_log_dbg(D_CWC, "cyclecheck [Dump CheckedCW] Client: %s EA: %s CW: %s Time: %lld Timediff: %lld", user, er_ecmf, cwstr, (long long)now, (long long)now - cwc->time);
 						if(now - cwc->time >= cwc->cycletime - cwc->dyncycletime)
 						{
-							cs_log_dbg(D_CWC, "cyclecheck [Same CW but much too late] Client: %s EA: %s CW: %s Time: %ld Timediff: %ld", user, er_ecmf, cwstr, now, now - cwc->time);
+							cs_log_dbg(D_CWC, "cyclecheck [Same CW but much too late] Client: %s EA: %s CW: %s Time: %lld Timediff: %lld", user, er_ecmf, cwstr, (long long)now, (long long)now - cwc->time);
 							ret = cfg.cwcycle_dropold ? 2 : 4;
 						}
 						else
@@ -361,7 +361,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uin
 						er->cwc_next_cw_cycle = 1;
 						if(cwc->cycletime < 128 && (!(cwc->caid == 0x0100 && cwc->provid == 0x00006A))) // make sure cycletime is lower dez 128 because share over cacheex buf[18] bit 8 is used for cwc_next_cw_cycle
 							{ er->cwc_cycletime = cwc->cycletime; }
-						cs_log_dbg(D_CWC, "cyclecheck [Valid CW 0 Cycle] Client: %s EA: %s Timediff: %ld Stage: %i Cycletime: %i dyncycletime: %i nextCycleCW = CW%i from Reader: %s", user, er_ecmf, now - cwc->time, cwc->stage, cwc->cycletime, cwc->dyncycletime, cwc->nextcyclecw, reader);
+						cs_log_dbg(D_CWC, "cyclecheck [Valid CW 0 Cycle] Client: %s EA: %s Timediff: %lld Stage: %i Cycletime: %i dyncycletime: %i nextCycleCW = CW%i from Reader: %s", user, er_ecmf, (long long)now - cwc->time, cwc->stage, cwc->cycletime, cwc->dyncycletime, cwc->nextcyclecw, reader);
 					}
 					else if(cycleok == 1)
 					{
@@ -369,10 +369,10 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uin
 						er->cwc_next_cw_cycle = 0;
 						if(cwc->cycletime < 128 && (!(cwc->caid == 0x0100 && cwc->provid == 0x00006A))) // make sure cycletime is lower dez 128 because share over cacheex buf[18] bit 8 is used for cwc_next_cw_cycle
 							{ er->cwc_cycletime = cwc->cycletime; }
-						cs_log_dbg(D_CWC, "cyclecheck [Valid CW 1 Cycle] Client: %s EA: %s Timediff: %ld Stage: %i Cycletime: %i dyncycletime: %i nextCycleCW = CW%i from Reader: %s", user, er_ecmf, now - cwc->time, cwc->stage, cwc->cycletime, cwc->dyncycletime, cwc->nextcyclecw, reader);
+						cs_log_dbg(D_CWC, "cyclecheck [Valid CW 1 Cycle] Client: %s EA: %s Timediff: %lld Stage: %i Cycletime: %i dyncycletime: %i nextCycleCW = CW%i from Reader: %s", user, er_ecmf, (long long)now - cwc->time, cwc->stage, cwc->cycletime, cwc->dyncycletime, cwc->nextcyclecw, reader);
 					}
-					cs_log_dbg(D_CWC, "cyclecheck [Dump Stored CW] Client: %s EA: %s CW: %s Time: %ld", user, cwc_ecmf, cwc_cw, cwc->time);
-					cs_log_dbg(D_CWC, "cyclecheck [Dump CheckedCW] Client: %s EA: %s CW: %s Time: %ld Timediff: %ld", user, er_ecmf, cwstr, now, now - cwc->time);
+					cs_log_dbg(D_CWC, "cyclecheck [Dump Stored CW] Client: %s EA: %s CW: %s Time: %lld", user, cwc_ecmf, cwc_cw, (long long)cwc->time);
+					cs_log_dbg(D_CWC, "cyclecheck [Dump CheckedCW] Client: %s EA: %s CW: %s Time: %lld Timediff: %lld", user, er_ecmf, cwstr, (long long)now, (long long)now - cwc->time);
 				}
 				else
 				{
@@ -404,11 +404,11 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uin
 					}
 					if(!upd_entry) { break; }
 					if(cycleok == -2)
-						{ cs_log_dbg(D_CWC, "cyclecheck [ATTENTION!! NON Valid CW] Client: %s EA: %s Timediff: %ld Stage: %i Cycletime: %i dyncycletime: %i nextCycleCW = CW%i from Reader: %s", user, er_ecmf, now - cwc->time, cwc->stage, cwc->cycletime, cwc->dyncycletime, cwc->nextcyclecw, reader); }
+						{ cs_log_dbg(D_CWC, "cyclecheck [ATTENTION!! NON Valid CW] Client: %s EA: %s Timediff: %lld Stage: %i Cycletime: %i dyncycletime: %i nextCycleCW = CW%i from Reader: %s", user, er_ecmf, (long long)now - cwc->time, cwc->stage, cwc->cycletime, cwc->dyncycletime, cwc->nextcyclecw, reader); }
 					else
-						{ cs_log_dbg(D_CWC, "cyclecheck [ATTENTION!! NON Valid CW Cycle] NO CW Cycle detected! Client: %s EA: %s Timediff: %ld Stage: %i Cycletime: %i dyncycletime: %i nextCycleCW = CW%i from Reader: %s", user, er_ecmf, now - cwc->time, cwc->stage, cwc->cycletime, cwc->dyncycletime, cwc->nextcyclecw, reader); }
-					cs_log_dbg(D_CWC, "cyclecheck [Dump Stored CW] Client: %s EA: %s CW: %s Time: %ld", user, cwc_ecmf, cwc_cw, cwc->time);
-					cs_log_dbg(D_CWC, "cyclecheck [Dump CheckedCW] Client: %s EA: %s CW: %s Time: %ld Timediff: %ld", user, er_ecmf, cwstr, now, now - cwc->time);
+						{ cs_log_dbg(D_CWC, "cyclecheck [ATTENTION!! NON Valid CW Cycle] NO CW Cycle detected! Client: %s EA: %s Timediff: %lld Stage: %i Cycletime: %i dyncycletime: %i nextCycleCW = CW%i from Reader: %s", user, er_ecmf, (long long)now - cwc->time, cwc->stage, cwc->cycletime, cwc->dyncycletime, cwc->nextcyclecw, reader); }
+					cs_log_dbg(D_CWC, "cyclecheck [Dump Stored CW] Client: %s EA: %s CW: %s Time: %lld", user, cwc_ecmf, cwc_cw, (long long)cwc->time);
+					cs_log_dbg(D_CWC, "cyclecheck [Dump CheckedCW] Client: %s EA: %s CW: %s Time: %lld Timediff: %lld", user, er_ecmf, cwstr, (long long)now, (long long)now - cwc->time);
 					ret = 1; // bad cycle
 					upd_entry = 0;
 					if(cfg.cwcycle_allowbadfromffb)
@@ -455,7 +455,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uin
 						if(diff > -2 && diff < 2)    // if we got a stable cycletime we go to stage 1
 						{
 							cwc->cycletime = now - cwc->time;
-							cs_log_dbg(D_CWC, "cyclecheck [Set Stage 1] %s Cycletime: %i Lockdiff: %ld", cwc_ecmf, cwc->cycletime, now - cwc->locktime);
+							cs_log_dbg(D_CWC, "cyclecheck [Set Stage 1] %s Cycletime: %i Lockdiff: %lld", cwc_ecmf, cwc->cycletime, (long long)now - cwc->locktime);
 							cwc->stage++; // increase stage
 						}
 						else
@@ -470,7 +470,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uin
 						if(diff > -2 && diff < 2)    // if we got a stable cycletime we go to stage 2
 						{
 							cwc->cycletime = now - cwc->time;
-							cs_log_dbg(D_CWC, "cyclecheck [Set Stage 2] %s Cycletime: %i Lockdiff: %ld", cwc_ecmf, cwc->cycletime, now - cwc->locktime);
+							cs_log_dbg(D_CWC, "cyclecheck [Set Stage 2] %s Cycletime: %i Lockdiff: %lld", cwc_ecmf, cwc->cycletime, (long long)now - cwc->locktime);
 							cwc->stage++; // increase stage
 						}
 						else
@@ -498,7 +498,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uin
 							if(n == m || !checkECMD5CW(cw)) { cwc->nextcyclecw = 2; }  //be sure only one cw part cycle and is valid
 							if(cwc->nextcyclecw < 2)
 							{
-								cs_log_dbg(D_CWC, "cyclecheck [Set Stage 3] %s Cycletime: %i Lockdiff: %ld nextCycleCW = CW%i", cwc_ecmf, cwc->cycletime, now - cwc->locktime, cwc->nextcyclecw);
+								cs_log_dbg(D_CWC, "cyclecheck [Set Stage 3] %s Cycletime: %i Lockdiff: %lld nextCycleCW = CW%i", cwc_ecmf, cwc->cycletime, (long long)now - cwc->locktime, cwc->nextcyclecw);
 								cs_log_dbg(D_CWC, "cyclecheck [Set Cycletime %i] for Entry: %s -> now we can check CW's", cwc->cycletime, cwc_ecmf);
 								cwc->stage = 3; // increase stage
 							}
@@ -531,7 +531,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uin
 						if(n == m || !checkECMD5CW(cw)) { cwc->nextcyclecw = 2; }  //be sure only one cw part cycle and is valid
 						if(cwc->nextcyclecw < 2)
 						{
-							cs_log_dbg(D_CWC, "cyclecheck [Back to Stage 3] %s Cycletime: %i Lockdiff: %ld nextCycleCW = CW%i", cwc_ecmf, cwc->cycletime, now - cwc->locktime, cwc->nextcyclecw);
+							cs_log_dbg(D_CWC, "cyclecheck [Back to Stage 3] %s Cycletime: %i Lockdiff: %lld nextCycleCW = CW%i", cwc_ecmf, cwc->cycletime, (long long)now - cwc->locktime, cwc->nextcyclecw);
 							cs_log_dbg(D_CWC, "cyclecheck [Set old Cycletime %i] for Entry: %s -> now we can check CW's", cwc->cycletime, cwc_ecmf);
 							cwc->stage = 3; // go back to stage 3
 						}
@@ -541,7 +541,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uin
 							if (cwc->stage4_repeat > 12)
 							{
 								cwc->stage = 1;
-								cs_log_dbg(D_CWC, "cyclecheck [Back to Stage 1] too much cyclefailure, maybe cycletime not correct %s Cycletime: %i Lockdiff: %ld nextCycleCW = CW%i", cwc_ecmf, cwc->cycletime, now - cwc->locktime, cwc->nextcyclecw);
+								cs_log_dbg(D_CWC, "cyclecheck [Back to Stage 1] too much cyclefailure, maybe cycletime not correct %s Cycletime: %i Lockdiff: %lld nextCycleCW = CW%i", cwc_ecmf, cwc->cycletime, (long long)now - cwc->locktime, cwc->nextcyclecw);
 							}
 						}
 						cwc->stage4_repeat++;
@@ -560,7 +560,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uin
 				}
 				else if(cwc->stage != 3)
 				{
-					cs_log_dbg(D_CWC, "cyclecheck [Ignore this EA] for LearningStages because of locktime EA: %s Lockdiff: %ld", cwc_ecmf, now - cwc->locktime);
+					cs_log_dbg(D_CWC, "cyclecheck [Ignore this EA] for LearningStages because of locktime EA: %s Lockdiff: %lld", cwc_ecmf, (long long)now - cwc->locktime);
 					upd_entry = 0;
 				}
 
@@ -637,7 +637,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uin
 				//write unlock /
 				cs_writeunlock(__func__, &cwcycle_lock);
 
-				cs_log_dbg(D_CWC, "cyclecheck [Store New Entry] %s Time: %ld Stage: %i Cycletime: %i Locktime: %ld", er_ecmf, new->time, new->stage, new->cycletime, new->locktime);
+				cs_log_dbg(D_CWC, "cyclecheck [Store New Entry] %s Time: %lld Stage: %i Cycletime: %i Locktime: %lld", er_ecmf, (long long)new->time, new->stage, new->cycletime, (long long)new->locktime);
 			}
 		}
 		else
@@ -676,7 +676,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uin
 		cw_cc_list_size++;
 		//write unlock /
 		cs_writeunlock(__func__, &cwcycle_lock);
-		cs_log_dbg(D_CWC, "cyclecheck [Update Entry and add on top] %s Time: %ld Stage: %i Cycletime: %i", er_ecmf, cwc->time, cwc->stage, cwc->cycletime);
+		cs_log_dbg(D_CWC, "cyclecheck [Update Entry and add on top] %s Time: %lld Stage: %i Cycletime: %i", er_ecmf, (long long)cwc->time, cwc->stage, cwc->cycletime);
 	}
 	else if(cwc)
 	{

@@ -167,9 +167,9 @@ void load_stat_from_file(void)
 		}
 		else // Old format - keep for compatibility:
 		{
-			i = sscanf(line, "%255s rc %04d caid %04hX prid %06X srvid %04hX time avg %d ms ecms %d last %ld fail %d len %02hX\n",
+			i = sscanf(line, "%255s rc %04d caid %04hX prid %06X srvid %04hX time avg %d ms ecms %d last %lld fail %d len %02hX\n",
 					   buf, &s->rc, &s->caid, &s->prid, &s->srvid,
-					   &s->time_avg, &s->ecm_count, &s->last_received.time, &s->fail_factor, &s->ecmlen);
+					   &s->time_avg, &s->ecm_count, (long long *)&s->last_received.time, &s->fail_factor, &s->ecmlen);
 			valid = i > 5;
 		}
 
@@ -361,9 +361,9 @@ static void save_stat_to_file_thread(void)
 				//  s->srvid, s->time_avg, s->ecm_count, s->last_received, s->fail_factor, s->ecmlen);
 
 				//New version:
-				fprintf(file, "%s,%d,%04hX,%06X,%04hX,%04hX,%d,%d,%ld,%d,%02hX\n",
+				fprintf(file, "%s,%d,%04hX,%06X,%04hX,%04hX,%d,%d,%lld,%d,%02hX\n",
 						rdr->label, s->rc, s->caid, s->prid,
-						s->srvid, (uint16_t)s->chid, s->time_avg, s->ecm_count, s->last_received.time, s->fail_factor, s->ecmlen);
+						s->srvid, (uint16_t)s->chid, s->time_avg, s->ecm_count, (long long)s->last_received.time, s->fail_factor, s->ecmlen);
 
 				count++;
 				//if(count % 500 == 0) { // Saving stats is using too much cpu and causes high file load. so we need a break

@@ -79,7 +79,7 @@ void emm_save_cache(void)
 		uint8_t tmp_emm[c->len * 2 + 1];
 		char_to_hex(c->emm, c->len, tmp_emm);
 
-		result = fprintf(file, "%s,%ld,%ld,%02X,%04X,%s\n", tmp_emmd5, c->firstseen.time, c->lastseen.time, c->type, c->len, tmp_emm);
+		result = fprintf(file, "%s,%lld,%lld,%02X,%04X,%s\n", tmp_emmd5, (long long)c->firstseen.time, (long long)c->lastseen.time, c->type, c->len, tmp_emm);
 		if(result < 0)
 		{
 			fclose(file);
@@ -270,7 +270,7 @@ void save_emmstat_to_file(void)
 			{
 				uint8_t tmp_emmd5[MD5_DIGEST_LENGTH * 2 + 1];
 				char_to_hex(s->emmd5, MD5_DIGEST_LENGTH, tmp_emmd5);
-				result = fprintf(file, "%s,%s,%ld,%ld,%02X,%04X\n", rdr->label, tmp_emmd5, s->firstwritten.time, s->lastwritten.time, s->type, s->count);
+				result = fprintf(file, "%s,%s,%lld,%lld,%02X,%04X\n", rdr->label, tmp_emmd5, (long long)s->firstwritten.time, (long long)s->lastwritten.time, s->type, s->count);
 				if(result < 0)
 				{
 					cs_writeunlock(__func__, &rdr->emmstat_lock);

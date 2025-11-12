@@ -161,7 +161,7 @@ static void account_expdate_fn(const char *token, char *value, void *setting, FI
 	{
 		if(!value[0])
 		{
-			account->expirationdate = (time_t)NULL;
+			account->expirationdate = (time_t)0;
 			return;
 		}
 		int i;
