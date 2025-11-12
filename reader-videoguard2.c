@@ -1176,7 +1176,7 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 	AES_set_decrypt_key(dimeno_magic, 128, &(csystem_data->astrokey));
 
 	rdr_log(reader, "type: VideoGuard2 Card, caid: %04X", reader->caid);
-	rdr_log_sensitive(reader, "serial: {%02X%02X%02X%02X}, BoxID: {%02X%02X%02X%02X}, startdate basemonth: %i, startdate baseyear: %i, expiredate basemonth: %i, expiredate baseyear: %i",
+	rdr_log_sensitive(reader, "serial: {%02X%02X%02X%02X}, BoxID: {%02X%02X%02X%02X}, base tiers start date: %i/%i, base tiers expiration date: %i/%i",
 		reader->hexserial[2],
 		reader->hexserial[3],
 		reader->hexserial[4],

@@ -1,7 +1,41 @@
 				<TR><TH COLSPAN="2">Reader specific settings for Videoguard</TH></TR>
-				<TR><TD><A>Startdate basemonth:</A></TD><TD><input name="card_startdate_basemonth" class="withunit short" type="text" maxlength="10" value="##CARDSTARTDATEBASEMONTH##"></TD></TR>
+				<TR><TD><A>Startdate basemonth:</A></TD>
+					<TD>
+						<select name="card_startdate_basemonth">
+							<option value="1" ##CARDSTARTDATEBASEMONTH1##>1 - Jan</option>
+							<option value="2" ##CARDSTARTDATEBASEMONTH2##>2 - Feb</option>
+							<option value="3" ##CARDSTARTDATEBASEMONTH3##>3 - Mar</option>
+							<option value="4" ##CARDSTARTDATEBASEMONTH4##>4 - Apr</option>
+							<option value="5" ##CARDSTARTDATEBASEMONTH5##>5 - May</option>
+							<option value="6" ##CARDSTARTDATEBASEMONTH6##>6 - Jun</option>
+							<option value="7" ##CARDSTARTDATEBASEMONTH7##>7 - Jul</option>
+							<option value="8" ##CARDSTARTDATEBASEMONTH8##>8 - Aug</option>
+							<option value="9" ##CARDSTARTDATEBASEMONTH9##>9 - Sep</option>
+							<option value="10" ##CARDSTARTDATEBASEMONTH10##>10 - Oct</option>
+							<option value="11" ##CARDSTARTDATEBASEMONTH11##>11 - Nov</option>
+							<option value="12" ##CARDSTARTDATEBASEMONTH12##>12 - Dec</option>
+						</select>
+					</TD>
+				</TR>
 				<TR><TD><A>Startdate baseyear:</A></TD><TD><input name="card_startdate_baseyear" class="withunit short" type="text" maxlength="10" value="##CARDSTARTDATEBASEYEAR##"></TD></TR>
-				<TR><TD><A>Expiredate basemonth:</A></TD><TD><input name="card_expiredate_basemonth" class="withunit short" type="text" maxlength="10" value="##CARDEXPIREDATEBASEMONTH##"></TD></TR>
+				<TR><TD><A>Expiredate basemonth:</A></TD>
+					<TD>
+						<select name="card_expiredate_basemonth">
+							<option value="1" ##CARDEXPIREDATEBASEMONTH1##>1 - Jan</option>
+							<option value="2" ##CARDEXPIREDATEBASEMONTH2##>2 - Feb</option>
+							<option value="3" ##CARDEXPIREDATEBASEMONTH3##>3 - Mar</option>
+							<option value="4" ##CARDEXPIREDATEBASEMONTH4##>4 - Apr</option>
+							<option value="5" ##CARDEXPIREDATEBASEMONTH5##>5 - May</option>
+							<option value="6" ##CARDEXPIREDATEBASEMONTH6##>6 - Jun</option>
+							<option value="7" ##CARDEXPIREDATEBASEMONTH7##>7 - Jul</option>
+							<option value="8" ##CARDEXPIREDATEBASEMONTH8##>8 - Aug</option>
+							<option value="9" ##CARDEXPIREDATEBASEMONTH9##>9 - Sep</option>
+							<option value="10" ##CARDEXPIREDATEBASEMONTH10##>10 - Oct</option>
+							<option value="11" ##CARDEXPIREDATEBASEMONTH11##>11 - Nov</option>
+							<option value="12" ##CARDEXPIREDATEBASEMONTH12##>12 - Dec</option>
+						</select>
+					</TD>
+				</TR>
 				<TR><TD><A>Expiredate baseyear:</A></TD><TD><input name="card_expiredate_baseyear" class="withunit short" type="text" maxlength="10" value="##CARDEXPIREDATEBASEYEAR##"></TD></TR>
 				<TR><TD><A>Fix 9993 for CAID 0919:</A></TD><TD><input name="fix9993" type="hidden" value="0"><input name="fix9993" type="checkbox" value="1" ##FIX9993CHECKED##><label></label></TD></TR>
 				<TR><TD><A>Filter 0x07 for CAID 09C4, 098C:</A></TD><TD><input name="fix07" type="hidden" value="0"><input name="fix07" type="checkbox" value="1" ##FIX07CHECKED##><label></label></TD></TR>

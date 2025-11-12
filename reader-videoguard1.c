@@ -127,7 +127,7 @@ static int32_t videoguard1_card_init(struct s_reader *reader, ATR *newatr)
 		return ERROR;
 	}
 
-	rdr_log(reader, "type: VideoGuard1 Card, expiredate basemonth: %i, expiredate baseyear: %i", reader->card_expiredate_basemonth, reader->card_expiredate_baseyear);
+	rdr_log(reader, "type: VideoGuard1 Card, base tiers expiration date: %i/%i", reader->card_expiredate_basemonth, reader->card_expiredate_baseyear);
 	if(reader->ndsversion == NDS1)
 	{
 		rdr_log(reader, "forced to NDS1+");
