@@ -472,7 +472,7 @@ int main(void)
 	int r = lzo1x_1_compress(data, in_len, out, &out_len, wrkmem);
 	if(r == LZO_E_OK)
 	{
-		printf("GEN\tCompressed %lu template bytes into %lu bytes. %ld saved bytes (%.2f%%).\n",
+		printf("GEN\tCompressed %lu template bytes into %lu bytes. %" PRId64 " saved bytes (%.2f%%).\n",
 			   (unsigned long)in_len, (unsigned long)out_len,
 			   (long)in_len - (long)out_len, 100 - ((float)out_len / in_len) * 100);
 	}

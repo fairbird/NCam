@@ -386,7 +386,7 @@ static void write_versionfile(bool use_stdout)
 		struct tm st;
 		time_t walltime = cs_time();
 		localtime_r(&walltime, &st);
-		fprintf(fp, "Unix Starttime: %lld\n", (long long)walltime);
+		fprintf(fp, "Unix Starttime: %" PRId64 "\n", (int64_t)walltime);
 		fprintf(fp, "Starttime:      %02d.%02d.%04d %02d:%02d:%02d\n",
 				st.tm_mday, st.tm_mon + 1, st.tm_year + 1900,
 				st.tm_hour, st.tm_min, st.tm_sec);

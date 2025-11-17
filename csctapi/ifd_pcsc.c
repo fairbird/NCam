@@ -242,7 +242,7 @@ static int32_t pcsc_activate_card(struct s_reader *pcsc_reader, uint8_t *atr, ui
 	dwAtrLen = sizeof(pbAtr);
 	dwReaderLen = 0;
 
-	rdr_log_dbg(pcsc_reader, D_DEVICE, "PCSC resetting card in (%s) with handle %ld", crdr_data->pcsc_name, (long)(crdr_data->hCard));
+	rdr_log_dbg(pcsc_reader, D_DEVICE, "PCSC resetting card in (%s) with handle %" PRIuPTR, crdr_data->pcsc_name, (uintptr_t)crdr_data->hCard);
 	rv = SCardReconnect(crdr_data->hCard, SCARD_SHARE_EXCLUSIVE, SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1,  SCARD_RESET_CARD, &crdr_data->dwActiveProtocol);
 
 	if(rv != SCARD_S_SUCCESS)
@@ -339,7 +339,7 @@ static int32_t pcsc_check_card_inserted(struct s_reader *pcsc_reader)
 		{
 			// we have a card
 			crdr_data->pcsc_has_card = 1;
-			rdr_log(pcsc_reader, "PCSC was opened with handle: %ld", (long)crdr_data->hCard);
+			rdr_log(pcsc_reader, "PCSC was opened with handle: %" PRIuPTR, (uintptr_t)crdr_data->hCard);
 		}
 		else
 		{

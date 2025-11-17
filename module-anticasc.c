@@ -437,7 +437,7 @@ void insert_zaplist(ECM_REQUEST *er, struct s_client *client)
 		{
 			if(zaptime-zap_caid_weight*2 < client->client_zap_list[k].lasttime)
 			{
-				cs_log_dbg(D_TRACE, "[zaplist] update Entry [%i] for Client: %s  %04X@%06X/%04X/%04X TIME: %lld Diff: %lld zcw: %i(%i)", k, username(client), er->caid, er->prid, er->chid, er->srvid, (long long)zaptime, (long long)zaptime-client->client_zap_list[k].lasttime, zap_caid_weight, zap_caid_weight*2);
+				cs_log_dbg(D_TRACE, "[zaplist] update Entry [%i] for Client: %s  %04X@%06X/%04X/%04X TIME: %" PRId64 " Diff: %" PRId64 " zcw: %i(%i)", k, username(client), er->caid, er->prid, er->chid, er->srvid, (int64_t)zaptime, (int64_t)(zaptime - client->client_zap_list[k].lasttime), zap_caid_weight, zap_caid_weight*2);
 				client->client_zap_list[k].lasttime = zaptime;
 				if(client->client_zap_list[k].request_stage < 10)
 				{
@@ -461,7 +461,7 @@ void insert_zaplist(ECM_REQUEST *er, struct s_client *client)
 				client->client_zap_list[k].sid = er->srvid;
 				client->client_zap_list[k].request_stage = 1; //need for ACoSC
 				client->client_zap_list[k].lasttime = zaptime;
-				cs_log_dbg(D_TRACE, "[zaplist] new Entry [%i] for Client: %s  %04X@%06X/%04X/%04X TIME: %lld", k, username(client), er->caid, er->prid, er->chid, er->srvid, (long long)zaptime);
+				cs_log_dbg(D_TRACE, "[zaplist] new Entry [%i] for Client: %s  %04X@%06X/%04X/%04X TIME: %" PRId64, k, username(client), er->caid, er->prid, er->chid, er->srvid, (int64_t)zaptime);
 				new_zaplist_entry = true;
 				break;
 			}
