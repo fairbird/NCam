@@ -41,7 +41,7 @@ void init_stat(void)
 	//checking config
 	if(cfg.lb_nbest_readers < 2)
 		{ cfg.lb_nbest_readers = DEFAULT_NBEST; }
-	if(cfg.lb_nfb_readers < 2)
+	if(cfg.lb_nfb_readers < 0)
 		{ cfg.lb_nfb_readers = DEFAULT_NFB; }
 	if(cfg.lb_min_ecmcount < 2)
 		{ cfg.lb_min_ecmcount = DEFAULT_MIN_ECM_COUNT; }
@@ -779,7 +779,7 @@ static int32_t get_nfb_readers(ECM_REQUEST *er)
 {
 	int32_t nfb_readers = er->client->account->lb_nfb_readers == -1 ? cfg.lb_nfb_readers : er->client->account->lb_nfb_readers;
 
-	if(nfb_readers <= 0) { nfb_readers = 1; }
+	if(nfb_readers <= 0) { nfb_readers = 0; }
 
 	return nfb_readers;
 }
@@ -939,7 +939,7 @@ static void reset_avgtime_reader(READER_STAT *s, struct s_reader *rdr)
 /* force_reopen=1 -> force opening of block readers
  * force_reopen=0 -> no force opening of block readers, use reopen_seconds
  */
-static void try_open_blocked_readers(ECM_REQUEST *er, STAT_QUERY *q, int32_t *max_reopen, int32_t *force_reopen)
+static void try_open_blocked_readers(ECM_REQUEST *er, STAT_QUERY *q, int32_t *max_reopen, int32_t force_reopen)
 {
 	struct s_ecm_answer *ea;
 	READER_STAT *s;
@@ -958,7 +958,7 @@ static void try_open_blocked_readers(ECM_REQUEST *er, STAT_QUERY *q, int32_t *ma
 		}
 
 		// if force_reopen we must active the "valid" reader
-		if(s->rc != E_FOUND && (*force_reopen) && cfg.lb_force_reopen_always)
+		if(s->rc != E_FOUND && force_reopen && cfg.lb_force_reopen_always)
 		{
 			cs_log_dbg(D_LB, "loadbalancer: force opening reader %s and reset fail_factor! --> ACTIVE", rdr->label);
 			ea->status |= READER_ACTIVE;
@@ -1662,6 +1662,11 @@ void stat_get_best_reader(ECM_REQUEST *er)
 		cs_log_dbg(D_LB, "loadbalancer: NO VALID MATCHING READER FOUND!");
 		force_reopen = 1;
 	}
+	else if(reader_active == 1 && cfg.double_check && is_double_check_caid(er, &cfg.double_check_caid))
+	{
+		cs_log_dbg(D_LB, "loadbalancer: ONLY 1 READER MATCHES AND DOUBLECHECK IS ENABLED!");
+		force_reopen = 1;
+	}
 	else if(retrylimit)
 	{
 		/*
@@ -1706,7 +1711,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 	}
 
 	//try to reopen max_reopen blocked readers (readers with last ecm not "e_found"); if force_reopen=1, force reopen valid blocked readers!
-	try_open_blocked_readers(er, &q, &max_reopen, &force_reopen);
+	try_open_blocked_readers(er, &q, &max_reopen, force_reopen);
 
 	cs_log_dbg(D_LB, "loadbalancer: --------------------------------------------");
 

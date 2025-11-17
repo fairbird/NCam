@@ -730,7 +730,7 @@ static void add_cascade_data(struct s_client *client, ECM_REQUEST *er)
 	}
 }
 
-static int32_t is_double_check_caid(ECM_REQUEST *er, FTAB *double_check_caid)
+int32_t is_double_check_caid(ECM_REQUEST *er, FTAB *double_check_caid)
 {
 	if(!double_check_caid->nfilts) { return 1; }
 

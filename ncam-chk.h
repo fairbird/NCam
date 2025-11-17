@@ -47,4 +47,5 @@ bool chk_nopushafter(uint16_t caid, CAIDVALUETAB *cv, int32_t ecm_time);
 uint8_t chk_lg_only(ECM_REQUEST *er, FTAB *ftab);
 uint8_t chk_lg_only_cp(uint16_t caid, uint32_t prid, FTAB *lg_only_ftab);
 #endif
+int32_t is_double_check_caid(ECM_REQUEST *er, FTAB *double_check_caid);
 #endif
