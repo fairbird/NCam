@@ -1241,6 +1241,14 @@ struct emm_rass
 	uint8_t         emm[MAX_EMM_SIZE];
 };
 
+// Tiger EMM reassembly (3 fragments)
+struct tiger_emm_rass
+{
+	uint8_t			emm_fragments[3][512];
+	uint16_t		emm_frag_len[3];
+	uint8_t			emm_frag_mask;
+};
+
 struct s_client
 {
 	uint32_t        tid;
@@ -1272,6 +1280,7 @@ struct s_client
 	int8_t          autoau;
 	LLIST           *ra_buf;         // EMM reassembly buffer for viaccess
 	struct emm_rass *cw_rass;          // EMM reassembly buffer for cryptoworks
+	struct tiger_emm_rass	*tiger_rass;	// EMM reassembly buffer for Tiger
 	int8_t          monlvl;
 	CAIDTAB         ctab;
 	TUNTAB          ttab;
@@ -1727,8 +1736,23 @@ struct s_reader
 	uint8_t         rsa_mod_length;
 	uint8_t         des_key[128];                   // 3des key for Viaccess 16 bytes, des key for Dre 128 bytes
 	uint8_t         des_key_length;
-	uint8_t           atr[64];
-	uint8_t           card_atr[64];                   // ATR readed from card
+	uint8_t	    rsa_mod_tiger[96];			// rsa module for Tiger multi-fragment EMM (Tiger/NCMED cards).
+	uint8_t	    rsa_mod_tiger_length;
+	int8_t	    tiger_emm_reassembly;		// enable Tiger EMM reassembly
+	int8_t	    tiger_save_emm;			// 0=never save, 1=save only if changed (default), 2=save always
+	uint8_t	    tiger_round_keys[96];		// Tiger round keys (24 x uint32_t = 96 bytes)
+	uint8_t	    tiger_round_keys_length;
+	uint8_t	    tiger_t0[1024];			// Tiger lookup table T0 (256 x uint32_t = 1024 bytes)
+	uint16_t	    tiger_t0_length;
+	uint8_t	    tiger_t1[1024];			// Tiger lookup table T1 (256 x uint32_t = 1024 bytes)
+	uint16_t	    tiger_t1_length;
+	uint8_t	    tiger_t2[1024];			// Tiger lookup table T2 (256 x uint32_t = 1024 bytes)
+	uint16_t	    tiger_t2_length;
+	uint8_t	    tiger_t3[1024];			// Tiger lookup table T3 (256 x uint32_t = 1024 bytes)
+	uint16_t	    tiger_t3_length;
+	uint8_t	    cwpk_mod[16];				// cwpk module for conax cards.
+	uint8_t	    atr[64];
+	uint8_t	    card_atr[64];                   // ATR readed from card
 	int8_t          card_atr_length;                // length of ATR
 	int8_t          seca_nagra_card;                // seca nagra card
 	int32_t         atrlen;

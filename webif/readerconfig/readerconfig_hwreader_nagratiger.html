@@ -1,0 +1,32 @@
+		<script>
+			function toggleTigerRSA(checkbox) {
+				var rows = ['tiger_rsa_row', 'tiger_round_keys_row', 'tiger_t0_row', 'tiger_t1_row', 'tiger_t2_row', 'tiger_t3_row'];
+				rows.forEach(function(rowId) {
+					var row = document.getElementById(rowId);
+					if (row) {
+						row.style.display = checkbox.checked ? 'table-row' : 'none';
+					}
+				});
+			}
+			window.addEventListener('load', function() {
+				var checkbox = document.getElementById('tiger_emm_checkbox');
+				if (checkbox) {
+					toggleTigerRSA(checkbox);
+				}
+			});
+		</script>
+		<TR><TH COLSPAN="2">Reader specific settings for Nagra Tiger</TH></TR>
+		<TR><TD><A>Tiger EMM Reassembly:</A></TD><TD><input name="tiger_emm_reassembly" type="hidden" value="0"><input name="tiger_emm_reassembly" type="checkbox" value="1" id="tiger_emm_checkbox" ##TIGEREMMREASSEMBLY## onchange="toggleTigerRSA(this)"><label>Enable (to configure Tiger parameters)</label></TD></TR>
+		<TR><TD><A>Tiger Save EMM:</A></TD><TD>
+			<select name="tiger_save_emm">
+				<option value="0" ##TIGERSAVEEMMSEL0##>0 - Never save</option>
+				<option value="1" ##TIGERSAVEEMMSEL1##>1 - Save only when changed (recommended)</option>
+				<option value="2" ##TIGERSAVEEMMSEL2##>2 - Save always</option>
+			</select>
+		</TD></TR>
+		<TR id="tiger_rsa_row" style="display:none;"><TD><A>Tiger RSA Key:</A></TD><TD><textarea name="rsakey_tiger" rows="4" class="bt" maxlength="192">##RSAKEY_TIGER##</textarea><BR>Only for Tiger multi-fragment EMM (Nagra/Tiger cards)</TD></TR>
+		<TR id="tiger_round_keys_row" style="display:none;"><TD><A>Tiger Round Keys:</A></TD><TD><textarea name="tiger_round_keys" rows="4" class="bt" maxlength="192">##TIGER_ROUND_KEYS##</textarea><BR>24 round keys (96 bytes, 192 hex chars)</TD></TR>
+		<TR id="tiger_t0_row" style="display:none;"><TD><A>Tiger Table T0:</A></TD><TD><textarea name="tiger_t0" rows="4" class="bt" maxlength="2048">##TIGER_T0##</textarea><BR>Lookup table T0 (1024 bytes, 2048 hex chars)</TD></TR>
+		<TR id="tiger_t1_row" style="display:none;"><TD><A>Tiger Table T1:</A></TD><TD><textarea name="tiger_t1" rows="4" class="bt" maxlength="2048">##TIGER_T1##</textarea><BR>Lookup table T1 (1024 bytes, 2048 hex chars)</TD></TR>
+		<TR id="tiger_t2_row" style="display:none;"><TD><A>Tiger Table T2:</A></TD><TD><textarea name="tiger_t2" rows="4" class="bt" maxlength="2048">##TIGER_T2##</textarea><BR>Lookup table T2 (1024 bytes, 2048 hex chars)</TD></TR>
+		<TR id="tiger_t3_row" style="display:none;"><TD><A>Tiger Table T3:</A></TD><TD><textarea name="tiger_t3" rows="4" class="bt" maxlength="2048">##TIGER_T3##</textarea><BR>Lookup table T3 (1024 bytes, 2048 hex chars)</TD></TR>

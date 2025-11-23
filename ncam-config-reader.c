@@ -442,6 +442,222 @@ static void rsakey_fn(const char *token, char *value, void *setting, FILE *f)
 		{ fprintf_conf(f, "rsakey", "\n"); }
 }
 
+static void rsakey_tiger_fn(const char *token, char *value, void *setting, FILE *f)
+{
+	struct s_reader *rdr = setting;
+	if(value)
+	{
+		int32_t len = cs_strlen(value);
+		if(len != 192)  // 96 bytes * 2 hex chars
+		{
+			rdr->rsa_mod_tiger_length = 0;
+			memset(rdr->rsa_mod_tiger, 0, 96);
+		}
+		else
+		{
+			if(key_atob_l(value, rdr->rsa_mod_tiger, len))
+			{
+				fprintf(stderr, "reader rsakey_tiger parse error, %s=%s\n", token, value);
+				rdr->rsa_mod_tiger_length = 0;
+				memset(rdr->rsa_mod_tiger, 0, sizeof(rdr->rsa_mod_tiger));
+			}
+			else
+			{
+				rdr->rsa_mod_tiger_length = len/2;
+			}
+		}
+		return;
+	}
+	int32_t len = rdr->rsa_mod_tiger_length;
+	if(len > 0)
+	{
+		char tmp[len * 2 + 1];
+		fprintf_conf(f, "rsakey_tiger", "%s\n", cs_hexdump(0, rdr->rsa_mod_tiger, len, tmp, sizeof(tmp)));
+	}
+	else if(cfg.http_full_cfg)
+		{ fprintf_conf(f, "rsakey_tiger", "\n"); }
+}
+
+static void tiger_round_keys_fn(const char *token, char *value, void *setting, FILE *f)
+{
+	struct s_reader *rdr = setting;
+	if(value)
+	{
+		int32_t len = cs_strlen(value);
+		if(len != 192)  // 96 bytes * 2 hex chars
+		{
+			rdr->tiger_round_keys_length = 0;
+			memset(rdr->tiger_round_keys, 0, 96);
+		}
+		else
+		{
+			if(key_atob_l(value, rdr->tiger_round_keys, len))
+			{
+				fprintf(stderr, "reader tiger_round_keys parse error, %s=%s\n", token, value);
+				rdr->tiger_round_keys_length = 0;
+				memset(rdr->tiger_round_keys, 0, sizeof(rdr->tiger_round_keys));
+			}
+			else
+			{
+				rdr->tiger_round_keys_length = len/2;
+			}
+		}
+		return;
+	}
+	int32_t len = rdr->tiger_round_keys_length;
+	if(len > 0)
+	{
+		char tmp[len * 2 + 1];
+		fprintf_conf(f, "tiger_round_keys", "%s\n", cs_hexdump(0, rdr->tiger_round_keys, len, tmp, sizeof(tmp)));
+	}
+	else if(cfg.http_full_cfg)
+		{ fprintf_conf(f, "tiger_round_keys", "\n"); }
+}
+
+static void tiger_t0_fn(const char *token, char *value, void *setting, FILE *f)
+{
+	struct s_reader *rdr = setting;
+	if(value)
+	{
+		int32_t len = cs_strlen(value);
+		if(len != 2048)  // 1024 bytes * 2 hex chars
+		{
+			rdr->tiger_t0_length = 0;
+			memset(rdr->tiger_t0, 0, 1024);
+		}
+		else
+		{
+			if(key_atob_l(value, rdr->tiger_t0, len))
+			{
+				fprintf(stderr, "reader tiger_t0 parse error, %s=%s\n", token, value);
+				rdr->tiger_t0_length = 0;
+				memset(rdr->tiger_t0, 0, sizeof(rdr->tiger_t0));
+			}
+			else
+			{
+				rdr->tiger_t0_length = len/2;
+			}
+		}
+		return;
+	}
+	int32_t len = rdr->tiger_t0_length;
+	if(len > 0)
+	{
+		char tmp[len * 2 + 1];
+		fprintf_conf(f, "tiger_t0", "%s\n", cs_hexdump(0, rdr->tiger_t0, len, tmp, sizeof(tmp)));
+	}
+	else if(cfg.http_full_cfg)
+		{ fprintf_conf(f, "tiger_t0", "\n"); }
+}
+
+static void tiger_t1_fn(const char *token, char *value, void *setting, FILE *f)
+{
+	struct s_reader *rdr = setting;
+	if(value)
+	{
+		int32_t len = cs_strlen(value);
+		if(len != 2048)  // 1024 bytes * 2 hex chars
+		{
+			rdr->tiger_t1_length = 0;
+			memset(rdr->tiger_t1, 0, 1024);
+		}
+		else
+		{
+			if(key_atob_l(value, rdr->tiger_t1, len))
+			{
+				fprintf(stderr, "reader tiger_t1 parse error, %s=%s\n", token, value);
+				rdr->tiger_t1_length = 0;
+				memset(rdr->tiger_t1, 0, sizeof(rdr->tiger_t1));
+			}
+			else
+			{
+				rdr->tiger_t1_length = len/2;
+			}
+		}
+		return;
+	}
+	int32_t len = rdr->tiger_t1_length;
+	if(len > 0)
+	{
+		char tmp[len * 2 + 1];
+		fprintf_conf(f, "tiger_t1", "%s\n", cs_hexdump(0, rdr->tiger_t1, len, tmp, sizeof(tmp)));
+	}
+	else if(cfg.http_full_cfg)
+		{ fprintf_conf(f, "tiger_t1", "\n"); }
+}
+
+static void tiger_t2_fn(const char *token, char *value, void *setting, FILE *f)
+{
+	struct s_reader *rdr = setting;
+	if(value)
+	{
+		int32_t len = cs_strlen(value);
+		if(len != 2048)  // 1024 bytes * 2 hex chars
+		{
+			rdr->tiger_t2_length = 0;
+			memset(rdr->tiger_t2, 0, 1024);
+		}
+		else
+		{
+			if(key_atob_l(value, rdr->tiger_t2, len))
+			{
+				fprintf(stderr, "reader tiger_t2 parse error, %s=%s\n", token, value);
+				rdr->tiger_t2_length = 0;
+				memset(rdr->tiger_t2, 0, sizeof(rdr->tiger_t2));
+			}
+			else
+			{
+				rdr->tiger_t2_length = len/2;
+			}
+		}
+		return;
+	}
+	int32_t len = rdr->tiger_t2_length;
+	if(len > 0)
+	{
+		char tmp[len * 2 + 1];
+		fprintf_conf(f, "tiger_t2", "%s\n", cs_hexdump(0, rdr->tiger_t2, len, tmp, sizeof(tmp)));
+	}
+	else if(cfg.http_full_cfg)
+		{ fprintf_conf(f, "tiger_t2", "\n"); }
+}
+
+static void tiger_t3_fn(const char *token, char *value, void *setting, FILE *f)
+{
+	struct s_reader *rdr = setting;
+	if(value)
+	{
+		int32_t len = cs_strlen(value);
+		if(len != 2048)  // 1024 bytes * 2 hex chars
+		{
+			rdr->tiger_t3_length = 0;
+			memset(rdr->tiger_t3, 0, 1024);
+		}
+		else
+		{
+			if(key_atob_l(value, rdr->tiger_t3, len))
+			{
+				fprintf(stderr, "reader tiger_t3 parse error, %s=%s\n", token, value);
+				rdr->tiger_t3_length = 0;
+				memset(rdr->tiger_t3, 0, sizeof(rdr->tiger_t3));
+			}
+			else
+			{
+				rdr->tiger_t3_length = len/2;
+			}
+		}
+		return;
+	}
+	int32_t len = rdr->tiger_t3_length;
+	if(len > 0)
+	{
+		char tmp[len * 2 + 1];
+		fprintf_conf(f, "tiger_t3", "%s\n", cs_hexdump(0, rdr->tiger_t3, len, tmp, sizeof(tmp)));
+	}
+	else if(cfg.http_full_cfg)
+		{ fprintf_conf(f, "tiger_t3", "\n"); }
+}
+
 static void deskey_fn(const char *token, char *value, void *setting, FILE *f)
 {
 	struct s_reader *rdr = setting;
@@ -1402,6 +1618,14 @@ static const struct config_list reader_opts[] =
 #endif
 	DEF_OPT_FUNC("boxkey"                         , 0,                                    boxkey_fn),
 	DEF_OPT_FUNC("rsakey"                         , 0,                                    rsakey_fn),
+	DEF_OPT_FUNC("rsakey_tiger"                   , 0,                                    rsakey_tiger_fn),
+	DEF_OPT_INT8("tiger_emm_reassembly"           , OFS(tiger_emm_reassembly),            0),
+	DEF_OPT_INT8("tiger_save_emm"                 , OFS(tiger_save_emm),                  1),
+	DEF_OPT_FUNC("tiger_round_keys"               , 0,                                    tiger_round_keys_fn),
+	DEF_OPT_FUNC("tiger_t0"                       , 0,                                    tiger_t0_fn),
+	DEF_OPT_FUNC("tiger_t1"                       , 0,                                    tiger_t1_fn),
+	DEF_OPT_FUNC("tiger_t2"                       , 0,                                    tiger_t2_fn),
+	DEF_OPT_FUNC("tiger_t3"                       , 0,                                    tiger_t3_fn),
 	DEF_OPT_FUNC("deskey"                         , 0,                                    deskey_fn),
 #ifdef READER_NAGRA_MERLIN
 	DEF_OPT_FUNC("mod1"                           , 0,                                    mod1_fn),

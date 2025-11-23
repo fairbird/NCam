@@ -8,6 +8,17 @@
 #include "reader-nagra-common.h"
 #include "ncam-work.h"
 #include "ncam-chk.h"
+#include "ncam-config.h"
+
+struct tiger_cipher
+{
+	uint32_t round_keys[24];
+	uint32_t t0[256];
+	uint32_t t1[256];
+	uint32_t t2[256];
+	uint32_t t3[256];
+	int8_t initialized;
+};
 
 struct nagra_data
 {
@@ -25,6 +36,13 @@ struct nagra_data
 	uint8_t signature[8];
 	uint8_t ird_info;
 	uint8_t cam_state[3];
+
+	uint8_t rsa_mod_tiger[96];
+	uint8_t emm_fragments[3][512];
+	uint16_t emm_frag_len[3];
+	uint8_t emm_frag_mask;
+
+	struct tiger_cipher tiger;
 };
 
 // Card Status checks
@@ -189,6 +207,358 @@ static void Signature(uint8_t *sig, const uint8_t *vkey, const uint8_t *msg, int
 	}
 	memcpy(sig, b0f0, 8);
 	return;
+}
+
+static void nagra2_post_process(struct s_reader *reader);
+static void init_tiger_tables(struct s_reader *reader, struct nagra_data *csystem_data);
+
+static inline int32_t tiger_params_configured(struct s_reader *reader)
+{
+	return (reader->rsa_mod_tiger_length == 96 &&
+	    reader->tiger_round_keys_length == 96 &&
+	    reader->tiger_t0_length == 1024 &&
+	    reader->tiger_t1_length == 1024 &&
+	    reader->tiger_t2_length == 1024 &&
+	    reader->tiger_t3_length == 1024);
+}
+
+static inline uint32_t mask32(uint32_t val)
+{
+	return val & 0xFFFFFFFF;
+}
+
+static inline uint32_t tiger_sbox(uint32_t val, const uint32_t *t0,
+                                   const uint32_t *t1, const uint32_t *t2,
+                                   const uint32_t *t3)
+{
+	return t1[(val >> 0) & 0xFF] ^
+	    t0[(val >> 24) & 0xFF] ^
+	    t2[(val >> 16) & 0xFF] ^
+	    t3[(val >> 8) & 0xFF];
+}
+
+static inline uint32_t tiger_permute(uint32_t val, const uint32_t *t1,
+                                      const uint32_t *t2)
+{
+	return (t1[(val >> 24) & 0xFF] & 0xFF000000) ^
+	    (t2[(val >> 0) & 0xFF] & 0x000000FF) ^
+	    (t1[(val >> 16) & 0xFF] & 0x00FF0000) ^
+	    (t2[(val >> 8) & 0xFF] & 0x0000FF00);
+}
+
+static inline void u32_to_bytes_le(uint8_t *output, uint32_t value)
+{
+	int32_t i;
+	for(i = 0; i < 4; i++)
+	{
+		output[i] = (value >> (i * 8)) & 0xFF;
+	}
+}
+
+static inline void u32_to_bytes_be(uint8_t *output, uint32_t value)
+{
+	int32_t i;
+	for(i = 0; i < 4; i++)
+	{
+		output[i] = (value >> ((3 - i) * 8)) & 0xFF;
+	}
+}
+
+static inline void tiger_output_bytes(uint8_t *output, uint32_t uVar6, uint32_t uVar5)
+{
+	u32_to_bytes_be(output, uVar6);
+	u32_to_bytes_be(output + 4, uVar5);
+}
+
+static void tiger_descramble_block_ex(const uint8_t *input, uint8_t *output,
+                                         const uint32_t *round_keys,
+                                         const uint32_t *t0, const uint32_t *t1,
+                                         const uint32_t *t2, const uint32_t *t3)
+{
+	uint32_t uVar1, uVar5, uVar6;
+	int32_t i, k1, k2;
+
+	uVar1 = b2i(4, input);
+	uVar5 = b2i(4, input + 4);
+
+	uVar6 = mask32(uVar1 ^ uVar5 ^ round_keys[22]);
+
+	uVar6 = mask32(tiger_sbox(uVar6, t0, t1, t2, t3) ^ round_keys[23]);
+
+	uVar6 = mask32(round_keys[22] ^ tiger_permute(uVar6, t1, t2));
+
+	uVar1 = mask32(uVar1 ^ uVar6);
+	uVar5 = mask32(uVar5 ^ uVar6);
+
+	for(i = 10; i >= 0; i--)
+	{
+		k1 = i * 2;
+		k2 = i * 2 + 1;
+
+		uVar6 = uVar1 >> 16;
+		uVar6 = mask32(uVar6 | ((uVar1 ^ uVar6) << 16));
+
+		uVar1 = mask32(uVar5 ^ round_keys[k1] ^ uVar6);
+
+		uVar1 = mask32(tiger_sbox(uVar1, t0, t1, t2, t3) ^ round_keys[k2]);
+
+		uVar1 = mask32(round_keys[k1] ^ tiger_permute(uVar1, t1, t2));
+
+		uVar6 = mask32(uVar6 ^ uVar1);
+		uVar5 = mask32(uVar5 ^ uVar1);
+		uVar1 = uVar6;
+	}
+
+	tiger_output_bytes(output, uVar6, uVar5);
+}
+
+static void tiger_descramble_cbc_ex(const uint8_t *input, uint8_t *output, int32_t length,
+                                       const uint32_t *round_keys,
+                                       const uint32_t *t0, const uint32_t *t1,
+                                       const uint32_t *t2, const uint32_t *t3)
+{
+	uint8_t prev_cipher[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+	uint8_t cipher_block[8];
+	uint8_t decrypted_block[8];
+	int32_t i, j;
+
+	for(i = 0; i < length; i += 8)
+	{
+		memcpy(cipher_block, input + i, 8);
+		tiger_descramble_block_ex(cipher_block, decrypted_block, round_keys, t0, t1, t2, t3);
+
+		for(j = 0; j < 8; j++)
+		{
+			output[i + j] = decrypted_block[j] ^ prev_cipher[j];
+		}
+
+		memcpy(prev_cipher, cipher_block, 8);
+	}
+}
+
+static void sha1_nagra_cipher(uint32_t *H, const uint8_t *block, uint8_t *keystream)
+{
+	uint32_t w[80];
+	uint32_t a, b, c, d, e, f, k, temp;
+	int32_t i;
+
+	for(i = 0; i < 16; i++)
+	{
+		w[i] = b2i(4, block + i * 4);
+	}
+
+	for(i = 16; i < 80; i++)
+	{
+		temp = w[i - 3] ^ w[i - 8] ^ w[i - 14] ^ w[i - 16];
+		w[i] = ((temp << 1) | (temp >> 31)) & 0xFFFFFFFF;
+	}
+
+	a = H[0]; b = H[1]; c = H[2]; d = H[3]; e = H[4];
+
+	for(i = 0; i < 80; i++)
+	{
+		if(i <= 19)
+		{
+			f = (b & c) | ((~b) & d);
+			k = 0x5A827999;
+		}
+		else if(i <= 39)
+		{
+			f = b ^ c ^ d;
+			k = 0x6ED9EBA1;
+		}
+		else if(i <= 59)
+		{
+			f = (b & c) | (b & d) | (c & d);
+			k = 0x8F1BBCDC;
+		}
+		else
+		{
+			f = b ^ c ^ d;
+			k = 0xCA62C1D6;
+		}
+
+		temp = (((a << 5) | (a >> 27)) + f + e + k + w[i]) & 0xFFFFFFFF;
+		w[i] = temp;
+		e = d; d = c; c = ((b << 30) | (b >> 2)) & 0xFFFFFFFF; b = a; a = temp;
+	}
+
+	uint32_t hash_values[5] = {a, b, c, d, e};
+	for(i = 0; i < 5; i++)
+	{
+		H[i] = (H[i] + hash_values[i]) & 0xFFFFFFFF;
+	}
+
+	for(i = 0; i < 16; i++)
+	{
+		u32_to_bytes_le(keystream + i * 4, w[64 + i]);
+	}
+}
+
+static void decrypt_nagra_sha1(uint8_t *buffer, int32_t len)
+{
+	uint32_t H[5] = {0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0};
+	uint8_t keystream[64];
+	uint8_t keystream_prev[64];
+	uint8_t block[64];
+	uint8_t h_bytes[20];
+	int32_t offset = 0;
+	int32_t has_prev = 0;
+	int32_t i;
+
+	while(offset < len)
+	{
+		int32_t block_size = (len - offset) < 64 ? (len - offset) : 64;
+		memset(block, 0, 64);
+		memcpy(block, buffer + offset, block_size);
+
+		if(has_prev)
+		{
+			for(i = 0; i < block_size; i++)
+			{
+				block[i] ^= keystream_prev[i];
+			}
+			memcpy(buffer + offset, block, block_size);
+		}
+
+		sha1_nagra_cipher(H, block, keystream);
+
+		for(i = 0; i < 5; i++)
+		{
+			u32_to_bytes_le(h_bytes + i * 4, H[i]);
+		}
+
+		for(i = 0; i < 20; i++)
+		{
+			keystream[i] ^= h_bytes[i];
+		}
+
+		for(i = 20; i < 64; i++)
+		{
+			keystream[i] ^= h_bytes[16 + ((i - 20) % 4)];
+		}
+
+		memcpy(keystream_prev, keystream, 64);
+		has_prev = 1;
+		offset += 64;
+	}
+}
+
+static int32_t decrypt_payload_rsa_tiger(struct s_reader *reader, uint8_t *payload_enc, uint8_t *payload_out)
+{
+	if(reader->rsa_mod_tiger_length != 96)
+	{
+		rdr_log_dbg(reader, D_READER, "ERROR: Tiger RSA module not configured or wrong size (%d)",
+				reader->rsa_mod_tiger_length);
+		return ERROR;
+	}
+
+	if(!reader->rsa_mod_tiger[0] && !reader->rsa_mod_tiger[95])
+	{
+		rdr_log_dbg(reader, D_READER, "ERROR: Tiger RSA module is empty");
+		return ERROR;
+	}
+
+	uint8_t vFixed[] = {0, 1, 2, 3};
+	uint8_t plaintext_rsa[96];
+
+	BN_CTX *ctx = BN_CTX_new();
+#ifdef WITH_LIBCRYPTO
+	BN_CTX_start(ctx);
+#endif
+	BIGNUM *bnN = BN_CTX_get(ctx);
+	BIGNUM *bnE = BN_CTX_get(ctx);
+	BIGNUM *bnCT = BN_CTX_get(ctx);
+	BIGNUM *bnPT = BN_CTX_get(ctx);
+
+	BN_bin2bn(reader->rsa_mod_tiger, 96, bnN);
+	BN_bin2bn(vFixed + 3, 1, bnE);
+	BN_bin2bn(payload_enc, 96, bnCT);
+	BN_mod_exp(bnPT, bnCT, bnE, bnN, ctx);
+
+	memset(plaintext_rsa, 0, 96);
+	BN_bn2bin(bnPT, plaintext_rsa + (96 - BN_num_bytes(bnPT)));
+
+	BN_CTX_end(ctx);
+	BN_CTX_free(ctx);
+
+	memcpy(payload_out, plaintext_rsa + 20, 76);
+	memcpy(payload_out + 76, payload_enc + 96, 247);
+
+	rdr_log_dbg(reader, D_READER, "RSA Tiger decrypt: 96 bytes -> 76 plain + 247 encrypted");
+
+	return OK;
+}
+
+static void save_tiger_emm(struct s_reader *reader, EMM_PACKET *ep, uint8_t *emm_buffer)
+{
+	FILE *fp_log;
+	char token_log[256];
+	char filename[80];
+	char *tmp2;
+	uint8_t emm_complete[512];
+	int32_t emm_complete_len;
+
+	static uint8_t last_emm_cache[512];
+	static int32_t last_emm_len = 0;
+	static int first_run = 1;
+
+	uint8_t emm_header[] = {0x82, 0x70, 0x8E, 0x00, 0x00, 0x00, 0x00, 0x00};
+	memcpy(emm_complete, emm_header, sizeof(emm_header));
+	memcpy(emm_complete + 8, ep->emm + 8, 4);
+
+	memcpy(emm_complete + 12, emm_buffer + 99, 133);
+	emm_complete_len = 8 + 4 + 133;
+
+	// tiger_save_emm: 0=never save, 1=save only when changed (default), 2=save always
+	if(reader->tiger_save_emm == 0)
+	{
+		rdr_log_dbg(reader, D_READER, "Tiger EMM saving disabled");
+		return;
+	}
+	else if(reader->tiger_save_emm == 1)
+	{
+		if(!first_run && last_emm_len == emm_complete_len &&
+			memcmp(last_emm_cache, emm_complete, emm_complete_len) == 0)
+		{
+			rdr_log_dbg(reader, D_READER, "Tiger EMM unchanged, skipping write");
+			return;
+		}
+	}
+	// tiger_save_emm == 2: save always (no check needed)
+	snprintf(filename, sizeof(filename), "%s_stb_emm.log", reader->label);
+	if(!cfg.emmlogdir)
+	{
+		get_config_filename(token_log, sizeof(token_log), filename);
+	}
+	else
+	{
+		const char *slash = "/";
+		if(cfg.emmlogdir[cs_strlen(cfg.emmlogdir) - 1] == '/') { slash = ""; }
+		snprintf(token_log, sizeof(token_log), "%s%s%s", cfg.emmlogdir, slash, filename);
+	}
+
+	fp_log = fopen(token_log, "w");
+
+	if(!fp_log)
+	{
+		rdr_log(reader, "ERROR: Cannot open file '%s' (errno=%d: %s)", token_log, errno, strerror(errno));
+		return;
+	}
+
+	if(cs_malloc(&tmp2, emm_complete_len * 2 + 1))
+	{
+		fprintf(fp_log, "%s\n", cs_hexdump(0, emm_complete, emm_complete_len, tmp2, emm_complete_len * 2 + 1));
+		NULLFREE(tmp2);
+	}
+
+	fclose(fp_log);
+
+	memcpy(last_emm_cache, emm_complete, emm_complete_len);
+	last_emm_len = emm_complete_len;
+	first_run = 0;
+
+	rdr_log_dbg(reader, D_READER, "Tiger EMM (%d bytes) saved to: %s", emm_complete_len, token_log);
 }
 
 static int32_t CamStateRequest(struct s_reader *reader)
@@ -357,7 +727,7 @@ static int32_t NegotiateSessionKey_Tiger(struct s_reader *reader)
 		return OK;
 	}
 
-	rdr_log(reader, "Negotiate sessionkey was not successful! Please check tivusat rsa key");
+	rdr_log(reader, "Negotiate sessionkey was not successful! Please check tiger rsa key");
 	return ERROR;
 }
 
@@ -565,7 +935,7 @@ static void decryptDT08(struct s_reader *reader, uint8_t *cta_res)
 		rdr_log_dbg(reader, D_READER, "RSA Error in dt08 decrypt");
 	}
 	ReverseMem(static_dt08 + 1, 64);
-	BN_bin2bn(reader->rsa_mod, 64, bn_mod); // rsa modulus
+	BN_bin2bn(reader->rsa_mod, 64, bn_mod); // rsa module
 	BN_bin2bn(vFixed + 3, 1, bn_exp); // exponent
 	BN_bin2bn(static_dt08 + 1, 64, bn_data);
 	BN_mod_exp(bn_res, bn_data, bn_exp, bn_mod, ctx);
@@ -818,6 +1188,16 @@ static int32_t nagra2_card_init(struct s_reader *reader, ATR *newatr)
 
 		struct nagra_data *csystem_data = reader->csystem_data;
 		csystem_data->is_pure_nagra = is_pure_nagra;
+		csystem_data->tiger.initialized = 0;  // Not a Tiger card
+
+		memset(csystem_data->rsa_mod_tiger, 0, 96);
+		if(reader->rsa_mod_tiger_length == 96)
+		{
+			memcpy(csystem_data->rsa_mod_tiger, reader->rsa_mod_tiger, 96);
+		}
+		memset(csystem_data->emm_fragments, 0, sizeof(csystem_data->emm_fragments));
+		memset(csystem_data->emm_frag_len, 0, sizeof(csystem_data->emm_frag_len));
+		csystem_data->emm_frag_mask = 0;
 
 		if(!do_cmd(reader, 0x10, 0x02, 0x90, 0x11, 0, cta_res, &cta_lr))
 		{
@@ -895,6 +1275,30 @@ static int32_t nagra2_card_init(struct s_reader *reader, ATR *newatr)
 	csystem_data->is_pure_nagra = is_pure_nagra;
 	csystem_data->is_tiger = is_tiger;
 	csystem_data->is_n3_na = is_n3_na;
+	// Initialize Tiger RSA module
+	memset(csystem_data->rsa_mod_tiger, 0, 96);
+	if(reader->rsa_mod_tiger_length == 96)
+	{
+		memcpy(csystem_data->rsa_mod_tiger, reader->rsa_mod_tiger, 96);
+	}
+
+	// Initialize Tiger cipher tables from config (if all parameters present)
+	csystem_data->tiger.initialized = 0;
+	if(tiger_params_configured(reader))
+	{
+		rdr_log_dbg(reader, D_READER, "Initializing Tiger cipher tables from config...");
+		init_tiger_tables(reader, csystem_data);
+		csystem_data->tiger.initialized = 1;
+		rdr_log(reader, "Tiger EMM reassembly enabled (all parameters configured)");
+	}
+	else if(is_tiger)
+	{
+		rdr_log(reader, "Tiger EMM reassembly disabled: missing parameters (need RSA=96, RoundKeys=96, T0/T1/T2/T3=1024)");
+	}
+
+	memset(csystem_data->emm_fragments, 0, sizeof(csystem_data->emm_fragments));
+	memset(csystem_data->emm_frag_len, 0, sizeof(csystem_data->emm_frag_len));
+	csystem_data->emm_frag_mask = 0;
 
 	reader->nprov = 1;
 
@@ -1479,6 +1883,230 @@ static int32_t nagra2_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, str
 	return ERROR;
 }
 
+static void bytes_to_u32_array_be(const uint8_t *src, uint32_t *dst, int32_t count)
+{
+	int32_t i;
+	for(i = 0; i < count; i++)
+	{
+		dst[i] = (src[i*4] << 24) |
+		        (src[i*4+1] << 16) |
+		        (src[i*4+2] << 8) |
+		        (src[i*4+3]);
+	}
+}
+
+static void init_tiger_tables(struct s_reader *reader, struct nagra_data *csystem_data)
+{
+	if(reader->tiger_round_keys_length == 96)
+	{
+		bytes_to_u32_array_be(reader->tiger_round_keys, csystem_data->tiger.round_keys, 24);
+		rdr_log_dbg(reader, D_READER, "Tiger round_keys loaded: %d bytes -> %d uint32_t",
+		            reader->tiger_round_keys_length, 24);
+	}
+
+	if(reader->tiger_t0_length == 1024)
+	{
+		bytes_to_u32_array_be(reader->tiger_t0, csystem_data->tiger.t0, 256);
+		rdr_log_dbg(reader, D_READER, "Tiger T0 loaded: %d bytes",
+		            reader->tiger_t0_length);
+	}
+
+	if(reader->tiger_t1_length == 1024)
+	{
+		bytes_to_u32_array_be(reader->tiger_t1, csystem_data->tiger.t1, 256);
+		rdr_log_dbg(reader, D_READER, "Tiger T1 loaded: %d bytes",
+		            reader->tiger_t1_length);
+	}
+
+	if(reader->tiger_t2_length == 1024)
+	{
+		bytes_to_u32_array_be(reader->tiger_t2, csystem_data->tiger.t2, 256);
+		rdr_log_dbg(reader, D_READER, "Tiger T2 loaded: %d bytes",
+		            reader->tiger_t2_length);
+	}
+
+	if(reader->tiger_t3_length == 1024)
+	{
+		bytes_to_u32_array_be(reader->tiger_t3, csystem_data->tiger.t3, 256);
+		rdr_log_dbg(reader, D_READER, "Tiger T3 loaded: %d bytes",
+		            reader->tiger_t3_length);
+	}
+}
+
+static int32_t nagra_reassemble_emm(struct s_reader *reader, struct s_client *client, EMM_PACKET *ep)
+{
+	struct nagra_data *csystem_data = reader->csystem_data;
+
+	if(!csystem_data || !csystem_data->tiger.initialized)
+	{
+		return 1;
+	}
+
+	uint32_t *round_keys = csystem_data->tiger.round_keys;
+	uint32_t *t0 = csystem_data->tiger.t0;
+	uint32_t *t1 = csystem_data->tiger.t1;
+	uint32_t *t2 = csystem_data->tiger.t2;
+	uint32_t *t3 = csystem_data->tiger.t3;
+
+	if(!client->tiger_rass && !cs_malloc(&client->tiger_rass, sizeof(struct tiger_emm_rass)))
+	{
+		rdr_log(reader, "ERROR: Can't allocate Tiger EMM reassembly buffer");
+		return 0;
+	}
+
+	struct tiger_emm_rass *r_emm = client->tiger_rass;
+
+	if(ep->emmlen < 52)
+	{
+		rdr_log_dbg(reader, D_EMM, "EMM too short for Tiger fragment: %d bytes", ep->emmlen);
+		return 1;
+	}
+
+	uint8_t header_dec[8];
+	tiger_descramble_block_ex(&ep->emm[12], header_dec, round_keys, t0, t1, t2, t3);
+
+	char tmp_enc[8 * 3 + 1], tmp_dec[8 * 3 + 1];
+	rdr_log_dbg(reader, D_EMM, "Header check - enc: %s dec: %s",
+	        cs_hexdump(1, &ep->emm[12], 8, tmp_enc, sizeof(tmp_enc)),
+	        cs_hexdump(1, header_dec, 8, tmp_dec, sizeof(tmp_dec)));
+
+	if(header_dec[4] != 0xBD)
+	{
+		rdr_log_dbg(reader, D_EMM, "Not a Tiger fragment (marker=0x%02X, expected 0xBD)", header_dec[4]);
+		return 1;
+	}
+
+	uint8_t fragment_id = header_dec[5] & 0x3F;
+
+	if(fragment_id >= 3)
+	{
+		rdr_log_dbg(reader, D_EMM, "Invalid Tiger fragment ID: %d", fragment_id);
+		return 1;
+	}
+
+	uint16_t frag_len;
+	if(ep->emm[1] == 0x70)
+	{
+		frag_len = ep->emm[2] + 3;
+	}
+	else
+	{
+		frag_len = ep->emm[1] + 2;
+	}
+
+	if(frag_len > 512)
+	{
+		rdr_log_dbg(reader, D_EMM, "Fragment length capped from %d to 512 bytes", frag_len);
+		frag_len = 512;
+	}
+
+	memcpy(r_emm->emm_fragments[fragment_id], ep->emm, frag_len);
+	r_emm->emm_frag_len[fragment_id] = frag_len;
+	r_emm->emm_frag_mask |= (1 << fragment_id);
+
+	int32_t num_frags = 0;
+	if(r_emm->emm_frag_mask & 0x01) num_frags++;
+	if(r_emm->emm_frag_mask & 0x02) num_frags++;
+	if(r_emm->emm_frag_mask & 0x04) num_frags++;
+
+	rdr_log_dbg(reader, D_EMM, "Tiger EMM fragment #%d received (%d bytes) - Total: %d/3 fragments",
+	        fragment_id, frag_len, num_frags);
+
+	if(r_emm->emm_frag_mask != 0x07)
+	{
+		rdr_log_dbg(reader, D_EMM, "Waiting for more fragments (have %d/3)",
+		        num_frags);
+		return 0;
+	}
+
+	rdr_log_dbg(reader, D_EMM, "=== Tiger EMM reassembly START (all 3/3 fragments received) ===");
+	rdr_log_dbg(reader, D_EMM, "Fragment sizes: [#0]=%d [#1]=%d [#2]=%d bytes",
+	        r_emm->emm_frag_len[0],
+	        r_emm->emm_frag_len[1],
+	        r_emm->emm_frag_len[2]);
+
+	uint8_t buffer_full[1024];
+	uint8_t payload_clean[400];
+	uint8_t final_buffer[400];
+	int32_t buf_pos = 0;
+	int32_t i;
+
+	rdr_log_dbg(reader, D_EMM, "Step 1: Decrypting metadata from fragment 0");
+	uint8_t metadata0_dec[32];
+	tiger_descramble_cbc_ex(&r_emm->emm_fragments[0][20], metadata0_dec, 32, round_keys, t0, t1, t2, t3);
+	memcpy(buffer_full + buf_pos, metadata0_dec, 32);
+	buf_pos += 32;
+	rdr_log_dbg(reader, D_EMM, "  Metadata decrypted: 32 bytes at pos 0");
+
+	int32_t payload0_len = r_emm->emm_frag_len[0] - 52;
+	rdr_log_dbg(reader, D_EMM, "Step 2: Adding payload from fragment 0 (%d bytes)", payload0_len);
+	memcpy(buffer_full + buf_pos, &r_emm->emm_fragments[0][52], payload0_len);
+	buf_pos += payload0_len;
+
+	for(i = 1; i < 3; i++)
+	{
+		rdr_log_dbg(reader, D_EMM, "Step %d: Processing fragment %d", i + 2, i);
+		memcpy(buffer_full + buf_pos, &r_emm->emm_fragments[i][20], 32);
+		buf_pos += 32;
+		int32_t payload_len = r_emm->emm_frag_len[i] - 52;
+		memcpy(buffer_full + buf_pos, &r_emm->emm_fragments[i][52], payload_len);
+		buf_pos += payload_len;
+		rdr_log_dbg(reader, D_EMM, "  Fragment %d: 32 bytes metadata + %d bytes payload", i, payload_len);
+	}
+
+	rdr_log_dbg(reader, D_EMM, "Step 5: Total buffer assembled: %d bytes", buf_pos);
+
+	rdr_log_dbg(reader, D_EMM, "Step 6: RSA decryption (96 bytes -> 76+247 bytes)");
+	rdr_log_dbg(reader, D_EMM, "  RSA key length: %d, configured: %s",
+	        reader->rsa_mod_tiger_length,
+	        (reader->rsa_mod_tiger_length == 96) ? "YES" : "NO");
+
+	uint8_t *payload_enc = buffer_full + 32;
+	int32_t decrypt_result = decrypt_payload_rsa_tiger(reader, payload_enc, payload_clean);
+	rdr_log_dbg(reader, D_EMM, "  decrypt_payload_rsa_tiger returned: %d", decrypt_result);
+
+	if(!decrypt_result)
+	{
+		rdr_log(reader, "ERROR: RSA Tiger decrypt failed");
+		memset(r_emm, 0, sizeof(struct tiger_emm_rass));
+		return 0;
+	}
+	rdr_log_dbg(reader, D_EMM, "  RSA decrypt OK: 323 bytes output");
+
+	rdr_log_dbg(reader, D_EMM, "Step 7: Preparing final buffer (355 bytes)");
+	memcpy(final_buffer, buffer_full, 32);
+	memcpy(final_buffer + 32, payload_clean, 323);
+
+	rdr_log_dbg(reader, D_EMM, "Step 8: SHA1 Nagra decryption");
+	decrypt_nagra_sha1(final_buffer, 355);
+	rdr_log_dump_dbg(reader, D_EMM, final_buffer, 120, "Final buffer (first 120 bytes):");
+
+	uint8_t emm_ins = final_buffer[92];
+	uint8_t emm_len = final_buffer[93];
+	rdr_log_dbg(reader, D_EMM, "Step 9: EMM extracted - INS=0x%02X, LEN=%d", emm_ins, emm_len);
+
+	rdr_log_dbg(reader, D_EMM, "Step 10: Building reassembled EMM");
+	uint8_t emm_header[] = {0x82, 0x70, 0x8E, 0x00, 0x00, 0x00, 0x00, 0x00};
+	memcpy(ep->emm, emm_header, sizeof(emm_header));
+	ep->emm[8] = emm_ins;
+	ep->emm[9] = emm_len - 3;
+	memcpy(ep->emm + 10, reader->prid[0] + 2, 2);
+	memcpy(ep->emm + 12, final_buffer + 99, emm_len - 3);
+
+	ep->emmlen = 12 + (emm_len - 3);
+
+	rdr_log_dbg(reader, D_EMM, "Tiger EMM reassembled: %d bytes (INS=0x%02X)", ep->emmlen, emm_ins);
+	rdr_log_dump_dbg(reader, D_EMM, ep->emm, ep->emmlen, "Reassembled EMM:");
+	rdr_log_dbg(reader, D_EMM, "=== Tiger EMM reassembly END ===");
+
+	save_tiger_emm(reader, ep, final_buffer);
+
+	rdr_log_dbg(reader, D_EMM, "Step 11: Resetting fragment buffer");
+	memset(r_emm, 0, sizeof(struct tiger_emm_rass));
+
+	return 1;
+}
+
 static int32_t nagra2_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 {
 	def_resp;
@@ -1536,15 +2164,16 @@ static int32_t nagra2_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 
 const struct s_cardsystem reader_nagra =
 {
-	.desc           = "nagra",
-	.caids          = (uint16_t[]){ 0x18, 0 },
-	.do_emm         = nagra2_do_emm,
-	.do_ecm         = nagra2_do_ecm,
-	.post_process   = nagra2_post_process,
-	.card_info      = nagra2_card_info,
-	.card_init      = nagra2_card_init,
-	.get_emm_type   = nagra_get_emm_type,
-	.get_emm_filter = nagra_get_emm_filter,
+	.desc              = "nagra",
+	.caids             = (uint16_t[]){ 0x18, 0 },
+	.do_emm_reassembly = nagra_reassemble_emm,
+	.do_emm            = nagra2_do_emm,
+	.do_ecm            = nagra2_do_ecm,
+	.post_process      = nagra2_post_process,
+	.card_info         = nagra2_card_info,
+	.card_init         = nagra2_card_init,
+	.get_emm_type      = nagra_get_emm_type,
+	.get_emm_filter    = nagra_get_emm_filter,
 };
 
 #endif
