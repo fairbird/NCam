@@ -16,6 +16,7 @@
 #include "module-emulator-powervu.h"
 #include "module-emulator-viaccess.h"
 #include "module-emulator-tvcas.h"
+#include "module-emulator-ecmdb.h"
 #ifdef WITH_LIBCURL
 #include "ncam-files.h"
 int32_t pvu_bucket;
@@ -1072,9 +1073,27 @@ int8_t emu_process_ecm(struct s_reader *rdr, const ECM_REQUEST *er, uint8_t *cw,
 	else if (er->caid == 0x00FF)			result = omnicrypt_ecm(ecmCopy, cw); // temp caid
 	else if (caid_is_conax(er->caid))       result = conax_ecm(er->caid, ecmCopy, cw);
 
+// ECMDB fallback: only if primary method failed
 	if (result != 0)
 	{
-		cs_log("ECM failed: %s", get_error_reason(result));
+		cs_log_dbg(D_TRACE, "EMU failed (%s), trying ECMDB fallback", get_error_reason(result));
+
+		int8_t ecmdb_result = ecmdb_ecm(er->caid, er->srvid, er->ecm, cw);
+        
+		if (ecmdb_result == 0)
+		{
+			cs_log("ECMDB fallback: %04X@%04X OK", er->caid, er->srvid);
+			return 0;
+		}
+		else if (ecmdb_result != EMU_NOT_SUPPORTED && ecmdb_result != EMU_KEY_NOT_FOUND)
+		{
+			cs_log_dbg(D_TRACE, "ECMDB fallback error: %s", get_error_reason(ecmdb_result));
+		}
+	}
+
+	if (result != 0)
+	{
+		cs_log("ECMDB error: %s", get_error_reason(result));
 	}
 
 	return result;

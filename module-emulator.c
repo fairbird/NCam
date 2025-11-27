@@ -9,6 +9,7 @@
 #include "module-emulator-biss.h"
 #include "module-emulator-irdeto.h"
 #include "module-emulator-powervu.h"
+#include "module-emulator-ecmdb.h"
 #include "ncam-conf-chk.h"
 #include "ncam-config.h"
 #include "ncam-reader.h"
@@ -297,6 +298,12 @@ static int32_t emu_card_info(struct s_reader *rdr)
 	set_prids(rdr);
 
 	set_hexserial_to_version(rdr);
+	
+	int8_t ecmdb_init_result = ecmdb_init(rdr);
+	if (ecmdb_init_result == EMU_OK)
+	{
+		cs_log("ECMDB initialized successfully");
+	}
 
 	return CS_OK;
 }
@@ -798,6 +805,7 @@ static int32_t emu_close(struct s_reader *UNUSED(reader))
 	SAFE_MUTEX_LOCK(&emu_key_data_mutex);
 	emu_clear_keydata();
 	SAFE_MUTEX_UNLOCK(&emu_key_data_mutex);
+	ecmdb_cleanup();
 
 	return CR_OK;
 }
