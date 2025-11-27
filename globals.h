@@ -475,7 +475,6 @@ typedef uint8_t uint8_t;
 #define R_PCSC          0x8 // PCSC
 #define R_DRECAS        0x9 // Reader DRECAS
 #define R_EMU           0x17  // Reader EMU
-#define R_ECMBIN        0x19  // Reader ECMBIN
 /////////////////// proxy readers after R_CS378X
 #define R_CAMD35        0x20  // Reader cascading camd 3.5x
 #define R_CAMD33        0x21  // Reader cascading camd 3.3x
@@ -1625,10 +1624,10 @@ struct s_reader
 	FTAB            fallback_percaid;
 	FTAB            localcards;
 	FTAB            disablecrccws_only_for;         // ignore checksum for selected caid provid
-	char            *ecmcwlogdir;
-	uint8_t         record_ecm_start_byte;
-	uint8_t         record_ecm_end_byte;
-	uint8_t         enable_ecmcw_logging;
+	char            *ecm_log_dir;
+	uint8_t         ecm_range_start;
+	uint8_t         ecm_range_end;
+	uint8_t         ecm_log_enabled;
 #ifdef READER_CRYPTOWORKS
 	int8_t          needsglobalfirst;               // 0:Write one Global EMM for SHARED EMM disabled 1:Write one Global EMM for SHARED EMM enabled
 #endif
@@ -1995,11 +1994,8 @@ struct s_reader
 	FTAB            emu_auproviders;                // AU providers for Emu reader
 	int8_t          emu_datecodedenabled;           // date-coded keys for BISS
 	LLIST		*ll_biss2_rsa_keys;	        // BISS2 RSA keys - Read from external PEM files
-#endif
-#ifdef WITH_ECMBIN
-	uint8_t		ecm_start;
-	uint8_t		ecm_end;
-	char		*ecm_path;
+	uint8_t		ecmdb_mode;
+	char		*ecmdb_path;
 #endif
 	uint8_t         cnxlastecm;                     // == 0 - last ecm has not been paired ecm, > 0 last ecm has been paired ecm
 	LLIST           *emmstat;                       //emm stats

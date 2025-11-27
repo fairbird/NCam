@@ -162,17 +162,6 @@ static int32_t reader_get_cardsystem(struct s_reader *reader, ATR *atr)
 		return (reader->csystem_active);
 	}
 #endif
-#ifdef WITH_ECMBIN
-	if(reader->typ == R_ECMBIN)
-	{
-		NULLFREE(reader->csystem_data);
-		rdr_log(reader, "found card system %s", reader_ecmbin.desc);
-		reader->csystem = &reader_ecmbin;
-		reader->csystem_active = true;
-		led_status_found_cardsystem();
-		return (reader->csystem_active);
-	}
-#endif
 
 	for(i = 0; cardsystems[i]; i++)
 	{

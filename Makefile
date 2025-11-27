@@ -411,7 +411,6 @@ SRC-$(CONFIG_CS_CACHEEX) += module-cccam-cacheex.c
 SRC-$(CONFIG_MODULE_CCCAM) += module-cccam.c
 SRC-$(CONFIG_MODULE_CCCSHARE) += module-cccshare.c
 SRC-$(CONFIG_MODULE_CONSTCW) += module-constcw.c
-SRC-$(CONFIG_WITH_ECMBIN) += module-ecmbin.c
 SRC-$(CONFIG_WITH_EMU) += module-emulator.c
 SRC-$(CONFIG_WITH_EMU) += module-emulator-nemu.c
 SRC-$(CONFIG_WITH_EMU) += module-emulator-biss.c
@@ -423,6 +422,7 @@ SRC-$(CONFIG_WITH_EMU) += module-emulator-omnicrypt.c
 SRC-$(CONFIG_WITH_EMU) += module-emulator-powervu.c
 SRC-$(CONFIG_WITH_EMU) += module-emulator-viaccess.c
 SRC-$(CONFIG_WITH_EMU) += module-emulator-tvcas.c
+SRC-$(CONFIG_WITH_EMU) += module-emulator-ecmdb.c
 ifeq "$(CONFIG_WITH_EMU)" "y"
 ifeq "$(CONFIG_WITH_SOFTCAM)" "y"
 UNAME := $(shell uname -s)

@@ -296,7 +296,7 @@ int32_t ICC_Async_Activate(struct s_reader *reader, ATR *atr, uint16_t deprecate
 	{
 		reader->crdr_flush = crdr_ops->flush; // Flush flag may be changed for each reader
 		call(crdr_ops->activate(reader, atr));
-		if(reader->typ == R_EMU || reader->typ == R_ECMBIN)
+		if(reader->typ == R_EMU)
 		{
 			return OK;
 		}

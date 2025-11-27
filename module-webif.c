@@ -2409,7 +2409,7 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 		chk_reader("lb_whitelist_services", servicelabelslb, rdr);
 		chk_reader("lb_priority_services", servicelabelslbprio, rdr);
 
-		if(is_network_reader(rdr) || rdr->typ == R_EMU || rdr->typ == R_ECMBIN)    //physical readers make trouble if re-started
+		if(is_network_reader(rdr) || rdr->typ == R_EMU)    //physical readers make trouble if re-started
 		{
 			if(rdr)
 				{
@@ -3285,14 +3285,14 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 #endif
 
 	tpl_addVar(vars, TPLADD, "PROTOCOL", reader_get_type_desc(rdr, 0));
-	tpl_addVar(vars, TPLADD, "READER_ECMCWLOGDIR", rdr->ecmcwlogdir ? rdr->ecmcwlogdir : "");
+	tpl_addVar(vars, TPLADD, "READER_ECM_LOG_DIR", rdr->ecm_log_dir ? rdr->ecm_log_dir : "");
 	char buf[8];
-	snprintf(buf, sizeof(buf), "%d", rdr->record_ecm_start_byte);
-	tpl_addVar(vars, TPLADD, "READER_RECORD_ECM_START_BYTE", buf);
-	snprintf(buf, sizeof(buf), "%d", rdr->record_ecm_end_byte);
-	tpl_addVar(vars, TPLADD, "READER_RECORD_ECM_END_BYTE", buf);
-	tpl_addVar(vars, TPLADD, "ENABLE_ECMCW_LOGGING_CHECKED", 
-		(rdr->enable_ecmcw_logging) ? "checked=\"checked\"" : "");
+	snprintf(buf, sizeof(buf), "%d", rdr->ecm_range_start);
+	tpl_addVar(vars, TPLADD, "READER_ECM_RANGE_START", buf);
+	snprintf(buf, sizeof(buf), "%d", rdr->ecm_range_end);
+	tpl_addVar(vars, TPLADD, "READER_ECM_RANGE_END", buf);
+	tpl_addVar(vars, TPLADD, "ECM_LOG_ENABLED_CHECKED", 
+		(rdr->ecm_log_enabled) ? "checked=\"checked\"" : "");
 	tpl_addVar(vars, TPLADD, "ECMCW_LOGGING_TEMPLATE", tpl_getTpl(vars, "READERCONFIGECMCWLOGGING"));
 
 	// Show only parameters which needed for the reader
@@ -3316,15 +3316,22 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 		break;
 	case R_EMU :
 		tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGEMUBIT"));
-		break;
-	case R_ECMBIN :
-#if defined WITH_ECMBIN
-		tpl_printf(vars, TPLADD, "ECMSTART", "%d", rdr->ecm_start);
-		tpl_printf(vars, TPLADD, "ECMEND", "%d", rdr->ecm_end);
-		if (rdr->ecm_path) {
-			tpl_addVar(vars, TPLADD, "ECMPATH", rdr->ecm_path);
+#if defined WITH_EMU
+		if(!apicall)
+		{
+			tpl_addVar(vars, TPLADD, "ECMDBMODESEL0", (rdr->ecmdb_mode == 0) ? "selected" : "");
+			tpl_addVar(vars, TPLADD, "ECMDBMODESEL1", (rdr->ecmdb_mode == 1) ? "selected" : "");
 		}
-		tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGECMBIN"));
+		else
+		{
+			tpl_printf(vars, TPLADD, "ECMDBMODEVALUE", "%d", rdr->ecmdb_mode);
+		}
+    
+		if (rdr->ecmdb_path) {
+			tpl_addVar(vars, TPLADD, "ECMDBPATH", rdr->ecmdb_path);
+		}
+    
+		tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGECMDB"));
 		tpl_addVar(vars, TPLADD, "ECMCW_LOGGING_TEMPLATE", ""); // Hide ECM/CW Logging
 #endif
 		break;

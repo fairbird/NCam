@@ -1705,45 +1705,67 @@ void update_chid(ECM_REQUEST *er)
 
 }
 
+/**
+ * Logs ECM and CW pair to file
+ * Records a specified byte range from the ECM along with the control word
+ */
 #define PATH_MAX_LEN 512
 #define CW_LENGTH 16
 
-static void logECMCWtoFileByReader(struct s_reader *reader, ECM_REQUEST *er, uint8_t *cw) {
-    if (!reader || !er || !cw || !reader->ecmcwlogdir || 
-        !reader->enable_ecmcw_logging || reader->typ == R_ECMBIN)
+static void write_ecm_cw_log(struct s_reader *reader, ECM_REQUEST *er, uint8_t *cw) {
+    // Validation - check if logging is enabled and configured
+    if (!reader || !er || !cw || !reader->ecm_log_dir || 
+        !reader->ecm_log_enabled || reader->typ == R_EMU)
         return;
-
+    
     char dir[PATH_MAX_LEN], filepath[PATH_MAX_LEN];
-    int ret = snprintf(dir, sizeof(dir), "%s/%s[%d#%d]",
-                       reader->ecmcwlogdir, reader->label,
-                       reader->record_ecm_start_byte, reader->record_ecm_end_byte);
+    
+    // Get ECM byte range to log
+    uint8_t range_start = reader->ecm_range_start;
+    uint8_t range_end = reader->ecm_range_end;
+    
+    // Validate and adjust range boundaries
+    if (range_end > er->ecmlen) {
+        range_end = er->ecmlen;
+    }
+    
+    if (range_start >= range_end) {
+        // Invalid range: log entire ECM
+        range_start = 0;
+        range_end = er->ecmlen;
+    }
+    
+    // Create directory path: {base_dir}/{reader_label}
+    int ret = snprintf(dir, sizeof(dir), "%s/%s", reader->ecm_log_dir, reader->label);
     if (ret >= (int)sizeof(dir)) return;
-
+    
+    // Ensure directory exists
     struct stat st;
     if (stat(dir, &st) != 0 && mkdir(dir, 0755) != 0) return;
-
-    ret = snprintf(filepath, sizeof(filepath), "%s/%04X@%04X", dir, er->caid, er->srvid);
+    
+    // Create file path: {dir}/{CAID}@{SRVID}[start#end]
+    ret = snprintf(filepath, sizeof(filepath), "%s/%04X@%04X[%d#%d]", 
+                   dir, er->caid, er->srvid, range_start, range_end);
     if (ret >= (int)sizeof(filepath)) return;
 
+    // Open file in append mode
     FILE *file = fopen(filepath, "a");
     if (!file) return;
 
     flockfile(file);
 
-    uint8_t start = reader->record_ecm_start_byte;
-    uint8_t end = (reader->record_ecm_end_byte > er->ecmlen) ? er->ecmlen : reader->record_ecm_end_byte;
-    if (start >= end) start = 0;
-
-    for (uint8_t i = start; i < end; i++)
+    // Write ECM bytes in specified range
+    for (uint8_t i = range_start; i < range_end; i++)
         fprintf(file, "%02X", er->ecm[i]);
 
+    // Write separator
     fprintf(file, " #CW ");
 
+    // Write complete CW (16 bytes)
     for (int i = 0; i < CW_LENGTH; i++)
         fprintf(file, "%02X", cw[i]);
 
     fprintf(file, "\n");
-
     fflush(file);
     funlockfile(file);
     fclose(file);
@@ -2120,7 +2142,7 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 #endif
 		if(rc==E_FOUND && cw){
 		if(cfg.cwlogdir) logCWtoFile(er,cw);
-		if(reader && reader->enable_ecmcw_logging) logECMCWtoFileByReader(reader,er,cw);
+		if(reader && reader->ecm_log_enabled) write_ecm_cw_log(reader,er,cw);
 			reader->ecmsok++;
 #ifdef CS_CACHEEX_AIO
 			if(er->localgenerated)

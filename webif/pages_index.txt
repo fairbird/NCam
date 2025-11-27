@@ -210,7 +210,7 @@ READEREDITCACHEEXBIT          readerconfig/readerconfig_cacheexbit.html         
 READERCONFIGCAMD35BIT         readerconfig/readerconfig_camd35bit.html                    MODULE_CAMD35
 READERCONFIGCCCAMBIT          readerconfig/readerconfig_cccambit.html                     MODULE_CCCAM
 READERCONFIGEMUBIT            readerconfig/readerconfig_emubit.html                       WITH_EMU
-READERCONFIGECMBIN            readerconfig/readerconfig_ecmbin.html                       WITH_ECMBIN
+READERCONFIGECMDB             readerconfig/readerconfig_ecmdb.html                        WITH_EMU
 READERCONFIGECMCWLOGGING      readerconfig/readerconfig_ecmcw_logging.html
 READERCONFIGCS378XBIT         readerconfig/readerconfig_cs378xbit.html                    MODULE_CAMD35_TCP
 READERCONFIGGBOXBIT           readerconfig/readerconfig_gboxbit.html                      MODULE_GBOX
