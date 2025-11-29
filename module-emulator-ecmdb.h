@@ -18,7 +18,7 @@ typedef enum {
 
 // ECM entry (RAM mode only)
 typedef struct ecmdb_entry {
-    uint8_t *ecm_data;
+    size_t ecm_offset;
     uint8_t cw[ECMDB_CW_LEN];
     uint16_t ecm_len;
     uint32_t hash;            // xxHash32
