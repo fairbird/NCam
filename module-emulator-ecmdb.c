@@ -396,6 +396,40 @@ static int load_channel_ram(ecmdb_channel_t *ch, const char *filepath,
     return ch->entry_count > 0;
 }
 
+// DIRECT Mode - File Validation
+static int validate_channel_file(const char *filepath, uint8_t ecm_start, 
+                                  uint8_t ecm_end, uint32_t *valid_count,
+                                  uint32_t *invalid_count)
+{
+    FILE *fp = fopen(filepath, "r");
+    if (!fp) return 0;
+    
+    uint16_t expected_len = ecm_end - ecm_start;
+    char line[1024];
+    uint8_t ecm_buf[ECMDB_MAX_ECM_LEN], cw_buf[ECMDB_CW_LEN];
+    uint16_t ecm_len;
+    
+    *valid_count = 0;
+    *invalid_count = 0;
+    
+    while (fgets(line, sizeof(line), fp))
+    {
+        if (line[0] == '\n' || line[0] == '\r' || line[0] == '#')
+            continue;
+        
+        if (parse_ecm_line(line, ecm_buf, cw_buf, &ecm_len, expected_len))
+            (*valid_count)++;
+        else
+            (*invalid_count)++;
+    }
+    
+    secure_zero(ecm_buf, sizeof(ecm_buf));
+    secure_zero(cw_buf, sizeof(cw_buf));
+    fclose(fp);
+    
+    return (*valid_count > 0);
+}
+
 // ECM Search Functions
 static int search_ecm_direct(FILE *fp, const uint8_t *ecm_data, size_t ecm_len,
                              uint8_t *cw, uint16_t expected_len)
@@ -484,8 +518,28 @@ static int add_channel(const char *filepath, uint16_t caid, uint16_t srvid,
     }
     else
     {
-        cs_log("ECMDB: %04X@%04X [%d#%d] DIRECT mode", 
-               caid, srvid, ecm_start, ecm_end);
+        // Validate file in DIRECT mode
+        uint32_t valid_count, invalid_count;
+        
+        if (!validate_channel_file(filepath, ecm_start, ecm_end, 
+                                   &valid_count, &invalid_count))
+        {
+            cs_log("ECMDB: %04X@%04X [%d#%d] No valid entries found", 
+                   caid, srvid, ecm_start, ecm_end);
+            free(ch->filepath);
+            return 0;
+        }
+        
+        if (invalid_count > 0)
+        {
+            cs_log("ECMDB: Skipped %u invalid entries (wrong length) in %s", 
+                   invalid_count, filepath);
+        }
+        
+        ch->entry_count = valid_count;
+        
+        cs_log("ECMDB: %04X@%04X [%d#%d] %u entries (DIRECT mode)", 
+               caid, srvid, ecm_start, ecm_end, valid_count);
     }
     
     ecmdb->lookup_keys[ecmdb->channel_count] = make_lookup_key(caid, srvid);
