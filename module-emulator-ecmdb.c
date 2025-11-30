@@ -140,9 +140,9 @@ static int parse_channel_filename(const char *filename, uint16_t *caid,
     return sscanf(base, "%04hX@%04hX", caid, srvid) == 2;
 }
 
-// ECM Line Parser with Length Validation
+// ECM Line Parser - Modified to accept any valid length
 static int parse_ecm_line(const char *line, uint8_t *ecm, uint8_t *cw, 
-                          uint16_t *ecm_len, uint16_t expected_len)
+                          uint16_t *ecm_len)
 {
     while (*line == ' ' || *line == '\t') line++;
     
@@ -155,10 +155,7 @@ static int parse_ecm_line(const char *line, uint8_t *ecm, uint8_t *cw,
     
     *ecm_len = hex_len / 2;
     
-    // Validate ECM length matches filename specification
-    if (*ecm_len != expected_len)
-        return 0;
-    
+    // Only check maximum length
     if (*ecm_len > ECMDB_MAX_ECM_LEN)
         return 0;
     
@@ -277,7 +274,7 @@ static void cache_close_all(void)
     }
 }
 
-// RAM Mode - Channel Loading with Length Validation
+// RAM Mode - Channel Loading with offset-based storage
 static int load_channel_ram(ecmdb_channel_t *ch, const char *filepath,
                             uint8_t ecm_start, uint8_t ecm_end)
 {
@@ -312,6 +309,7 @@ static int load_channel_ram(ecmdb_channel_t *ch, const char *filepath,
     uint32_t *seen = malloc(50000 * sizeof(uint32_t));
     uint32_t seen_count = 0;
     uint32_t skipped_count = 0;
+    uint32_t length_mismatch = 0;
     
     if (!seen)
     {
@@ -326,10 +324,17 @@ static int load_channel_ram(ecmdb_channel_t *ch, const char *filepath,
         if (line[0] == '\n' || line[0] == '\r' || line[0] == '#')
             continue;
         
-        // Parse with strict length validation
-        if (!parse_ecm_line(line, ecm_buf, cw_buf, &ecm_len, expected_len))
+        // Parse line (accepts any valid length)
+        if (!parse_ecm_line(line, ecm_buf, cw_buf, &ecm_len))
         {
             skipped_count++;
+            continue;
+        }
+        
+        // Check if length matches filename specification
+        if (ecm_len != expected_len)
+        {
+            length_mismatch++;
             continue;
         }
         
@@ -360,12 +365,12 @@ static int load_channel_ram(ecmdb_channel_t *ch, const char *filepath,
             ch->pool_size = new_size;
         }
         
-        // Add entry
+        // Add entry using offset instead of pointer
         ecmdb_entry_t *entry = malloc(sizeof(ecmdb_entry_t));
         if (!entry) break;
         
-        entry->ecm_data = ch->data_pool + ch->pool_used;
-        memcpy(entry->ecm_data, ecm_buf, ecm_len);
+        entry->ecm_offset = ch->pool_used;
+        memcpy(ch->data_pool + ch->pool_used, ecm_buf, ecm_len);
         ch->pool_used += ecm_len;
         
         memcpy(entry->cw, cw_buf, ECMDB_CW_LEN);
@@ -389,11 +394,59 @@ static int load_channel_ram(ecmdb_channel_t *ch, const char *filepath,
     
     if (skipped_count > 0)
     {
-        cs_log("ECMDB: Skipped %u invalid entries (wrong length) in %s", 
+        cs_log("ECMDB: Skipped %u invalid entries in %s", 
                skipped_count, filepath);
     }
     
+    if (length_mismatch > 0)
+    {
+        cs_log("ECMDB: Skipped %u entries with wrong length (expected %u bytes) in %s", 
+               length_mismatch, expected_len, filepath);
+    }
+    
     return ch->entry_count > 0;
+}
+
+// DIRECT Mode - File Validation
+static int validate_channel_file(const char *filepath, uint8_t ecm_start, 
+                                  uint8_t ecm_end, uint32_t *valid_count,
+                                  uint32_t *invalid_count)
+{
+    FILE *fp = fopen(filepath, "r");
+    if (!fp) return 0;
+    
+    uint16_t expected_len = ecm_end - ecm_start;
+    char line[1024];
+    uint8_t ecm_buf[ECMDB_MAX_ECM_LEN], cw_buf[ECMDB_CW_LEN];
+    uint16_t ecm_len;
+    
+    *valid_count = 0;
+    *invalid_count = 0;
+    
+    while (fgets(line, sizeof(line), fp))
+    {
+        if (line[0] == '\n' || line[0] == '\r' || line[0] == '#')
+            continue;
+        
+        if (parse_ecm_line(line, ecm_buf, cw_buf, &ecm_len))
+        {
+            // Check if length matches filename specification
+            if (ecm_len == expected_len)
+                (*valid_count)++;
+            else
+                (*invalid_count)++;
+        }
+        else
+        {
+            (*invalid_count)++;
+        }
+    }
+    
+    secure_zero(ecm_buf, sizeof(ecm_buf));
+    secure_zero(cw_buf, sizeof(cw_buf));
+    fclose(fp);
+    
+    return (*valid_count > 0);
 }
 
 // ECM Search Functions
@@ -411,7 +464,11 @@ static int search_ecm_direct(FILE *fp, const uint8_t *ecm_data, size_t ecm_len,
         if (line[0] == '\n' || line[0] == '\r' || line[0] == '#')
             continue;
         
-        if (!parse_ecm_line(line, line_ecm, line_cw, &line_ecm_len, expected_len))
+        if (!parse_ecm_line(line, line_ecm, line_cw, &line_ecm_len))
+            continue;
+        
+        // Check length matches filename specification
+        if (line_ecm_len != expected_len)
             continue;
         
         if (line_ecm_len == ecm_len && 
@@ -441,7 +498,7 @@ static int search_ecm_ram(ecmdb_channel_t *ch, const uint8_t *ecm_data,
     {
         if (entry->hash == hash && 
             entry->ecm_len == ecm_len &&
-            memcmp(ecm_data, entry->ecm_data, ecm_len) == 0)
+            memcmp(ecm_data, ch->data_pool + entry->ecm_offset, ecm_len) == 0)
         {
             memcpy(cw, entry->cw, ECMDB_CW_LEN);
             return 1;
@@ -484,8 +541,28 @@ static int add_channel(const char *filepath, uint16_t caid, uint16_t srvid,
     }
     else
     {
-        cs_log("ECMDB: %04X@%04X [%d#%d] DIRECT mode", 
-               caid, srvid, ecm_start, ecm_end);
+        // Validate file in DIRECT mode
+        uint32_t valid_count, invalid_count;
+        
+        if (!validate_channel_file(filepath, ecm_start, ecm_end, 
+                                   &valid_count, &invalid_count))
+        {
+            cs_log("ECMDB: %04X@%04X [%d#%d] No valid entries found", 
+                   caid, srvid, ecm_start, ecm_end);
+            free(ch->filepath);
+            return 0;
+        }
+        
+        if (invalid_count > 0)
+        {
+            cs_log("ECMDB: Skipped %u entries with wrong length (expected %u bytes) in %s", 
+                   invalid_count, (ecm_end - ecm_start), filepath);
+        }
+        
+        ch->entry_count = valid_count;
+        
+        cs_log("ECMDB: %04X@%04X [%d#%d] %u entries (DIRECT mode)", 
+               caid, srvid, ecm_start, ecm_end, valid_count);
     }
     
     ecmdb->lookup_keys[ecmdb->channel_count] = make_lookup_key(caid, srvid);
