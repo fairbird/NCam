@@ -461,6 +461,7 @@ typedef struct demux_s
 	int8_t           decodingtries;                  // -1 = first run
 	struct timeb     decstart;
 	struct timeb     decend;
+	uint32_t         msgid;
 } DEMUXTYPE;
 
 typedef struct s_streampid

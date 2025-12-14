@@ -389,6 +389,7 @@ static uint32_t ca_descramblers_used = 0; // total number of used descramblers d
 static int32_t ca_fd[CA_MAX]; // holds fd handle of all ca devices (0 not in use)
 static LLIST *ll_activestreampids; // list of all enabled streampids on ca devices
 static int32_t assoc_fd[MAX_ASSOC_FD]; // list of all client sockets
+static uint8_t ca_soft_csa[MAX_DEMUX] = {0};
 
 bool is_dvbapi_usr(char *usr)
 {
@@ -2582,10 +2583,13 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, uint32_t idx, bool enable, bo
 
 								if(currentfd > 0)
 								{
-									if(dvbapi_ioctl(currentfd, CA_SET_PID, &ca_pid2) == -1)
+									if(!ca_soft_csa[demux_id])
 									{
-										cs_log_dbg(D_TRACE | D_DVBAPI,"CA_SET_PID ioctl error (errno=%d %s)", errno, strerror(errno));
-										remove_streampid_from_list(i, ca_pid2.pid, INDEX_DISABLE_ALL);
+										if(dvbapi_ioctl(currentfd, CA_SET_PID, &ca_pid2) == -1)
+										{
+											cs_log_dbg(D_TRACE | D_DVBAPI,"CA_SET_PID ioctl error (errno=%d %s)", errno, strerror(errno));
+											remove_streampid_from_list(i, ca_pid2.pid, INDEX_DISABLE_ALL);
+										}
 									}
 
 									uint32_t result = is_ca_used(i, 0); // check if in use by any pid
@@ -4855,6 +4859,7 @@ int32_t dvbapi_parse_capmt(const uint8_t *buffer, uint32_t length, int32_t connf
 			demux[demux_id].running = false;
 			demux[demux_id].sdt_filter = -1;
 			demux[demux_id].rdr = NULL;
+			demux[demux_id].msgid = msgid;
 
 			if(pmtfile)
 			{
@@ -5888,7 +5893,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uint8_t *buffer,
 		er->vpid = curpid->VPID;
 		er->ecmlen = sctlen;
 		memcpy(er->ecm, buffer, er->ecmlen);
-		er->msgid = msgid;
+		er->msgid = (msgid > 0) ? msgid : demux[demux_id].msgid;
 		chid = get_subid(er); // fetch chid or fake chid
 		uint32_t fixedprovid = chk_provid(er->ecm, er->caid);
 
@@ -6908,6 +6913,7 @@ static void *dvbapi_main_local(void *cli)
 					pfd2[0].fd = listenfd;
 					pfd2[0].events = (POLLIN | POLLPRI);
 					type[0] = 1;
+					client_proto_version[0] = 0;
 					cs_log("PMT mode 6: Successfully connected to CA PMT server (fd %d)", listenfd);
 				}
 			}
@@ -7420,6 +7426,16 @@ void dvbapi_write_cw(int32_t demux_id, int32_t pid, int32_t stream_id, uint8_t *
 	ca_descr_mode_t ca_descr_mode;
 	ca_descr_data_t ca_descr_data;
 
+	// determine if soft-mode CSA_ALT should be active on this demux
+	ca_soft_csa[demux_id] =
+		(
+			(algo == CW_ALGO_CSA_ALT) &&
+			(demux[demux_id].client_proto_version == 3)
+#ifdef WITH_EXTENDED_CW
+			&& (cfg.dvbapi_extended_cw_api >= 1)
+#endif
+		);
+
 	memset(null_cw, 0, cw_length);
 	memset(&ca_descr, 0, sizeof(ca_descr));
 	memset(&ca_descr_mode, 0, sizeof(ca_descr_mode));
@@ -7609,14 +7625,14 @@ void dvbapi_write_cw(int32_t demux_id, int32_t pid, int32_t stream_id, uint8_t *
 						demux_id, (n == 1 ? "even" : "odd"), newcw, lastcw);
 
 					cs_log_dbg(D_DVBAPI, "Demuxer %d write cw%d index: %d (ca%d)", demux_id, n, ca_descr.index, i);
-
+#ifdef WITH_EXTENDED_CW
 					if(cfg.dvbapi_extended_cw_api == 1) // Set descrambler algorithm and mode
 					{
 						ca_descr_mode.index = usedidx;
 						ca_descr_mode.algo = algo;
 						ca_descr_mode.cipher_mode = cipher_mode;
 
-						if(cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
+						if((cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX) || ca_soft_csa[demux_id])
 						{
 							dvbapi_net_send(DVBAPI_CA_SET_DESCR_MODE, demux[demux_id].socket_fd, msgid, demux_id, -1 /*unused*/,
 									(uint8_t *) &ca_descr_mode, NULL, NULL, demux[demux_id].client_proto_version);
@@ -7645,7 +7661,7 @@ void dvbapi_write_cw(int32_t demux_id, int32_t pid, int32_t stream_id, uint8_t *
 						ca_descr_data.data = iv;
 						ca_descr_data.length = iv_length;
 
-						if(cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
+						if((cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX) || ca_soft_csa[demux_id])
 						{
 							dvbapi_net_send(DVBAPI_CA_SET_DESCR_DATA, demux[demux_id].socket_fd, msgid, demux_id, -1 /*unused*/,
 									(uint8_t *) &ca_descr_data, NULL, NULL, demux[demux_id].client_proto_version);
@@ -7665,7 +7681,7 @@ void dvbapi_write_cw(int32_t demux_id, int32_t pid, int32_t stream_id, uint8_t *
 						ca_descr_data.length = cw_length;
 						ca_descr_data.parity = n;
 
-						if(cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
+						if((cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX) || ca_soft_csa[demux_id])
 						{
 							dvbapi_net_send(DVBAPI_CA_SET_DESCR_DATA, demux[demux_id].socket_fd, msgid, demux_id, -1 /*unused*/,
 									(uint8_t *) &ca_descr_data, NULL, NULL, demux[demux_id].client_proto_version);
@@ -7679,8 +7695,9 @@ void dvbapi_write_cw(int32_t demux_id, int32_t pid, int32_t stream_id, uint8_t *
 						}
 					}
 					else // Send 8 byte CW for DVB-CSA or DES
+#endif
 					{
-						if(cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
+						if ((cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX) || ca_soft_csa[demux_id])
 						{
 							dvbapi_net_send(DVBAPI_CA_SET_DESCR, demux[demux_id].socket_fd, msgid, demux_id, -1 /*unused*/,
 									(uint8_t *) &ca_descr, NULL, NULL, demux[demux_id].client_proto_version);
@@ -7724,6 +7741,15 @@ void delayer(ECM_REQUEST *er, uint32_t delay)
 		cs_sleepms(delay - gone);
 	}
 }
+
+#ifdef WITH_EXTENDED_CW
+bool select_csa_alt(ECM_REQUEST *er)
+{
+	return ( caid_is_videoguard(er->caid)
+			&& er->ecm[4] != 0
+			&& (er->ecm[2] - er->ecm[4]) == 4 );
+}
+#endif
 
 void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 {
@@ -8258,6 +8284,14 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 					{
 						dvbapi_write_cw(i, j, 0, er->cw_ex.session_word, 16, er->cw_ex.data, 16, er->cw_ex.algo, er->cw_ex.algo_mode, er->msgid);
 					}
+					else if(er->cw_ex.algo == CW_ALGO_CSA)
+					{
+						if(select_csa_alt(er))
+						{
+							er->cw_ex.algo = CW_ALGO_CSA_ALT;
+						}
+						dvbapi_write_cw(i, j, 0, er->cw, 8, NULL, 0, er->cw_ex.algo, er->cw_ex.algo_mode, er->msgid);
+					}
 					else
 					{
 						dvbapi_write_cw(i, j, 0, er->cw, 8, NULL, 0, er->cw_ex.algo, er->cw_ex.algo_mode, er->msgid);
@@ -8319,13 +8353,11 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 		// reset idle-Time
 		client->last = time((time_t *)0); // ********* TO BE FIXED LATER ON ******
 
-		if((cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX) && demux[i].client_proto_version >= 2)
+		if((cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX) || ca_soft_csa[i])
 		{
 			dvbapi_net_send(DVBAPI_ECM_INFO, demux[i].socket_fd, 0, i, 0, NULL, client, er, demux[i].client_proto_version);
 		}
-#ifndef __CYGWIN__
-		else if(!cfg.dvbapi_listenport && cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX)
-#endif
+
 		if(cfg.dvbapi_ecminfo_file != 0 && cfg.dvbapi_boxtype != BOXTYPE_SAMYGO)
 		{
 #ifdef WITH_EXTENDED_CW
