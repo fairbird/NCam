@@ -144,8 +144,9 @@ static bool use_srvid2 = false;
 #define MNU_CFG_CCCAMCFG    30
 #define MNU_CFG_FSOFTCAMKEY 31
 #define MNU_CFG_FS          32
+#define MNU_CFG_TASK        33
 
-#define MNU_CFG_TOTAL_ITEMS 33 // sum of items above. Use it for "All inactive" in function calls too.
+#define MNU_CFG_TOTAL_ITEMS 34 // sum of items above. Use it for "All inactive" in function calls too.
 
 static void set_status_info_var(struct templatevars *vars, char *varname, int no_data, char *fmt, double value)
 {
@@ -767,6 +768,7 @@ static char *send_ncam_config_global(struct templatevars *vars, struct uriparams
 	if(cfg.cccam_cfg_reconnect_attempts)
 		{ tpl_printf(vars, TPLADD, "CCCAM_CFG_RECONNECT_ATTEMPTS", "%d", cfg.cccam_cfg_reconnect_attempts); }
 #endif
+	if(cfg.task_enabled == 1)  { tpl_addVar(vars, TPLADD, "TASKENABLEDCHECKED", "checked"); }
 
 	return tpl_getTpl(vars, "CONFIGGLOBAL");
 }
@@ -7479,7 +7481,8 @@ static char *send_ncam_files(struct templatevars * vars, struct uriparams * para
 #ifdef WITH_EMU
 		{ "SoftCam.Key",     MNU_CFG_FSOFTCAMKEY,FTYPE_CONFIG },  // id 31
 #endif
-		{ "ncam.fs" ,       MNU_CFG_FS,  FTYPE_CONFIG },          // id 32
+		{ "ncam.fs" ,        MNU_CFG_FS,  FTYPE_CONFIG },         // id 32
+		{ "task.cfg" ,       MNU_CFG_TASK,  FTYPE_CONFIG },       // id 33
 		{ NULL, 0, 0 },
 	};
 
@@ -7672,6 +7675,9 @@ static char *send_ncam_files(struct templatevars * vars, struct uriparams * para
 
 	if(open_config_file("ncam.fs"))
 		{ tpl_addVar(vars, TPLADD, "VIEW_FILEMENUFS", tpl_getTpl(vars, "FILEMENUFS")); }
+	
+	if(cfg.task_enabled)
+		{ tpl_addVar(vars, TPLADD, "VIEW_FILEMENUTASK", tpl_getTpl(vars, "FILEMENUTASK")); }
 
 	if(!apicall)
 		{ return tpl_getTpl(vars, "FILE"); }

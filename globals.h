@@ -2642,6 +2642,7 @@ struct s_config
 	int8_t          cccam_cfg_reconnect_attempts;
 	int8_t          cccam_cfg_inactivity;
 	int8_t          cccam_cfg_fallback;
+	int8_t          task_enabled;
 };
 
 struct s_clientinit

@@ -41,6 +41,7 @@
 #include "ncam-work.h"
 #include "reader-common.h"
 #include "module-gbox.h"
+#include "ncam-sched.h"
 
 #ifdef WITH_EMU
 	void add_emu_reader(void);
@@ -2007,6 +2008,8 @@ int32_t main(int32_t argc, char *argv[])
 
 	start_thread("card poll", (void *) &card_poll, NULL, NULL, 1, 1);
 
+	ncam_sched_init();
+
 	for(i = 0; i < CS_MAX_MOD; i++)
 	{
 		struct s_module *module = &modules[i];
@@ -2087,6 +2090,7 @@ int32_t main(int32_t argc, char *argv[])
 	free_irdeto_guess_tab();
 	config_free();
 	ssl_done();
+	ncam_sched_shutdown();
 
 	detect_valgrind();
 	if (!running_under_valgrind)
