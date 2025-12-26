@@ -480,6 +480,7 @@ SRC-$(CONFIG_WITH_LB) += module-stat.c
 SRC-$(CONFIG_WEBIF) += module-webif-lib.c
 SRC-$(CONFIG_WEBIF) += module-webif-tpl.c
 SRC-$(CONFIG_WEBIF) += module-webif.c
+SRC-$(CONFIG_WEBIF) += ncam-sched.c
 SRC-$(CONFIG_WEBIF) += webif/pages.c
 SRC-$(CONFIG_WITH_CARDREADER) += reader-common.c
 SRC-$(CONFIG_READER_BULCRYPT) += reader-bulcrypt.c
