@@ -79,9 +79,8 @@ static void account_allowedprotocols_fn(const char *token, char *value, void *se
 		account->allowedprotocols = 0;
 		if(cs_strlen(value) > 3)
 		{
-			int i;
 			char *ptr, *saveptr1 = NULL;
-			for(i = 0, ptr = strtok_r(value, ",", &saveptr1); ptr; ptr = strtok_r(NULL, ",", &saveptr1), i++)
+			for(ptr = strtok_r(value, ",", &saveptr1); ptr; ptr = strtok_r(NULL, ",", &saveptr1))
 			{
 				if(streq(ptr, "camd33"))        { account->allowedprotocols |= LIS_CAMD33TCP; }
 				else if(streq(ptr, "camd35"))   { account->allowedprotocols |= LIS_CAMD35UDP; }

@@ -103,8 +103,7 @@ void chk_cacheex_valuetab(char *lbrlt, CECSPVALUETAB *tab)
 	char *ptr = NULL, *saveptr1 = NULL;
 	cecspvaluetab_clear(tab);
 
-	int32_t i;
-	for(i = 0, ptr = strtok_r(lbrlt, ",", &saveptr1); (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++)
+	for(ptr = strtok_r(lbrlt, ",", &saveptr1); (ptr); ptr = strtok_r(NULL, ",", &saveptr1))
 	{
 		CECSPVALUETAB_DATA d;
 		memset(&d, 0, sizeof(d));
@@ -268,11 +267,10 @@ void chk_cacheex_hitvaluetab(char *lbrlt, CECSPVALUETAB *tab)
 
 void chk_tuntab(char *tunasc, TUNTAB *ttab)
 {
-	int32_t i;
 	tuntab_clear(ttab);
 	errno = 0;
 	char *caid_ptr, *savecaid_ptr = NULL;
-	for(i = 0, caid_ptr = strtok_r(tunasc, ",", &savecaid_ptr); (caid_ptr); caid_ptr = strtok_r(NULL, ",", &savecaid_ptr), i++)
+	for(caid_ptr = strtok_r(tunasc, ",", &savecaid_ptr); (caid_ptr); caid_ptr = strtok_r(NULL, ",", &savecaid_ptr))
 	{
 		TUNTAB_DATA d;
 		char *srvid_ptr  = strchr(trim(caid_ptr), '.');

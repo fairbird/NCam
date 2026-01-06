@@ -125,7 +125,9 @@ void load_stat_from_file(void)
 
 	int32_t i = 1;
 	int32_t valid = 0;
+#ifdef WITH_DEBUG
 	int32_t count = 0;
+#endif
 	int32_t type = 0;
 	char *ptr, *saveptr1 = NULL;
 	char *split[12];
@@ -196,7 +198,9 @@ void load_stat_from_file(void)
 				}
 
 				ll_append(rdr->lb_stat, s);
+#ifdef WITH_DEBUG
 				count++;
+#endif
 			}
 			else
 			{
