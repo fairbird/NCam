@@ -362,6 +362,7 @@ list_config() {
 	have_flag USE_COOLAPI2 && echo "CONFIG_WITH_COOLAPI2=y" || echo "# CONFIG_WITH_COOLAPI2=n"
 	have_flag USE_SU980 && echo "CONFIG_WITH_SU980=y" || echo "# CONFIG_WITH_SU980=n"
 	have_flag USE_AZBOX && echo "CONFIG_WITH_AZBOX=y" || echo "# CONFIG_WITH_AZBOX=n"
+	have_flag USE_AMSMC && echo "CONFIG_WITH_AMSMC=y" || echo "# CONFIG_WITH_AMSMC=n"
 	have_flag USE_MCA && echo "CONFIG_WITH_MCA=y" || echo "# CONFIG_WITH_MCA=n"
 	have_flag USE_LIBCRYPTO && echo "CONFIG_WITH_LIBCRYPTO=y" || echo "# CONFIG_WITH_LIBCRYPTO=n"
 	for OPT in $addons $protocols WITH_CARDREADER $readers
@@ -376,7 +377,8 @@ list_config() {
 			enabled $OPT && have_flag USE_AZBOX && echo "CONFIG_${OPT}_AZBOX=y" || echo "# CONFIG_${OPT}_AZBOX=n"
 			enabled $OPT && have_any_flags USE_COOLAPI USE_SU980 && echo "CONFIG_${OPT}_COOLAPI=y" || echo "# CONFIG_${OPT}_COOLAPI=n"
 			enabled $OPT && have_flag USE_COOLAPI2 && echo "CONFIG_${OPT}_COOLAPI2=y" || echo "# CONFIG_${OPT}_COOLAPI2=n"
-			enabled $OPT && not_have_all_flags USE_AZBOX USE_COOLAPI USE_COOLAPI2 USE_SU980 && echo "CONFIG_${OPT}_SCI=y" || echo "# CONFIG_${OPT}_SCI=n"
+			enabled $OPT && have_flag USE_AMSMC && echo "CONFIG_${OPT}_AMSMC=y" || echo "# CONFIG_${OPT}_AMSMC=n"
+			enabled $OPT && not_have_all_flags USE_AZBOX USE_COOLAPI USE_COOLAPI2 USE_SU980 USE_AMSMC && echo "CONFIG_${OPT}_SCI=y" || echo "# CONFIG_${OPT}_SCI=n"
 			continue
 		fi
 		if [ $OPT = CARDREADER_STAPI ]

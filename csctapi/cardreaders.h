@@ -5,6 +5,7 @@ extern const struct s_cardreader cardreader_db2com;
 extern const struct s_cardreader cardreader_internal_sci;
 extern const struct s_cardreader cardreader_internal_cool;
 extern const struct s_cardreader cardreader_internal_azbox;
+extern const struct s_cardreader cardreader_internal_amsmc;
 extern const struct s_cardreader cardreader_mp35;
 extern const struct s_cardreader cardreader_mouse;
 extern const struct s_cardreader cardreader_pcsc;

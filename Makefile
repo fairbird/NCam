@@ -284,6 +284,7 @@ $(eval $(call prepare_use_flags,COOLAPI2,coolapi2))
 $(eval $(call prepare_use_flags,GXAPI,gxapi))
 $(eval $(call prepare_use_flags,SU980,su980))
 $(eval $(call prepare_use_flags,AZBOX,azbox))
+$(eval $(call prepare_use_flags,AMSMC,amsmc))
 $(eval $(call prepare_use_flags,MCA,mca))
 $(eval $(call prepare_use_flags,SSL,ssl))
 $(eval $(call prepare_use_flags,LIBCRYPTO,))
@@ -398,6 +399,7 @@ SRC-$(CONFIG_CARDREADER_SMART) += csctapi/ifd_smartreader.c
 SRC-$(CONFIG_CARDREADER_STINGER) += csctapi/ifd_stinger.c
 SRC-$(CONFIG_CARDREADER_STAPI) += csctapi/ifd_stapi.c
 SRC-$(CONFIG_CARDREADER_STAPI5) += csctapi/ifd_stapi.c
+SRC-$(CONFIG_CARDREADER_INTERNAL_AMSMC) += csctapi/ifd_amsmc.c
 SRC-$(CONFIG_CARDREADER_GXAPI) += csctapi/ifd_gx.c
 
 SRC-$(CONFIG_LIB_MINILZO) += minilzo/minilzo.c
@@ -842,6 +844,11 @@ NCam build system documentation\n\
                      extapi/goceed/liboscam_gxapi.a library that is shipped\n\
                      with NCam is compiled for gxapi.\n\
 \n\
+   USE_AMSMC=1     - Request support for Amlogic SMC internal smartcard reader.\n\
+                     Using USE_AMSMC=1 adds '-amsmc' to PLUS_TARGET.\n\
+                     This enables support for the internal smartcard slot\n\
+                     on set-top boxes using the Amlogic SMC driver (/dev/smc0).\n\
+\n\
    USE_MCA=1      - Request support for Matrix Cam Air (MCA).\n\
                     The variables that control the build are:\n\
                          MCA_FLAGS='$(DEFAULT_MCA_FLAGS)'\n\
@@ -990,6 +997,8 @@ NCam build system documentation\n\
      make CROSS=arm-pnx8400-linux-uclibcgnueabi- USE_COOLAPI2=1\n\n\
    Build NCam for MIPSEL with AZBOX support:\n\
      make CROSS=mipsel-linux-uclibc- USE_AZBOX=1\n\n\
+   Build NCam for ARM with Amlogic SMC internal reader support:\n\
+     make CROSS=aarch64-linux-gnu- USE_AMSMC=1\n\n\
    Build NCam for GX with GXAPI support:\n\
      make CROSS=csky-linux- USE_GXAPI=1\n\n\
    Build NCam for ARM with MCA support:\n\

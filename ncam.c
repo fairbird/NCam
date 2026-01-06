@@ -543,6 +543,7 @@ static void write_versionfile(bool use_stdout)
 #elif defined(CARDREADER_INTERNAL_SCI) || defined(HAVE_DVBAPI)
 		write_cardreaderconf(CARDREADER_INTERNAL_SCI, "Internal sci");
 #endif
+		write_cardreaderconf(CARDREADER_INTERNAL_AMSMC, "internal_amsmc");
 		write_cardreaderconf(CARDREADER_PHOENIX, "Phoenix");
 		write_cardreaderconf(CARDREADER_DRECAS, "drecas");
 		write_cardreaderconf(CARDREADER_SC8IN1, "SC8in1");
@@ -1710,6 +1711,8 @@ const struct s_cardreader *cardreaders[] =
 	&cardreader_internal_cool,
 #elif defined(CARDREADER_INTERNAL_COOLAPI2)
 	&cardreader_internal_cool,
+#elif defined(CARDREADER_INTERNAL_AMSMC)
+	&cardreader_internal_amsmc,
 #elif defined(CARDREADER_INTERNAL_SCI)
 	&cardreader_internal_sci,
 #endif

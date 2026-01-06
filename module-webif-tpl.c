@@ -401,6 +401,7 @@ char *tpl_getUnparsedTpl(const char *name, int8_t removeHeader, const char *subd
 											check_conf(CARDREADER_DRECAS, ptr2);
 											check_conf(CARDREADER_INTERNAL_AZBOX, ptr2);
 											check_conf(CARDREADER_INTERNAL_COOLAPI, ptr2);
+											check_conf(CARDREADER_INTERNAL_AMSMC, ptr2);
 											check_conf(CARDREADER_INTERNAL_SCI, ptr2);
 											check_conf(CARDREADER_SC8IN1, ptr2);
 											check_conf(CARDREADER_MP35, ptr2);
