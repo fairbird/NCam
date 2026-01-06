@@ -2574,6 +2574,11 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, uint32_t idx, bool enable, bo
 							}
 							else
 							{
+								if(ca_soft_csa[demux_id])
+								{
+									continue;
+								}
+
 								currentfd = ca_fd[i];
 								if(currentfd <= 0)
 								{
@@ -2583,13 +2588,10 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, uint32_t idx, bool enable, bo
 
 								if(currentfd > 0)
 								{
-									if(!ca_soft_csa[demux_id])
+									if(dvbapi_ioctl(currentfd, CA_SET_PID, &ca_pid2) == -1)
 									{
-										if(dvbapi_ioctl(currentfd, CA_SET_PID, &ca_pid2) == -1)
-										{
-											cs_log_dbg(D_TRACE | D_DVBAPI,"CA_SET_PID ioctl error (errno=%d %s)", errno, strerror(errno));
-											remove_streampid_from_list(i, ca_pid2.pid, INDEX_DISABLE_ALL);
-										}
+										cs_log_dbg(D_TRACE | D_DVBAPI,"CA_SET_PID ioctl error (errno=%d %s)", errno, strerror(errno));
+										remove_streampid_from_list(i, ca_pid2.pid, INDEX_DISABLE_ALL);
 									}
 
 									uint32_t result = is_ca_used(i, 0); // check if in use by any pid
