@@ -2459,6 +2459,7 @@ struct s_config
 	int8_t      dvbapi_pmtmode;
 	int8_t      dvbapi_requestmode;
 	int32_t     dvbapi_listenport;                  // TCP port to listen instead of camd.socket (network mode, default=0 -> disabled)
+	IN_ADDR_T	dvbapi_srvip;
 	SIDTABS     dvbapi_sidtabs;
 	int32_t     dvbapi_delayer;                     // delayer ms, minimum time to write cw
 	int8_t      dvbapi_ecminfo_file;                // Enable or disable ecm.info file creation

@@ -1394,6 +1394,7 @@ static const struct config_list dvbapi_opts[] =
 	DEF_OPT_INT8("pmt_mode"       , OFS(dvbapi_pmtmode)        , 0),
 	DEF_OPT_INT8("request_mode"   , OFS(dvbapi_requestmode)    , 0),
 	DEF_OPT_INT32("listen_port"   , OFS(dvbapi_listenport)     , 0),
+	DEF_OPT_FUNC("serverip"       , OFS(dvbapi_srvip)          , serverip_fn),
 	DEF_OPT_INT32("delayer"       , OFS(dvbapi_delayer)        , 0),
 	DEF_OPT_INT8("ecminfo_file"   , OFS(dvbapi_ecminfo_file)   , 1),
 	DEF_OPT_INT8("ecminfo_type"   , OFS(dvbapi_ecminfo_type)   , 0),

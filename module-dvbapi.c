@@ -5391,7 +5391,7 @@ int32_t dvbapi_net_init_listenfd(void)
 
 	memset(&servaddr, 0, sizeof(servaddr));
 	SIN_GET_FAMILY(servaddr) = DEFAULT_AF;
-	SIN_GET_ADDR(servaddr) = ADDR_ANY;
+	SIN_GET_ADDR(servaddr) = cfg.dvbapi_srvip;
 	SIN_GET_PORT(servaddr) = htons((uint16_t)cfg.dvbapi_listenport);
 
 	if((listenfd = socket(DEFAULT_AF, SOCK_STREAM, 0)) < 0)

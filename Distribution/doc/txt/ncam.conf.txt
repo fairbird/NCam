@@ -791,6 +791,9 @@ DESCRIPTIONS
        listen_port = 0|port
 	  TCP/IP port for SAT IP clients, filtering has to be done on client site, 0 = disabled, default:0
 
+       serverip = IP address
+	  bind service to specified IP address, default:none
+
        user = username
 	  user name for DVB API client, default:anonymous
 

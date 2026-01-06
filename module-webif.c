@@ -1739,6 +1739,9 @@ static char *send_ncam_config_dvbapi(struct templatevars *vars, struct uriparams
 	if(cfg.dvbapi_listenport > 0)
 		{ tpl_printf(vars, TPLADD, "LISTENPORT", "%d", cfg.dvbapi_listenport); }
 
+	if(IP_ISSET(cfg.dvbapi_srvip))
+		{ tpl_addVar(vars, TPLADD, "SERVERIP", cs_inet_ntoa(cfg.dvbapi_srvip)); }
+
 	return tpl_getTpl(vars, "CONFIGDVBAPI");
 }
 #endif
