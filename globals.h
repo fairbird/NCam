@@ -2760,6 +2760,16 @@ static inline bool caid_is_dre(uint16_t caid) { return caid == 0x4AE0 || caid ==
 static inline bool caid_is_streamguard(uint16_t caid) { return caid == 0x4AD2 || caid == 0x4AD3; }
 static inline bool caid_is_dvn(uint16_t caid) { return caid == 0x4A30; }
 static inline bool caid_is_tongfang(uint16_t caid) { return (caid == 0x4A02) || (caid >= 0x4B00 && caid <= 0x4BFF); }
+#if defined(WITH_EXTENDED_CW) || defined(MODULE_STREAMRELAY)
+static inline bool select_csa_alt(const ECM_REQUEST *er) {
+	return (caid_is_videoguard(er->caid) && er->ecm[4] != 0 && (er->ecm[2] - er->ecm[4]) == 4);
+}
+#endif
+#ifdef MODULE_STREAMRELAY
+static inline uint8_t get_ecm_mode(const ECM_REQUEST *er) {
+	return (caid_is_videoguard(er->caid) && er->ecmlen >= 4) ? (er->ecm[er->ecmlen - 1] & 0x0F) : 0;
+}
+#endif
 const char *get_cardsystem_desc_by_caid(uint16_t caid);
 
 #ifdef WITH_EMU

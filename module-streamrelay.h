@@ -63,6 +63,7 @@ typedef struct
 	int8_t have_pmt_data;
 	int8_t have_ecm_data;
 	int8_t have_emm_data;
+	uint16_t blocked_caid;
 	uint8_t cat_data[1024+208];
 	uint8_t pat_data[1024+208];
 	uint8_t pmt_data[1024+208];

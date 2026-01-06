@@ -4590,18 +4590,6 @@ static void dvbapi_prepare_descrambling(int32_t demux_id, uint32_t msgid)
 	// stream pid, so we have to check against that. Finally, if the PMT pid is
 	// not included in the CA PMT, we start the PAT filter instead.
 
-#ifdef WITH_EXTENDED_CW
-	uint8_t i;
-	for(i = 0; i < demux[demux_id].ECMpidcount; i++)
-	{
-		if(caid_is_powervu(demux[demux_id].ECMpids[i].CAID))
-		{
-			is_powervu = true;
-			break;
-		}
-	}
-#endif
-
 	if(demux[demux_id].pmtpid == 0)
 	{
 		dvbapi_start_pat_filter(demux_id);
@@ -8124,7 +8112,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 #endif
 #ifdef MODULE_STREAMRELAY
 		bool set_dvbapi_cw = true;
-		if(chk_ctab_ex(er->caid, &cfg.stream_relay_ctab) && cfg.stream_relay_enabled)
+		if((cfg.stream_relay_ctab.ctnum == 0 || chk_ctab_ex(er->caid, &cfg.stream_relay_ctab)) && cfg.stream_relay_enabled)
 		{
 			// streamserver set cw
 			set_dvbapi_cw = !stream_write_cw(er);
@@ -8355,7 +8343,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 
 		if((cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX) || ca_soft_csa[i])
 		{
-			dvbapi_net_send(DVBAPI_ECM_INFO, demux[i].socket_fd, 0, i, 0, NULL, client, er, demux[i].client_proto_version);
+			dvbapi_net_send(DVBAPI_ECM_INFO, demux[i].socket_fd, er->msgid, i, 0, NULL, client, er, demux[i].client_proto_version);
 		}
 
 		if(cfg.dvbapi_ecminfo_file != 0 && cfg.dvbapi_boxtype != BOXTYPE_SAMYGO)

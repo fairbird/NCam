@@ -91,7 +91,7 @@ static void radegast_send_dcw(struct s_client *client, ECM_REQUEST *er)
 	if(er->rc < E_NOTFOUND)
 	{
 #ifdef MODULE_STREAMRELAY
-		if(chk_ctab_ex(er->caid, &cfg.stream_relay_ctab) && cfg.stream_relay_enabled)
+		if((cfg.stream_relay_ctab.ctnum == 0 || chk_ctab_ex(er->caid, &cfg.stream_relay_ctab)) && cfg.stream_relay_enabled)
 		{
 			stream_write_cw(er);
 		}
