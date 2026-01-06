@@ -269,16 +269,51 @@ void cc_cacheex_feature_trigger_in(struct s_client *cl, uint8_t *buf)
 			}
 			break;
 		// aio-version
-		case 32:
+		case 32: ;
+			uint16_t payload_size = b2i(2, buf + i + 2);
 			if(cl->typ == 'c' && cl->account->cacheex.mode > 0)
 			{
 				char *ofs = (char *)buf + i + 4;
-				cs_strncpy(cl->account->cacheex.aio_version, ofs, sizeof(cl->account->cacheex.aio_version));
+				memset(cl->account->cacheex.aio_version, 0, sizeof(cl->account->cacheex.aio_version));
+				if(payload_size > 0)
+				{
+					size_t str_len = strnlen(ofs, payload_size);
+					if(str_len >= sizeof(cl->account->cacheex.aio_version))
+						str_len = sizeof(cl->account->cacheex.aio_version) - 1;
+					memcpy(cl->account->cacheex.aio_version, ofs, str_len);
+					// sanitize: remove non-printable characters
+					size_t x;
+					for(x = 0; x < str_len; x++)
+					{
+						if(cl->account->cacheex.aio_version[x] < 0x20 || cl->account->cacheex.aio_version[x] > 0x7E)
+						{
+							cl->account->cacheex.aio_version[x] = '\0';
+							break;
+						}
+					}
+				}
 			}
 			else if(cl->typ == 'p' && cl->reader->cacheex.mode > 0)
 			{
 				char *ofs = (char *)buf + i + 4;
-				cs_strncpy(cl->reader->cacheex.aio_version, ofs, sizeof(cl->reader->cacheex.aio_version));
+				memset(cl->reader->cacheex.aio_version, 0, sizeof(cl->reader->cacheex.aio_version));
+				if(payload_size > 0)
+				{
+					size_t str_len = strnlen(ofs, payload_size);
+					if(str_len >= sizeof(cl->reader->cacheex.aio_version))
+						str_len = sizeof(cl->reader->cacheex.aio_version) - 1;
+					memcpy(cl->reader->cacheex.aio_version, ofs, str_len);
+					// sanitize: remove non-printable characters
+					size_t x;
+					for(x = 0; x < str_len; x++)
+					{
+						if(cl->reader->cacheex.aio_version[x] < 0x20 || cl->reader->cacheex.aio_version[x] > 0x7E)
+						{
+							cl->reader->cacheex.aio_version[x] = '\0';
+							break;
+						}
+					}
+				}
 			}
 			break;
 		// lg_only_tab caid:prov1[,provN][;caid:prov]
@@ -660,7 +695,8 @@ void cc_cacheex_feature_trigger(struct s_client *cl, int32_t feature, uint8_t mo
 			break;
 		// aio-version
 		case 32: ;
-			uint8_t token[12];
+			uint8_t token[CS_AIO_VERSION_LEN];
+			memset(token, 0, sizeof(token));
 
 			// bitfield
 			i2b_buf(2, feature, payload + i);
