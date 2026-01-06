@@ -103,7 +103,8 @@ void chk_cacheex_valuetab(char *lbrlt, CECSPVALUETAB *tab)
 	char *ptr = NULL, *saveptr1 = NULL;
 	cecspvaluetab_clear(tab);
 
-	for(ptr = strtok_r(lbrlt, ",", &saveptr1); (ptr); ptr = strtok_r(NULL, ",", &saveptr1))
+	int32_t i;
+	for(i = 0, ptr = strtok_r(lbrlt, ",", &saveptr1); (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++)
 	{
 		CECSPVALUETAB_DATA d;
 		memset(&d, 0, sizeof(d));
@@ -224,11 +225,10 @@ void chk_cacheex_cwcheck_valuetab(char *lbrlt, CWCHECKTAB *tab)
 void chk_cacheex_hitvaluetab(char *lbrlt, CECSPVALUETAB *tab)
 {
 	//[caid][&mask][@provid][$servid]
-	int32_t i;
 	char *ptr = NULL, *saveptr1 = NULL;
 	cecspvaluetab_clear(tab);
 
-	for(i = 0, ptr = strtok_r(lbrlt, ",", &saveptr1); (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++)
+	for(ptr = strtok_r(lbrlt, ",", &saveptr1); (ptr); ptr = strtok_r(NULL, ",", &saveptr1))
 	{
 		CECSPVALUETAB_DATA d;
 		memset(&d, 0, sizeof(d));

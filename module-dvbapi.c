@@ -7735,15 +7735,6 @@ void delayer(ECM_REQUEST *er, uint32_t delay)
 	}
 }
 
-#ifdef WITH_EXTENDED_CW
-bool select_csa_alt(ECM_REQUEST *er)
-{
-	return ( caid_is_videoguard(er->caid)
-			&& er->ecm[4] != 0
-			&& (er->ecm[2] - er->ecm[4]) == 4 );
-}
-#endif
-
 void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 {
 	int32_t i, j, k, handled = 0;
