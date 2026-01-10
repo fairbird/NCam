@@ -256,7 +256,7 @@ static char *monitor_client_info(char id, struct s_client *cl, char *sbuf)
 
 	if(cl)
 	{
-		char ldate[16], ltime[16];
+		char ldate[20], ltime[16];
 		const char *usr;
 		int32_t lsec, isec, con, cau, lrt = - 1;
 		time_t now;
@@ -314,9 +314,9 @@ static char *monitor_client_info(char id, struct s_client *cl, char *sbuf)
 				lrt = cl->cwlastresptime;
 			}
 			localtime_r(&cl->login, &lt);
-			// snprintf(ldate, sizeof(ldate), " %02d.%02d.%02d", lt.tm_mday, lt.tm_mon + 1, lt.tm_year % 100);
 			int32_t cnr = get_threadnum(cl);
-			snprintf(ltime, sizeof(ldate), "%02d:%02d:%02d", lt.tm_hour, lt.tm_min, lt.tm_sec);
+			snprintf(ldate, sizeof(ldate), " %02d.%02d.%02d", lt.tm_mday, lt.tm_mon + 1, lt.tm_year % 100);
+			snprintf(ltime, sizeof(ltime), "%02d:%02d:%02d", lt.tm_hour, lt.tm_min, lt.tm_sec);
 			snprintf(sbuf, 256, "[%c--CCC]%8X|%c|%d|%s|%d|%d|%s|%d|%s|%s|%s|%d|%04X@%06X:%04X|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d\n",
 					 id, cl->tid, cl->typ, cnr, usr, cau, cl->crypted,
 					 cs_inet_ntoa(cl->ip), cl->port, client_get_proto(cl),
