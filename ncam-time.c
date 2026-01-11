@@ -170,27 +170,13 @@ void cs_ftimeus(struct timeb *tp)
 void cs_sleepms(uint32_t msec)
 {
 	// does not interfere with signals like sleep and usleep do
-	struct timespec req_ts;
+	struct timespec req_ts, rem_ts;
 	req_ts.tv_sec = msec / 1000;
 	req_ts.tv_nsec = (msec % 1000) * 1000000L;
 	int32_t olderrno = errno; // Some OS (especially MacOSX) seem to set errno to ETIMEDOUT when sleeping
-	while (1)
+	while (nanosleep(&req_ts, &rem_ts) == -1 && errno == EINTR)
 	{
-		/* Sleep for the time specified in req_ts. If interrupted by a
-		signal, place the remaining time left to sleep back into req_ts. */
-		int rval = nanosleep (&req_ts, &req_ts);
-		if (rval == 0)
-		{
-			break; // Completed the entire sleep time; all done.
-		}
-		else if (errno == EINTR)
-		{
-			continue; // Interrupted by a signal. Try again.
-		}
-		else
-		{
-			break; // Some other error; bail out.
-		}
+		req_ts = rem_ts;
 	}
 	errno = olderrno;
 }
@@ -198,28 +184,14 @@ void cs_sleepms(uint32_t msec)
 void cs_sleepus(uint32_t usec)
 {
 	// does not interfere with signals like sleep and usleep do
-	struct timespec req_ts;
+	struct timespec req_ts, rem_ts;
 	req_ts.tv_sec = usec / 1000000;
 	req_ts.tv_nsec = (usec % 1000000) * 1000L;
 	int32_t olderrno = errno; // Some OS (especially MacOSX) seem to set errno to ETIMEDOUT when sleeping
 
-	while (1)
+	while (nanosleep(&req_ts, &rem_ts) == -1 && errno == EINTR)
 	{
-		/* Sleep for the time specified in req_ts. If interrupted by a
-		signal, place the remaining time left to sleep back into req_ts. */
-		int rval = nanosleep (&req_ts, &req_ts);
-		if (rval == 0)
-		{
-			break; // Completed the entire sleep time; all done.
-		}
-		else if (errno == EINTR)
-		{
-			continue; // Interrupted by a signal. Try again.
-		}
-		else
-		{
-			break; // Some other error; bail out.
-		}
+		req_ts = rem_ts;
 	}
 	errno = olderrno;
 }
