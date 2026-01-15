@@ -527,6 +527,10 @@ static int32_t drecas_card_init(struct s_reader *reader, ATR *newatr)
 		int cmd_len;
 		int n;
 		char *tempbuf = malloc(2048);
+		if (!tempbuf)
+		{
+			return ERROR;
+		}
 		trim2(reader->userscript);
 		FILE *pFile = fopen(reader->userscript, "rt");
 
@@ -549,6 +553,11 @@ static int32_t drecas_card_init(struct s_reader *reader, ATR *newatr)
 
 				cmd_len = cs_strlen(tempbuf) / 2 - 3;
 				usercmd = malloc(cmd_len);
+				if (!usercmd)
+				{
+					free(tempbuf);
+					return ERROR;
+				}
 
 				for(i = 0, n = 4; i < cmd_len; i++, n += 2)
 				{

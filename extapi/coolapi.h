@@ -223,8 +223,8 @@ do { \
 			__LINE__ , \
 			label, \
 			ret, \
-			ret > CNXT_STATUS_ERRORS ? "UNKNOWN" : "CNXT_STATUS_", \
-			ret > CNXT_STATUS_ERRORS ? ""        : cnxt_status[ret] \
+			ret >= CNXT_STATUS_ERRORS ? "UNKNOWN" : "CNXT_STATUS_", \
+			ret >= CNXT_STATUS_ERRORS ? ""        : cnxt_status[ret] \
 		); \
 	} \
 } while(0)

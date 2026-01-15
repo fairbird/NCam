@@ -6993,11 +6993,10 @@ static char *send_ncam_services_edit(struct templatevars * vars, struct uriparam
 		for(sidtab = cfg.sidtab; sidtab != NULL && strcmp(label, sidtab->label) != 0; sidtab = sidtab->next) { ; }
 	}
 
-	tpl_addVar(vars, TPLADD, "LABEL", xml_encode(vars, sidtab->label));
-	tpl_addVar(vars, TPLADD, "LABELENC", urlencode(vars, sidtab->label));
-
 	if(sidtab)
 	{
+		tpl_addVar(vars, TPLADD, "LABEL", xml_encode(vars, sidtab->label));
+		tpl_addVar(vars, TPLADD, "LABELENC", urlencode(vars, sidtab->label));
 #ifdef CS_CACHEEX_AIO
 		tpl_addVar(vars, TPLADD, "NWCHECKED", (sidtab->no_wait_time == 1) ? "checked" : "" );
 		tpl_addVar(vars, TPLADD, "LGOECHECKED", (sidtab->lg_only_exception == 1) ? "checked" : "" );
@@ -7270,7 +7269,7 @@ static char *send_ncam_script(struct templatevars * vars, struct uriparams * par
 			{
 				if(s.st_mode & S_IXUSR)
 				{
-					int32_t rc;
+					int32_t rc = -1;
 					FILE *fp;
 					char buf[256];
 
@@ -7282,13 +7281,15 @@ static char *send_ncam_script(struct templatevars * vars, struct uriparams * par
 
 					fp = popen(system_str,"r");
 
-					while (fgets(buf, sizeof(buf), fp) != NULL)
+					if (fp)
 					{
-						tpl_addVar(vars, TPLAPPEND, "SCRIPTRESULTOUT", buf);
+						while (fgets(buf, sizeof(buf), fp) != NULL)
+						{
+							tpl_addVar(vars, TPLAPPEND, "SCRIPTRESULTOUT", buf);
+						}
+
+						rc = pclose(fp)/256;
 					}
-
-					rc = pclose(fp)/256;
-
 					tpl_printf(vars, TPLAPPEND, "CODE", "returncode: %d", rc);
 					tpl_printf(vars, TPLADD, "SCRIPTNAME", "scriptname: %s", scriptname);
 				}
@@ -7336,8 +7337,8 @@ static char *send_ncam_scanusb(struct templatevars * vars)
 			tpl_addVar(vars, TPLAPPEND, "USBBIT", tpl_getTpl(vars, "SCANUSBBIT"));
 		}
 		while(fgets(path, sizeof(path) - 1, fp) != NULL);
+		pclose(fp);
 	}
-	pclose(fp);
 #else
 	tpl_addMsg(vars, "Function not supported in CYGWIN environment");
 #endif
@@ -7352,7 +7353,10 @@ static void webif_process_logfile(struct templatevars * vars, struct uriparams *
 		if(cs_strlen(targetfile) > 0)
 		{
 			FILE *file = fopen(targetfile, "w");
-			fclose(file);
+			if (file != NULL)
+			{
+				fclose(file);
+			}
 		}
 	}
 #ifdef WITH_DEBUG
@@ -7408,7 +7412,10 @@ static void webif_process_userfile(struct templatevars * vars, struct uriparams 
 		if(cs_strlen(targetfile) > 0)
 		{
 			FILE *file = fopen(targetfile, "w");
-			fclose(file);
+			if (file)
+			{
+				fclose(file);
+			}
 		}
 	}
 	if(!cfg.disableuserfile)
@@ -8124,13 +8131,16 @@ static char *send_ncam_EMM(struct templatevars * vars, struct uriparams * params
 					do {
 						snprintf(orgfile, sizeof(orgfile), "%s.%d", targetfile, f);
 						f++;
-					} while(access(orgfile, 0|F_OK) != -1);
+					} while(access(orgfile, F_OK) != -1);
 
 					if(rename(targetfile, orgfile) == 0)
 					{
 						FILE *fs = fopen(targetfile, "w");
-						fprintf(fs, "%s", tpl_getVar(vars, "EMM_TMP"));
-						fclose(fs);
+						if (fs)
+						{
+							fprintf(fs, "%s", tpl_getVar(vars, "EMM_TMP"));
+							fclose(fs);
+						}
 						tpl_printf(vars, TPLAPPEND, emm_txt, "<br><b>New reduced File created!</b> Size of Original File is higher as %d kB, saved to %s", emm_max_size[i], orgfile);
 					}
 				}

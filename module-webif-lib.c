@@ -694,8 +694,8 @@ int8_t get_stats_linux(const pid_t pid, struct pstat* result)
 				break;
 			}
 		}
+		fclose(fd);
 	}
-	fclose(fd);
 
 	// read processes from /proc
 	uint info_procs = 0;

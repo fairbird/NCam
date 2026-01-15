@@ -623,6 +623,12 @@ static int32_t dre_card_init(struct s_reader *reader, ATR *newatr)
 
 				cmd_len = cs_strlen(tempbuf) / 2 - 3 + ignoreProvid - (crypted * 2);
 				usercmd = malloc(cmd_len);
+				if (!usercmd)
+				{
+					free(tempbuf);
+					fclose(pFile);
+					return ERROR;
+				}
 
 				for(i = 0, n = 4 + (crypted * 4); i < cmd_len; i++, n += 2)
 				{
@@ -642,6 +648,7 @@ static int32_t dre_card_init(struct s_reader *reader, ATR *newatr)
 				rdr_log(reader, "Script %s", (dre_script(usercmd, cmd_len, ignoreProvid, crypted, cryptkey)) ? "done" : "error");
 			}
 			while(!feof(pFile));
+			fclose(pFile);
 		}
 		else
 		{

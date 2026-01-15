@@ -5773,7 +5773,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uint8_t *buffer,
 		return;
 	}
 
-	if(filtertype == TYPE_ECM)
+	if(filtertype == TYPE_ECM && curpid)
 	{
 		uint32_t chid = 0x10000;
 		int8_t pvu_skip = 0;
@@ -5789,20 +5789,14 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uint8_t *buffer,
 				cs_log_dbg(D_DVBAPI, "Received data with total length 0x%03X but max supported ECM length is 0x%03X -> Please report!",
 					sctlen, MAX_ECM_SIZE);
 
-				if(curpid)
-				{
-					curpid->tries -= 0x0E;
-				}
+				curpid->tries -= 0x0E;
 				return;
 			}
 
 			if(!(buffer[0] == 0x80 || buffer[0] == 0x81 || (caid_is_dvn(curpid->CAID) && buffer[0] == 0x50)))
 			{
 				cs_log_dbg(D_DVBAPI, "Received an ECM with invalid ecmtable ID %02X -> ignoring!", buffer[0]);
-				if(curpid)
-				{
-					curpid->tries--;
-				}
+				curpid->tries--;
 				return;
 			}
 
@@ -8684,10 +8678,11 @@ int32_t dvbapi_set_section_filter(int32_t demux_id, ECM_REQUEST *er, int32_t n)
 	struct s_ecmpid *curpid = NULL;
 
 	int32_t pid = demux[demux_id].demux_fd[n].pidindex;
-	if(pid != -1)
+	if(pid == -1)
 	{
-		curpid = &demux[demux_id].ECMpids[pid];
+		return -1;
 	}
+	curpid = &demux[demux_id].ECMpids[pid];
 
 	if(curpid->table != er->ecm[0] && curpid->table != 0)
 	{

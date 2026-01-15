@@ -25,6 +25,7 @@ static int32_t RSA_CNX(struct s_reader *reader, uint8_t *msg, uint8_t *mod, uint
 		if(ctx == NULL)
 		{
 			rdr_log_dbg(reader, D_READER, "RSA Error in RSA_CNX");
+			return -1;
 		}
 
 		BN_CTX_start(ctx);

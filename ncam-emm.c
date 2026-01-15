@@ -52,6 +52,9 @@ static int8_t do_simple_emm_filter(struct s_reader *rdr, const struct s_cardsyst
 	// Call cardsystems emm filter
 	csystem->get_emm_filter(rdr, &dmx_filter, &filter_count);
 
+	if(!dmx_filter)
+		{ return 0; }
+
 	// Only check matching emmtypes:
 	uint8_t org_emmtype;
 	if(ep->type == UNKNOWN)

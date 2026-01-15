@@ -1254,7 +1254,6 @@ static int32_t nagra2_card_init(struct s_reader *reader, ATR *newatr)
 				return ERROR;
 			}
 		}
-		NULLFREE(reader->csystem_data);
 		return ERROR; // quitting csystem still not having needed commands to run on nagra layer
 	}
 	else

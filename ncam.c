@@ -712,14 +712,20 @@ static void cs_dumpstack(int32_t sig)
 
 	fprintf(stderr, "crashed with signal %d on %swriting ncam.crash\n", sig, buf);
 
-	fprintf(fp, "%sCardServer NCam %s-%s, build:%s (%s)\n", buf, CS_VERSION, CS_REVISION, CS_DATE_BUILD, CS_TARGET);
-	fprintf(fp, "FATAL: Signal %d: %s Fault. Logged StackTrace:\n\n", sig, (sig == SIGSEGV) ? "Segmentation" : ((sig == SIGBUS) ? "Bus" : "Unknown"));
-	fclose(fp);
+	if (fp)
+	{
+		fprintf(fp, "%sCardServer NCam %s-%s, build:%s (%s)\n", buf, CS_VERSION, CS_REVISION, CS_DATE_BUILD, CS_TARGET);
+		fprintf(fp, "FATAL: Signal %d: %s Fault. Logged StackTrace:\n\n", sig, (sig == SIGSEGV) ? "Segmentation" : ((sig == SIGBUS) ? "Bus" : "Unknown"));
+		fclose(fp);
+	}
 
 	FILE *cmd = fopen("/tmp/gdbcmd", "w");
-	fputs("bt\n", cmd);
-	fputs("thread apply all bt\n", cmd);
-	fclose(cmd);
+	if (cmd)
+	{
+		fputs("bt\n", cmd);
+		fputs("thread apply all bt\n", cmd);
+		fclose(cmd);
+	}
 
 	snprintf(buf, sizeof(buf) - 1, "gdb %s %d -batch -x /tmp/gdbcmd >> ncam.crash", prog_name, getpid());
 	if(system(buf) == -1)

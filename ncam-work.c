@@ -308,6 +308,8 @@ void *work_thread(void *ptr)
 					break;
 #if defined(WITH_SENDCMD) && defined(READER_VIDEOGUARD)
 				case ACTION_READER_SENDCMD:
+					if (!reader)
+						{ break; }
 					dblvl = cs_dblevel;
 					cs_dblevel = dblvl | D_READER;
 					rc = cardreader_do_rawcmd(reader, data->ptr);
