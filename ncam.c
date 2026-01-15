@@ -481,12 +481,7 @@ static void write_versionfile(bool use_stdout)
 	write_conf(CW_CYCLE_CHECK, "CW Cycle Check support");
 	write_conf(LCDSUPPORT, "LCD support");
 	write_conf(LEDSUPPORT, "LED support");
-	switch (cs_getclocktype())
-	{
-		case CLOCK_TYPE_UNKNOWN  : write_conf(CLOCKFIX, "Clockfix with UNKNOWN clock"); break;
-		case CLOCK_TYPE_REALTIME : write_conf(CLOCKFIX, "Clockfix with realtime clock"); break;
-		case CLOCK_TYPE_MONOTONIC: write_conf(CLOCKFIX, "Clockfix with monotonic clock"); break;
-	}
+	write_conf(CLOCKFIX, "Clockfix with realtime clock");
 	write_conf(IPV6SUPPORT, "IPv6 support");
 #ifdef WITH_CARDLIST
 	write_conf(WITH_CARDLIST, "Cardlist support");
@@ -1811,8 +1806,6 @@ int32_t main(int32_t argc, char *argv[])
 	run_tests();
 	int32_t i, j;
 	prog_name = argv[0];
-	struct timespec start_ts;
-	cs_gettime(&start_ts); // Initialize clock_type
 
 	if(pthread_key_create(&getclient, NULL))
 	{
