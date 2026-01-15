@@ -58,7 +58,7 @@ ifeq "$(shell ./config.sh --enabled MODULE_STREAMRELAY)" "Y"
 	endif
 endif
 
-override STD_LIBS := $(LIB_PTHREAD) $(LIB_DL)
+override STD_LIBS := -lm $(LIB_PTHREAD) $(LIB_DL) $(LIB_RT)
 override STD_DEFS := -D'CS_REVISION="$(REV)"'
 override STD_DEFS += -D'CS_GIT_VERSION="$(shell ./config.sh --ncam-revision | cut -d "t" -f2 -s)"'
 override STD_DEFS += -D'CS_DATE_BUILD="$(shell date +"%d-%m-%Y")"'
