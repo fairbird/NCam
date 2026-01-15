@@ -32,12 +32,11 @@ typedef struct
 	int sptr, stack[STACKMAX];
 	uint8_t iram[0x1800];
 	int invalid;
-	int verbose;
 } st20_context_t;
 
 static bool st20_set_flash(st20_context_t *ctx, uint8_t *m, uint32_t len);
 static bool st20_set_ram(st20_context_t *ctx, uint8_t *m, uint32_t len);
-static void st20_init(st20_context_t *ctx, uint32_t IPtr, uint32_t WPtr, int verbose);
+static void st20_init(st20_context_t *ctx, uint32_t IPtr, uint32_t WPtr);
 static void st20_free(st20_context_t *ctx);
 
 static void st20_set_call_frame(st20_context_t *ctx, uint32_t raddr, int p1, int p2, int p3);
@@ -49,7 +48,7 @@ static void st20_wbyte(st20_context_t *ctx, uint32_t off, uint8_t val);
 static uint32_t st20_rword(st20_context_t *ctx, uint32_t off);
 static void st20_wword(st20_context_t *ctx, uint32_t off, uint32_t val);
 
-#define INVALID_VALUE 0xCCCCCCCC
+#define INVALID_VALUE 0xCC
 #define ERRORVAL      0xDEADBEEF
 
 #define MININT        0x7FFFFFFF
@@ -368,14 +367,13 @@ static bool st20_set_ram(st20_context_t *ctx, uint8_t *m, uint32_t len)
 	return true;
 }
 
-static void st20_init(st20_context_t *ctx, uint32_t IPtr, uint32_t WPtr, int32_t verbose)
+static void st20_init(st20_context_t *ctx, uint32_t IPtr, uint32_t WPtr)
 {
 	ctx->Wptr = WPtr;
 	ctx->Iptr = IPtr;
 	memset(ctx->stack, INVALID_VALUE, sizeof(ctx->stack));
 	ctx->sptr = STACKMAX - 3;
 	memset(ctx->iram, 0, sizeof(ctx->iram));
-	ctx->verbose = verbose;
 }
 
 static void st20_free(st20_context_t *ctx)
@@ -431,7 +429,7 @@ int st20_run(uint8_t* snip, uint32_t snip_len, int addr, uint8_t *data, uint16_t
 			error = FLA_ERR;
 			break;
 		}
-		st20_init(&ctx, FLASHS + addr, RAMS + 0x100, 1);
+		st20_init(&ctx, FLASHS + addr, RAMS + 0x100);
 		st20_set_call_frame(&ctx, 0, RAMS, RAMS, RAMS);
 
 		for(i = 0; i < 8; i++)

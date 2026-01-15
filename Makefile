@@ -66,7 +66,7 @@ ifeq "$(shell ./config.sh --enabled MODULE_STREAMRELAY)" "Y"
 	endif
 endif
 
-override STD_LIBS := -lm $(LIB_PTHREAD) $(LIB_DL) $(LIB_RT)
+override STD_LIBS := $(LIB_PTHREAD) $(LIB_DL) $(LIB_RT)
 override STD_DEFS := -D'CS_REVISION="$(REV)"'
 override STD_DEFS += -D'CS_GIT_VERSION="$(shell ./config.sh --ncam-revision | cut -d "t" -f2 -s)"'
 override STD_DEFS += -D'CS_DATE_BUILD="$(shell date +"%d-%m-%Y")"'
@@ -200,11 +200,7 @@ DEFAULT_LIBCRYPTO_LIB = -lcrypto
 DEFAULT_SSL_LIB = -lssl
 DEFAULT_LIBCURL_LIB = -lcurl
 #DEFAULT_LIBCURL_FLAGS = -lrt -lssl -lcrypto # (static libcurl ...??? += -static -lcurl -lssl -lcrypto -ldl -lm -lz -DCURL_STATICLIB)
-ifeq ($(uname_S),Linux)
-	DEFAULT_LIBUSB_LIB = -lusb-1.0 -lrt
-else
-	DEFAULT_LIBUSB_LIB = -lusb-1.0
-endif
+DEFAULT_LIBUSB_LIB = -lusb-1.0
 DEFAULT_LIBDVBCSA_LIB = -ldvbcsa
 # Since FreeBSD 8 (released in 2010) they are using their own
 # libusb that is API compatible to libusb but with different soname

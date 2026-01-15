@@ -85,9 +85,6 @@ static int32_t Azbox_Reset(struct s_reader *reader, ATR *atr)
 
         rdr_log_dbg(reader, D_IFD, "Waiting for card ATR Response...");
 
-        int32_t ret = 0;
-        while(ret);
-
         int32_t FI = (buf[n] >> 4);
 
 	int32_t Fi = atr_f_table[FI];
@@ -109,9 +106,7 @@ static int32_t Azbox_Reset(struct s_reader *reader, ATR *atr)
         rdr_log_dbg(reader, D_IFD, "ATR Fsmax is %.2f MHz, Work ETU is %.2f us, clocking card to %.2f MHz",
 			                fmax / 1000000, (double)((double)(1 / (double)D) * ((double)Fi / (double)((double)frequency / 1000000))), (float) frequency / 1000000);
 
-        ret = ATR_InitFromArray(atr, buf, n);
-
-	if(ret == ERROR)
+	if(ATR_InitFromArray(atr, buf, n) == ERROR)
 	{
 		rdr_log(reader, "WARNING: ATR is invalid!");
 		return ERROR;

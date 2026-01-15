@@ -900,11 +900,7 @@ if (HAVE_LIBCRYPTO)
     endif (STATIC_LIBCRYPTO)
 endif (HAVE_LIBCRYPTO)
 
-# some systems need libm for the nagra cak7 functions to work
-check_include_file("math.h" HAVE_LIBM)
-if(HAVE_LIBM)
-    target_link_libraries (${exe_name} m)
-endif(HAVE_LIBM)
+# libm no longer needed - fmod replaced with pure C implementation in reader-nagracak7.c
 
 if (HAVE_LIBSTAPI)
     target_link_libraries(${exe_name} stapilib)
@@ -920,8 +916,12 @@ add_dependencies (${exe_name} ${csncam} ${csreaders} ${csmodules})
 
 if (USE_LIBRT_STATIC)
 else (USE_LIBRT_STATIC)
+# librt only needed for CLOCKFIX on Linux
+execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --enabled CLOCKFIX OUTPUT_VARIABLE CONFIG_CLOCKFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
 if (NOT NCamOperatingSystem MATCHES "(Mac OS X|Windows/Cygwin|FreeBSD|OpenBSD|Android)")
-    target_link_libraries (${exe_name} rt)
+	if (CONFIG_CLOCKFIX MATCHES "Y")
+		target_link_libraries (${exe_name} rt)
+	endif (CONFIG_CLOCKFIX MATCHES "Y")
 endif (NOT NCamOperatingSystem MATCHES "(Mac OS X|Windows/Cygwin|FreeBSD|OpenBSD|Android)")
 endif (USE_LIBRT_STATIC)
 

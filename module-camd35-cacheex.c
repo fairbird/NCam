@@ -1128,7 +1128,7 @@ static int32_t camd35_cacheex_push_chk(struct s_client *cl, ECM_REQUEST *er)
 		}
 	}
 
-	//if(chk_is_null_nodeid(remote_node,8)){
+	//if(chk_is_null_nodeid(remote_node)){
 	if(!cl->ncd_skey[8])
 	{
 		cs_log_dbg(D_CACHEEX, "cacheex: NO peer_node_id got yet, skip!");

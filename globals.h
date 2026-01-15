@@ -243,7 +243,7 @@ typedef uint8_t uint8_t;
 #endif
 
 //checking if (X) free(X) unneccessary since freeing a null pointer doesnt do anything
-#define NULLFREE(X) {if (X) {void *tmpX=X; X=NULL; free(tmpX); }}
+#define NULLFREE(X) {void *tmpX=X; X=NULL; free(tmpX); }
 
 #ifdef __CYGWIN__
 #define cs_recv(a,b,c,d) cygwin_recv(a,b,c,d)
@@ -1799,7 +1799,6 @@ struct s_reader
 	int8_t          ncd_proto;
 	int8_t          ncd_stealth;
 	int8_t          currenthops;                    // number of hops (cccam & gbox)
-	int8_t          sh4_stb;                        // to set sh4 type box used to identify sci type.
 	int8_t          ncd_multics_mode;
 #ifdef MODULE_CCCAM
 	char            cc_version[7];                  // cccam version

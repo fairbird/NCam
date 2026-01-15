@@ -345,21 +345,19 @@ static int32_t Sci_Reset(struct s_reader *reader, ATR *atr)
 			{
 				Sci_Deactivate(reader);
 				Sci_Activate(reader);
+				tries++; // increase fs
 				if (reader->cardmhz > 2000 && reader->cardmhz != 8300)
 				{
-					tries++; // increase fs
 					params.fs = (pll_start_fs - tries); // if 1 Mhz init failed retry with min 300 Mhz up to max 9.0 Mhz
 					rdr_log(reader, "Read ATR fail, attempt %d/%d  fs = %d", tries, max_tries, params.fs);
 				}
-				else if (reader->cardmhz > 2000 && reader->cardmhz == 8300)
+				else if (reader->cardmhz == 8300)
 				{
-					tries++; // increase fs
 					params.fs = (11 - tries); // if 1 Mhz init failed retry with 3.19 Mhz up to 5.188 Mhz
 					rdr_log(reader, "Read ATR fail, attempt %d/5  fs = %d", tries, params.fs);
 				}
 				else
 				{
-					tries++; // increase fs
 					params.fs = (2 + tries); // if 1 Mhz init failed retry with 3.0 Mhz up to 7.0 Mhz
 					rdr_log(reader, "Read ATR fail, attempt %d/5  fs = %d", tries, params.fs);
 				}
@@ -489,7 +487,6 @@ static int32_t Sci_Init(struct s_reader *reader)
 	int flags = O_RDWR | O_NOCTTY;
 #if defined(__SH4__) || defined(STB04SCI)
 	flags |= O_NONBLOCK;
-	reader->sh4_stb = 1;
 #endif
 	reader->handle = open(reader->device, flags);
 	if(reader->handle < 0)

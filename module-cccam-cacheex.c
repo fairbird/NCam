@@ -1081,7 +1081,7 @@ void cc_cacheex_filter_in(struct s_client *cl, uint8_t *buf)
 static int32_t cc_cacheex_push_chk(struct s_client *cl, struct ecm_request_t *er)
 {
 	struct cc_data *cc = cl->cc;
-	if(chk_is_null_nodeid(cc->peer_node_id,8))
+	if(chk_is_null_nodeid(cc->peer_node_id))
 	{
 		cs_log_dbg(D_CACHEEX, "cacheex: NO peer_node_id got yet, skip!");
 		return 0;

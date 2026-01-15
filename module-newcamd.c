@@ -1741,16 +1741,10 @@ void newcamd_idle(void)
 
 int32_t newcamd_client_init(struct s_client *client)
 {
-	char ptxt[1]
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L //gcc-15+
-	__attribute__((nonstring))
-#endif
-	= { "\0" };
-
 	client->ncd_proto = client->reader->ncd_proto;
 
-	cs_log("proxy %s:%d newcamd52%d (fd=%d%s)", client->reader->device, client->reader->r_port,
-			(client->reader->ncd_proto == NCD_525) ? 5 : 4, client->udp_fd, ptxt);
+	cs_log("proxy %s:%d newcamd52%d (fd=%d)", client->reader->device, client->reader->r_port,
+			(client->reader->ncd_proto == NCD_525) ? 5 : 4, client->udp_fd);
 
 	// try to connect. ignore possible failures
 	// idle reconnect (tcp_ito = -1) will trigger an additional connect anyway

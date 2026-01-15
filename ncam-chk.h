@@ -35,7 +35,7 @@ int32_t chk_bcaid(ECM_REQUEST *er, CAIDTAB *ctab);
 int32_t chk_is_null_CW(uint8_t cw[]);
 int8_t is_halfCW_er(ECM_REQUEST *er);
 int8_t chk_halfCW(ECM_REQUEST *er, uint8_t *cw);
-int32_t chk_is_null_nodeid(uint8_t node_id[], uint8_t len);
+int32_t chk_is_null_nodeid(uint8_t node_id[]);
 bool check_client(struct s_client *cl);
 uint16_t caidvaluetab_get_value(CAIDVALUETAB *cv, uint16_t caid, uint16_t default_value);
 int32_t chk_is_fakecw(uint8_t *cw);

@@ -42,10 +42,7 @@ bool cs_realloc(void *result, size_t size)
 /* Calling strlen directly e.g. strlen(somechar) can cause segmentation fault if pointer to somechar is NULL! */
 size_t cs_strlen(const char* str)
 {
-	if(!str)
-		{ return 0; }
-	else
-		{ return strlen(str); }
+	return str ? strlen(str) : 0;
 }
 
 /* Allocates a new empty string and copies str into it. You need to free() the result. */
@@ -91,8 +88,7 @@ char *strtolower(char *txt)
 	char *p;
 	for(p = txt; *p; p++)
 	{
-		if(isupper((uint8_t)*p))
-			{ *p = tolower((uint8_t) * p); }
+		*p = tolower((uint8_t) *p);
 	}
 	return txt;
 }
@@ -103,8 +99,7 @@ char *strtoupper(char *txt)
 	char *p;
 	for(p = txt; *p; p++)
 	{
-		if(islower((uint8_t)*p))
-			{ *p = toupper((uint8_t)*p); }
+		*p = toupper((uint8_t) *p);
 	}
 	return txt;
 }

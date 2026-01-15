@@ -1273,10 +1273,10 @@ int8_t chk_halfCW(ECM_REQUEST *er, uint8_t *cw)
 /**
  * Check for NULL nodeid
  **/
-int32_t chk_is_null_nodeid(uint8_t node_id[], uint8_t len)
+int32_t chk_is_null_nodeid(uint8_t node_id[])
 {
 	int8_t i;
-	for(i = 0; i < len; i++)
+	for(i = 0; i < 8; i++)
 	{
 		if(node_id[i]) { return 0; }
 	}

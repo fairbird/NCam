@@ -206,10 +206,10 @@ static int32_t ParseDataType(struct s_reader *reader, uint8_t dt, uint8_t *cta_r
 	return ERROR;
 }
 
-static int32_t CAK7do_cmd(struct s_reader *reader, uint8_t dt, uint8_t len, uint8_t *res, uint16_t *rlen, int32_t sub, uint8_t retlen)
+static int32_t CAK7do_cmd(struct s_reader *reader, uint8_t dt, uint8_t *res, uint16_t *rlen, int32_t sub, uint8_t retlen)
 {
 	uint8_t dtdata[0x10];
-	memset(dtdata, 0xCC, len);
+	memset(dtdata, 0xCC, 0x10);
 
 	dtdata[7] = 0x04;
 	dtdata[8] = 0x04;
@@ -232,7 +232,7 @@ static int32_t CAK7GetDataType(struct s_reader *reader, uint8_t dt)
 	uint8_t retlen = 0x10;
 	while(1)
 	{
-		CAK7do_cmd(reader, dt, 0x10, cta_res, &cta_lr, sub, retlen);
+		CAK7do_cmd(reader, dt, cta_res, &cta_lr, sub, retlen);
 		// hier eigentlich check auf 90 am ende usw... obs halt klarging ...
 
 		if((cta_lr == 0) || (cta_res[cta_lr-2] == 0x6F && cta_res[cta_lr-1] == 0x01))

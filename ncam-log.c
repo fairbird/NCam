@@ -253,10 +253,7 @@ LLIST *log_history = NULL;
 */
 void cs_reinit_loghist(uint32_t size)
 {
-	if(cfg.loghistorylines != size)
-	{
-		cfg.loghistorylines = size;
-	}
+	cfg.loghistorylines = size;
 }
 #endif
 
