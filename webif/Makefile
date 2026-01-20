@@ -14,7 +14,7 @@ endif
 
 all: pages.c
 
-pages.c: pages_gen
+pages.c: pages_gen ../config.h
 	$(SAY) "GEN	webif/$@"
 	$(Q)./pages_mkdep
 	$(Q)./pages_gen

@@ -462,6 +462,7 @@ make_config_mak() {
 		[ $? != 0 ] && cat $TMPFILE > $OBJDIR/config.c
 	fi
 	rm -rf $TMPFILE
+	write_enabled
 }
 
 check_test() {
