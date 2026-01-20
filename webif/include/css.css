@@ -613,18 +613,22 @@ div.footer {
 	border-top:3px solid #CCC*/
 }
 div.footer .top_link {
-	padding-left:12px;
 	position:absolute;
-	font-weight:bold;
 	bottom:5px;
-	left:7px;
-	z-index:0
+	right:10px;
+	font-weight:bold
 }
-div.footer .top_link a:before {
-	content:"▲";
-	font-weight:normal;
+div.footer .top_link a:after {
+	content:" \25B2"
+}
+LI.bottom_link {
 	position:absolute;
-	left:1px
+	top:6px;
+	right:10px;
+	font-weight:bold
+}
+LI.bottom_link a:after {
+	content:" \25BC"
 }
 div.footer li {
 	margin:5px
