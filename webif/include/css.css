@@ -621,13 +621,13 @@ div.footer .top_link {
 div.footer .top_link a:after {
 	content:" \25B2"
 }
-LI.bottom_link {
+DIV.bottom_link {
 	position:absolute;
 	top:6px;
 	right:10px;
 	font-weight:bold
 }
-LI.bottom_link a:after {
+DIV.bottom_link a:after {
 	content:" \25BC"
 }
 div.footer li {
