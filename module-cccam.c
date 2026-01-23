@@ -1610,7 +1610,14 @@ struct cc_card *get_matching_card(struct s_client *cl, ECM_REQUEST *cur_er, int8
 			}
 
 			rating = ncard->rating - ncard->hop * HOP_RATING;
-			rating = MIN(MAX(rating, MIN_RATING), MAX_RATING);
+			if(rating < MIN_RATING)
+			{
+				rating = MIN_RATING;
+			}
+			else if(rating > MAX_RATING)
+			{
+				rating = MAX_RATING;
+			}
 
 			if(!ll_count(ncard->providers)) // card has no providers:
 			{
@@ -2284,6 +2291,24 @@ int32_t is_null_dcw(uint8_t *dcw)
 			{ return 0; }
 	return 1;
 }
+
+/*int32_t is_dcw_corrupted(uint8_t *dcw)
+{
+	int32_t i;
+	int32_t c, cs;
+
+	for(i = 0; i < 16; i += 4)
+	{
+		c = (dcw[i] + dcw[i + 1] + dcw[i + 2]) & 0xFF;
+		cs = dcw[i + 3];
+
+		if(cs != c)
+		{
+			return (1);
+		}
+	}
+	return 0;
+}*/
 
 int32_t check_extended_mode(struct s_client *cl, char *msg)
 {
@@ -3286,7 +3311,10 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 							add_sid_block(card, &srvid, true);
 						}
 
-						card->rating = MAX(card->rating, MIN_RATING);
+						if(card->rating < MIN_RATING)
+						{
+							card->rating = MIN_RATING;
+						}
 
 						if(cfg.cc_forward_origin_card && card->origin_reader == rdr)
 						{
@@ -3595,11 +3623,19 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 								cs_log_dbg(D_READER, "%s card %04X is too slow, moving to the end...", getprefix(), card->id);
 								move_card_to_end(cl, card);
 
-								card->rating = MAX(card->rating - 1, MIN_RATING);
+								card->rating--;
+								if(card->rating < MIN_RATING)
+								{
+									card->rating = MIN_RATING;
+								}
 							}
 							else
 							{
-								card->rating = MIN(card->rating + 1, MAX_RATING);
+								card->rating++;
+								if(card->rating > MAX_RATING)
+								{
+									card->rating = MAX_RATING;
+								}
 							}
 						}
 					}

@@ -45,6 +45,15 @@ CONF_DIR = /usr/local/etc
 LIB_PTHREAD = -lpthread
 LIB_DL := -ldl
 
+
+LIB_RT :=
+ifeq ($(uname_S),Linux)
+	ifndef ANDROID_NDK
+		ifeq "$(shell ./config.sh --enabled CLOCKFIX)" "Y"
+			LIB_RT := -lrt
+		endif
+	endif
+endif
 ifeq ($(uname_S),FreeBSD)
 	LIB_DL :=
 endif
@@ -192,7 +201,11 @@ DEFAULT_LIBCRYPTO_LIB = -lcrypto
 DEFAULT_SSL_LIB = -lssl
 DEFAULT_LIBCURL_LIB = -lcurl
 #DEFAULT_LIBCURL_FLAGS = -lrt -lssl -lcrypto # (static libcurl ...??? += -static -lcurl -lssl -lcrypto -ldl -lm -lz -DCURL_STATICLIB)
-DEFAULT_LIBUSB_LIB = -lusb-1.0
+ifeq ($(uname_S),Linux)
+	DEFAULT_LIBUSB_LIB = -lusb-1.0 -lrt
+else
+	DEFAULT_LIBUSB_LIB = -lusb-1.0
+endif
 DEFAULT_LIBDVBCSA_LIB = -ldvbcsa
 # Since FreeBSD 8 (released in 2010) they are using their own
 # libusb that is API compatible to libusb but with different soname

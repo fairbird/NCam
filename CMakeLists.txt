@@ -899,6 +899,12 @@ if (HAVE_LIBCRYPTO)
     endif (STATIC_LIBCRYPTO)
 endif (HAVE_LIBCRYPTO)
 
+# some systems need libm for the nagra cak7 functions to work
+check_include_file("math.h" HAVE_LIBM)
+if(HAVE_LIBM)
+    target_link_libraries (${exe_name} m)
+endif(HAVE_LIBM)
+
 if (HAVE_LIBSTAPI)
     target_link_libraries(${exe_name} stapilib)
 endif (HAVE_LIBSTAPI)
@@ -910,6 +916,13 @@ endif (HAVE_LIBSTAPI5)
 add_dependencies (${exe_name} ${csncam} ${csreaders} ${csmodules})
 
 #----------------------- specific options ------------------------------
+
+if (USE_LIBRT_STATIC)
+else (USE_LIBRT_STATIC)
+if (NOT NCamOperatingSystem MATCHES "(Mac OS X|Windows/Cygwin|FreeBSD|OpenBSD|Android)")
+	target_link_libraries (${exe_name} rt)
+endif (NOT NCamOperatingSystem MATCHES "(Mac OS X|Windows/Cygwin|FreeBSD|OpenBSD|Android)")
+endif (USE_LIBRT_STATIC)
 
 if (NCamOperatingSystem MATCHES "Linux")
 	set (dl_link "dl")

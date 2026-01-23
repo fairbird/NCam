@@ -340,7 +340,8 @@ static int32_t stinger_mouse_init(struct s_reader *reader)
 
 	clock_mhz = reader->mhz;
 
-	reader->mhz = reader->cardmhz;
+	if(reader->mhz != reader->cardmhz)
+		{ reader->mhz = reader->cardmhz; }
 
 	reader->handle = open(reader->device,  O_RDWR | O_NOCTTY | O_NONBLOCK);
 	if(reader->handle < 0)

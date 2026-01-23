@@ -253,7 +253,10 @@ LLIST *log_history = NULL;
 */
 void cs_reinit_loghist(uint32_t size)
 {
-	cfg.loghistorylines = size;
+	if(cfg.loghistorylines != size)
+	{
+		cfg.loghistorylines = size;
+	}
 }
 #endif
 
@@ -267,7 +270,7 @@ static uint8_t get_log_header(char *txt, int32_t txt_size, uint8_t* hdr_logcount
 	int32_t tmp;
 
 	cs_ftime(&log_ts);
-	time_t walltime = log_ts.time;
+	time_t walltime = cs_walltime(&log_ts);
 	localtime_r(&walltime, &lt);
 
 	tmp = snprintf(txt, txt_size, "[LOG000]%04d/%02d/%02d %02d:%02d:%02d %08X %c ",
