@@ -282,6 +282,8 @@ write_enabled() {
 	for OPT in $(get_opts) WITH_CARDREADER
 	do
 		enabled $OPT && printf "%s\n" $OPT >> $defined_file
+		# Handle USE_FLAG based card readers for webif template filtering
+		have_flag USE_PCSC && printf "%s\n" CARDREADER_PCSC >> $defined_file
 	done
 }
 
