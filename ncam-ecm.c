@@ -1,6 +1,7 @@
 #define MODULE_LOG_PREFIX "ecm"
 
 #include "globals.h"
+#include <math.h>
 #include "cscrypt/md5.h"
 #include "module-anticasc.h"
 #include "module-cacheex.h"
@@ -142,6 +143,593 @@ void ecm_cache_cleanup(bool force)
 	SAFE_RWLOCK_UNLOCK(&ecm_cache_lock);
 }
 #endif
+
+/**
+ * maxparallel - Helper: Calculate pending slots array size
+ * Formula: round(maxparallel * parallelfactor)
+ * parallelfactor <= 0 means no pending slots (zapping disabled)
+ */
+static inline int32_t get_pending_size(struct s_reader *rdr)
+{
+	// parallelfactor <= 0 means no pending slots (disabled or not configured)
+	if(rdr->parallelfactor <= 0.0f)
+		return 0;
+	int32_t size = (int32_t)(rdr->maxparallel * rdr->parallelfactor + 0.5f);
+	return (size < 1) ? 1 : size;
+}
+
+/**
+ * maxparallel - Helper: Check if slot is expired
+ * Returns timeout threshold in ms, 0 if no timeout check needed
+ */
+static int32_t get_slot_timeout(struct s_parallel_slot *slot, int32_t paralleltimeout)
+{
+	if(slot->ecm_interval > 0)
+		return slot->ecm_interval + paralleltimeout;
+	else
+		return 10000 + paralleltimeout;  // Default 10s if no interval measured
+}
+
+/**
+ * maxparallel - Helper: Clear a slot
+ */
+static void clear_slot(struct s_parallel_slot *slot)
+{
+	slot->srvid = 0;
+	slot->ecm_interval = 0;
+	slot->client = NULL;
+	memset(&slot->last_ecm, 0, sizeof(struct timeb));
+}
+
+/**
+ * maxparallel - Helper: Add client+service to blocked list
+ * Replaces any existing entry for the same client
+ */
+static void block_client_service(struct s_reader *rdr, struct s_client *client, uint16_t srvid)
+{
+	if(!rdr || !client || !rdr->blocked_services)
+		return;
+
+	// Check if client already has a blocked entry - if so, update it
+	LL_ITER it = ll_iter_create(rdr->blocked_services);
+	struct s_blocked_client *bc;
+	while((bc = ll_iter_next(&it)))
+	{
+		if(bc->client == client)
+		{
+			bc->srvid = srvid;
+			return;
+		}
+	}
+
+	// Add new entry
+	if(!cs_malloc(&bc, sizeof(struct s_blocked_client)))
+		return;
+	bc->client = client;
+	bc->srvid = srvid;
+	ll_append(rdr->blocked_services, bc);
+}
+
+/**
+ * maxparallel - Helper: Check if client+service is blocked
+ * Returns: 1 = blocked, 0 = not blocked
+ */
+static int8_t is_client_blocked(struct s_reader *rdr, struct s_client *client, uint16_t srvid)
+{
+	if(!rdr || !client || !rdr->blocked_services)
+		return 0;
+
+	LL_ITER it = ll_iter_create(rdr->blocked_services);
+	struct s_blocked_client *bc;
+	while((bc = ll_iter_next(&it)))
+	{
+		if(bc->client == client && bc->srvid == srvid)
+			return 1;
+	}
+	return 0;
+}
+
+/**
+ * maxparallel - Helper: Remove block for client if zapping to different service
+ * Only unblocks if the new service is DIFFERENT from the blocked one
+ */
+static void unblock_client_if_different(struct s_reader *rdr, struct s_client *client, uint16_t new_srvid)
+{
+	if(!rdr || !client || !rdr->blocked_services)
+		return;
+
+	LL_ITER it = ll_iter_create(rdr->blocked_services);
+	struct s_blocked_client *bc;
+	while((bc = ll_iter_next(&it)))
+	{
+		if(bc->client == client)
+		{
+			// Only unblock if zapping to a DIFFERENT service
+			if(bc->srvid != new_srvid)
+			{
+				ll_iter_remove_data(&it);
+			}
+			return;
+		}
+	}
+}
+
+/**
+ * maxparallel - Helper: Clear all blocked entries (when active slot becomes free)
+ */
+static void clear_blocked_services(struct s_reader *rdr)
+{
+	if(!rdr || !rdr->blocked_services)
+		return;
+
+	ll_clear_data(rdr->blocked_services);
+}
+
+/**
+ * maxparallel - Cleanup expired slots in both arrays and promote pending
+ * - Removes expired slots from parallel_slots (active) and parallel_slots_pending (pending)
+ * - Upgrades pending to active when space becomes available (FIFO)
+ * - Does NOT drop pending (that's done separately when active services send ECMs)
+ * MUST be called with parallel_lock held
+ * Returns: count of active slots after cleanup
+ */
+static int32_t reader_cleanup_slots_nolock(struct s_reader *rdr, struct timeb *now)
+{
+	if(!rdr || rdr->maxparallel <= 0)
+		return 0;
+
+	int32_t i;
+	int32_t active_count = 0;
+	int32_t pending_count = 0;
+	int32_t free_active = -1;  // First empty slot in active array
+
+	// Pass 1: Clean expired slots in active array, count active
+	for(i = 0; i < rdr->maxparallel; i++)
+	{
+		if(rdr->parallel_slots[i].srvid == 0)
+		{
+			if(free_active < 0)
+				free_active = i;
+			continue;
+		}
+
+		int64_t gone = comp_timeb(now, &rdr->parallel_slots[i].last_ecm);
+		int32_t timeout = get_slot_timeout(&rdr->parallel_slots[i], rdr->paralleltimeout);
+
+		if(gone > timeout)
+		{
+			cs_log_dbg(D_READER, "reader %s: service %04X expired (no ECM for %"PRId64" ms, timeout %d ms)",
+				rdr->label, rdr->parallel_slots[i].srvid, gone, timeout);
+			clear_slot(&rdr->parallel_slots[i]);
+			if(free_active < 0)
+				free_active = i;
+		}
+		else
+		{
+			active_count++;
+		}
+	}
+
+	// Pass 2: Clean expired slots in pending array, count active
+	int32_t pending_size = get_pending_size(rdr);
+	for(i = 0; i < pending_size; i++)
+	{
+		if(rdr->parallel_slots_prov[i].srvid == 0)
+			continue;
+
+		int64_t gone = comp_timeb(now, &rdr->parallel_slots_prov[i].last_ecm);
+		int32_t timeout = get_slot_timeout(&rdr->parallel_slots_prov[i], rdr->paralleltimeout);
+
+		if(gone > timeout)
+		{
+			cs_log_dbg(D_READER, "reader %s: pending service %04X expired (no ECM for %"PRId64" ms, timeout %d ms)",
+				rdr->label, rdr->parallel_slots_prov[i].srvid, gone, timeout);
+			clear_slot(&rdr->parallel_slots_prov[i]);
+		}
+		else
+		{
+			pending_count++;
+		}
+	}
+
+	// Pass 3: Upgrade pending to active if space available (FIFO)
+	// This handles the zapping case: old service expired, new one can be promoted
+	while(active_count < rdr->maxparallel && pending_count > 0)
+	{
+		// Find oldest pending (largest age = first to arrive = FIFO upgrade)
+		int32_t oldest_idx = -1;
+		int64_t oldest_time = -1;
+
+		for(i = 0; i < pending_size; i++)
+		{
+			if(rdr->parallel_slots_prov[i].srvid != 0)
+			{
+				int64_t age = comp_timeb(now, &rdr->parallel_slots_prov[i].last_ecm);
+				if(oldest_idx < 0 || age > oldest_time)
+				{
+					oldest_idx = i;
+					oldest_time = age;
+				}
+			}
+		}
+
+		if(oldest_idx < 0)
+			break;
+
+		// Find empty slot in active array
+		if(free_active < 0)
+		{
+			for(i = 0; i < rdr->maxparallel; i++)
+			{
+				if(rdr->parallel_slots[i].srvid == 0)
+				{
+					free_active = i;
+					break;
+				}
+			}
+		}
+
+		if(free_active < 0)
+			break;  // Should not happen, but safety check
+
+		// Move pending to active
+		rdr->parallel_slots[free_active] = rdr->parallel_slots_prov[oldest_idx];
+		clear_slot(&rdr->parallel_slots_prov[oldest_idx]);
+
+		cs_log_dbg(D_READER, "reader %s: service %04X promoted from pending to active (slot %d)",
+			rdr->label, rdr->parallel_slots[free_active].srvid, free_active);
+
+		active_count++;
+		pending_count--;
+		free_active = -1;  // Need to find next empty slot
+	}
+
+	// If active slots are now available, clear blocked list
+	// This allows previously blocked clients to try again
+	if(active_count < rdr->maxparallel)
+	{
+		clear_blocked_services(rdr);
+	}
+
+	return active_count;
+}
+
+/**
+ * maxparallel - Drop pending services when active array is full (FIFO)
+ * Called only when an ACTIVE service receives an ECM, proving it's still active.
+ * Drops the OLDEST pending first (first in, first out)
+ * This is fair: first to request overload is first to be denied.
+ * Dropped clients are added to the blocked list so they fall over to other readers.
+ * MUST be called with parallel_lock held
+ */
+static void reader_drop_pending_nolock(struct s_reader *rdr, struct timeb *now)
+{
+	if(!rdr || rdr->maxparallel <= 0)
+		return;
+
+	// Count active and pending
+	int32_t i;
+	int32_t active_count = 0;
+	int32_t pending_count = 0;
+	int32_t pending_size = get_pending_size(rdr);
+
+	for(i = 0; i < rdr->maxparallel; i++)
+	{
+		if(rdr->parallel_slots[i].srvid != 0)
+			active_count++;
+	}
+	for(i = 0; i < pending_size; i++)
+	{
+		if(rdr->parallel_slots_prov[i].srvid != 0)
+			pending_count++;
+	}
+
+	// Drop pending if active array is full (FIFO - oldest dropped first)
+	while(active_count >= rdr->maxparallel && pending_count > 0)
+	{
+		// Find oldest pending (largest age = first to arrive = drop first)
+		int32_t oldest_idx = -1;
+		int64_t oldest_time = -1;
+
+		for(i = 0; i < pending_size; i++)
+		{
+			if(rdr->parallel_slots_prov[i].srvid != 0)
+			{
+				int64_t age = comp_timeb(now, &rdr->parallel_slots_prov[i].last_ecm);
+				if(oldest_idx < 0 || age > oldest_time)
+				{
+					oldest_idx = i;
+					oldest_time = age;
+				}
+			}
+		}
+
+		if(oldest_idx < 0)
+			break;
+
+		// Add client to blocked list before clearing slot
+		struct s_parallel_slot *slot = &rdr->parallel_slots_prov[oldest_idx];
+		if(slot->client)
+		{
+			block_client_service(rdr, slot->client, slot->srvid);
+		}
+
+		cs_log("reader %s: dropped pending service %04X (%.3f sec old, active services still running)",
+			rdr->label, slot->srvid, (float)oldest_time / 1000);
+		clear_slot(slot);
+		pending_count--;
+	}
+}
+
+/**
+ * maxparallel - Check if reader has capacity for a service (does NOT reserve slot)
+ * Used during ECM request to decide if reader should be tried.
+ * Also checks if client+service is blocked (was dropped earlier).
+ * Returns: 1 = has capacity (or service already registered), 0 = full or blocked (skip reader)
+ */
+static int8_t reader_has_capacity(struct s_reader *rdr, uint16_t srvid, struct s_client *client)
+{
+	if(!rdr || rdr->maxparallel <= 0)
+		return 1;  // unlimited
+
+	cs_readlock(__func__, &rdr->parallel_lock);
+
+	struct timeb now;
+	cs_ftime(&now);
+
+	int32_t i;
+	int32_t pending_size = get_pending_size(rdr);
+	int8_t result = 0;
+
+	// Check if client+service is blocked (was dropped earlier)
+	if(is_client_blocked(rdr, client, srvid))
+	{
+		result = 0;
+		goto done;
+	}
+
+	// Check if service already registered in active array
+	for(i = 0; i < rdr->maxparallel; i++)
+	{
+		if(rdr->parallel_slots[i].srvid == srvid)
+		{
+			result = 1;
+			goto done;
+		}
+	}
+
+	// Check if service already registered in pending array
+	for(i = 0; i < pending_size; i++)
+	{
+		if(rdr->parallel_slots_prov[i].srvid == srvid)
+		{
+			result = 1;
+			goto done;
+		}
+	}
+
+	// Count active slots (with expiry check)
+	int32_t active_count = 0;
+	for(i = 0; i < rdr->maxparallel; i++)
+	{
+		if(rdr->parallel_slots[i].srvid != 0)
+		{
+			int64_t gone = comp_timeb(&now, &rdr->parallel_slots[i].last_ecm);
+			int32_t timeout = get_slot_timeout(&rdr->parallel_slots[i], rdr->paralleltimeout);
+			if(gone <= timeout)
+				active_count++;
+		}
+	}
+
+	// Space in active array?
+	if(active_count < rdr->maxparallel)
+	{
+		result = 1;
+		goto done;
+	}
+
+	// Space in pending array?
+	if(pending_size > 0)
+	{
+		int32_t pending_count = 0;
+		for(i = 0; i < pending_size; i++)
+		{
+			if(rdr->parallel_slots_prov[i].srvid != 0)
+			{
+				int64_t gone = comp_timeb(&now, &rdr->parallel_slots_prov[i].last_ecm);
+				int32_t timeout = get_slot_timeout(&rdr->parallel_slots_prov[i], rdr->paralleltimeout);
+				if(gone <= timeout)
+					pending_count++;
+			}
+		}
+		if(pending_count < pending_size)
+		{
+			result = 1;
+			goto done;
+		}
+	}
+
+	// No capacity available
+	result = 0;
+
+done:
+	cs_readunlock(__func__, &rdr->parallel_lock);
+	return result;
+}
+
+/**
+ * maxparallel - Register a service on a reader (called when CW is found)
+ * Uses dual-array architecture:
+ * - parallel_slots: active services (the limit)
+ * - parallel_slots_pending: pending services during zapping
+ * New services go to active if space available, otherwise pending.
+ * Returns: 1 = registered, 0 = failed
+ */
+static int8_t reader_register_service(struct s_reader *rdr, uint16_t srvid, struct s_client *client)
+{
+	if(!rdr || rdr->maxparallel <= 0)
+		return 1;  // unlimited, always OK
+
+	cs_writelock(__func__, &rdr->parallel_lock);
+
+	// If client is registering a DIFFERENT service, unblock them
+	// (they zapped away from the blocked service)
+	unblock_client_if_different(rdr, client, srvid);
+
+	struct timeb now;
+	cs_ftime(&now);
+
+	// Cleanup expired slots and handle promotions/drops
+	int32_t active_count = reader_cleanup_slots_nolock(rdr, &now);
+
+	int32_t i;
+	int32_t pending_size = get_pending_size(rdr);
+
+	// Search for existing slot in both arrays
+	int32_t existing_active = -1;
+	int32_t existing_pending = -1;
+	int32_t free_active = -1;
+	int32_t free_pending = -1;
+
+	// Search active array
+	for(i = 0; i < rdr->maxparallel; i++)
+	{
+		if(rdr->parallel_slots[i].srvid == srvid)
+			existing_active = i;
+		else if(free_active < 0 && rdr->parallel_slots[i].srvid == 0)
+			free_active = i;
+	}
+
+	// Search pending array
+	for(i = 0; i < pending_size; i++)
+	{
+		if(rdr->parallel_slots_prov[i].srvid == srvid)
+			existing_pending = i;
+		else if(free_pending < 0 && rdr->parallel_slots_prov[i].srvid == 0)
+			free_pending = i;
+	}
+
+	struct s_parallel_slot *slot = NULL;
+	int8_t is_new = 0;
+	int8_t is_pending = 0;
+	int32_t slot_idx = -1;
+	const char *array_name = "active";
+
+	if(existing_active >= 0)
+	{
+		// Already in active array - just update
+		slot = &rdr->parallel_slots[existing_active];
+		slot_idx = existing_active;
+		is_new = 0;
+	}
+	else if(existing_pending >= 0)
+	{
+		// Already in pending array - update there
+		slot = &rdr->parallel_slots_prov[existing_pending];
+		slot_idx = existing_pending;
+		is_new = 0;
+		is_pending = 1;
+		array_name = "pending";
+	}
+	else if(active_count < rdr->maxparallel && free_active >= 0)
+	{
+		// New service, space in active array
+		slot = &rdr->parallel_slots[free_active];
+		slot_idx = free_active;
+		slot->srvid = srvid;
+		slot->ecm_interval = 0;
+		slot->client = client;
+		is_new = 1;
+	}
+	else if(free_pending >= 0)
+	{
+		// New service, active full -> put in pending
+		slot = &rdr->parallel_slots_prov[free_pending];
+		slot_idx = free_pending;
+		slot->srvid = srvid;
+		slot->ecm_interval = 0;
+		slot->client = client;
+		is_new = 1;
+		is_pending = 1;
+		array_name = "pending";
+	}
+	else
+	{
+		// No slot available in either array
+		cs_writeunlock(__func__, &rdr->parallel_lock);
+		cs_log("reader %s: no slot available for service %04X (all %d+%d slots used)",
+			rdr->label, srvid, rdr->maxparallel, pending_size);
+		return 0;
+	}
+
+	// Update interval for existing slots
+	if(!is_new && slot->last_ecm.time > 0)
+	{
+		int64_t interval = comp_timeb(&now, &slot->last_ecm);
+		if(interval > 0 && interval < 30000)  // Sanity: < 30 seconds
+		{
+			if(slot->ecm_interval == 0)
+				slot->ecm_interval = (int32_t)interval;
+			else
+				slot->ecm_interval = (slot->ecm_interval + (int32_t)interval) / 2;
+		}
+	}
+
+	slot->last_ecm = now;
+
+	// If this is an ACTIVE service (not pending), drop pending if needed
+	// This ensures pending are only dropped when active services prove they're still active
+	if(!is_pending)
+	{
+		reader_drop_pending_nolock(rdr, &now);
+	}
+
+	// Recount for logging (drop may have changed counts)
+	int32_t final_active = 0, final_pending = 0;
+	for(i = 0; i < rdr->maxparallel; i++)
+	{
+		if(rdr->parallel_slots[i].srvid != 0)
+			final_active++;
+	}
+	for(i = 0; i < pending_size; i++)
+	{
+		if(rdr->parallel_slots_prov[i].srvid != 0)
+			final_pending++;
+	}
+
+	if(is_new)
+	{
+		if(final_pending > 0)
+		{
+			cs_log_dbg(D_READER, "reader %s: registered service %04X in %s slot %d (%d/%d active, +%d pending)",
+				rdr->label, srvid, array_name, slot_idx, final_active, rdr->maxparallel, final_pending);
+		}
+		else
+		{
+			cs_log_dbg(D_READER, "reader %s: registered service %04X in %s slot %d (%d/%d active)",
+				rdr->label, srvid, array_name, slot_idx, final_active, rdr->maxparallel);
+		}
+
+		// Log "now full" only once per state change, and only for active services
+		if(!is_pending && final_active >= rdr->maxparallel && !rdr->parallel_full)
+		{
+			rdr->parallel_full = 1;
+			cs_log("reader %s: now full (%d/%d active)",
+				rdr->label, final_active, rdr->maxparallel);
+		}
+	}
+
+	// Reset full flag when capacity becomes available
+	if(final_active < rdr->maxparallel && rdr->parallel_full)
+	{
+		rdr->parallel_full = 0;
+		cs_log_dbg(D_READER, "reader %s: capacity available (%d/%d active)",
+			rdr->label, final_active, rdr->maxparallel);
+	}
+
+	cs_writeunlock(__func__, &rdr->parallel_lock);
+	return 1;
+}
 
 void fallback_timeout(ECM_REQUEST *er)
 {
@@ -1409,6 +1997,15 @@ void request_cw_from_readers(ECM_REQUEST *er, uint8_t stop_stage)
 				cs_log_dbg(D_TRACE | D_CSP, "request_cw stage=%d to reader %s ecm hash=%s", er->stage, rdr ? rdr->label : "", ecmd5);
 			}
 #endif
+			// maxparallel: check if reader has capacity (slot is reserved later when CW found)
+			if(rdr->maxparallel > 0 && !reader_has_capacity(rdr, er->srvid, er->client))
+			{
+				cs_log_dbg(D_LB, "reader %s skipped for %s srvid %04X (maxparallel %d reached)",
+					rdr->label, check_client(er->client) ? er->client->account->usr : "-",
+					er->srvid, rdr->maxparallel);
+				continue;
+			}
+
 			ea->status |= REQUEST_SENT;
 			cs_ftime(&ea->time_request_sent);
 
@@ -1574,6 +2171,10 @@ void chk_dcw(struct s_ecm_answer *ea)
 	switch(ea->rc)
 	{
 	case E_FOUND:
+		// maxparallel: register this service on the winning reader
+		if(eardr->maxparallel > 0)
+			{ reader_register_service(eardr, ert->srvid, ert->client); }
+
 		memcpy(ert->cw, ea->cw, 16);
 		ert->cw_ex = ea->cw_ex;
 		ert->rcEx = 0;

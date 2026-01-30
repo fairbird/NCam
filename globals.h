@@ -1486,6 +1486,22 @@ struct ecmrl
 };
 #define MAXECMRATELIMIT 20
 
+// maxparallel service tracking
+struct s_parallel_slot
+{
+	uint16_t		srvid;			// service ID
+	struct timeb	last_ecm;			// time of last ECM for this service
+	int32_t	      ecm_interval;		// measured interval between ECMs in ms
+	struct s_client	*client;			// client using this slot
+};
+
+// maxparallel blocked client tracking
+struct s_blocked_client
+{
+	struct s_client	*client;			// client pointer
+	uint16_t		srvid;			// blocked service ID
+};
+
 #ifdef MODULE_SERIAL
 struct ecmtw
 {
@@ -1945,6 +1961,14 @@ struct s_reader
 	int8_t          cooldownstate;
 	struct timeb    cooldowntime;
 	struct ecmrl    rlecmh[MAXECMRATELIMIT];
+	int32_t	    maxparallel;					// max parallel active services, 0 = unlimited (default)
+	float		    parallelfactor;				// zapping tolerance multiplier (default: 2.0)
+	int32_t	    paralleltimeout;				// timeout buffer in ms after expected ECM (default: 1000)
+	struct s_parallel_slot	*parallel_slots;			// regular service tracking (size: maxparallel)
+	struct s_parallel_slot	*parallel_slots_prov;		// pending service tracking (size: maxparallel * parallelfactor, rounded)
+	LLIST		    *blocked_services;				// list of s_blocked_client for dropped services
+	CS_MUTEX_LOCK   parallel_lock;				// lock for parallel_slots access
+	int8_t	    parallel_full;				// flag: 1 if reader is at capacity limit
 	int8_t          fix_07;
 	int8_t          fix_9993;
 	int8_t          readtiers; // method to get videoguard tiers

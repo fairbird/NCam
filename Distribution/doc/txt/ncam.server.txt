@@ -381,6 +381,37 @@ DESCRIPTIONS
 
 	  ratelimitecm and ratelimitseconds are required
 
+       maxparallel = count
+	  maximum number of parallel active services allowed for this reader,
+	  0 = unlimited (default). Useful for limiting load on readers with
+	  slot restrictions. When the limit is reached, the reader is
+	  temporarily skipped and other readers are tried. A service slot
+	  expires when no ECM is received within the measured ECM interval
+	  plus the paralleltimeout buffer.
+
+	   example: maxparallel = 2
+
+       paralleltimeout = milliseconds
+	  timeout buffer in milliseconds added to the measured ECM interval
+	  to determine when a service slot expires, default: 1000
+
+	   example: paralleltimeout = 1500
+
+       parallelfactor = factor
+	  multiplier for pending slots used during zapping. Pending
+	  slots allow temporary capacity overrun while switching channels.
+	  Formula: pending_slots = round(maxparallel * parallelfactor)
+	  Supports decimal values (e.g. 1.5 or 2.0), default: 1.5
+
+	  When zapping, new services go to pending slots if active slots
+	  are full. Pending are promoted to active when slots free up,
+	  or dropped when active services prove they're still running.
+
+	  Set to 0 to disable pending slots (strict limit, may cause
+	  black screen when zapping with single reader).
+
+	   example: parallelfactor = 1.5  (with maxparallel=2: 3 pending slots)
+
        blocknano = nano[,nano]...|all
 	  list of EMM-nanos to block (in hex w/o 0x) or all EMM-nanos, valid for physical readers only, default:none
 

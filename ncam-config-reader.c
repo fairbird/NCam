@@ -1461,6 +1461,55 @@ static void cooldown_fn(const char *token, char *value, void *setting, FILE *f)
 	}
 }
 
+static void parallelfactor_fn(const char *token, char *value, void *setting, FILE *f)
+{
+	struct s_reader *rdr = setting;
+	if(value)
+	{
+		if(cs_strlen(value) == 0)
+		{
+			rdr->parallelfactor = 1.5;  // default
+		}
+		else
+		{
+			// Parse float manually to avoid locale issues (strtof uses locale decimal separator)
+			// Accept both '.' and ',' as decimal separator
+			char tmp[32];
+			cs_strncpy(tmp, value, sizeof(tmp));
+
+			// Find decimal separator (either . or ,)
+			char *sep = strchr(tmp, '.');
+			if(!sep) sep = strchr(tmp, ',');
+
+			if(sep)
+			{
+				*sep = '\0';  // Split at separator
+				int32_t integer_part = atoi(tmp);
+				int32_t decimal_part = atoi(sep + 1);
+				// Calculate decimal value (assuming 1 decimal place)
+				rdr->parallelfactor = (float)integer_part + (float)decimal_part / 10.0f;
+			}
+			else
+			{
+				rdr->parallelfactor = (float)atoi(tmp);
+			}
+
+			if(rdr->parallelfactor < 0)
+				rdr->parallelfactor = 1.5;  // default on negative
+		}
+		return;
+	}
+	// Write config: use comma as decimal separator
+	if(rdr->parallelfactor != 1.5 || cfg.http_full_cfg)
+	{
+		char buf[16];
+		snprintf(buf, sizeof(buf), "%.1f", rdr->parallelfactor);
+		char *dot = strchr(buf, '.');
+		if(dot) *dot = ',';
+		fprintf_conf(f, token, "%s\n", buf);
+	}
+}
+
 static void cooldowndelay_fn(const char *UNUSED(token), char *value, void *setting, FILE *UNUSED(f))
 {
 	struct s_reader *rdr = setting;
@@ -1516,6 +1565,48 @@ void reader_fixups_fn(void *var)
 #endif
 		if(rdr->typ == R_CAMD35)
 			{ rdr->keepalive = 0; } // with NO-cacheex, and UDP, keepalive is not required!
+	}
+
+	// Allocate/reallocate parallel_slots if maxparallel changed
+	// Two separate arrays: active slots (maxparallel) and pending slots (round(maxparallel * parallelfactor))
+	if(rdr->maxparallel > 0)
+	{
+		// Set default parallelfactor if negative (not configured)
+		// parallelfactor = 0 is valid (disables pending slots)
+		if(rdr->parallelfactor < 0)
+			rdr->parallelfactor = 1.5;
+
+		// Calculate pending slots size: round(maxparallel * parallelfactor) without math.h
+		// parallelfactor = 0 means no pending slots (zapping support disabled)
+		int32_t pending_size = (int32_t)(rdr->maxparallel * rdr->parallelfactor + 0.5);
+
+		// Only allocate if not yet allocated (first time setup)
+		// Size changes require NCam restart to take effect
+		if(!rdr->parallel_slots)
+		{
+			if(!cs_malloc(&rdr->parallel_slots, rdr->maxparallel * sizeof(struct s_parallel_slot)))
+				{ rdr->maxparallel = 0; }  // disable on allocation failure
+			else if(pending_size > 0 && !cs_malloc(&rdr->parallel_slots_prov, pending_size * sizeof(struct s_parallel_slot)))
+			{
+				NULLFREE(rdr->parallel_slots);  // free first array on second failure
+				rdr->maxparallel = 0;
+			}
+			else
+			{
+				cs_lock_create(__func__, &rdr->parallel_lock, "parallel_lock", 5000);
+				rdr->blocked_services = ll_create("blocked_services");
+			}
+
+			rdr->parallel_full = 0;  // reset full flag
+		}
+	}
+	else if(rdr->parallel_slots || rdr->parallel_slots_prov)
+	{
+		// maxparallel was disabled, free the slots
+		NULLFREE(rdr->parallel_slots);
+		NULLFREE(rdr->parallel_slots_prov);
+		ll_destroy_data(&rdr->blocked_services);
+		rdr->parallel_full = 0;
 	}
 }
 
@@ -1736,6 +1827,9 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_FUNC("cooldown"                       , 0,                                    cooldown_fn),
 	DEF_OPT_FUNC("cooldowndelay"                  , 0,                                    cooldowndelay_fn),
 	DEF_OPT_FUNC("cooldowntime"                   , 0,                                    cooldowntime_fn),
+	DEF_OPT_INT32("maxparallel"                   , OFS(maxparallel),                     0),
+	DEF_OPT_FUNC("parallelfactor"                 , 0,                                    parallelfactor_fn),
+	DEF_OPT_INT32("paralleltimeout"               , OFS(paralleltimeout),                 1000),
 	DEF_OPT_UINT8("read_old_classes"              , OFS(read_old_classes),                1),
 	DEF_OPT_INT8("ecmending"                      , OFS(ecmending),                       1),
 	DEF_LAST_OPT
@@ -1965,6 +2059,11 @@ int32_t init_readerdb(void)
 void free_reader(struct s_reader *rdr)
 {
 	NULLFREE(rdr->emmfile);
+	if(rdr->parallel_slots || rdr->parallel_slots_prov)
+		{ cs_lock_destroy(__func__, &rdr->parallel_lock); }
+	NULLFREE(rdr->parallel_slots);
+	NULLFREE(rdr->parallel_slots_prov);
+	ll_destroy_data(&rdr->blocked_services);
 
 	ecm_whitelist_clear(&rdr->ecm_whitelist);
 	ecm_hdr_whitelist_clear(&rdr->ecm_hdr_whitelist);

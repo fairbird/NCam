@@ -2979,6 +2979,11 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 		tpl_printf(vars, TPLADD, "COOLDOWNDELAY", "%d", rdr->cooldown[0]);
 		tpl_printf(vars, TPLADD, "COOLDOWNTIME", "%d", rdr->cooldown[1]);
 	}
+	// Max parallel services
+	tpl_printf(vars, TPLADD, "MAXPARALLEL", "%d", rdr->maxparallel);
+	// Parallelfactor: format as float with dot (comma would break URL parameters)
+	tpl_printf(vars, TPLADD, "PARALLELFACTOR", "%.1f", rdr->parallelfactor >= 0 ? rdr->parallelfactor : 2.0);
+	tpl_printf(vars, TPLADD, "PARALLELTIMEOUT", "%d", rdr->paralleltimeout);
 	// Frequencies
 	tpl_printf(vars, TPLADD, "MHZ", "%d", rdr->mhz);
 	tpl_printf(vars, TPLADD, "CARDMHZ", "%d", rdr->cardmhz);
