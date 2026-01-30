@@ -5129,6 +5129,40 @@ bool cccam_client_newbox_mode(struct s_client *cl)
 	return cl && cl->cc && ((struct cc_data *)cl->cc)->newbox_mode == 2;
 }
 
+static int32_t compare_cards_by_hop(struct cc_card **pcard1, struct cc_card **pcard2)
+{
+	struct cc_card *card1 = (*pcard1), *card2 = (*pcard2);
+
+	int32_t res = card1->hop - card2->hop;
+	if(res) { return res; }
+	res = card1->caid - card2->caid;
+	if(res) { return res; }
+	res = card1->reshare - card2->reshare;
+	if(res) { return res; }
+	res = card1->id - card2->id;
+	return res;
+}
+
+static int32_t compare_cards_by_hop_r(struct cc_card **pcard1, struct cc_card **pcard2)
+{
+	return -compare_cards_by_hop(pcard1, pcard2);
+}
+
+struct cc_card **get_sorted_card_copy(LLIST *cards, int32_t reverse, int32_t *size)
+{
+	if(reverse)
+		{ return (struct cc_card **)ll_sort(cards, compare_cards_by_hop_r, size); }
+	else
+		{ return (struct cc_card **)ll_sort(cards, compare_cards_by_hop, size); }
+}
+
+#ifndef MODULE_CCCSHARE
+/* Stub functions when CCCSHARE is disabled */
+LLIST **get_and_lock_sharelist(void) { return NULL; }
+void unlock_sharelist(void) { }
+void cccam_init_share(void) { }
+#endif
+
 void module_cccam(struct s_module *ph)
 {
 	ph->desc = "cccam";
