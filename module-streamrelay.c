@@ -48,7 +48,7 @@ typedef struct
 
 static char *stream_source_auth = NULL;
 static uint32_t cluster_size = 50;
-static bool has_dvbcsa_ecm = 0;
+bool has_dvbcsa_ecm = 0, is_dvbcsa_static = 1;
 #if DVBCSA_KEY_ECM
 static uint8_t (*dvbcsa_get_ecm_table_fn)(void) = NULL;
 #endif
@@ -1917,8 +1917,6 @@ static void *stream_client_handler(void *arg)
 		dvbcsa_bs_key_free(key_data[conndata->connid].key[i][EVEN]);
 	}
 #endif
-	key_data[conndata->connid].key[ODD] = NULL;
-	key_data[conndata->connid].key[EVEN] = NULL;
 
 	NULLFREE(tsbbatch);
 	NULLFREE(data);
@@ -1954,19 +1952,20 @@ static void *stream_server(void)
 	cs_log("INFO: dynamic dvbcsa%s parallel mode = %d (relay buffer time: %d ms)", (!has_dvbcsa_ecm) ? "" : " (with icam)", cluster_size, cfg.stream_relay_buffer_time);
 #if DVBCSA_KEY_ECM
 	dvbcsa_get_ecm_table_fn = dlsym(RTLD_DEFAULT, "dvbcsa_get_ecm_table");
+	is_dvbcsa_static = 0;
 #endif
 #endif
 
 	do
 	{
 		cs_log("%s: (%s) %s dvbcsa parallel mode = %d (relay buffer time: %d ms)%s%s",
-			(!DVBCSA_HEADER_ECM || !has_dvbcsa_ecm) ? "WARNING" : "INFO",
+			(!DVBCSA_KEY_ECM || !has_dvbcsa_ecm) ? "WARNING" : "INFO",
 			(!has_dvbcsa_ecm) ? "wrong" : "ecm",
 			(!is_dvbcsa_static) ? "dynamic" : "static",
 			cluster_size,
 			cfg.stream_relay_buffer_time,
-			(!DVBCSA_HEADER_ECM || !has_dvbcsa_ecm) ? "! ECM processing via Streamrelay does not work!" : "",
-			(!DVBCSA_HEADER_ECM) ? " Missing dvbcsa ecm headers during build!" : "");
+			(!DVBCSA_KEY_ECM || !has_dvbcsa_ecm) ? "! ECM processing via Streamrelay does not work!" : "",
+			(!DVBCSA_KEY_ECM) ? " Missing dvbcsa ecm headers during build!" : "");
 
 		if (!stream_server_mutex_init)
 		{
