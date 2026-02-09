@@ -146,7 +146,7 @@
 #define DEMUX_CA_MASK_ADAPTER           0x82 // deprecated - applications should use descriptors ADAPTER_DEVICE, DEMUX_DEVICE and CA_DEVICE instead
 #define ADAPTER_DEVICE                  0x83
 #define PMT_PID                         0x84
-#define SERVICE_TYPE_MASK               0x85 // not used by NCam
+#define SERVICE_TYPE_MASK		    0x85
 #define DEMUX_DEVICE                    0x86
 #define CA_DEVICE                       0x87
 
@@ -462,6 +462,7 @@ typedef struct demux_s
 	struct timeb     decstart;
 	struct timeb     decend;
 	uint32_t         msgid;
+	int64_t          srvtype;                        // service type mask from CA PMT descriptor 0x85, or -1 if not present
 } DEMUXTYPE;
 
 typedef struct s_streampid

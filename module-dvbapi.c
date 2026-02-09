@@ -2712,6 +2712,7 @@ void dvbapi_stop_descrambling(int32_t demux_id, uint32_t msgid)
 	}
 	demux[demux_id].pidindex = -1;
 	demux[demux_id].curindex = -1;
+	demux[demux_id].srvtype = -1;
 
 	if(!dvbapi_listenport_active && cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX)
 	{
@@ -4444,6 +4445,7 @@ typedef struct demux_parameters
 	uint16_t onid;
 	uint16_t tsid;
 	uint32_t ens;
+	int64_t  srvtype;		// service type mask from descriptor 0x85, or -1 if not present
 } demux_parameters_t;
 
 static void get_demux_parameters(const uint8_t *buffer, demux_parameters_t *parameters)
@@ -4534,7 +4536,13 @@ static void get_demux_parameters(const uint8_t *buffer, demux_parameters_t *para
 			}
 
 			case SERVICE_TYPE_MASK:
+			{
+				if(descriptor_length == 0x04)
+				{
+					parameters->srvtype = b2i(4, buffer + pos + 2);
+				}
 				break;
+			}
 
 			case DEMUX_DEVICE:
 			{
@@ -4685,6 +4693,7 @@ int32_t dvbapi_parse_capmt(const uint8_t *buffer, uint32_t length, int32_t connf
 	bool is_update = false;
 	demux_parameters_t parameters;
 	memset(&parameters, 0, sizeof(parameters));
+	parameters.srvtype = -1;
 
 #if defined WITH_COOLAPI || defined WITH_COOLAPI2
 	ca_pmt_list_management = CA_PMT_LIST_ONLY;
@@ -4848,6 +4857,7 @@ int32_t dvbapi_parse_capmt(const uint8_t *buffer, uint32_t length, int32_t connf
 			demux[demux_id].ens = parameters.ens;
 			demux[demux_id].tsid = parameters.tsid;
 			demux[demux_id].onid = parameters.onid;
+			demux[demux_id].srvtype = parameters.srvtype;
 			demux[demux_id].stop_descrambling = false;
 			demux[demux_id].running = false;
 			demux[demux_id].sdt_filter = -1;
@@ -8104,8 +8114,21 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 		bool set_dvbapi_cw = true;
 		if((cfg.stream_relay_ctab.ctnum == 0 || chk_ctab_ex(er->caid, &cfg.stream_relay_ctab)) && cfg.stream_relay_enabled)
 		{
-			// streamserver set cw
-			set_dvbapi_cw = !stream_write_cw(er);
+			bool sr_handled = stream_write_cw(er);
+
+			if(demux[i].srvtype >= 0 && !(demux[i].srvtype & 0x180))
+			{
+				// E2 sent service type mask without streamrelay bits (type 7/8),
+				// so this is a live-TV/softcsa service. Always send CW via dvbapi,
+				// even if a dying streamrelay client still consumed it.
+				set_dvbapi_cw = true;
+			}
+			else
+			{
+				// No service type mask (old E2) or streamrelay bits set:
+				// preserve original behavior - let stream_write_cw() decide.
+				set_dvbapi_cw = !sr_handled;
+			}
 		}
 		if (set_dvbapi_cw)
 #endif
