@@ -1204,7 +1204,7 @@ static int32_t dvbapi_detect_api(void)
 	{
 		selected_api = DVBAPI_3;
 		selected_box = BOX_INDEX_DREAMBOX_DVBAPI3;
-		dvbapi_listenport_active = dvbapi_listenport_active;
+		dvbapi_listenport_active = cfg.dvbapi_listenport;
 		if(dvbapi_listenport_active)
 		{
 			cs_log("Using TCP listen socket, API forced to DVBAPIv3 (%d), userconfig boxtype: %d",

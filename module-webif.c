@@ -1735,6 +1735,12 @@ static char *send_ncam_config_dvbapi(struct templatevars *vars, struct uriparams
 	if(cfg.dvbapi_write_sdt_prov > 0)
 		{ tpl_addVar(vars, TPLADD, "WRITESDTPROVCHECKED", "checked"); }
 
+#ifdef MODULE_STREAMRELAY
+	//demuxer_fix
+	if(cfg.dvbapi_demuxer_fix > 0)
+		{ tpl_addVar(vars, TPLADD, "DEMUXERFIXCHECKED", "checked"); }
+#endif
+
 	//TCP listen port
 	if(cfg.dvbapi_listenport > 0)
 		{ tpl_printf(vars, TPLADD, "LISTENPORT", "%d", cfg.dvbapi_listenport); }

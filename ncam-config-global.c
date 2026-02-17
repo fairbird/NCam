@@ -1349,6 +1349,9 @@ static const struct config_list dvbapi_opts[] =
 #if defined(WITH_WI) && !defined(WI_OLD)
 	DEF_OPT_INT8("wi_sosket_id"   , OFS(dvbapi_wi_sosket_id)   , SOCKET_ID),
 #endif
+#ifdef MODULE_STREAMRELAY
+	DEF_OPT_INT8("demuxer_fix"    , OFS(dvbapi_demuxer_fix)    , 0),
+#endif
 	DEF_OPT_FUNC("boxtype"        , OFS(dvbapi_boxtype)        , dvbapi_boxtype_fn),
 	DEF_OPT_FUNC("services"       , OFS(dvbapi_sidtabs.ok)     , dvbapi_services_fn),
 	DEF_LAST_OPT
