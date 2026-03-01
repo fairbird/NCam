@@ -203,7 +203,7 @@ static void account_allowedtimeframe_fn(const char *token, char *value, void *se
 {
 	struct s_auth *account = setting;
 	int32_t i, j, t, startt, endt;
-	char *dest;
+	const char *dest;
 	uint8_t day_idx;
 	int32_t allowed[4];
 	uint32_t tempo = 0;

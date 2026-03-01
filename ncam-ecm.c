@@ -3259,7 +3259,7 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 		struct tm acttm;
 		localtime_r(&now, &acttm);
 		int32_t curday = acttm.tm_wday;
-		char *dest = strstr(weekdstr,"ALL");
+		const char *dest = strstr(weekdstr,"ALL");
 		int32_t all_idx = (dest - weekdstr) / 3;
 		uint8_t allowed = 0;
 
