@@ -6805,6 +6805,7 @@ static void *dvbapi_main_local(void *cli)
 	}
 
 	int32_t listenfd = -1;
+	int8_t pmt6_waiting = 0;
 	if(cfg.dvbapi_boxtype != BOXTYPE_IPBOX_PMT &&
 		cfg.dvbapi_pmtmode != 2 && cfg.dvbapi_pmtmode != 5 && cfg.dvbapi_pmtmode != 6)
 	{
@@ -6891,17 +6892,28 @@ static void *dvbapi_main_local(void *cli)
 		{
 			if(listenfd < 0)
 			{
-				cs_log("PMT mode 6: Connecting to enigma CA PMT listen socket...");
+				if(!pmt6_waiting)
+				{
+					cs_log("PMT mode 6: Connecting to enigma CA PMT listen socket...");
+				}
 
 				// socket init
 				if((listenfd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
 				{
-					cs_log("socket error (errno=%d %s)", errno, strerror(errno));
+					if(!pmt6_waiting)
+					{
+						cs_log_dbg(D_DVBAPI, "socket error (errno=%d %s), waiting for CA PMT server...", errno, strerror(errno));
+						pmt6_waiting = 1;
+					}
 					listenfd = -1;
 				}
 				else if(connect(listenfd, (struct sockaddr *)&saddr, sizeof(saddr)) < 0)
 				{
-					cs_log("socket connect error (errno=%d %s)", errno, strerror(errno));
+					if(!pmt6_waiting)
+					{
+						cs_log_dbg(D_DVBAPI, "socket connect error (errno=%d %s), waiting for CA PMT server...", errno, strerror(errno));
+						pmt6_waiting = 1;
+					}
 					close(listenfd);
 					listenfd = -1;
 				}
@@ -6911,6 +6923,7 @@ static void *dvbapi_main_local(void *cli)
 					pfd2[0].events = (POLLIN | POLLPRI);
 					type[0] = 1;
 					client_proto_version[0] = 0;
+					pmt6_waiting = 0;
 					cs_log("PMT mode 6: Successfully connected to CA PMT server (fd %d)", listenfd);
 				}
 			}
@@ -7215,6 +7228,7 @@ static void *dvbapi_main_local(void *cli)
 					if(pfd2[i].fd == listenfd && cfg.dvbapi_pmtmode == 6)
 					{
 						listenfd = -1;
+						pmt6_waiting = 0;
 					}
 					cs_log_dbg(D_DVBAPI, "Socket %d reported hard connection close", pfd2[i].fd);
 				}
