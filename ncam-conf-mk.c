@@ -355,6 +355,7 @@ char *mk_t_gbox_dest_peers(void)
 }
 #endif
 
+#ifdef READER_VIACCESS
 /*
  * Creates a string ready to write as a token into config or WebIf for AESKeys. You must free the returned value through free_mk_t().
  */
@@ -442,6 +443,7 @@ char *mk_t_aeskeys(struct s_reader *rdr)
 	memcpy(value, tmp, pos + 1);
 	return (value);
 }
+#endif
 
 /*
  * Creates a string ready to write as a token into config or WebIf for the Newcamd Port. You must free the returned value through free_mk_t().

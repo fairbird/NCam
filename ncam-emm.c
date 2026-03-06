@@ -515,6 +515,7 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 
 		int32_t is_blocked = 0;
 
+#ifdef READER_VIDEOGUARD
 		if (aureader->fix_07 == 1 && ep->type == UNIQUE)
 		{
 			if((caid == 0x098D || caid == 0x098C || caid == 0x09C4) && ep->emm[1] == 0x70 && (ep->emm[8] * 0x100 + ep->emm[9] != 0x200))
@@ -541,6 +542,7 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 				ep->type = UNKNOWN;
 			}
 		}
+#endif
 
 #ifdef READER_CRYPTOWORKS
 		if ((ep->type == GLOBAL) && ((caid == 0x0D96) || (caid == 0x0D98)) && ((aureader->blockemm & EMM_GLOBAL) != EMM_GLOBAL) && ((aureader->blockemm & EMM_SHARED) != EMM_SHARED) && (aureader->needsglobalfirst == 1))

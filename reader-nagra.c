@@ -1172,11 +1172,13 @@ static int32_t nagra2_card_init(struct s_reader *reader, ATR *newatr)
 			return ERROR;
 		}
 
+#ifdef READER_IRDETO
 		if(reader->force_irdeto)
 		{
 			rdr_log(reader, "rsa key configured but irdeto mode forced -> using irdeto mode");
 			return ERROR;
 		}
+#endif
 
 		rdr_log(reader, "rsa key configured -> using nagra mode");
 		is_pure_nagra = 1;

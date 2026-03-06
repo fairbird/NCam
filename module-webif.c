@@ -2627,6 +2627,7 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 	if(rdr->boxid)
 		{ tpl_printf(vars, TPLADD, "BOXID", "%08X", rdr->boxid); }
 
+#ifdef READER_VIDEOGUARD
 	// Filt 07
 	if(!apicall)
 	{
@@ -2637,7 +2638,6 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 		tpl_addVar(vars, TPLADD, "FIX07VALUE", (rdr->fix_07 == 1) ? "1" : "0");
 	}
 
-
 	// Fix 9993
 	if(!apicall)
 	{
@@ -2647,6 +2647,7 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 	{
 		tpl_addVar(vars, TPLADD, "FIX9993VALUE", (rdr->fix_9993 == 1) ? "1" : "0");
 	}
+#endif
 
 	// Drop CWs with wrong checksum:
 	if(!apicall)
@@ -2668,6 +2669,7 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 		tpl_addVar(vars, TPLADD, "DISABLECRCCWSVALUE", (rdr->disablecrccws == 1) ? "1" : "0");
 	}
 
+#ifdef WITH_CARDREADER
 	// Set reader to use GPIO
 	if(!apicall)
 	{
@@ -2677,6 +2679,7 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 	{
 		tpl_addVar(vars, TPLADD, "USE_GPIOVALUE", rdr->use_gpio ? "1" : "0");
 	}
+#endif
 
 	// AUdisabled
 	if(!apicall)
@@ -2698,6 +2701,7 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 	if(rdr->ecmtimeoutlimit)
 		{ tpl_printf(vars, TPLADD, "ECMTIMEOUTLIMIT", "%u", rdr->ecmtimeoutlimit); }
 
+#ifdef READER_IRDETO
 	// Force Irdeto
 	if(!apicall)
 	{
@@ -2707,6 +2711,7 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 	{
 		tpl_addVar(vars, TPLADD, "FORCEIRDETOVALUE", (rdr->force_irdeto == 1) ? "1" : "0");
 	}
+#endif
 
 #ifdef READER_CRYPTOWORKS
 	// needsglobalfirst
@@ -2720,6 +2725,7 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 	}
 #endif
 
+#ifdef WITH_CARDREADER
 	// RSA Key
 	int32_t len = rdr->rsa_mod_length;
 	if(len > 0)
@@ -2786,7 +2792,7 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 		for(i = 0; i < len ; i++)
 			{ tpl_printf(vars, TPLAPPEND, "BOXKEY", "%02X", rdr->boxkey[i]); }
 	}
-
+#endif
 #ifdef READER_NAGRA_MERLIN
 	// mod1 (CAK7)
 	len = rdr->mod1_length;
@@ -2845,6 +2851,7 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 	}
 #endif
 
+#ifdef READER_VIDEOGUARD
 	tpl_printf(vars, TPLADD, "TMP", "CARDSTARTDATEBASEMONTH%d", rdr->card_startdate_basemonth);
 	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
 
@@ -2889,11 +2896,14 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 	{
 		for(i = 0; i < rdr->k1_unique[0x10] ; i++) { tpl_printf(vars, TPLAPPEND, "K1_UNIQUE", "%02X", rdr->k1_unique[i]); }
 	}
+#endif
 
+#ifdef WITH_CARDREADER
 	// ATR
 	if(rdr->atr[0])
 		for(i = 0; i < rdr->atrlen / 2; i++)
 			{ tpl_printf(vars, TPLAPPEND, "ATR", "%02X", rdr->atr[i]); }
+#endif
 
 	// ECM Whitelist
 	value = mk_t_ecm_whitelist(&rdr->ecm_whitelist);
@@ -2905,6 +2915,7 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 	tpl_addVar(vars, TPLADD, "ECMHEADERWHITELIST", value);
 	free_mk_t(value);
 
+#ifdef WITH_CARDREADER
 	// Deprecated
 	if(!apicall)
 	{
@@ -2944,6 +2955,7 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 		tpl_addVar(vars, TPLADD, "SC8IN1DTRRTSPATCHVALUE", (rdr->sc8in1_dtrrts_patch == 1) ? "1" : "0");
 	}
 
+#ifdef READER_VIACCESS
 	if(!apicall)
 	{
 		tpl_addVar(vars, TPLADD, "READOLDCLASSES", (rdr->read_old_classes == 1) ? "checked" : "");
@@ -2952,7 +2964,7 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 	{
 		tpl_addVar(vars, TPLADD, "READOLDCLASSES", (rdr->read_old_classes == 1) ? "1" : "0");
 	}
-
+#endif
 	// ECM ending with
 	tpl_printf(vars, TPLADD, "TMP", "ECMENDING%d", rdr->ecmending);
 	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
@@ -2962,6 +2974,7 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 		{ tpl_printf(vars, TPLADD, "DETECT", "!%s", RDR_CD_TXT[rdr->detect & 0x7f]); }
 	else
 		{ tpl_addVar(vars, TPLADD, "DETECT", RDR_CD_TXT[rdr->detect & 0x7f]); }
+#endif
 
 	// Ratelimit
 	if(rdr->ratelimitecm)
@@ -2990,10 +3003,11 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 	// Parallelfactor: format as float with dot (comma would break URL parameters)
 	tpl_printf(vars, TPLADD, "PARALLELFACTOR", "%.1f", rdr->parallelfactor >= 0 ? rdr->parallelfactor : 2.0);
 	tpl_printf(vars, TPLADD, "PARALLELTIMEOUT", "%d", rdr->paralleltimeout);
+#ifdef WITH_CARDREADER
 	// Frequencies
 	tpl_printf(vars, TPLADD, "MHZ", "%d", rdr->mhz);
 	tpl_printf(vars, TPLADD, "CARDMHZ", "%d", rdr->cardmhz);
-
+#endif
 	// Device
 	if(!apicall)
 	{
@@ -3065,10 +3079,12 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 	tpl_addVar(vars, TPLADD, "CAIDS", value);
 	free_mk_t(value);
 
+#ifdef READER_VIACCESS
 	// AESkeys
 	value = mk_t_aeskeys(rdr);
 	tpl_addVar(vars, TPLADD, "AESKEYS", value);
 	free_mk_t(value);
+#endif
 
 	//ident
 	value = mk_t_ftab(&rdr->ftab);
@@ -3187,22 +3203,26 @@ static char *send_ncam_reader_config(struct templatevars *vars, struct uriparams
 	}
 #endif
 
+#ifdef READER_VIDEOGUARD
 	tpl_printf(vars, TPLADD, "TMP", "NDSVERSION%d", rdr->ndsversion);
 	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
 
 	tpl_printf(vars, TPLADD, "TMP", "NDSREADTIERS%d", rdr->readtiers);
 	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
-
+#endif
+#ifdef READER_NAGRA
 	tpl_printf(vars, TPLADD, "TMP", "NAGRAREAD%d", rdr->nagra_read);
 	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
 
 	if(rdr->detect_seca_nagra_tunneled_card)
 		{ tpl_addVar(vars, TPLADD, "NAGRADETECTSECACARDCHECKED", "checked"); }
+#endif
 #if defined(READER_STREAMGUARD) || defined(READER_TONGFANG) || defined(READER_JET)
 	if(rdr->cas_version)
 		{ tpl_printf(vars, TPLADD, "CASVERSION",  "%ld", rdr->cas_version & 0x00FFFFL); }
 	tpl_printf(vars, TPLADD, "CASVERSIONFIXED",  (rdr->cas_version & 0x010000L) ? "checked" : "");
 #endif
+
 #ifdef READER_TONGFANG
 	if(rdr->tongfang3_calibsn)
 		{ tpl_printf(vars, TPLADD, "TONGFANGCALIBSN", "%08X", rdr->tongfang3_calibsn); }
@@ -5523,6 +5543,7 @@ static char *send_ncam_entitlement(struct templatevars *vars, struct uriparams *
 					}
 				}
 
+#ifdef READER_VIDEOGUARD
 				//CountryCode Vg card
 				char add_nds_line = 0;
 				if(rdr->VgCountryC[0])
@@ -5581,6 +5602,7 @@ static char *send_ncam_entitlement(struct templatevars *vars, struct uriparams *
 				{
 					tpl_addVar(vars, TPLADD, "READERCREDIT", "n/a");
 				}
+#endif
 
 				if(rdr->card_valid_to)
 				{
@@ -5636,10 +5658,12 @@ static char *send_ncam_entitlement(struct templatevars *vars, struct uriparams *
 				if (rdr->csystem)
 					tpl_addVar(vars, TPLADD, "READERCSYSTEM", rdr->csystem->desc);
 
+#ifdef READER_VIDEOGUARD
 				if(add_nds_line)
 				{
 					tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENTNDS", tpl_getTpl(vars, "ENTITLEMENTBITNDS"));
 				}
+#endif
 				tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTBIT"));
 			}
 			else

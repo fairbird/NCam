@@ -235,6 +235,7 @@ static void reader_caid_fn(const char *token, char *value, void *setting, FILE *
 	}
 }
 
+#ifdef WITH_CARDREADER
 static void boxid_fn(const char *token, char *value, void *setting, FILE *f)
 {
 	struct s_reader *rdr = setting;
@@ -248,6 +249,7 @@ static void boxid_fn(const char *token, char *value, void *setting, FILE *f)
 	else if(cfg.http_full_cfg)
 		{ fprintf_conf(f, token, "\n"); }
 }
+#endif
 
 #if defined(READER_STREAMGUARD) || defined(READER_TONGFANG) || defined(READER_JET)
 static void cas_version_fixed_fn(const char *UNUSED(token), char *value, void *setting, FILE *UNUSED(f))
@@ -1001,6 +1003,7 @@ static void flags_fn(const char *token, char *value, void *setting, long flag, F
 		{ fprintf_conf(f, token, "%d\n", (*var & flag) ? 1 : 0); }
 }
 
+#ifdef READER_VIDEOGUARD
 static void ins7E_fn(const char *token, char *value, void *setting, long var_size, FILE *f)
 {
 	uint8_t *var = setting;
@@ -1083,7 +1086,9 @@ static void des_and_3des_key_fn(const char *token, char *value, void *setting, F
 	else if(cfg.http_full_cfg)
 		{ fprintf_conf(f, token, "\n"); }
 }
+#endif
 
+#ifdef WITH_CARDREADER
 static void atr_fn(const char *token, char *value, void *setting, FILE *f)
 {
 	struct s_reader *rdr = setting;
@@ -1136,6 +1141,7 @@ static void detect_fn(const char *token, char *value, void *setting, FILE *f)
 	}
 	fprintf_conf(f, token, "%s%s\n", rdr->detect & 0x80 ? "!" : "", RDR_CD_TXT[rdr->detect & 0x7f]);
 }
+#endif
 
 void ftab_fn(const char *token, char *value, void *setting, long ftab_type, FILE *f)
 {
@@ -1171,6 +1177,7 @@ void ftab_fn(const char *token, char *value, void *setting, long ftab_type, FILE
 	free_mk_t(value);
 }
 
+#ifdef READER_VIACCESS
 static void aeskeys_fn(const char *token, char *value, void *setting, FILE *f)
 {
 	struct s_reader *rdr = setting;
@@ -1184,6 +1191,7 @@ static void aeskeys_fn(const char *token, char *value, void *setting, FILE *f)
 		{ fprintf_conf(f, token, "%s\n", value); }
 	free_mk_t(value);
 }
+#endif
 
 static void emmcache_fn(const char *token, char *value, void *setting, FILE *f)
 {
@@ -1651,12 +1659,14 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_INT8("ncd_stealth"                    , OFS(ncd_stealth),                     4),
 	DEF_OPT_INT8("connectoninit"                  , OFS(ncd_connect_on_init),             1),
 	DEF_OPT_UINT8("keepalive"                     , OFS(keepalive),                       0),
+#ifdef WITH_CARDREADER
 	DEF_OPT_INT8("smargopatch"                    , OFS(smargopatch),                     0),
 	DEF_OPT_INT8("autospeed"                      , OFS(autospeed),                       1),
+	DEF_OPT_UINT8("sc8in1_dtrrts_patch"           , OFS(sc8in1_dtrrts_patch),             0),
+#endif
 #ifdef WITH_CARDLIST
 	DEF_OPT_INT8("cardlist"                       , OFS(cardlist),                        1),
 #endif
-	DEF_OPT_UINT8("sc8in1_dtrrts_patch"           , OFS(sc8in1_dtrrts_patch),             0),
 	DEF_OPT_INT8("fallback"                       , OFS(fallback),                        1),
 	DEF_OPT_FUNC_X("fallback_percaid"             , OFS(fallback_percaid),                ftab_fn, FTAB_READER | FTAB_FBPCAID),
 	DEF_OPT_FUNC_X("localcards"                   , OFS(localcards),                      ftab_fn, FTAB_READER | FTAB_LOCALCARDS),
@@ -1689,8 +1699,10 @@ static const struct config_list reader_opts[] =
 #endif
 #endif
 	DEF_OPT_FUNC("caid"                           , OFS(ctab),                            reader_caid_fn),
+#ifdef WITH_CARDREADER
 	DEF_OPT_FUNC("atr"                            , 0,                                    atr_fn),
 	DEF_OPT_FUNC("boxid"                          , 0,                                    boxid_fn),
+#endif
 #if defined(READER_STREAMGUARD) || defined(READER_TONGFANG) || defined(READER_JET)
 	DEF_OPT_INT32("cas_version"                   , OFS(cas_version),                     0),
 	DEF_OPT_FUNC("cas_version_fixed"              , 0,                                    cas_version_fixed_fn),
@@ -1706,8 +1718,11 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_INT8("jet_resync_vendorkey"           , OFS(jet_resync_vendorkey),            0),
 	DEF_OPT_INT8("jet_fix_ecm"                    , OFS(jet_fix_ecm),                     0),
 #endif
+#ifdef WITH_CARDREADER
 	DEF_OPT_FUNC("boxkey"                         , 0,                                    boxkey_fn),
 	DEF_OPT_FUNC("rsakey"                         , 0,                                    rsakey_fn),
+	DEF_OPT_FUNC("deskey"                         , 0,                                    deskey_fn),
+#endif
 	DEF_OPT_FUNC("rsakey_tiger"                   , 0,                                    rsakey_tiger_fn),
 	DEF_OPT_INT8("tiger_emm_reassembly"           , OFS(tiger_emm_reassembly),            0),
 	DEF_OPT_INT8("tiger_save_emm"                 , OFS(tiger_save_emm),                  1),
@@ -1716,7 +1731,6 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_FUNC("tiger_t1"                       , 0,                                    tiger_t1_fn),
 	DEF_OPT_FUNC("tiger_t2"                       , 0,                                    tiger_t2_fn),
 	DEF_OPT_FUNC("tiger_t3"                       , 0,                                    tiger_t3_fn),
-	DEF_OPT_FUNC("deskey"                         , 0,                                    deskey_fn),
 #ifdef READER_NAGRA_MERLIN
 	DEF_OPT_FUNC("mod1"                           , 0,                                    mod1_fn),
 	DEF_OPT_FUNC("data50"                         , 0,                                    data50_fn),
@@ -1728,6 +1742,8 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_FUNC("nuid"                           , 0,                                    nuid_fn),
 	DEF_OPT_FUNC("cwekey"                         , 0,                                    cwekey_fn),
 #endif
+#if defined(READER_VIDEOGUARD)
+	DEF_OPT_INT8("ndsversion"                     , OFS(ndsversion),                      0),
 	DEF_OPT_INT32("card_startdate_basemonth"      , OFS(card_startdate_basemonth),        1),
 	DEF_OPT_INT32("card_startdate_baseyear"       , OFS(card_startdate_baseyear),         1997),
 	DEF_OPT_INT32("card_expiredate_basemonth"     , OFS(card_expiredate_basemonth),       1),
@@ -1741,7 +1757,10 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_INT8("fix07"                          , OFS(fix_07),                          1),
 	DEF_OPT_INT8("fix9993"                        , OFS(fix_9993),                        0),
 	DEF_OPT_INT8("readtiers"                      , OFS(readtiers),                       1),
+#endif
+#ifdef READER_IRDETO
 	DEF_OPT_INT8("force_irdeto"                   , OFS(force_irdeto),                    0),
+#endif
 #ifdef READER_CRYPTOWORKS
 	DEF_OPT_INT8("needsglobalfirst"               , OFS(needsglobalfirst),                0),
 #endif
@@ -1753,18 +1772,24 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_UINT32("ecmtimeoutlimit"              , OFS(ecmtimeoutlimit),                 0),
 	DEF_OPT_FUNC("ecmwhitelist"                   , 0,                                    ecmwhitelist_fn),
 	DEF_OPT_FUNC("ecmheaderwhitelist"             , 0,                                    ecmheaderwhitelist_fn),
+#ifdef WITH_CARDREADER
 	DEF_OPT_FUNC("detect"                         , 0,                                    detect_fn),
+#ifdef READER_NAGRA
 	DEF_OPT_INT8("nagra_read"                     , OFS(nagra_read),                      0),
 	DEF_OPT_INT8("detect_seca_nagra_tunneled_card", OFS(detect_seca_nagra_tunneled_card), 1),
+#endif
 	DEF_OPT_INT32("mhz"                           , OFS(mhz),                             357),
 	DEF_OPT_INT32("cardmhz"                       , OFS(cardmhz),                         357),
+#endif
 #ifdef WITH_AZBOX
 	DEF_OPT_INT32("mode"                          , OFS(azbox_mode),                      -1),
 #endif
 	DEF_OPT_FUNC_X("ident"                        , OFS(ftab),                            ftab_fn, FTAB_READER | FTAB_PROVID),
 	DEF_OPT_FUNC_X("chid"                         , OFS(fchid),                           ftab_fn, FTAB_READER | FTAB_CHID),
 	DEF_OPT_FUNC("class"                          , OFS(cltab),                           class_fn),
+#ifdef READER_VIACCESS
 	DEF_OPT_FUNC("aeskeys"                        , 0,                                    aeskeys_fn),
+#endif
 	DEF_OPT_FUNC("group"                          , OFS(grp),                             group_fn),
 	DEF_OPT_FUNC("emmcache"                       , 0,                                    emmcache_fn),
 	DEF_OPT_FUNC_X("blockemm-unknown"             , OFS(blockemm),                        flags_fn, EMM_UNKNOWN),
@@ -1784,7 +1809,9 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_FUNC("blocknano"                      , OFS(b_nano),                          nano_fn),
 	DEF_OPT_INT8("dropbadcws"                     , OFS(dropbadcws),                      0),
 	DEF_OPT_INT8("disablecrccws"                  , OFS(disablecrccws),                   0),
+#ifdef WITH_CARDREADER
 	DEF_OPT_INT32("use_gpio"                      , OFS(use_gpio),                        0),
+#endif
 #ifdef MODULE_PANDORA
 	DEF_OPT_UINT8("pand_send_ecm"                 , OFS(pand_send_ecm),                   0),
 #endif
@@ -1816,10 +1843,11 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_STR("ecmdb_path"                      , OFS(ecmdb_path),                      NULL),
 #endif
 	DEF_OPT_INT8("resetalways"                    , OFS(resetalways),                     0),
+#ifdef WITH_CARDREADER
 	DEF_OPT_INT8("deprecated"                     , OFS(deprecated),                      0),
+#endif
 	DEF_OPT_INT8("audisabled"                     , OFS(audisabled),                      0),
 	DEF_OPT_FUNC("auprovid"                       , 0,                                    auprovid_fn),
-	DEF_OPT_INT8("ndsversion"                     , OFS(ndsversion),                      0),
 	DEF_OPT_FUNC("ratelimitecm"                   , 0,                                    ratelimitecm_fn),
 	DEF_OPT_FUNC("ecmunique"                      , 0,                                    ecmunique_fn),
 	DEF_OPT_FUNC("ratelimittime"                  , 0,                                    ratelimittime_fn),
@@ -1830,7 +1858,9 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_INT32("maxparallel"                   , OFS(maxparallel),                     0),
 	DEF_OPT_FUNC("parallelfactor"                 , 0,                                    parallelfactor_fn),
 	DEF_OPT_INT32("paralleltimeout"               , OFS(paralleltimeout),                 1000),
+#ifdef READER_VIACCESS
 	DEF_OPT_UINT8("read_old_classes"              , OFS(read_old_classes),                1),
+#endif
 	DEF_OPT_INT8("ecmending"                      , OFS(ecmending),                       1),
 	DEF_LAST_OPT
 };
@@ -2104,7 +2134,9 @@ void free_reader(struct s_reader *rdr)
 
 	ll_destroy_data(&rdr->emmstat);
 
+#ifdef READER_VIACCESS
 	aes_clear_entries(&rdr->aes_list);
+#endif
 
 	config_list_gc_values(reader_opts, rdr);
 	add_garbage(rdr);

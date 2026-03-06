@@ -49,6 +49,7 @@ void aes_cbc_decrypt(struct aes_keys *aes, uint8_t *buf, int32_t n, uint8_t *iv)
 	AES_cbc_encrypt(buf, buf, n, &aes->aeskey_decrypt, iv, AES_DECRYPT);
 }
 
+#ifdef READER_VIACCESS
 /* Creates an AES_ENTRY and adds it to the given linked list. */
 void add_aes_entry(AES_ENTRY **list, uint16_t caid, uint32_t ident, int32_t keyid, uint8_t *aesKey)
 {
@@ -232,3 +233,4 @@ int32_t aes_present(AES_ENTRY *list, uint16_t caid, uint32_t provid, int32_t key
 {
 	return aes_list_find(list, caid, provid, keyid) != NULL;
 }
+#endif

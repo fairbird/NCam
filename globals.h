@@ -1628,8 +1628,6 @@ struct s_reader
 	uint32_t        auprovid;                       // AU only for this provid
 	int8_t          audisabled;                     // exclude reader from auto AU
 	struct timeb    emm_last;                       // time of last successfully written emm
-	int8_t          smargopatch;
-	int8_t          autospeed;                      // 1 clockspeed set according to atr f max
 	struct s_client *client;                        // pointer to 'r'client this reader is running in
 	LLIST           *ll_entitlements;               // entitlements
 	int8_t          enable;
@@ -1707,6 +1705,7 @@ struct s_reader
 	char            *description;
 #endif
 	char            device[128];
+#ifdef WITH_CARDREADER
 	uint16_t        slot;                           // in case of multiple slots like sc8in1; first slot = 1
 	int32_t         handle;                         // device handle
 	int64_t         handle_nr;                      // device handle_nr for mutiple readers same driver
@@ -1715,6 +1714,7 @@ struct s_reader
 	int32_t         mhz;                            // actual clock rate of reader in 10khz steps
 	int32_t         cardmhz;                        // standard clock speed your card should have in 10khz steps; normally 357 but for Irdeto cards 600
 	int32_t         divider;                        // PLL divider for internal readers
+#endif
 	int32_t         r_port;
 	char            r_usr[64];
 	char            r_pwd[64];
@@ -1744,15 +1744,22 @@ struct s_reader
 #if defined(READER_STREAMGUARD) || defined(READER_TONGFANG) || defined(READER_JET)
 	uint32_t        cas_version;                    // cas version, used by tongfang,jet and streamguard. manual set for streamguard.
 #endif
+#ifdef READER_NAGRA
 	int8_t          nagra_read;                     // read nagra ncmed records: 0 Disabled (default), 1 read all records, 2 read valid records only
 	int8_t          detect_seca_nagra_tunneled_card;
-	int8_t          force_irdeto;
+#endif
+#ifdef READER_IRDETO
+	int8_t	    force_irdeto;
+#endif
+#ifdef WITH_CARDREADER
 	uint8_t         boxkey[32];                     // n3 boxkey 8 bytes, seca sessionkey 16 bytes, viaccess camid 4 bytes
 	uint8_t         boxkey_length;
 	uint8_t         rsa_mod[120];                   // rsa modulus for nagra cards.
 	uint8_t         rsa_mod_length;
+	uint8_t	    cwpk_mod[16];				// cwpk module for conax cards.
 	uint8_t         des_key[128];                   // 3des key for Viaccess 16 bytes, des key for Dre 128 bytes
 	uint8_t         des_key_length;
+#endif
 	uint8_t	    rsa_mod_tiger[96];			// rsa module for Tiger multi-fragment EMM (Tiger/NCMED cards).
 	uint8_t	    rsa_mod_tiger_length;
 	int8_t	    tiger_emm_reassembly;		// enable Tiger EMM reassembly
@@ -1767,28 +1774,29 @@ struct s_reader
 	uint16_t	    tiger_t2_length;
 	uint8_t	    tiger_t3[1024];			// Tiger lookup table T3 (256 x uint32_t = 1024 bytes)
 	uint16_t	    tiger_t3_length;
-	uint8_t	    cwpk_mod[16];				// cwpk module for conax cards.
+#ifdef WITH_CARDREADER
 	uint8_t	    atr[64];
+	int32_t         atrlen;
+	int8_t          seca_nagra_card;                // seca nagra card
+#endif
 	uint8_t	    card_atr[64];                   // ATR readed from card
 	int8_t          card_atr_length;                // length of ATR
-	int8_t          seca_nagra_card;                // seca nagra card
-	int32_t         atrlen;
 	SIDTABS         sidtabs;
 	SIDTABS         lb_sidtabs;
 	SIDTABS         lb_prio_sidtabs;
-	uint8_t           hexserial[8];
+	uint8_t         hexserial[8];
 	int32_t         nprov;
-	uint8_t           prid[CS_MAXPROV][8];
-	uint8_t           sa[CS_MAXPROV][4];              // viaccess & seca
+	uint8_t         prid[CS_MAXPROV][8];
+	uint8_t         sa[CS_MAXPROV][4];              // viaccess & seca
 	uint8_t         read_old_classes;               // viaccess
 	int8_t          ecmending;                      // viaccess
 	uint8_t         maturity;                       // viaccess & seca maturity level
 	uint16_t        caid;
-	uint16_t	cak7_emm_caid;
+	uint16_t	    cak7_emm_caid;
 	uint16_t        b_nano;
 	uint16_t        s_nano;
 	int8_t          ecmcommand;                     // used for filtering nagra bad ecm commands
-	uint8_t           ecmcommandcache[5];             // cachebuff for ecm commands
+	uint8_t         ecmcommandcache[5];             // cachebuff for ecm commands
 	int32_t         blockemm;
 	int32_t         saveemm;
 	LLIST           *blockemmbylen;
@@ -1799,7 +1807,9 @@ struct s_reader
 	int16_t         rewritemm;
 	int16_t         deviceemm;                      // catch device specific emms (so far only used for viaccess)
 	int8_t          card_status;
+#ifdef WITH_CARDREADER
 	int8_t          deprecated;                     //if 0 ATR obeyed, if 1 default speed (9600) is chosen; for devices that cannot switch baudrate
+#endif
 	int8_t          resetalways;                    // send reset after each commands (for pscs)
 	struct          s_module ph;
 	const struct    s_cardreader *crdr;
@@ -1809,7 +1819,7 @@ struct s_reader
 	void            *csystem_data;                  // Private card system data
 	bool            csystem_active;
 	uint8_t         ncd_key[14];
-	uint8_t           ncd_skey[16];
+	uint8_t         ncd_skey[16];
 	int8_t          ncd_connect_on_init;
 	int8_t          ncd_disable_server_filt;
 	int8_t          ncd_proto;
@@ -1836,8 +1846,8 @@ struct s_reader
 	int32_t         tcp_ito;                        // inactivity timeout
 	int32_t         tcp_rto;                        // reconnect timeout
 	int8_t          reconnect_attempts;
-	uint8_t		ipv4force;
-	uint8_t		ipv6_connect_failed;
+	uint8_t	    ipv4force;
+	uint8_t	    ipv6_connect_failed;
 	struct timeb    tcp_block_connect_till;         // time tcp connect ist blocked
 	int32_t         tcp_block_delay;                // incrementing block time
 	time_t          last_g;                         // get (if last_s-last_g>tcp_rto - reconnect )
@@ -1870,15 +1880,15 @@ struct s_reader
 #ifdef WITH_AZBOX
 	int32_t         azbox_mode;
 #endif
+#ifdef WITH_CARDREADER
 	int32_t         use_gpio;                       // Should this reader use GPIO functions
 	int             gpio_outen;                     // fd of opened /dev/gpio/outen
 	int             gpio_out;                       // fd of opened /dev/gpio/out
 	int             gpio_in;                        // fd of opened /dev/gpio/in
 	uint32_t        gpio;                           // gpio addr
 	////variables from icc_async.h start
-#ifdef WITH_CARDREADER
 	int32_t         convention;                     // Convention of this ICC
-	uint8_t   protocol_type;                  // Type of protocol
+	uint8_t         protocol_type;                  // Type of protocol
 	uint32_t        current_baudrate;               // (for overclocking uncorrected) baudrate to prevent unnecessary conversions from/to termios structure
 	double          worketu;          // in us for internal and external readers calculated (1/D)*(F/cardclock)*1000000
 	uint32_t        read_timeout;     // Max timeout (ETU) to receive characters
@@ -1889,29 +1899,31 @@ struct s_reader
 	int32_t         written;          // keep score of how much bytes are written to serial port, since they are echoed back they have to be read
 	////variables from protocol_t1.h
 	uint16_t        ifsc;             // Information field size for the ICC
-	uint8_t   ns;               // Send sequence number
+	uint8_t         ns;               // Send sequence number
 	int16_t         smartdev_found;
 	int16_t         smart_type;
 	uint16_t        statuscnt;
 	uint16_t        modemstat;
 #endif
 #ifdef READER_CRYPTOWORKS
-	EMM_PACKET	*last_g_emm;		// last global EMM
-	bool		last_g_emm_valid;	// status of last global EMM
+	EMM_PACKET      *last_g_emm;		// last global EMM
+	bool            last_g_emm_valid;	// status of last global EMM
 #endif
-	uint8_t	rom[15];
-	uint8_t	irdId[4];
-	uint8_t   payload4C[15];
-	uint16_t	VgCredit;
-	uint16_t	VgPin;
-	uint8_t	VgFuse;
-	uint8_t   VgCountryC[3];
-	uint8_t	VgRegionC[8];
-	uint8_t   VgLastPayload[6];
-	int32_t   card_startdate_basemonth;
-	int32_t   card_startdate_baseyear;
-	int32_t   card_expiredate_basemonth;
-	int32_t   card_expiredate_baseyear;
+	uint8_t         rom[15];
+	uint8_t         irdId[4];
+#ifdef READER_VIDEOGUARD
+	uint8_t         payload4C[15];
+	uint16_t        VgCredit;
+	uint16_t        VgPin;
+	uint8_t         VgFuse;
+	uint8_t         VgCountryC[3];
+	uint8_t         VgRegionC[8];
+	uint8_t         VgLastPayload[6];
+	int32_t         card_startdate_basemonth;
+	int32_t         card_startdate_baseyear;
+	int32_t         card_expiredate_basemonth;
+	int32_t         card_expiredate_baseyear;
+#endif
 #ifdef WITH_LB
 	int32_t         lb_weight;                      //loadbalance weight factor, if unset, weight=100. The higher the value, the higher the usage-possibility
 	int8_t          lb_force_fallback;              //force this reader as fallback if fallback or fallback_percaid paramters set
@@ -1923,9 +1935,9 @@ struct s_reader
 	CS_MUTEX_LOCK   lb_stat_lock;
 	int32_t         lb_stat_busy;                   //do not add while saving
 #endif
-
+#ifdef READER_VIACCESS
 	AES_ENTRY       *aes_list;                      // multi AES linked list
-	int8_t          ndsversion;                     // 0 auto (default), 1 NDS1, 12 NDS1+, 2 NDS2
+#endif
 	time_t          card_valid_to;
 	//ratelimit
 	int32_t         ratelimitecm;
@@ -1969,6 +1981,8 @@ struct s_reader
 	LLIST		    *blocked_services;				// list of s_blocked_client for dropped services
 	CS_MUTEX_LOCK   parallel_lock;				// lock for parallel_slots access
 	int8_t	    parallel_full;				// flag: 1 if reader is at capacity limit
+#ifdef READER_VIDEOGUARD
+	int8_t	    ndsversion;					// 0 auto (default), 1 NDS1, 12 NDS1+, 2 NDS2
 	int8_t          fix_07;
 	int8_t          fix_9993;
 	int8_t          readtiers; // method to get videoguard tiers
@@ -1976,11 +1990,15 @@ struct s_reader
 	uint8_t         ins7E11[0x01 + 1];
 	uint8_t         ins42[0x25 + 1];
 	uint8_t         ins2e06[0x04 + 1];
-	int8_t          ins7e11_fast_reset;
 	uint8_t         k1_generic[0x10 + 1]; // k1 for generic pairing mode
 	uint8_t         k1_unique[0x10 + 1]; // k1 for unique pairing mode
-	uint8_t         sc8in1_dtrrts_patch; // fix for kernel commit 6a1a82df91fa0eb1cc76069a9efe5714d087eccd
-
+#endif
+#ifdef WITH_CARDREADER
+	int8_t          smargopatch;
+	int8_t          autospeed;					// 1 clockspeed set according to atr f max
+	int8_t          ins7e11_fast_reset;
+	uint8_t         sc8in1_dtrrts_patch;			// fix for kernel commit 6a1a82df91fa0eb1cc76069a9efe5714d087eccd
+#endif
 #if defined(READER_DRE) || defined(READER_DRECAS)
 	char            *userscript;
 	uint32_t        force_ua;
@@ -2023,7 +2041,9 @@ struct s_reader
 	uint8_t		ecmdb_mode;
 	char		*ecmdb_path;
 #endif
+#ifdef READER_CONAX
 	uint8_t         cnxlastecm;                     // == 0 - last ecm has not been paired ecm, > 0 last ecm has been paired ecm
+#endif
 	LLIST           *emmstat;                       //emm stats
 	CS_MUTEX_LOCK   emmstat_lock;
 	struct s_reader *next;
