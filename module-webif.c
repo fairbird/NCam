@@ -9232,14 +9232,13 @@ static int32_t readRequest(FILE * f, IN_ADDR_T in, char **result, int8_t forcePl
 	int32_t n, bufsize = 0, errcount = 0;
 	const int32_t max_request_size = cfg.http_max_request_size > 0 ? cfg.http_max_request_size : 102400;
 	char buf2[1024];
-	struct pollfd pfd2[1];
 #ifdef WITH_SSL
 	int8_t is_ssl = 0;
 	if(ssl_active && !forcePlain)
 		{ is_ssl = 1; }
 #endif
 
-	while(1)
+	do
 	{
 		errno = 0;
 		if(forcePlain)
@@ -9255,7 +9254,7 @@ static int32_t readRequest(FILE * f, IN_ADDR_T in, char **result, int8_t forcePl
 					cs_sleepms(5);
 					continue;
 				}
-				else { return -1; }
+				return -1;
 			}
 #ifdef WITH_SSL
 			if(is_ssl)
@@ -9305,22 +9304,9 @@ static int32_t readRequest(FILE * f, IN_ADDR_T in, char **result, int8_t forcePl
 
 			if(len > 0)
 				{ continue; }
-
-			pfd2[0].fd = SSL_get_fd((SSL *)f);
-
 		}
-		else
 #endif
-			pfd2[0].fd = fileno(f);
-
-		pfd2[0].events = (POLLIN | POLLPRI);
-
-		int32_t rc = poll(pfd2, 1, 100);
-		if(rc > 0 || !check_request(*result, bufsize))
-			{ continue; }
-		else
-			{ break; }
-	}
+	} while (!check_request(*result, bufsize));
 	return bufsize;
 }
 static int32_t process_request(FILE * f, IN_ADDR_T in)
