@@ -293,9 +293,9 @@ int32_t init_sidtab(void)
 		if((token[0] == '[') && (token[l - 1] == ']'))
 		{
 			token[l - 1] = 0;
-			if(nr > MAX_SIDBITS)
+			if(nr >= MAX_SIDBITS)
 			{
-				fprintf(stderr, "Warning: Service No.%d - '%s' ignored. Max allowed Services %d\n", nr, strtolower(token + 1), MAX_SIDBITS);
+				fprintf(stderr, "Warning: Service No.%d - '%s' ignored. Max allowed Services %d\n", nr + 1, strtolower(token + 1), MAX_SIDBITS);
 				nr++;
 				nrr++;
 			}
@@ -323,6 +323,31 @@ int32_t init_sidtab(void)
 	}
 	NULLFREE(token);
 	fclose(fp);
+
+	int32_t sidtab_count = 0;
+	struct s_sidtab *last_allowed = NULL;
+	for(ptr = cfg.sidtab; ptr; ptr = ptr->next)
+	{
+		sidtab_count++;
+		if(sidtab_count == MAX_SIDBITS)
+		{
+			last_allowed = ptr;
+		}
+	}
+
+	if(sidtab_count > MAX_SIDBITS && last_allowed)
+	{
+		struct s_sidtab *next, *overflow = last_allowed->next;
+		last_allowed->next = NULL;
+		while(overflow)
+		{
+			next = overflow->next;
+			free_sidtab(overflow);
+			overflow = next;
+			nrr++;
+		}
+		cs_log("WARNING: services configuration exceeds limit (%d > %d), truncating overflow entries", sidtab_count, MAX_SIDBITS);
+	}
 
 	show_sidtab(cfg.sidtab);
 	++cfg_sidtab_generation;

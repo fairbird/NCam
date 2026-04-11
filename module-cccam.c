@@ -4239,6 +4239,11 @@ int32_t cc_srv_wakeup_readers(struct s_client *cl)
 
 		if(!(rdr->grp & cl->grp))
 		{
+			char rdr_grp[CS_GROUP_FMT_LEN], cl_grp[CS_GROUP_FMT_LEN];
+			cs_log_dbg(D_CLIENT, "cccam: skip reader %s by group filter (reader=%s, client=%s)",
+				rdr->label,
+				cs_fmt_group(rdr_grp, sizeof(rdr_grp), rdr->grp),
+				cs_fmt_group(cl_grp, sizeof(cl_grp), cl->grp));
 			continue;
 		}
 

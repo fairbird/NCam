@@ -160,7 +160,7 @@ int32_t chk_srvid_disablecrccws_only_for_exception(ECM_REQUEST *er)
 	int32_t nr;
 	SIDTAB *sidtab;
 
-	for(nr = 0, sidtab = cfg.sidtab; sidtab; sidtab = sidtab->next, nr++)
+	for(nr = 0, sidtab = cfg.sidtab; sidtab && nr < MAX_SIDBITS; sidtab = sidtab->next, nr++)
 	{
 		if(sidtab->disablecrccws_only_for_exception && (sidtab->num_caid | sidtab->num_provid | sidtab->num_srvid) && chk_srvid_match(er, sidtab))
 		{
@@ -234,7 +234,7 @@ int32_t has_srvid(struct s_client *cl, ECM_REQUEST *er)
 	int32_t nr;
 	SIDTAB *sidtab;
 
-	for(nr = 0, sidtab = cfg.sidtab; sidtab; sidtab = sidtab->next, nr++)
+	for(nr = 0, sidtab = cfg.sidtab; sidtab && nr < MAX_SIDBITS; sidtab = sidtab->next, nr++)
 	{
 		if(sidtab->num_srvid)
 		{
@@ -253,7 +253,7 @@ int32_t has_lb_srvid(struct s_client *cl, ECM_REQUEST *er)
 	int32_t nr;
 	SIDTAB *sidtab;
 
-	for(nr = 0, sidtab = cfg.sidtab; sidtab; sidtab = sidtab->next, nr++)
+	for(nr = 0, sidtab = cfg.sidtab; sidtab && nr < MAX_SIDBITS; sidtab = sidtab->next, nr++)
 	{
 		if((cl->lb_sidtabs.ok & ((SIDTABBITS)1 << nr)) && (chk_srvid_match(er, sidtab)))
 			{ return 1; }
@@ -291,7 +291,7 @@ int32_t chk_srvid_by_caid_prov(struct s_client *cl, uint16_t caid, uint32_t prov
 		rc = 1;
 	}
 
-	for(nr = 0, sidtab = cfg.sidtab; sidtab; sidtab = sidtab->next, nr++)
+	for(nr = 0, sidtab = cfg.sidtab; sidtab && nr < MAX_SIDBITS; sidtab = sidtab->next, nr++)
 	{
 		if(sidtab->num_caid | sidtab->num_provid)
 		{
@@ -318,7 +318,7 @@ int32_t chk_srvid_by_caid_prov_rdr(struct s_reader *rdr, uint16_t caid, uint32_t
 		rc = 1;
 	}
 
-	for(nr = 0, sidtab = cfg.sidtab; sidtab; sidtab = sidtab->next, nr++)
+	for(nr = 0, sidtab = cfg.sidtab; sidtab && nr < MAX_SIDBITS; sidtab = sidtab->next, nr++)
 	{
 		if(sidtab->num_caid | sidtab->num_provid)
 		{
@@ -904,7 +904,14 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr)
 #endif
 
 	if(!(rdr->grp & cur_cl->grp))
-		{ return (0); }
+	{
+		char rdr_grp[CS_GROUP_FMT_LEN], cl_grp[CS_GROUP_FMT_LEN];
+		cs_log_dbg(D_TRACE, "reader %s skipped by group filter (reader=%s, client=%s)",
+			rdr->label,
+			cs_fmt_group(rdr_grp, sizeof(rdr_grp), rdr->grp),
+			cs_fmt_group(cl_grp, sizeof(cl_grp), cur_cl->grp));
+		return (0);
+	}
 
 	// Checking caids:
 	if((!er->ocaid || !chk_ctab(er->ocaid, &rdr->ctab)) && !chk_ctab(er->caid, &rdr->ctab))

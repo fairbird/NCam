@@ -7,7 +7,7 @@ extern char *mk_t_cacheex_valuetab(CECSPVALUETAB *tab);
 extern char *mk_t_cacheex_cwcheck_valuetab(CWCHECKTAB *tab);
 extern char *mk_t_cacheex_hitvaluetab(CECSPVALUETAB *tab);
 extern char *mk_t_tuntab(TUNTAB *ttab);
-extern char *mk_t_group(uint64_t grp);
+extern char *mk_t_group(group_t grp);
 extern char *mk_t_ftab(FTAB *ftab);
 extern char *mk_t_camd35tcp_port(void);
 extern char *mk_t_cccam_port(void);

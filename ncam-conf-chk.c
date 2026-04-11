@@ -301,7 +301,7 @@ void chk_services(char *labels, SIDTABS *sidtabs)
 	newsidok = newsidno = 0;
 	for(ptr = strtok_r(labels, ",", &saveptr1); ptr; ptr = strtok_r(NULL, ",", &saveptr1))
 	{
-		for(trim(ptr), i = 0, sidtab = cfg.sidtab; sidtab; sidtab = sidtab->next, i++)
+		for(trim(ptr), i = 0, sidtab = cfg.sidtab; sidtab && i < MAX_SIDBITS; sidtab = sidtab->next, i++)
 		{
 			if(!strcmp(sidtab->label, ptr)) { newsidok |= ((SIDTABBITS)1 << i); }
 			if((ptr[0] == '!') && (!strcmp(sidtab->label, ptr + 1))) { newsidno |= ((SIDTABBITS)1 << i); }

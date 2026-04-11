@@ -220,7 +220,7 @@ static int32_t send_sid_list(void)
 
 	//memset(mbuf, 0, sizeof(mbuf)); // not nessesery
 
-	for(nr = 0, sidtab = cfg.sidtab; sidtab; sidtab = sidtab->next, nr++)
+	for(nr = 0, sidtab = cfg.sidtab; sidtab && nr < MAX_SIDBITS; sidtab = sidtab->next, nr++)
 	{
 		if((cl->sidtabs.no & ((SIDTABBITS)1 << nr)) && (sidtab->num_caid | sidtab->num_provid | sidtab->num_srvid))
 		{
@@ -1502,6 +1502,11 @@ static void newcamd_report_cards(struct s_client *client)
 
 		if(!(rdr->grp & client->grp))
 		{
+			char rdr_grp[CS_GROUP_FMT_LEN], cl_grp[CS_GROUP_FMT_LEN];
+			cs_log_dbg(D_CLIENT, "newcamd: skip reader %s by group filter (reader=%s, client=%s)",
+				rdr->label,
+				cs_fmt_group(rdr_grp, sizeof(rdr_grp), rdr->grp),
+				cs_fmt_group(cl_grp, sizeof(cl_grp), client->grp));
 			continue; // test - skip unaccesible readers
 		}
 
@@ -1564,7 +1569,7 @@ static void newcamd_report_cards(struct s_client *client)
 	if(cfg.sidtab && client->account)
 	{
 		struct s_sidtab *ptr;
-		for(j = 0, ptr = cfg.sidtab; ptr; ptr = ptr->next, j++)
+		for(j = 0, ptr = cfg.sidtab; ptr && j < MAX_SIDBITS; ptr = ptr->next, j++)
 		{
 			if(client->account->sidtabs.ok & ((SIDTABBITS)1 << j))
 			{

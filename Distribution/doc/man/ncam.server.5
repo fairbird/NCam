@@ -313,9 +313,9 @@ set SC specific ChIDs for reader, default:none
 example: chid = 0100:12
 .RE
 .PP
-\fBgroup\fP = \fB1..64[,1..64]...\fP
+\fBgroup\fP = \fB1..128[,1..128]...\fP
 .RS 3n
-reader assingment to groups, default:none, \fIrequired\fR
+reader assingment to groups, default:none, \fIrequired\fR, \fI1..64 without __int128 support\fR
 .RE
 .PP
 \fBaudisabled\fP = \fB0\fP|\fB1\fP

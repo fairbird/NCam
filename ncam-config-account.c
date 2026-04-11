@@ -345,17 +345,41 @@ static void account_tuntab_fn(const char *token, char *value, void *setting, FIL
 
 void group_fn(const char *token, char *value, void *setting, FILE *f)
 {
-	uint64_t *grp = setting;
+	group_t *grp = setting;
 	if(value)
 	{
 		char *ptr1, *saveptr1 = NULL;
+		int32_t dropped = 0;
 		*grp = 0;
 		for(ptr1 = strtok_r(value, ",", &saveptr1); ptr1; ptr1 = strtok_r(NULL, ",", &saveptr1))
 		{
-			int32_t g;
-			g = atoi(ptr1);
-			if(g > 0 && g < 65)
-				{ *grp |= (((uint64_t)1) << (g - 1)); }
+			char *endptr = NULL;
+			long g;
+			char *group_str = trim(ptr1);
+
+			errno = 0;
+			g = strtol(group_str, &endptr, 10);
+
+			if(endptr == group_str || *endptr != '\0' || errno)
+			{
+				cs_log("WARNING: invalid %s entry '%s' ignored", token, group_str);
+				dropped++;
+				continue;
+			}
+
+			if(g <= 0 || g > GROUP_BITS)
+			{
+				cs_log("WARNING: %s entry '%s' out of range 1..%d ignored", token, group_str, GROUP_BITS);
+				dropped++;
+				continue;
+			}
+
+			*grp |= (((group_t)1) << ((int32_t)g - 1));
+		}
+
+		if(dropped)
+		{
+			cs_log("WARNING: %d invalid/out-of-range %s entr%s ignored", dropped, token, dropped > 1 ? "ies" : "y");
 		}
 		return;
 	}

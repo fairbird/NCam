@@ -71,38 +71,40 @@ char *mk_t_tuntab(TUNTAB *ttab)
 /*
  * Creates a string ready to write as a token into config or WebIf for groups. You must free the returned value through free_mk_t().
  */
-char *mk_t_group(uint64_t grp)
+char *mk_t_group(group_t grp)
 {
 	int32_t i = 0, needed = 1, pos = 0, dot = 0;
 
-	for(i = 0; i < 64; i++)
+	for(i = 0; i < GROUP_BITS; i++)
 	{
-		if(grp & ((uint64_t)1 << i))
+		if(grp & ((group_t)1 << i))
 		{
 			needed += 2;
-			if(i > 9) { needed += 1; }
+			if(i > 8) { needed += 1; }
+			if(i > 98) { needed += 1; }
 		}
 	}
 
 	char *value;
 	if(needed == 1 || !cs_malloc(&value, needed)) { return ""; }
-	char *saveptr = value;
 
-	for(i = 0; i < 64; i++)
+	for(i = 0; i < GROUP_BITS; i++)
 	{
-		if(grp & ((uint64_t)1 << i))
+		if(grp & ((group_t)1 << i))
 		{
 			if(dot == 0)
 			{
-				snprintf(value + pos, needed - (value - saveptr), "%d", i + 1);
-				if(i > 8) { pos += 2; }
+				snprintf(value + pos, needed - pos, "%d", i + 1);
+				if(i > 98) { pos += 3; }
+				else if(i > 8) { pos += 2; }
 				else { pos += 1; }
 				dot = 1;
 			}
 			else
 			{
-				snprintf(value + pos, needed - (value - saveptr), ",%d", i + 1);
-				if(i > 8) { pos += 3; }
+				snprintf(value + pos, needed - pos, ",%d", i + 1);
+				if(i > 98) { pos += 4; }
+				else if(i > 8) { pos += 3; }
 				else { pos += 2; }
 			}
 		}
@@ -573,21 +575,39 @@ char *mk_t_service(SIDTABS *sidtabs)
 	int32_t i, pos;
 	char *dot;
 	char *value;
+	int32_t needed = 1;
 	struct s_sidtab *sidtab = cfg.sidtab;
-	if(!sidtab || (!sidtabs->ok && !sidtabs->no) || !cs_malloc(&value, 1024)) { return ""; }
+	if(!sidtab || (!sidtabs->ok && !sidtabs->no)) { return ""; }
+
+	for(i = 0; sidtab; sidtab = sidtab->next, i++)
+	{
+		if(i >= MAX_SIDBITS) { break; }
+		if(sidtabs->ok & ((SIDTABBITS)1 << i))
+		{
+			needed += cs_strlen(sidtab->label) + 1;
+		}
+		if(sidtabs->no & ((SIDTABBITS)1 << i))
+		{
+			needed += cs_strlen(sidtab->label) + 2;
+		}
+	}
+
+	if(needed == 1 || !cs_malloc(&value, needed)) { return ""; }
 
 	value[0] = '\0';
 
+	sidtab = cfg.sidtab;
 	for(i = pos = 0, dot = ""; sidtab; sidtab = sidtab->next, i++)
 	{
+		if(i >= MAX_SIDBITS) { break; }
 		if(sidtabs->ok & ((SIDTABBITS)1 << i))
 		{
-			pos += snprintf(value + pos, 1024 - pos, "%s%s", dot, sidtab->label);
+			pos += snprintf(value + pos, needed - pos, "%s%s", dot, sidtab->label);
 			dot = ",";
 		}
 		if(sidtabs->no & ((SIDTABBITS)1 << i))
 		{
-			pos += snprintf(value + pos, 1024 - pos, "%s!%s", dot, sidtab->label);
+			pos += snprintf(value + pos, needed - pos, "%s!%s", dot, sidtab->label);
 			dot = ",";
 		}
 	}
@@ -1106,8 +1126,9 @@ char *mk_t_allowedtimeframe(struct s_auth *account)
 }
 
 /*
- * mk_t-functions give back a constant empty string when allocation fails or when the result is an empty string.
- * This function thus checks the stringlength and only frees if necessary.
+ * mk_t-functions may return a constant empty string literal on allocation failure
+ * or when the result is empty. Always release results via free_mk_t(); do not
+ * free the returned value directly.
  */
 void free_mk_t(char *value)
 {

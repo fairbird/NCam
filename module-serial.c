@@ -132,7 +132,7 @@ static int32_t chk_ser_srvid(struct s_client *cl, uint16_t caid, uint16_t sid, u
 		if(!cl->sidtabs.no) { return (1); }
 		rc = 1;
 	}
-	for(nr = 0, sidtab = cfg.sidtab; sidtab; sidtab = sidtab->next, nr++)
+	for(nr = 0, sidtab = cfg.sidtab; sidtab && nr < MAX_SIDBITS; sidtab = sidtab->next, nr++)
 		if(sidtab->num_caid | sidtab->num_provid | sidtab->num_srvid)
 		{
 			if((cl->sidtabs.no & ((SIDTABBITS)1 << nr)) &&

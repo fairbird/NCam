@@ -89,7 +89,7 @@ void add_good_bad_sids_by_rdr(struct s_reader *rdr, struct cc_card *card)
 {
 	struct s_sidtab *ptr;
 	int32_t n, i;
-	for(n = 0, ptr = cfg.sidtab; ptr; ptr = ptr->next, n++)
+	for(n = 0, ptr = cfg.sidtab; ptr && n < MAX_SIDBITS; ptr = ptr->next, n++)
 	{
 		if(rdr->sidtabs.ok & ((SIDTABBITS)1 << n))
 		{
@@ -178,7 +178,7 @@ int32_t write_card(struct cc_data *cc, uint8_t *buf, struct cc_card *card, int32
 
 			// bad sids:
 			int32_t n;
-			for(n = 0, ptr = cfg.sidtab; ptr; ptr = ptr->next, n++)
+			for(n = 0, ptr = cfg.sidtab; ptr && n < MAX_SIDBITS; ptr = ptr->next, n++)
 			{
 				if((cl->sidtabs.no & ((SIDTABBITS)1 << n)) || (card->sidtabno & ((SIDTABBITS)1 << n)))
 				{
@@ -608,7 +608,7 @@ int32_t card_valid_for_client(struct s_client *cl, struct cc_card *card)
 			if(!cl->sidtabs.ok) // no positive services, so ok by default if no negative found
 				{ ok = 1; }
 
-			for(j = 0, ptr = cfg.sidtab; ptr; ptr = ptr->next, j++)
+			for(j = 0, ptr = cfg.sidtab; ptr && j < MAX_SIDBITS; ptr = ptr->next, j++)
 			{
 				if(ptr == card->sidtab)
 				{
@@ -1237,7 +1237,7 @@ void update_card_list(void)
 					cfg.sidtab && (rdr->sidtabs.no || rdr->sidtabs.ok))
 			{
 				struct s_sidtab *ptr;
-				for(j = 0, ptr = cfg.sidtab; ptr; ptr = ptr->next, j++)
+				for(j = 0, ptr = cfg.sidtab; ptr && j < MAX_SIDBITS; ptr = ptr->next, j++)
 				{
 					if(!(rdr->sidtabs.no & ((SIDTABBITS)1 << j)) && (rdr->sidtabs.ok & ((SIDTABBITS)1 << j)))
 					{

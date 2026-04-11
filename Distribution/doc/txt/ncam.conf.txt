@@ -393,6 +393,9 @@ DESCRIPTIONS
        httprefresh = seconds
 	  status refresh in seconds, default:none
 
+      httpmaxrequestsize = bytes
+	  maximum accepted HTTP request size for WebIF, default:102400
+
        httputf8 = 0|1
 	  1 = webif http use utf8 charset,default:0
 

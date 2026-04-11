@@ -15,6 +15,9 @@ char *remove_white_chars(char *txt);
 char *remove_newline_chars(const char *txt);
 bool streq(const char *s1, const char *s2);
 
+#define CS_GROUP_FMT_LEN 35
+char *cs_fmt_group(char *target, size_t target_size, group_t grp);
+
 char *cs_hexdump(int32_t m, const uint8_t *buf, int32_t n, char *target, int32_t len);
 bool gethexval_within_range(char c);
 int32_t gethexval(char c);

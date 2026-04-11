@@ -37,7 +37,7 @@ typedef struct cw_t
 	uint16_t            srvid;               // first srvid received
 	struct s_reader     *selected_reader;    // first answering: reader
 	struct s_client     *cacheex_src;        // first answering: cacheex client
-	uint64_t            grp;                 // updated grp
+	group_t             grp;                 // updated grp
 	uint8_t             csp;                 // updated if answer from csp
 	uint8_t             cacheex;             // updated if answer from cacheex
 	uint8_t             localcards;          // updated if answer from local cards (or proxy using localcards option)
@@ -309,7 +309,7 @@ struct ecm_request_t *check_cache(ECM_REQUEST *er, struct s_client *cl)
 	ECM_REQUEST *ecm = NULL;
 	ECMHASH *result;
 	CW *cw;
-	uint64_t grp = cl?cl->grp:0;
+	group_t grp = cl ? cl->grp : 0;
 
 	SAFE_RWLOCK_RDLOCK(&cache_lock);
 

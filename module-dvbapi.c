@@ -1918,6 +1918,12 @@ void dvbapi_start_emm_filter(int32_t demux_id)
 	{
 		if(!(rdr->grp & cl->grp))
 		{
+			char rdr_grp[CS_GROUP_FMT_LEN], cl_grp[CS_GROUP_FMT_LEN];
+			cs_log_dbg(D_DVBAPI, "Demuxer %d skip reader %s by group filter (reader=%s, client=%s)",
+				demux_id,
+				rdr->label,
+				cs_fmt_group(rdr_grp, sizeof(rdr_grp), rdr->grp),
+				cs_fmt_group(cl_grp, sizeof(cl_grp), cl->grp));
 			continue;
 		}
 
@@ -3525,7 +3531,7 @@ void dvbapi_resort_ecmpids(int32_t demux_id)
 		}
 		else // ecmpids with no matching readers are disabled and matching sidtabbits have now highest status
 		{
-			for(nr = 0, sidtab = cfg.sidtab; sidtab; sidtab = sidtab->next, nr++)
+			for(nr = 0, sidtab = cfg.sidtab; sidtab && nr < MAX_SIDBITS; sidtab = sidtab->next, nr++)
 			{
 				if(sidtab->num_caid | sidtab->num_provid | sidtab->num_srvid)
 				{

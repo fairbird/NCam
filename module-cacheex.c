@@ -43,11 +43,11 @@ typedef struct hit_key_t {
 } HIT_KEY;
 
 typedef struct cache_hit_t {
-	HIT_KEY			key;
+	HIT_KEY		key;
 	struct timeb	time;
 	struct timeb	max_hitcache_time;
-	uint64_t		grp;
-	uint64_t		grp_last_max_hitcache_time;
+	group_t		grp;
+	group_t		grp_last_max_hitcache_time;
 #ifdef CS_CACHEEX_AIO
 	int32_t			waittime_block;
 #endif
@@ -101,7 +101,7 @@ static int32_t cacheex_check_hitcache(ECM_REQUEST *er, struct s_client *cl)
 		struct timeb now;
 		cs_ftime(&now);
 		int64_t gone = comp_timeb(&now, &result->time);
-		uint64_t grp = cl?cl->grp:0;
+		group_t grp = cl ? cl->grp : 0;
 
 		if(
 			gone <= (cfg.max_hitcache_time*1000)

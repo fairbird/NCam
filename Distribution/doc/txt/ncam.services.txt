@@ -10,7 +10,7 @@ SYNOPSIS
 
 DESCRIPTIONS
    The [<service name>] section
-       service name section, service name sections are recurring, required, maximum 64 services are allowed
+       service name section, service name sections are recurring, required, maximum 128 services are allowed (64 without __int128 support)
 
        caid = CAID[,CAID]...
 	  listing of CAIDs in hex

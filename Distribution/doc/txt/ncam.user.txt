@@ -211,8 +211,8 @@ DESCRIPTIONS
 	    1		    = auto AU is sending EMMs to all readers
 			      (security issue: clients can see SC data!)
 
-       group = 1..64[,1..64]...
-	  user assingment to reader groups, default:none, required
+       group = 1..128[,1..128]...
+	  user assingment to reader groups, default:none, required, 1..64 without __int128 support
 
        betatunnel = <CAID>.<ServiceID>:<target CAID>[,<CAID>.<ServiceID>: <target CAID>]...
 	  Define Betacrypt tunneling.  The ServiceID can also be used for wildcarded CAIDs.

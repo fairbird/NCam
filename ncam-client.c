@@ -389,8 +389,7 @@ int32_t cs_auth_client(struct s_client *client, struct s_auth *account, const ch
 	char *t_msg[] = { buf, "invalid access", "invalid ip", "unknown reason", "protocol not allowed" };
 	struct s_module *module = get_module(client);
 
-	memset(&client->grp, 0xff, sizeof(uint64_t));
-	//client->grp=0xffffffffffffff;
+	memset(&client->grp, 0xff, sizeof(client->grp));
 	if((intptr_t)account != 0 && (intptr_t)account != -1 && account->disabled)
 	{
 		cs_add_violation(client, account->usr);

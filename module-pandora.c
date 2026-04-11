@@ -233,7 +233,6 @@ int pandora_client_init(struct s_client *cl)
 	memcpy(cl->pand_md5_key, MD5((uint8_t *)rdr->r_pwd, cs_strlen(rdr->r_pwd), md5tmp), 16);
 	cl->crypted = 1;
 
-	//cl->grp = 0xFFFFFFFF;
 	//rdr->caid[0] = rdr->ctab.caid[0];
 
 	cl->pand_send_ecm = rdr->pand_send_ecm;

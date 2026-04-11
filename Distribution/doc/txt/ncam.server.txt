@@ -241,8 +241,8 @@ DESCRIPTIONS
 
 	  example: chid = 0100:12
 
-       group = 1..64[,1..64]...
-	  reader assingment to groups, default:none, required
+       group = 1..128[,1..128]...
+	  reader assingment to groups, default:none, required, 1..64 without __int128 support
 
        audisabled = 0|1
 	  1 = exclude reader from auto AU, default:0

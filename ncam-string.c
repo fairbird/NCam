@@ -85,6 +85,24 @@ void cs_strncpy(char *destination, const char *source, size_t num)
 	destination[l] = '\0';
 }
 
+char *cs_fmt_group(char *target, size_t target_size, group_t grp)
+{
+	if(!target || target_size == 0)
+	{
+		return target;
+	}
+
+#if GROUP_BITS > 64
+	uint64_t high = (uint64_t)(grp >> 64);
+	uint64_t low = (uint64_t)grp;
+	snprintf(target, target_size, "0x%016" PRIX64 "%016" PRIX64, high, low);
+#else
+	snprintf(target, target_size, "0x%016" PRIX64, (uint64_t)grp);
+#endif
+
+	return target;
+}
+
 /* Converts the string txt to it's lower case representation. */
 char *strtolower(char *txt)
 {

@@ -22,6 +22,7 @@
 #else
 #define DEFAULT_HTTP_ALLOW  "127.0.0.1,192.168.0.0-192.168.255.255,10.0.0.0-10.255.255.255,172.16.0.0-172.31.255.255"
 #endif
+#define DEFAULT_HTTP_MAX_REQUEST_SIZE 102400
 
 static void disablelog_fn(const char *token, char *value, void *UNUSED(setting), FILE *f)
 {
@@ -582,6 +583,7 @@ static const struct config_list webif_opts[] =
 	DEF_OPT_STR("http_text_color"           , OFS(http_text_color)          , "#000000"),
 	DEF_OPT_INT8("http_prepend_embedded_css", OFS(http_prepend_embedded_css), 0),
 	DEF_OPT_INT32("httprefresh"             , OFS(http_refresh)             , 0),
+	DEF_OPT_INT32("httpmaxrequestsize"      , OFS(http_max_request_size)    , DEFAULT_HTTP_MAX_REQUEST_SIZE),
 	DEF_OPT_INT32("httppollrefresh"         , OFS(poll_refresh)             , 60),
 	DEF_OPT_INT8("httphideidleclients"      , OFS(http_hide_idle_clients)   , 1),
 	DEF_OPT_STR("httphidetype"              , OFS(http_hide_type)           , NULL),
