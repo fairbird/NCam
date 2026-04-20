@@ -918,9 +918,6 @@ static void init_machine_info(void)
 
 	cs_log("Service/group limit for this build: %d entries (group_t=%d-bit, size=%zu, align=%zu)",
 		GROUP_BITS, GROUP_BITS, sizeof(group_t), (size_t)__alignof__(group_t));
-#if GROUP_BITS < 128
-	cs_log("WARNING: this build supports up to 64 services/groups; configs or runtime state using entries above 64 are not compatible with this build");
-#endif
 
 #if !defined(__linux__)
 	return;
