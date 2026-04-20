@@ -395,7 +395,6 @@ static const struct config_list global_opts[] =
 #endif
 	DEF_OPT_FUNC("double_check_caid"               , OFS(double_check_caid)             , chk_ftab_fn),
 	DEF_OPT_STR("ecmfmt"                           , OFS(ecmfmt)                        , NULL),
-	DEF_OPT_INT32("resolvegethostbyname"           , OFS(resolve_gethostbyname)         , 0),
 	DEF_OPT_INT32("failbantime"                    , OFS(failbantime)                   , 0),
 	DEF_OPT_INT32("failbancount"                   , OFS(failbancount)                  , 0),
 	DEF_OPT_INT8("suppresscmd08"                   , OFS(c35_suppresscmd08)             , 0),

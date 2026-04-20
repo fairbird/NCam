@@ -9,7 +9,6 @@
 #include "ncam-time.h"
 #include "ncam-work.h"
 
-extern CS_MUTEX_LOCK gethostbyname_lock;
 extern int32_t exit_oscam;
 
 #ifndef IPV6SUPPORT
@@ -181,43 +180,26 @@ int32_t check_ip(struct s_ip *ip, IN_ADDR_T n)
 	return ok;
 }
 
-/* Returns the ip from the given hostname. If gethostbyname is configured in the config file, a lock
-	will be held until the ip has been resolved. */
+/* Returns the ip from the given hostname. */
 uint32_t cs_getIPfromHost(const char *hostname)
 {
 	uint32_t result = 0;
-#if !defined(__MIPSEL__)
-	// Resolve with gethostbyname:
-	if(cfg.resolve_gethostbyname)
-	{
-		cs_writelock(__func__, &gethostbyname_lock);
-		struct hostent *rht = gethostbyname(hostname);
-		if(!rht)
-			{ cs_log("can't resolve %s", hostname); }
-		else
-			{ result = ((struct in_addr *)rht->h_addr)->s_addr; }
-		cs_writeunlock(__func__, &gethostbyname_lock);
-	}
-	else // Resolve with getaddrinfo:
-#endif
-	{
-		struct addrinfo hints, *res = NULL;
-		memset(&hints, 0, sizeof(hints));
-		hints.ai_socktype = SOCK_STREAM;
-		hints.ai_family = AF_INET;
-		hints.ai_protocol = IPPROTO_TCP;
+	struct addrinfo hints, *res = NULL;
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_family = AF_INET;
+	hints.ai_protocol = IPPROTO_TCP;
 
-		int32_t err = getaddrinfo(hostname, NULL, &hints, &res);
-		if(err != 0 || !res || !res->ai_addr)
-		{
-			cs_log("can't resolve %s, error: %s", hostname, err ? gai_strerror(err) : "unknown");
-		}
-		else
-		{
-			result = ((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr;
-		}
-		if(res) { freeaddrinfo(res); }
+	int32_t err = getaddrinfo(hostname, NULL, &hints, &res);
+	if(err != 0 || !res || !res->ai_addr)
+	{
+		cs_log("can't resolve %s, error: %s", hostname, err ? gai_strerror(err) : "unknown");
 	}
+	else
+	{
+		result = ((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr;
+	}
+	if(res) { freeaddrinfo(res); }
 	return result;
 }
 

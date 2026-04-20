@@ -755,11 +755,6 @@ static char *send_ncam_config_global(struct templatevars *vars, struct uriparams
 
 	tpl_addVar(vars, TPLADD, "DROPDUPSCHECKED", (cfg.dropdups == 1) ? "checked" : "");
 
-	if(cfg.resolve_gethostbyname == 1)
-		{ tpl_addVar(vars, TPLADD, "RESOLVER1", "selected"); }
-	else
-		{ tpl_addVar(vars, TPLADD, "RESOLVER0", "selected"); }
-
 #if !defined(__MIPSEL__)
 	tpl_addVar(vars, TPLADD, "VIEW_GETHOSTBYNAME", tpl_getTpl(vars, "GETHOSTBYNAME"));
 #endif

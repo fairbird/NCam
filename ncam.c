@@ -112,7 +112,6 @@ static uint16_t cs_waittime = 60;
 char cs_tmpdir[200] = {0x00};
 CS_MUTEX_LOCK system_lock;
 CS_MUTEX_LOCK config_lock;
-CS_MUTEX_LOCK gethostbyname_lock;
 CS_MUTEX_LOCK clientlist_lock;
 CS_MUTEX_LOCK readerlist_lock;
 CS_MUTEX_LOCK fakeuser_lock;
@@ -1907,7 +1906,6 @@ int32_t main(int32_t argc, char *argv[])
 	init_first_client();
 	cs_lock_create(__func__, &system_lock, "system_lock", 5000);
 	cs_lock_create(__func__, &config_lock, "config_lock", 10000);
-	cs_lock_create(__func__, &gethostbyname_lock, "gethostbyname_lock", 10000);
 	cs_lock_create(__func__, &clientlist_lock, "clientlist_lock", 5000);
 	cs_lock_create(__func__, &readerlist_lock, "readerlist_lock", 5000);
 	cs_lock_create(__func__, &fakeuser_lock, "fakeuser_lock", 5000);

@@ -2500,7 +2500,6 @@ struct s_config
 	int32_t         lb_auto_timeout_p;              // percent added to avg time as timeout time
 	int32_t         lb_auto_timeout_t;              // minimal time added to avg time as timeout time
 #endif
-	int32_t         resolve_gethostbyname;
 	int8_t          double_check;                   // schlocke: Double checks each ecm+dcw from two (or more) readers
 	FTAB            double_check_caid;          // do not store loadbalancer stats with providers for this caid
 
