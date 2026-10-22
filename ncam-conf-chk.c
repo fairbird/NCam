@@ -578,12 +578,13 @@ void chk_ecm_hdr_whitelist(char *value, ECM_HDR_WHITELIST *ecm_hdr_whitelist)
 		{
 			hdr_ptr = trim(hdr_ptr);
 			d.len = cs_strlen(hdr_ptr);
-			if (d.len / 2 > sizeof(d.header))
-				d.len = sizeof(d.header) * 2;
-			if (d.len > 1)
+			if (d.len > 1 && (d.len % 2) == 0)
 			{
-				key_atob_l(hdr_ptr, d.header, d.len);
-				ecm_hdr_whitelist_add(ecm_hdr_whitelist, &d);
+				if (d.len / 2 > sizeof(d.header))
+					d.len = sizeof(d.header) * 2;
+				memset(d.header, 0, sizeof(d.header));
+				if (key_atob_l(hdr_ptr, d.header, d.len) == 0)
+					ecm_hdr_whitelist_add(ecm_hdr_whitelist, &d);
 			}
 		}
 	}
