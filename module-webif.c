@@ -9325,6 +9325,52 @@ static int32_t readRequest(FILE * f, IN_ADDR_T in, char **result, int8_t forcePl
 	} while (!check_request(*result, bufsize));
 	return bufsize;
 }
+enum webif_page
+{
+	WEBIF_PAGE_UNKNOWN = -1,
+	WEBIF_PAGE_CONFIG,
+	WEBIF_PAGE_READERS,
+	WEBIF_PAGE_ENTITLEMENTS,
+	WEBIF_PAGE_STATUS,
+	WEBIF_PAGE_USERCONFIG,
+	WEBIF_PAGE_READERCONFIG,
+	WEBIF_PAGE_SERVICES,
+	WEBIF_PAGE_USER_EDIT,
+	WEBIF_PAGE_CSS,
+	WEBIF_PAGE_SERVICES_EDIT,
+	WEBIF_PAGE_SAVETEMPLATES,
+	WEBIF_PAGE_SHUTDOWN,
+	WEBIF_PAGE_SCRIPT,
+	WEBIF_PAGE_SCANUSB,
+	WEBIF_PAGE_FILES,
+	WEBIF_PAGE_READERSTATS,
+	WEBIF_PAGE_FAILBAN,
+	WEBIF_PAGE_JS,
+	WEBIF_PAGE_API_HTML,
+	WEBIF_PAGE_IMAGE,
+	WEBIF_PAGE_FAVICON,
+	WEBIF_PAGE_GRAPH,
+	WEBIF_PAGE_API_XML,
+	WEBIF_PAGE_CACHEEX,
+	WEBIF_PAGE_API_JSON,
+	WEBIF_PAGE_EMM,
+	WEBIF_PAGE_EMM_RUNNING,
+	WEBIF_PAGE_ROBOTS,
+	WEBIF_PAGE_GHTTP,
+	WEBIF_PAGE_LOGPOLL,
+	WEBIF_PAGE_JQUERY,
+#ifdef WEBIF_WIKI
+	WEBIF_PAGE_WIKI,
+	WEBIF_PAGE_WIKI_STATUS,
+#endif
+	WEBIF_PAGE_COUNT
+};
+
+static bool is_api_page(enum webif_page page)
+{
+	return page == WEBIF_PAGE_API_HTML || page == WEBIF_PAGE_API_XML || page == WEBIF_PAGE_API_JSON;
+}
+
 static int32_t process_request(FILE * f, IN_ADDR_T in)
 {
 	int32_t ok = 0;
@@ -9357,43 +9403,43 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 		char *method, *path, *protocol, *str1, *saveptr1 = NULL, *authheader = NULL, *extraheader = NULL, *filebuf = NULL;
 		char *pch, *tmp, *buf, *nameInUrl, subdir[32];
 		/* List of possible pages */
-		char *pages[] =
+		static const char *const pages[WEBIF_PAGE_COUNT] =
 		{
-			"/config.html",
-			"/readers.html",
-			"/entitlements.html",
-			"/status.html",
-			"/userconfig.html",
-			"/readerconfig.html",
-			"/services.html",
-			"/user_edit.html",
-			"/site.css",
-			"/services_edit.html",
-			"/savetemplates.html",
-			"/shutdown.html",
-			"/script.html",
-			"/scanusb.html",
-			"/files.html",
-			"/readerstats.html",
-			"/failban.html",
-			"/ncam.js",
-			"/ncamapi.html",
-			"/image",
-			"/favicon.ico",
-			"/graph.svg",
-			"/ncamapi.xml",
-			"/cacheex.html",
-			"/ncamapi.json",
-			"/emm.html",
-			"/emm_running.html",
-			"/robots.txt",
-			"/ghttp.html",
-			"/logpoll.html",
-			"/jquery.js",
+			[WEBIF_PAGE_CONFIG] = "/config.html",
+			[WEBIF_PAGE_READERS] = "/readers.html",
+			[WEBIF_PAGE_ENTITLEMENTS] = "/entitlements.html",
+			[WEBIF_PAGE_STATUS] = "/status.html",
+			[WEBIF_PAGE_USERCONFIG] = "/userconfig.html",
+			[WEBIF_PAGE_READERCONFIG] = "/readerconfig.html",
+			[WEBIF_PAGE_SERVICES] = "/services.html",
+			[WEBIF_PAGE_USER_EDIT] = "/user_edit.html",
+			[WEBIF_PAGE_CSS] = "/site.css",
+			[WEBIF_PAGE_SERVICES_EDIT] = "/services_edit.html",
+			[WEBIF_PAGE_SAVETEMPLATES] = "/savetemplates.html",
+			[WEBIF_PAGE_SHUTDOWN] = "/shutdown.html",
+			[WEBIF_PAGE_SCRIPT] = "/script.html",
+			[WEBIF_PAGE_SCANUSB] = "/scanusb.html",
+			[WEBIF_PAGE_FILES] = "/files.html",
+			[WEBIF_PAGE_READERSTATS] = "/readerstats.html",
+			[WEBIF_PAGE_FAILBAN] = "/failban.html",
+			[WEBIF_PAGE_JS] = "/oscam.js",
+			[WEBIF_PAGE_API_HTML] = "/oscamapi.html",
+			[WEBIF_PAGE_IMAGE] = "/image",
+			[WEBIF_PAGE_FAVICON] = "/favicon.ico",
+			[WEBIF_PAGE_GRAPH] = "/graph.svg",
+			[WEBIF_PAGE_API_XML] = "/oscamapi.xml",
+			[WEBIF_PAGE_CACHEEX] = "/cacheex.html",
+			[WEBIF_PAGE_API_JSON] = "/oscamapi.json",
+			[WEBIF_PAGE_EMM] = "/emm.html",
+			[WEBIF_PAGE_EMM_RUNNING] = "/emm_running.html",
+			[WEBIF_PAGE_ROBOTS] = "/robots.txt",
+			[WEBIF_PAGE_GHTTP] = "/ghttp.html",
+			[WEBIF_PAGE_LOGPOLL] = "/logpoll.html",
+			[WEBIF_PAGE_JQUERY] = "/jquery.js",
 		};
 
-		int32_t pagescnt = sizeof(pages) / sizeof(char *); // Calculate the amount of items in array
-		int32_t i, bufsize, len, pgidx = -1;
+		int32_t i, bufsize, len;
+		enum webif_page pgidx = WEBIF_PAGE_UNKNOWN;
 		uint32_t etagheader = 0;
 		struct uriparams params;
 		params.paramcount = 0;
@@ -9477,9 +9523,9 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 		}
 
 		/* Map page to our static page definitions */
-		for(i = 0; i < pagescnt; i++)
+		for(i = 0; i < WEBIF_PAGE_COUNT; i++)
 		{
-			if(!strcmp(nameInUrl, pages[i])) { pgidx = i; }
+			if(!strcmp(nameInUrl, pages[i])) { pgidx = (enum webif_page)i; }
 		}
 
 		parseParams(&params, pch);
@@ -9566,15 +9612,15 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 		else { NULLFREE(authheader); }
 
 		/*build page*/
-		if(pgidx == 8)
+		if(pgidx == WEBIF_PAGE_CSS)
 		{
 			send_file(f, "CSS", subdir, modifiedheader, etagheader, extraheader);
 		}
-		else if(pgidx == 17)
+		else if(pgidx == WEBIF_PAGE_JS)
 		{
 			send_file(f, "JS", subdir, modifiedheader, etagheader, extraheader);
 		}
-		else if(pgidx == 30)
+		else if(pgidx == WEBIF_PAGE_JQUERY)
 		{
 			send_file(f, "JQ", subdir, modifiedheader, etagheader, extraheader);
 		}
@@ -9632,12 +9678,12 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 				tpl_printf(vars, TPLADD, "POLLREFRESHTIME", "%d", cfg.poll_refresh);
 			}
 			if	(	cfg.http_refresh > 0 && 
-				(((	pgidx == 1 || pgidx == 4 ) && !cfg.poll_refresh ) ||
-				(	pgidx == 3 && ( cfg.http_status_log || !cfg.poll_refresh )) ||
-					pgidx == 15 || pgidx == 23 || pgidx == -1 )) // wenn polling bei cachex.html eingeführt wird muss die 23 => 2 zeilen höher
+				(((	pgidx == WEBIF_PAGE_READERS || pgidx == WEBIF_PAGE_USERCONFIG ) && !cfg.poll_refresh ) ||
+				(	pgidx == WEBIF_PAGE_STATUS && ( cfg.http_status_log || !cfg.poll_refresh )) ||
+					pgidx == WEBIF_PAGE_READERSTATS || pgidx == WEBIF_PAGE_CACHEEX || pgidx == WEBIF_PAGE_UNKNOWN ))
 			{
 				tpl_printf(vars, TPLADD, "REFRESHTIME", "%d", cfg.http_refresh);
-				tpl_addVar(vars, TPLADD, "WITHQUERY", pgidx == 15 ? "1" : "0");
+				tpl_addVar(vars, TPLADD, "WITHQUERY", pgidx == WEBIF_PAGE_READERSTATS ? "1" : "0");
 				tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 			}
 			if(cfg.http_style)
@@ -9666,8 +9712,8 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 			tpl_addVar(vars, TPLADD, "RUNAS", urlencode(vars, username(first_client)));
 
 			time_t now = time((time_t *)0);
-			// XMLAPI
-			if(pgidx == 18 || pgidx == 22 || pgidx == 24)
+			// API response metadata
+			if(is_api_page(pgidx))
 			{
 				char tbuffer [30];
 				strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &st);
@@ -9704,118 +9750,115 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 			char *result = NULL;
 
 			// WebIf allows modifying many things. Thus, all pages except images/css/static are expected to be non-threadsafe!
-			if(pgidx != 19 && pgidx != 20 && pgidx != 21 && pgidx != 27) { cs_writelock(__func__, &http_lock); }
+			if(pgidx != WEBIF_PAGE_IMAGE && pgidx != WEBIF_PAGE_FAVICON && pgidx != WEBIF_PAGE_GRAPH && pgidx != WEBIF_PAGE_ROBOTS) { cs_writelock(__func__, &http_lock); }
 			switch(pgidx)
 			{
-			case 0:
+			case WEBIF_PAGE_CONFIG:
 				tpl_addVar(vars, TPLADD, "CONFIG_CONTENT", send_ncam_config(vars, &params));
 				result = tpl_getTpl(vars, "CONFIGCONTENT");
 				break;
-			case 1:
+			case WEBIF_PAGE_READERS:
 				result = send_ncam_reader(vars, &params, 0);
 				break;
-			case 2:
+			case WEBIF_PAGE_ENTITLEMENTS:
 				result = send_ncam_entitlement(vars, &params, 0);
 				break;
-			case 3:
+			case WEBIF_PAGE_STATUS:
 				result = send_ncam_status(vars, &params, 0);
 				break;
-			case 4:
+			case WEBIF_PAGE_USERCONFIG:
 				result = send_ncam_user_config(vars, &params, 0);
 				break;
-			case 5:
+			case WEBIF_PAGE_READERCONFIG:
 				result = send_ncam_reader_config(vars, &params);
 				break;
-			case 6:
+			case WEBIF_PAGE_SERVICES:
 				result = send_ncam_services(vars, &params);
 				break;
-			case 7:
+			case WEBIF_PAGE_USER_EDIT:
 				result = send_ncam_user_config_edit(vars, &params, 0);
 				break;
-				//case  8: css file
-			case 9:
+			case WEBIF_PAGE_SERVICES_EDIT:
 				result = send_ncam_services_edit(vars, &params);
 				break;
-			case 10:
+			case WEBIF_PAGE_SAVETEMPLATES:
 				result = send_ncam_savetpls(vars);
 				break;
-			case 11:
+			case WEBIF_PAGE_SHUTDOWN:
 				result = send_ncam_shutdown(vars, f, &params, 0, keepalive, extraheader);
 				break;
-			case 12:
+			case WEBIF_PAGE_SCRIPT:
 				result = send_ncam_script(vars, &params);
 				break;
-			case 13:
+			case WEBIF_PAGE_SCANUSB:
 				result = send_ncam_scanusb(vars);
 				break;
-			case 14:
+			case WEBIF_PAGE_FILES:
 				result = send_ncam_files(vars, &params, 0);
 				break;
-			case 15:
+			case WEBIF_PAGE_READERSTATS:
 				result = send_ncam_reader_stats(vars, &params, 0);
 				break;
-			case 16:
+			case WEBIF_PAGE_FAILBAN:
 				result = send_ncam_failban(vars, &params, 0);
 				break;
-				//case  17: js file
-			case 18:
+			case WEBIF_PAGE_API_HTML:
 				result = send_ncam_api(vars, f, &params, keepalive, 1, extraheader);
 				break; //ncamapi.html
-			case 19:
+			case WEBIF_PAGE_IMAGE:
 				result = send_ncam_image(vars, f, &params, NULL, modifiedheader, etagheader, extraheader);
 				break;
-			case 20:
+			case WEBIF_PAGE_FAVICON:
 				result = send_ncam_image(vars, f, &params, "ICMAI", modifiedheader, etagheader, extraheader);
 				break;
-			case 21:
+			case WEBIF_PAGE_GRAPH:
 				result = send_ncam_graph(vars);
 				break;
-			case 22:
+			case WEBIF_PAGE_API_XML:
 				result = send_ncam_api(vars, f, &params, keepalive, 1, extraheader);
 				break; //ncamapi.xml
 #ifdef CS_CACHEEX
-			case 23:
+			case WEBIF_PAGE_CACHEEX:
 				result = send_ncam_cacheex(vars, &params, 0);
 				break;
 #endif
-			case 24:
+			case WEBIF_PAGE_API_JSON:
 				result = send_ncam_api(vars, f, &params, keepalive, 2, extraheader);
 				break; //ncamapi.json
-			case 25:
+			case WEBIF_PAGE_EMM:
 				result = send_ncam_EMM(vars, &params);
 				break; //emm.html
-			case 26:
+			case WEBIF_PAGE_EMM_RUNNING:
 				result = send_ncam_EMM_running(vars, &params);
 				break; //emm_running.html
-			case 27:
+			case WEBIF_PAGE_ROBOTS:
 				result = send_ncam_robots_txt(f);
 				break; //robots.txt
 #ifdef MODULE_GHTTP
-			case 28:
+			case WEBIF_PAGE_GHTTP:
 				result = send_ncam_ghttp(vars, &params, 0);
 				break;
 #endif
 #ifdef WEBIF_LIVELOG
-			case 29:
+			case WEBIF_PAGE_LOGPOLL:
 				result = send_ncam_logpoll(vars, &params);
 				break;
-			//case 30: jquery.js
 #endif
 			default:
 				result = send_ncam_status(vars, &params, 0);
 				break;
 			}
-			if(pgidx != 19 && pgidx != 20 && pgidx != 21 && pgidx != 27) { cs_writeunlock(__func__, &http_lock); }
+			if(pgidx != WEBIF_PAGE_IMAGE && pgidx != WEBIF_PAGE_FAVICON && pgidx != WEBIF_PAGE_GRAPH && pgidx != WEBIF_PAGE_ROBOTS) { cs_writeunlock(__func__, &http_lock); }
 
 			if(result == NULL || !strcmp(result, "0") || cs_strlen(result) == 0) { send_error500(f); }
 			else if(strcmp(result, "1"))
 			{
 				//it doesn't make sense to check for modified etagheader here as standard template has timestamp in output and so site changes on every request
-				if(pgidx == 18)
+				if(pgidx == WEBIF_PAGE_API_HTML)
 					{ send_headers(f, 200, "OK", extraheader, "text/xml", 0, cs_strlen(result), NULL, 0); }
-				else if(pgidx == 21)
+				else if(pgidx == WEBIF_PAGE_GRAPH)
 					{ send_headers(f, 200, "OK", extraheader, "image/svg+xml", 0, cs_strlen(result), NULL, 0); }
-				else if(pgidx == 24)
+				else if(pgidx == WEBIF_PAGE_API_JSON)
 					{ send_headers(f, 200, "OK", extraheader, "text/javascript", 0, cs_strlen(result), NULL, 0); }
 				else
 					{ send_headers(f, 200, "OK", extraheader, "text/html", 0, cs_strlen(result), NULL, 0); }
