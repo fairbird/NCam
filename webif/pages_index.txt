@@ -63,7 +63,7 @@ CONFIGCWCYCLE                 config/cache_cwcycle.html                         
 CONFIGCAMD33                  config/camd33.html                                          MODULE_CAMD33
 CONFIGCAMD35                  config/camd35.html                                          MODULE_CAMD35
 CONFIGCAMD35TCP               config/camd35tcp.html                                       MODULE_CAMD35_TCP
-CONFIGCCCAM                   config/cccam.html                                           MODULE_CCCSHARE
+CONFIGCCCAM                   config/cccam.html                                           MODULE_CCCAM
 CONFIGCCCAMCTRL               config/cccam_control.html                                   MODULE_CCCSHARE
 CONFIGCONTENT                 config/config.html
 CONFIGDVBAPI                  config/dvbapi.html                                          HAVE_DVBAPI
@@ -87,7 +87,7 @@ CONFIGMENUANTICASC            config/menu_anticasc.html                         
 CONFIGMENUCAMD33              config/menu_camd33.html                                     MODULE_CAMD33
 CONFIGMENUCAMD35              config/menu_camd35.html                                     MODULE_CAMD35
 CONFIGMENUCAMD35TCP           config/menu_camd35tcp.html                                  MODULE_CAMD35_TCP
-CONFIGMENUCCCAM               config/menu_cccam.html                                      MODULE_CCCSHARE
+CONFIGMENUCCCAM               config/menu_cccam.html                                      MODULE_CCCAM
 CMCAPTIONCWC                  config/menu_cmcaptioncwc.html                               CW_CYCLE_CHECK
 CONFIGMENUDVBAPI              config/menu_dvbapi.html                                     HAVE_DVBAPI
 CONFIGMENUGBOX                config/menu_gbox.html                                       MODULE_GBOX
