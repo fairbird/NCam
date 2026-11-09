@@ -9243,19 +9243,92 @@ static int8_t check_request(char *result, int32_t readen)
 	return 0;
 }
 
+/* Keep retries and partial reads within one monotonic deadline. */
+static int32_t webif_remaining_ms(const struct timespec *deadline)
+{
+	struct timespec now;
+	if(clock_gettime(CLOCK_MONOTONIC, &now) != 0) { return -1; }
+	int64_t remaining = (int64_t)(deadline->tv_sec - now.tv_sec) * 1000
+		+ (deadline->tv_nsec - now.tv_nsec) / 1000000;
+	return remaining > 0 ? remaining : 0;
+}
+
+static int32_t webif_wait(int32_t fd, short events, const struct timespec *deadline)
+{
+	struct pollfd pfd = { .fd = fd, .events = events };
+	for(;;)
+	{
+		int32_t remaining = webif_remaining_ms(deadline);
+		if(remaining <= 0) { return -1; }
+		int32_t rc = poll(&pfd, 1, remaining);
+		if(rc < 0 && (errno == EINTR || errno == EAGAIN)) { continue; }
+		return rc > 0 ? 0 : -1;
+	}
+}
+
+#ifdef WITH_SSL
+/* Return 0 only for a TLS error eligible for the existing plain-HTTP fallback. */
+static int32_t webif_ssl_accept(SSL *ssl, int32_t fd)
+{
+	struct timespec deadline;
+	int32_t flags = fcntl(fd, F_GETFL, 0), ok = -1;
+	if(flags < 0 || clock_gettime(CLOCK_MONOTONIC, &deadline) != 0
+		|| fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0) { return -1; }
+	deadline.tv_sec += 10;
+
+	while(webif_remaining_ms(&deadline) > 0)
+	{
+		ERR_clear_error();
+		errno = 0;
+		int32_t rc = SSL_accept(ssl);
+		if(rc == 1)
+		{
+			ok = webif_remaining_ms(&deadline) > 0 ? 1 : -1;
+			break;
+		}
+		int32_t err = SSL_get_error(ssl, rc);
+		if(err != SSL_ERROR_WANT_READ && err != SSL_ERROR_WANT_WRITE)
+		{
+			if(err == SSL_ERROR_SYSCALL && errno == EINTR) { continue; }
+			ok = 0;
+			break;
+		}
+		if(webif_wait(fd, err == SSL_ERROR_WANT_WRITE ? POLLOUT : POLLIN, &deadline) < 0)
+			{ break; }
+	}
+	if(fcntl(fd, F_SETFL, flags) < 0) { return -1; }
+	return ok;
+}
+#endif
+
 static int32_t readRequest(FILE * f, IN_ADDR_T in, char **result, int8_t forcePlain)
 {
-	int32_t n, bufsize = 0, errcount = 0;
+	int32_t n, bufsize = 0, ret = -1;
+	int32_t fd;
+	int8_t allocation_failed = 0;
+	struct timespec deadline;
 	const int32_t max_request_size = cfg.http_max_request_size > 0 ? cfg.http_max_request_size : 102400;
 	char buf2[1024];
 #ifdef WITH_SSL
 	int8_t is_ssl = 0;
 	if(ssl_active && !forcePlain)
 		{ is_ssl = 1; }
+	fd = is_ssl ? SSL_get_fd((SSL *)f) : fileno(f);
+#else
+	fd = fileno(f);
 #endif
+	int32_t flags = fcntl(fd, F_GETFL, 0);
+	if(flags < 0 || clock_gettime(CLOCK_MONOTONIC, &deadline) != 0
+		|| fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0) { return -1; }
+	/* Each call, including subsequent keepalive requests, gets a fresh budget. */
+	deadline.tv_sec += 10;
 
 	do
 	{
+		if(webif_remaining_ms(&deadline) <= 0) { goto out; }
+#ifdef WITH_SSL
+		if(is_ssl) { ERR_clear_error(); }
+#endif
 		errno = 0;
 		if(forcePlain)
 			{ n = read(fileno(f), buf2, sizeof(buf2)); }
@@ -9263,38 +9336,42 @@ static int32_t readRequest(FILE * f, IN_ADDR_T in, char **result, int8_t forcePl
 			{ n = webif_read(buf2, sizeof(buf2), f); }
 		if(n <= 0)
 		{
-			if((errno == 0 || errno == EINTR))
-			{
-				if(errcount++ < 10)
-				{
-					cs_sleepms(5);
-					continue;
-				}
-				return -1;
-			}
 #ifdef WITH_SSL
 			if(is_ssl)
 			{
+				int32_t err = SSL_get_error((SSL *)f, n);
+				if(err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
+				{
+					if(webif_wait(fd, err == SSL_ERROR_WANT_WRITE ? POLLOUT : POLLIN, &deadline) < 0)
+						{ goto out; }
+					continue;
+				}
+				if(err == SSL_ERROR_SYSCALL && errno == EINTR) { continue; }
 				if(errno != ECONNRESET)
 				{
 					int32_t errcode = ERR_peek_error();
 					char errstring[128];
 					ERR_error_string_n(errcode, errstring, sizeof(errstring) - 1);
-					cs_log_dbg(D_TRACE, "WebIf: read error ret=%d (%d%s%s)", n, SSL_get_error(cur_ssl(), n), errcode ? " " : "", errcode ? errstring : "");
+					cs_log_dbg(D_TRACE, "WebIf: read error ret=%d (%d%s%s)", n, err, errcode ? " " : "", errcode ? errstring : "");
 				}
-				return -1;
+				goto out;
 			}
-#else
+#endif
+			if(n < 0 && errno == EINTR) { continue; }
+			if(n < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))
+			{
+				if(webif_wait(fd, POLLIN, &deadline) < 0) { goto out; }
+				continue;
+			}
 			if(errno != ECONNRESET)
 				{ cs_log_dbg(D_TRACE, "WebIf: read error ret=%d (errno=%d %s)", n, errno, strerror(errno)); }
-#endif
-			return -1;
+			goto out;
 		}
+		if(webif_remaining_ms(&deadline) <= 0) { goto out; }
 		if(!cs_realloc(result, bufsize + n + 1))
 		{
-			send_error500(f);
-			NULLFREE(*result);
-			return -1;
+			allocation_failed = 1;
+			goto out;
 		}
 
 		memcpy(*result + bufsize, buf2, n);
@@ -9307,9 +9384,7 @@ static int32_t readRequest(FILE * f, IN_ADDR_T in, char **result, int8_t forcePl
 #endif
 		{
 			cs_log("error: too much data received from %s (%d > %d)", cs_inet_ntoa(in), bufsize, max_request_size);
-			NULLFREE(*result);
-			*result = NULL;
-			return -1;
+			goto out;
 		}
 
 #ifdef WITH_SSL
@@ -9323,7 +9398,13 @@ static int32_t readRequest(FILE * f, IN_ADDR_T in, char **result, int8_t forcePl
 		}
 #endif
 	} while (!check_request(*result, bufsize));
-	return bufsize;
+	ret = bufsize;
+out:
+	/* Response writes retain the existing blocking socket timeout profile. */
+	if(fcntl(fd, F_SETFL, flags) < 0) { ret = -1; }
+	if(ret < 0) { NULLFREE(*result); }
+	if(allocation_failed) { send_error500(f); }
+	return ret;
 }
 enum webif_page
 {
@@ -9893,38 +9974,16 @@ static void *serve_process(void *conn)
 #ifdef WITH_SSL
 	if(ssl_active)
 	{
+		int32_t request_ok = -1;
 		if(SSL_set_fd(ssl, s))
 		{
-			int32_t ok = (SSL_accept(ssl) != -1);
-			if(!ok)
+			int32_t ok = webif_ssl_accept(ssl, s);
+			if(ok == 1)
 			{
-				int8_t tries = 100;
-				while(!ok && tries--)
-				{
-					int32_t err = SSL_get_error(ssl, -1);
-					if(err != SSL_ERROR_WANT_READ && err != SSL_ERROR_WANT_WRITE)
-						{ break; }
-					else
-					{
-						struct pollfd pfd;
-						pfd.fd = s;
-						pfd.events = POLLIN | POLLPRI;
-						int32_t rc = poll(&pfd, 1, -1);
-						if(rc < 0)
-						{
-							if(errno == EINTR || errno == EAGAIN) { continue; }
-							break;
-						}
-						if(rc == 1)
-							{ ok = (SSL_accept(ssl) != -1); }
-					}
-				}
+				request_ok = process_request((FILE *)ssl, in);
+
 			}
-			if(ok)
-			{
-				process_request((FILE *)ssl, in);
-			}
-			else
+			else if(ok == 0)
 			{
 				FILE *f;
 				f = fdopen(s, "r+");
@@ -9963,7 +10022,7 @@ static void *serve_process(void *conn)
 			}
 		}
 		else { cs_log("WebIf: Error calling SSL_set_fd()."); }
-		SSL_shutdown(ssl);
+		if(request_ok >= 0) { SSL_shutdown(ssl); }
 		close(s);
 		SSL_free(ssl);
 	}

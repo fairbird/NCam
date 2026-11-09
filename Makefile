@@ -485,6 +485,15 @@ SRC-$(CONFIG_WEBIF) += module-webif-tpl.c
 SRC-$(CONFIG_WEBIF) += module-webif.c
 SRC-$(CONFIG_WEBIF) += ncam-sched.c
 SRC-$(CONFIG_WEBIF) += webif/pages.c
+ifeq ($(CONFIG_WEBIF),y)
+	# Older libc versions provide clock_gettime in librt.
+	CLOCK_TEST = printf '%s\n' \
+		'int main(void) { struct timespec ts; return clock_gettime(CLOCK_MONOTONIC, &ts); }' | \
+		$(CC) $(CFLAGS) -D_GNU_SOURCE -include time.h -x c -o /dev/null -
+	CLOCK_LIB := $(shell $(CLOCK_TEST) >/dev/null 2>&1 || \
+		{ $(CLOCK_TEST) -lrt >/dev/null 2>&1 && echo -lrt; })
+	override LIBS += $(CLOCK_LIB)
+endif
 SRC-$(CONFIG_WITH_CARDREADER) += reader-common.c
 SRC-$(CONFIG_READER_BULCRYPT) += reader-bulcrypt.c
 SRC-$(CONFIG_READER_CONAX) += reader-conax.c
