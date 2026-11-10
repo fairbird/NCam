@@ -9974,6 +9974,7 @@ static void *serve_process(void *conn)
 #ifdef WITH_SSL
 	if(ssl_active)
 	{
+		FILE *f = NULL;
 		int32_t request_ok = -1;
 		if(SSL_set_fd(ssl, s))
 		{
@@ -9985,7 +9986,6 @@ static void *serve_process(void *conn)
 			}
 			else if(ok == 0)
 			{
-				FILE *f;
 				f = fdopen(s, "r+");
 				if(f != NULL)
 				{
@@ -10012,7 +10012,6 @@ static void *serve_process(void *conn)
 					else
 						{ send_error(f, 200, "Bad Request", NULL, "This web server is running in SSL mode.", 1); }
 					fflush(f);
-					fclose(f);
 					NULLFREE(filebuf);
 				}
 				else
@@ -10023,8 +10022,10 @@ static void *serve_process(void *conn)
 		}
 		else { cs_log("WebIf: Error calling SSL_set_fd()."); }
 		if(request_ok >= 0) { SSL_shutdown(ssl); }
-		close(s);
 		SSL_free(ssl);
+		/* A fallback stream owns the socket; release TLS before its descriptor. */
+		if(f != NULL) { fclose(f); }
+		else { close(s); }
 	}
 	else
 #endif
@@ -10035,14 +10036,15 @@ static void *serve_process(void *conn)
 		{
 			process_request(f, in);
 			fflush(f);
+			shutdown(s, SHUT_WR);
 			fclose(f);
 		}
 		else
 		{
 			cs_log_dbg(D_TRACE, "WebIf: fdopen(%d) failed. (errno=%d %s)", s, errno, strerror(errno));
+			shutdown(s, SHUT_WR);
+			close(s);
 		}
-		shutdown(s, SHUT_WR);
-		close(s);
 	}
 
 	return NULL;
