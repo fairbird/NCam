@@ -67,7 +67,7 @@ function cleaninsert(deleteinsert) {
 	var tmp_array = existing_inserts.slice();
 	existing_inserts.length = 0;
 	var i2 = 0;
-	for (i = 0; i < tmp_array.length; i++) {
+	for (var i = 0; i < tmp_array.length; i++) {
 		if (tmp_array[i] != deleteinsert){
 			existing_inserts[i2] = tmp_array[i];
 			i2++; 
