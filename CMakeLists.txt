@@ -1134,22 +1134,12 @@ file (GLOB config_files "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/ncam.*")
 file (GLOB doc_files "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/doc/txt/*.txt")
 file (GLOB man1_files "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/doc/man/*.1")
 file (GLOB man5_files "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/doc/man/*.5")
-file (GLOB example_files "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/doc/example/ncam.ac"
-                         "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/doc/example/ncam.cert"
-                         "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/doc/example/ncam.conf"
-                         "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/doc/example/ncam.guess"
-                         "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/doc/example/ncam.ird"
-                         "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/doc/example/ncam.server"
-                         "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/doc/example/ncam.services"
-                         "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/doc/example/ncam.srvid"
-                         "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/doc/example/ncam.user")
 
 install (PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${exe_name}${CMAKE_EXECUTABLE_SUFFIX} DESTINATION bin COMPONENT bin)
 install (FILES ${config_files} DESTINATION etc COMPONENT config)
 install (FILES ${doc_files} DESTINATION share/doc/ncam COMPONENT doc)
 install (FILES ${man1_files} DESTINATION share/man/man1 COMPONENT doc)
 install (FILES ${man5_files} DESTINATION share/man/man5 COMPONENT doc)
-install (FILES ${example_files} DESTINATION share/doc/ncam/example COMPONENT doc)
 
 #----------------------- we can use CPack to build pacakges --------------------------
 

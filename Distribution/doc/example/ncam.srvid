@@ -1,6 +1,0 @@
-#
-# service ID configuration file for web interface and monitor
-#
-
-1111,2222:000A|provider A|Name C|TV|package E
-3333,4444,5555:000B|provider B|Name D|Radio|package F
