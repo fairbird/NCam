@@ -249,19 +249,25 @@ void SHA1_Init(SHA_CTX *context)
 void SHA1_Update(SHA_CTX *context, const uint8_t *data, const size_t len)
 {
 	size_t i, j;
+	uint32_t old_count;
+
+	if(len == 0) { return; }
 
 #ifdef VERBOSE
 	SHAPrintContext(context, "before");
 #endif
 
 	j = (context->count[0] >> 3) & 63;
-	if((context->count[0] += len << 3) < (len << 3)) { context->count[1]++; }
-	context->count[1] += (len >> 29);
-	if((j + len) > 63)
+	/* Detect carry within the low word, even when size_t is wider. */
+	old_count = context->count[0];
+	context->count[0] += (uint32_t)(len << 3);
+	if(context->count[0] < old_count) { context->count[1]++; }
+	context->count[1] += (uint32_t)(len >> 29);
+	if(len >= 64 - j)
 	{
 		memcpy(&context->buffer[j], data, (i = 64 - j));
 		SHA1_Transform(context->state, context->buffer);
-		for(; i + 63 < len; i += 64)
+		for(; len - i >= 64; i += 64)
 		{
 			SHA1_Transform(context->state, data + i);
 		}

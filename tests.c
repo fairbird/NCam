@@ -433,6 +433,72 @@ static int run_sha256_tests(void)
 	return failures;
 }
 
+#if !defined(WITH_SSL) && !defined(WITH_LIBCRYPTO)
+static int run_sha1_length_tests(void)
+{
+	int failures = 0;
+	SHA_CTX context, before;
+	const uint8_t byte = 0;
+	printf("SHA1 update lengths\n");
+	memset(&context, 0xa5, sizeof(context));
+	SHA1_Init(&context);
+	for (size_t prefix = 0; prefix < 2; prefix++)
+	{
+		memcpy(&before, &context, sizeof(context));
+		SHA1_Update(&context, NULL, 0);
+		printf(" Testing NULL/zero %s", prefix ? "after a partial update" : "after init");
+		if (!memcmp(&context, &before, sizeof(context))) { printf(" [OK]\n"); }
+		else { printf(" [FAIL]\n"); failures++; }
+		SHA1_Update(&context, &byte, 1);
+	}
+
+	const uint32_t high[] = { 7, UINT32_MAX };
+	for (size_t i = 0; i < sizeof(high) / sizeof(*high); i++)
+	{
+		memset(&context, 0, sizeof(context));
+		SHA1_Init(&context);
+		context.count[0] = UINT32_C(0xfffffff8);
+		context.count[1] = high[i];
+		SHA1_Update(&context, &byte, 1);
+		printf(" Testing bit-count carry from high word %" PRIu32, high[i]);
+		if (context.count[0] == 0 && context.count[1] == (uint32_t)(high[i] + 1)) { printf(" [OK]\n"); }
+		else { printf(" [FAIL]\n"); failures++; }
+	}
+
+	const char *large = getenv("NCAM_TEST_SHA1_LARGE");
+	if (!large || strcmp(large, "1"))
+	{
+		printf(" Skipping 512 MiB updates (set NCAM_TEST_SHA1_LARGE=1; uses 512 MiB + 1 byte)\n");
+		return failures;
+	}
+	const size_t size = (size_t)512 * 1024 * 1024;
+	uint8_t *data = malloc(size + 1);
+	if (!data) { printf(" Large-update allocation failed\n"); return failures + 1; }
+	/* SHA-1 of zero bytes, independently checked with OpenSSL. */
+	const char *expected[] = {
+		"5b088492c9f4778f409b7ae61477dec124c99033",
+		"3e1bb536d18494c32e66ef9f479d65bbe0d863de"
+	};
+	for (size_t extra = 0; extra < 2; extra++)
+	{
+		uint8_t digest[SHA_DIGEST_LENGTH];
+		memset(data, 0, size + extra);
+		SHA1_Init(&context);
+		SHA1_Update(&context, data, size + extra);
+		printf(" Testing 512 MiB + %zu bytes in one update", extra);
+		if (context.count[0] != extra * 8 || context.count[1] != 1)
+		{
+			printf(" [FAIL: bit count]"); failures++;
+		}
+		SHA1_Final(digest, &context);
+		if (hex_equal(digest, sizeof(digest), expected[extra])) { printf(" [OK]\n"); }
+		else { report_mismatch("SHA1 large update", "zero bytes", digest, sizeof(digest), expected[extra]); failures++; }
+	}
+	free(data);
+	return failures;
+}
+#endif
+
 /* --------------------------------------------------------------------- */
 /*  AES                                                                  */
 /* --------------------------------------------------------------------- */
@@ -1318,6 +1384,9 @@ static int run_crypto_tests(void)
 	failures += run_sha1_tests();
 	failures += run_sha1_input_tests();
 	failures += run_sha256_tests();
+#if !defined(WITH_SSL) && !defined(WITH_LIBCRYPTO)
+	failures += run_sha1_length_tests();
+#endif
 #ifdef WITH_LIB_MDC2
 	failures += run_mdc2_tests();
 #endif
