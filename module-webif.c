@@ -428,32 +428,32 @@ static void set_ecm_info(struct templatevars * vars)
 	struct s_reader *rdr;
 	while((rdr = ll_iter_next(&itr)))
 	{
-		if (rdr->webif_ecmsok) { totalrdrok += rdr->webif_ecmsok; }
-		if (rdr->webif_ecmsnok) { totalrdrnok += rdr->webif_ecmsnok; }
-		if (rdr->webif_ecmstout) { totalrdrtout += rdr->webif_ecmstout; }
+		totalrdrok += rdr->webif_ecmsok;
+		totalrdrnok += rdr->webif_ecmsnok;
+		totalrdrtout += rdr->webif_ecmstout;
 
-		if (rdr->webif_ecmsfilteredlen) { flen += rdr->webif_ecmsfilteredlen; }
-		if (rdr->webif_ecmsfilteredhead) { fhead += rdr->webif_ecmsfilteredhead; }
+		flen += rdr->webif_ecmsfilteredlen;
+		fhead += rdr->webif_ecmsfilteredhead;
 
-		if (rdr->webif_emmerror[0]) { teruk += rdr->webif_emmerror[0]; }
-		if (rdr->webif_emmerror[1]) { teruq += rdr->webif_emmerror[1]; }
-		if (rdr->webif_emmerror[2]) { ters += rdr->webif_emmerror[2]; }
-		if (rdr->webif_emmerror[3]) { terg += rdr->webif_emmerror[3]; }
+		teruk += rdr->webif_emmerror[0];
+		teruq += rdr->webif_emmerror[1];
+		ters += rdr->webif_emmerror[2];
+		terg += rdr->webif_emmerror[3];
 
-		if (rdr->webif_emmwritten[0]) { twruk += rdr->webif_emmwritten[0]; }
-		if (rdr->webif_emmwritten[1]) { twruq += rdr->webif_emmwritten[1]; }
-		if (rdr->webif_emmwritten[2]) { twrs += rdr->webif_emmwritten[2]; }
-		if (rdr->webif_emmwritten[3]) { twrg += rdr->webif_emmwritten[3]; }
+		twruk += rdr->webif_emmwritten[0];
+		twruq += rdr->webif_emmwritten[1];
+		twrs += rdr->webif_emmwritten[2];
+		twrg += rdr->webif_emmwritten[3];
 
-		if (rdr->webif_emmskipped[0]) { tskuk += rdr->webif_emmskipped[0]; }
-		if (rdr->webif_emmskipped[1]) { tskuq += rdr->webif_emmskipped[1]; }
-		if (rdr->webif_emmskipped[2]) { tsks += rdr->webif_emmskipped[2]; }
-		if (rdr->webif_emmskipped[3]) { tskg += rdr->webif_emmskipped[3]; }
+		tskuk += rdr->webif_emmskipped[0];
+		tskuq += rdr->webif_emmskipped[1];
+		tsks += rdr->webif_emmskipped[2];
+		tskg += rdr->webif_emmskipped[3];
 
-		if (rdr->webif_emmblocked[0]) { tbluk += rdr->webif_emmblocked[0]; }
-		if (rdr->webif_emmblocked[1]) { tbluq += rdr->webif_emmblocked[1]; }
-		if (rdr->webif_emmblocked[2]) { tbls += rdr->webif_emmblocked[2]; }
-		if (rdr->webif_emmblocked[3]) { tblg += rdr->webif_emmblocked[3]; }
+		tbluk += rdr->webif_emmblocked[0];
+		tbluq += rdr->webif_emmblocked[1];
+		tbls += rdr->webif_emmblocked[2];
+		tblg += rdr->webif_emmblocked[3];
 	}
 	cs_readunlock(__func__, &readerlist_lock);
 
