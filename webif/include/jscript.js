@@ -2422,27 +2422,24 @@ function decodeVideoguardEMM(text, target, addHideButton) {
 	};
 	e.extend(true, e.fn.colorPicker, {
 		toHex: function (e) {
-			if (e.match(/[0-9A-F]{6}|[0-9A-F]{3}$/i)) {
-				return e.charAt(0) === "#" ? e : "#" + e
-			} else if (e.match(/^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/)) {
-				var t = [parseInt(RegExp.$1, 10), parseInt(RegExp.$2, 10), parseInt(RegExp.$3, 10)],
-					n = function (e) {
-						if (e.length < 2) {
-							for (var t = 0, n = 2 - e.length; t < n; t++) {
-								e = "0" + e
-							}
-						}
-						return e
-					};
-				if (t.length === 3) {
-					var r = n(t[0].toString(16)),
-						i = n(t[1].toString(16)),
-						s = n(t[2].toString(16));
-					return "#" + r + i + s
-				}
-			} else {
+			var hex = e.match(/^#?([0-9A-F]{3}|[0-9A-F]{6})$/i);
+			if (hex && hex[0] === e) {
+				return "#" + hex[1]
+			}
+			var rgb = e.match(/^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/);
+			if (!rgb || rgb[0] !== e) {
 				return false
 			}
+			var channels = [parseInt(rgb[1], 10), parseInt(rgb[2], 10), parseInt(rgb[3], 10)],
+				hexColor = "#";
+			for (var channel = 0; channel < channels.length; channel++) {
+				if (channels[channel] > 255) {
+					return false
+				}
+				var hexChannel = channels[channel].toString(16);
+				hexColor += hexChannel.length < 2 ? "0" + hexChannel : hexChannel;
+			}
+			return hexColor
 		},
 		checkMouse: function (r, i) {
 			var s = n,
