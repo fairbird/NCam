@@ -444,7 +444,7 @@ static void cacheex_cache_add(ECM_REQUEST *er, ECMHASH *result, CW *cw, bool add
 		if (er->cacheex_src->account)
 			er->cacheex_src->account->cwcacheexerrcw++;
 
-		if (((0x0200| 0x0800) & cs_dblevel)) // avoid useless operations if debug is not enabled
+		if (((D_CACHEEX | D_CSP) & cs_dblevel)) // avoid useless operations if debug is not enabled
 		{
 			char cw1[16*3+2], cw2[16*3+2];
 			cs_hexdump(0, er->cw, 16, cw1, sizeof(cw1));
