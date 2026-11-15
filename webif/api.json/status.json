@@ -15,7 +15,6 @@
 	"pcc":"##PCC##",
 	"pca":"##PCA##",
 	"pco":"##PCO##",
-	"client":[
-	                          ##JSONSTATUSBITS##
+	"client":[##JSONSTATUSBITS##]}
 								]}
 ##TPLJSONFOOTER##

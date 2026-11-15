@@ -595,9 +595,7 @@ function updateUserpage(data) {
 						$(uid + " > td.usercol6").text('');
 
 						// just to be sure that class of image is set
-						if ($(uid + " > td.usercol6 > img").length) {
-							$(uid + " > td.usercol6 > img").attr('class', 'usericon');
-						}
+						$(uid + " > td.usercol6 > img").attr('class', 'usericon');
 
 						newimage = $('<img class="usericon" src="image?i=IC_' + item.user.lca + '">');
 						newimage.hide();
@@ -752,9 +750,7 @@ function updateUserpage(data) {
 				// last status was online so cleanup offline
 				$(uid).attr('class', item.user.classname);
 				if (!is_nopoll('usercol1')) {
-					if ($(uid + " td.usercol1 > span.span_notifier").length) {
 						$(uid + " td.usercol1 > span.span_notifier").remove();
-					}
 				}
 				if (!is_nopoll('usercol2')) {
 					$(uid + " td.usercol2")
@@ -882,11 +878,7 @@ function setDebuglevel(debug, maxdebug) {
 		$("#debugfrom").text(' Switch Debug from ' + cs_dblevel + ' to ');
 		for (var i = 0; i < maxlevel; i++) {
 			lvl = 1 << i;
-			if (cs_dblevel & lvl) {
-				$("#debug" + lvl).attr('sendval', cs_dblevel - lvl);
-			} else {
-				$("#debug" + lvl).attr('sendval', cs_dblevel + lvl);
-			}
+			$("#debug" + lvl).attr('sendval', cs_dblevel ^ lvl);
 			$("#debug" + lvl).attr('class', (cs_dblevel & lvl) ? 'debugls' : 'debugl');
 		}
 		lastdebuglevel = cs_dblevel;
@@ -1376,9 +1368,7 @@ function updateStatuspage(data) {
 					$(uid + " > td.statuscol13 > a").attr('title', item.request.chname + item.request.chprovider);
 
 					// just to be sure that class of image is set
-					if ($(uid + " > td.statuscol13 > a > img").length) {
-						$(uid + " > td.statuscol13 > a > img").attr('class', 'statususericon');
-					}
+					$(uid + " > td.statuscol13 > a > img").attr('class', 'statususericon');
 
 					newimage = $('<img class="statususericon" src="image?i=IC_' + item.request.picon + '">');
 					newimage.hide();
@@ -1637,9 +1627,7 @@ function setPollerr(error) {
 	if (error && !$("#pollerr").length) {
 		$("body").append('<div id="pollerr" style="top:5px;left:5px;background-color:red;color:yellow;">POLLERR</div>');
 	} else {
-		if ($("#pollerr").length) {
-			$("#pollerr").fadeOut('slow').remove();
-		}
+		$("#pollerr").fadeOut('slow').remove();
 	}
 }
 
@@ -2048,18 +2036,18 @@ function decodeVideoguardEMM(text, target, addHideButton) {
 				var b = ret.replace(/[^A-Fa-f0-9]/g, "").match(/.{1,2}/g) || [];
 				var bin = parseInt(b[2] + b[3], 16);
 				var time = {};
-				time.s = ((bin & parseInt('11111', 2)) * 2);
+				time.s = ((bin & 0x1F) * 2);
 				bin = bin >>> 5;
-				time.m = (bin & parseInt('111111', 2));
+				time.m = (bin & 0x3F);
 				bin = bin >>> 6;
-				time.h = (bin & parseInt('11111', 2));
+				time.h = (bin & 0x1F);
 				bin = bin >>> 5;
 
 				bin = parseInt(b[0] + b[1], 16);
 				var date = {};
-				date.d = (bin & parseInt('11111111', 2));
+				date.d = (bin & 0xFF);
 				bin = bin >>> 8;
-				date.m = (bin & parseInt('11111111', 2));
+				date.m = (bin & 0xFF);
 				bin = bin >>> 8;
 
 				date.y = parseInt(date.m / 12) + 2004;
@@ -2552,7 +2540,7 @@ function decodeVideoguardEMM(text, target, addHideButton) {
 						var o = typeof s !== "undefined" ? s : r.text();
 						a.push([o, n])
 					});
-					a.sort(function (e, t, s) {
+					a.sort(function (e, t) {
 						return f(e[0], t[0], o)
 					});
 					if (o != s.ASC) a.reverse();

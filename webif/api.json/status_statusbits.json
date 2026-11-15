@@ -1,4 +1,4 @@
-##JSONARRAYDELIMITER##{
+##JSONDELIMITER##{
 "thid": "##CSIDX##",
 "type": "##CLIENTTYPE##",
 "name_enc": "##USERENC##",
