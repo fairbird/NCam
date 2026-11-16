@@ -658,19 +658,6 @@ static void set_signal_handler(int32_t sig, int32_t flags, void (*sighandler))
 	}
 }
 
-static void cs_master_alarm(void)
-{
-	cs_log("PANIC: master deadlock!");
-	fprintf(stderr, "PANIC: master deadlock!");
-	fflush(stderr);
-}
-
-static void cs_sigpipe(void)
-{
-	if(cs_dblevel & D_ALL_DUMP)
-		{ cs_log("Got sigpipe signal -> captured"); }
-}
-
 static void cs_dummy(void)
 {
 	return;
@@ -808,8 +795,8 @@ static void cs_reload_config(void)
 	SAFE_MUTEX_UNLOCK(&mutex);
 }
 
-/* Sets signal handlers to ignore for early startup of NCam because for example log
-   could cause SIGPIPE errors and the normal signal handlers can't be used at this point. */
+/* Ignore signals before daemonizing or starting the supervisor, when normal
+   handlers cannot be used yet. */
 static void init_signal_pre(void)
 {
 	set_signal_handler(SIGPIPE , 1, SIG_IGN);
@@ -828,8 +815,9 @@ static void init_signal(void)
 	set_signal_handler(SIGTERM, 3, cs_exit);
 
 	set_signal_handler(SIGWINCH, 1, SIG_IGN);
-	set_signal_handler(SIGPIPE, 0, cs_sigpipe);
-	set_signal_handler(SIGALRM, 0, cs_master_alarm);
+	/* Empty handlers avoid unsafe logging and reset to defaults in exec'd helpers. */
+	set_signal_handler(SIGPIPE, 0, cs_dummy);
+	set_signal_handler(SIGALRM, 0, cs_dummy);
 	set_signal_handler(SIGHUP, 1, cs_reload_config);
 	set_signal_handler(SIGUSR1, 1, cs_debug_level);
 	set_signal_handler(SIGUSR2, 1, cs_card_info);
@@ -856,7 +844,6 @@ void cs_exit(int32_t sig)
 		{ cs_dumpstack(sig); }
 
 	set_signal_handler(SIGHUP , 1, SIG_IGN);
-	set_signal_handler(SIGPIPE, 1, SIG_IGN);
 
 	struct s_client *cl = cur_client();
 	if(!cl)
@@ -870,7 +857,6 @@ void cs_exit(int32_t sig)
 		free_client(cl);
 
 		// Restore signals before exiting thread
-		set_signal_handler(SIGPIPE, 0, cs_sigpipe);
 		set_signal_handler(SIGHUP, 1, cs_reload_config);
 
 		pthread_exit(NULL);
@@ -1559,7 +1545,7 @@ static void restart_daemon(void)
 		set_signal_handler(SIGHUP , 0, fwd_sig);
 		set_signal_handler(SIGUSR1, 0, fwd_sig);
 		set_signal_handler(SIGUSR2, 0, fwd_sig);
-		set_signal_handler(SIGALRM , 0, fwd_sig);
+		set_signal_handler(SIGALRM , 0, SIG_IGN);
 		set_signal_handler(SIGWINCH, 1, SIG_IGN);
 		set_signal_handler(SIGPIPE , 0, SIG_IGN);
 		set_signal_handler(NCAM_SIGNAL_WAKEUP, 0, SIG_IGN);
@@ -1886,6 +1872,8 @@ int32_t main(int32_t argc, char *argv[])
 
 	parse_cmdline_params(argc, argv);
 
+	init_signal_pre();
+
 	if(bg && do_daemon(1, 0))
 	{
 		printf("Error starting in background (errno=%d: %s)", errno, strerror(errno));
@@ -1903,7 +1891,6 @@ int32_t main(int32_t argc, char *argv[])
 	cfg.max_pending = max_pending;
 
 	if(cs_confdir[cs_strlen(cs_confdir) - 1] != '/') { cs_strncpy(cs_confdir + cs_strlen(cs_confdir), "/", 2); }
-	init_signal_pre(); // because log could cause SIGPIPE errors, init a signal handler first
 	init_first_client();
 	cs_lock_create(__func__, &system_lock, "system_lock", 5000);
 	cs_lock_create(__func__, &config_lock, "config_lock", 10000);
